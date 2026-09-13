@@ -67,6 +67,7 @@
 .\.venv\Scripts\python.exe scripts\seed_db.py
 cmd /c "cd frontend && npm run build"
 cmd /c "cd frontend && npm start"
+cmd /c "cd frontend && npm run audit:api"
 ```
 
 `seed_db.py` руйнівно перестворює локальні бази. Не запускай його без окремого підтвердження користувача. Якщо `npm.ps1` блокується execution policy, використовуй `cmd /c npm ...`, не змінюючи системну policy.

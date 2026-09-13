@@ -20,6 +20,7 @@ env/
 # Frontend
 node_modules/
 frontend/dist/
+docs/audits/
 .sass-cache/
 npm-debug.log*
 yarn-debug.log*

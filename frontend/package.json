@@ -8,7 +8,8 @@
   "scripts": {
     "start": "gulp",
     "build": "gulp build",
-    "clean": "gulp clean"
+    "clean": "gulp clean",
+    "audit:api": "node ../scripts/audit-api.mjs"
   },
   "devDependencies": {
     "browser-sync": "^3.0.4",
