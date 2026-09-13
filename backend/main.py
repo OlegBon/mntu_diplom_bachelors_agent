@@ -10,13 +10,11 @@ from . import models, schemas, database, crud, security
 
 app = FastAPI(title="Diamond ID System API")
 
-# CORS налаштування
+# CORS для локального Gulp/BrowserSync. Порт може змінюватися, якщо 3000 зайнятий.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000"
-    ],
+    allow_origins=[],
+    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1):\d+$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

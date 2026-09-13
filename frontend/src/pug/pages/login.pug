@@ -10,11 +10,11 @@ block content
             form#login-form
                 .form-group
                     label(for="username") Логін
-                    input#username(type="text" name="username" required placeholder="admin")
+                    input#username(type="text" name="username" required autocomplete="username" placeholder="admin")
                 
                 .form-group
                     label(for="password") Пароль
-                    input#password(type="password" name="password" required placeholder="******")
+                    input#password(type="password" name="password" required autocomplete="current-password" placeholder="******")
                 
                 // Місце для помилки
                 p#error-msg(style="color: red; display: none;")
