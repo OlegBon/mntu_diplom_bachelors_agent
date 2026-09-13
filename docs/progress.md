@@ -4,6 +4,15 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-13 — agent-guidance-audit (завершено)
+
+- **Задача:** повторно дослідити стек Diamant ID, звірити rules і skills зі структурою Convertly Hub та оновити інструкції агента без перенесення чужих технологічних припущень.
+- **Змінені файли:** `AGENTS.md`, `.codex/rules/{python-backend,frontend,database,security,testing,verification,local-architecture,local-quality-and-performance}.md`, `.codex/skills/{api-response-auditor,postgres-patterns,frontend-patterns}/SKILL.md`, `docs/progress.md`.
+- **Результат аудиту:** підтверджено стек FastAPI + SQLAlchemy 2 + MariaDB/XAMPP, Pydantic і JWT; Gulp 5 + Pug + SCSS + vanilla JavaScript + BrowserSync. React, Next.js, Prisma, їхні hooks і правила не застосовні. Автоматичного `audit:api` скрипта та test suite немає.
+- **Рішення:** додано правила архітектури й якості/продуктивності, skill `frontend-patterns`, актуалізовано API-аудит і PostgreSQL-патерни для SQLAlchemy. Приклад `.codex/convertly-hub` лишено недоторканим і не зроблено частиною канонічних інструкцій Diamant ID.
+- **Перевірки:** структура репозиторію, `README.md`, `docs/architecture.md`, Python- і Node-залежності, Gulp-конфігурація та імпорти коду звірені читанням і пошуком; імпорт `backend.main:app` і `npm run build` успішні. `caniuse-lite` повідомляє про застарілу базу браузерів, але це не блокує збірку.
+- **Нові змінні середовища:** немає.
+
 ## 2026-09-13 — login-cors-fix (завершено)
 
 - **Задача:** усунути блокування входу в браузері, коли BrowserSync запускається не на порту `3000`.

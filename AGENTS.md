@@ -13,22 +13,26 @@
 | --- | --- |
 | `.codex/rules/global-rules.md` | Для будь-якого завдання. |
 | `docs/architecture.md` | Зміна структури, API, інтеграцій або потоку даних. |
+| `.codex/rules/local-architecture.md` | FastAPI-маршрути, API-контракти, auth-потік, CRUD або межі frontend/backend. |
 | `.codex/rules/python-backend.md` | Python, FastAPI, SQLAlchemy, Pydantic або скрипти. |
 | `.codex/rules/frontend.md` | Pug, SCSS, JavaScript або Gulp. |
 | `.codex/rules/database.md` | MariaDB/PostgreSQL, SQL, seed або міграції. |
 | `.codex/rules/security.md` | Ввід користувача, авторизація, API, файли та env. |
 | `.codex/rules/testing.md` | Проєктування або додавання тестів. |
+| `.codex/rules/local-quality-and-performance.md` | UI-якість, доступність, зображення, анімації або продуктивність. |
 | `.codex/rules/verification.md` | Після зміни коду, конфігурації чи залежностей. |
 | `DESIGN.md` | Будь-яка візуальна зміна. |
 
 ## MCP-сервери
 
-Фактичний перелік перевіряй через `codex mcp list`. Використовуй лише сервери й методи, доступні в поточній сесії.
+Фактичний перелік перевіряй через `codex mcp list`. Використовуй лише сервери й методи, доступні в поточній сесії; не припускай, що сервер увімкнений лише тому, що він згадується нижче.
 
-- `context7` — актуальна документація бібліотек перед новою інтеграцією.
-- `chrome-devtools` — DOM, console, network і візуальне налагодження відкритого браузера.
-- `playwright` — E2E-флоу та регресійне UI-тестування.
-- `github` — issues, репозиторій і PR, лише коли це потрібно завданню.
+| Сервер | Застосування |
+| --- | --- |
+| `context7` | Актуальна документація бібліотек перед інтеграцією або виправленням помилки. |
+| `chrome-devtools` | Налагодження DOM, console, network і візуальних проблем уже відкритого браузера. |
+| `playwright` | E2E-сценарії, відтворення користувацьких флоу та UI-регресії. |
+| `github` | Репозиторії, issues і pull requests, лише коли цього потребує завдання. |
 
 ## Локальні навички
 
@@ -37,10 +41,11 @@
 | Skill | Коли застосовувати |
 | --- | --- |
 | `project-discovery` | Перше ознайомлення з кодовою базою або огляд проєкту. |
+| `frontend-patterns` | Написання, рев’ю або рефакторинг Pug, SCSS, JavaScript, Gulp чи API-клієнта. |
 | `python-patterns` | Написання, рев’ю або рефакторинг Python-коду. |
 | `python-testing` | Створення стратегії чи реалізація `pytest`-тестів. |
 | `security-review` | Аудит безпеки або зміна auth, доступу чи API. |
-| `api-response-auditor` | Аудит HTTP-відповідей FastAPI. |
+| `api-response-auditor` | Аудит API-контрактів і HTTP-відповідей FastAPI без зміни даних. |
 | `database-reviewer` | Рев’ю поточного шару MariaDB/SQLAlchemy. |
 | `database-migrations` | Майбутня міграція MariaDB → PostgreSQL. |
 | `postgres-patterns` | PostgreSQL-запити, індекси й продуктивність. |
@@ -50,7 +55,7 @@
 
 - Для Python-змін запускай релевантний import/smoke-check; для frontend — `npm run build`.
 - Для UI-змін перевір відрендерену сторінку та один цільовий користувацький сценарій.
-- Після завершення завдання оновлюй `docs/progress.md`: задача, файли, перевірки, нові env-змінні та обмеження.
+- Після завершення завдання оновлюй `docs/progress.md`: задача, файли, перевірки, нові env-змінні та обмеження. Новий запис додавай одразу під вступом у зворотному хронологічному порядку.
 - Підтримуй `docs/work_plan.md` як актуальний перелік реалізованого й backlog. Оновлюй `docs/architecture.md` для зміни архітектури.
 
 ## Основні команди
@@ -70,7 +75,7 @@ cmd /c "cd frontend && npm start"
 Перед будь-якою архітектурною зміною прочитай `docs/architecture.md`.
 
 - Поточний стек: FastAPI + SQLAlchemy 2 + MariaDB/XAMPP; Gulp + Pug + SCSS + JavaScript.
-- Локальна база: `diamond_oltp`, `diamond_market`, `diamond_analytics`.
+- Локальна база: `diamond_oltp`, `diamond_market`; `diamond_analytics` — запланований аналітичний шар.
 - `local-dev` — база для локального MariaDB MVP; `main` — майбутній deploy-кандидат після перевіреної PostgreSQL-міграції.
 - Не розгалужуй бізнес-логіку за Git-гілкою: відмінності середовищ належать до env, драйвера БД та міграцій.
 
