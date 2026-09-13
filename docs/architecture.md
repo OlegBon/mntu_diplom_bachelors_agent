@@ -1,24 +1,166 @@
-# Архітектура Diamant ID
+# 🏗️ Архітектура застосунку «Diamant ID»
 
-## Поточна система
+Цей документ описує фактичну високорівневу архітектуру дипломного проєкту «Diamant ID»: локальної системи для ведення звітів про діаманти, довідників оцінювання, розрахунку IDC-параметрів і демонстраційного прогнозу ціни.
 
-```text
-Frontend (Pug + SCSS + JS, Gulp, :3000)
-            │ HTTP / JSON + Bearer JWT
-            ▼
-Backend (FastAPI, SQLAlchemy, :8000)
-            │
-            ▼
-MariaDB / XAMPP
-├── diamond_oltp     експерти та звіти
-├── diamond_market   довідники оцінок і ціновий індекс
-└── diamond_analytics запланований аналітичний шар
+Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
+
+> **Статус на 13 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Реалізовано CRUD звітів, ролі `admin`/`gemologist`, довідники ринкових оцінок, IDC-калькулятор і демонстраційний розрахунок ціни. Docker, PostgreSQL, Alembic, завершений ML-потік, публічний паспорт і автоматизовані тести ще не реалізовані.
+
+---
+
+## 1. Загальна концепція
+
+Система має три прикладні шари з розподіленою відповідальністю.
+
+1. **Клієнтський шар (Frontend).** Статичний інтерфейс на Pug, SCSS і vanilla JavaScript. Він показує сторінки, зберігає JWT у `localStorage` та викликає HTTP API.
+2. **Серверний шар (Backend/API).** FastAPI маршрути виконують автентифікацію, перевіряють ролі, валідують запити Pydantic-схемами й координують доступ до даних та доменні розрахунки.
+3. **Шар даних і доменних сервісів.** SQLAlchemy-моделі зберігають експертів, звіти й ринкові довідники в MariaDB. IDC-калькулятор визначає оцінки пропорцій та огранювання; `MLService` поки використовує евристичну формулу з випадковим коефіцієнтом, а не навчену модель.
+
+### Схема взаємодії компонентів
+
+```mermaid
+graph TD
+    A[Браузер користувача] -->|HTML, CSS, JS| B[BrowserSync / Gulp<br/>frontend/dist]
+    A -->|HTTP JSON, Bearer JWT| C[FastAPI<br/>backend/main.py]
+    C --> D[JWT і RBAC<br/>backend/security.py]
+    C --> E[CRUD / SQLAlchemy<br/>backend/crud.py]
+    E --> F[(MariaDB / XAMPP)]
+    F --> G[diamond_oltp<br/>експерти й звіти]
+    F --> H[diamond_market<br/>довідники й індекс цін]
+    F --> I[diamond_analytics<br/>зарезервовано]
+    C --> J[DiamondCalculator<br/>IDC proportions/cut]
+    C --> K[MLService<br/>демо-прогноз ціни]
+    K --> E
 ```
 
-`backend/main.py` містить HTTP-маршрути та dependencies; `crud.py` — доступ до даних; `models.py` — SQLAlchemy-моделі; `schemas.py` — API-контракти; `calculator.py` — правила IDC; `ml_service.py` — поточний демонстраційний прогноз ціни. Фронтенд компілюється з `frontend/src` у `frontend/dist` і не має власного серверного рендерингу.
+---
 
-## Середовища й гілки
+## 2. Локальне середовище розробки
 
-Локальна розробка орієнтована на MariaDB/XAMPP і гілку `local-dev`. `main` буде гілкою deploy-кандидата після появи перевіреного PostgreSQL-контуру. Код не повинен розгалужуватися за гілкою: різниця середовищ належить до змінних середовища, драйвера БД і версіонованих міграцій.
+Поточний підтримуваний runtime — **Windows, Python virtual environment, XAMPP MariaDB і Node.js**. Apache у XAMPP не потрібен для FastAPI/Gulp контуру; потрібен сервіс MySQL/MariaDB.
 
-Міграція до PostgreSQL виконується лише окремим етапом: конфігурація `DATABASE_URL`, Alembic, тестовий seed/дамп, перевірка цілісності, deployment та rollback-план. До цього MariaDB лишається єдиною підтримуваною runtime-БД.
+| Компонент | Поточна роль | Типовий локальний доступ |
+| --- | --- | --- |
+| MariaDB / XAMPP | Три бази даних, seed-дані | `localhost:3306` |
+| FastAPI + Uvicorn | JSON API, Swagger, JWT | `http://127.0.0.1:8000` |
+| Gulp + BrowserSync | Збірка та віддавання frontend | `http://localhost:3000` або інший вільний порт |
+
+Backend запускають із кореня репозиторію через `python -m uvicorn backend.main:app --reload`; frontend — командами `npm run build` або `npm start` із папки `frontend`. Повні, перевірені команди є в [local-start.md](./local-start.md).
+
+`scripts/seed_db.py` — **руйнівний локальний seed**: він перестворює `diamond_oltp` і `diamond_market`, створює `diamond_analytics`, а потім наповнює довідники, експертів і звіти з `data/diamonds_dataset.csv`. Його не можна запускати проти цінних даних або майбутнього production-середовища.
+
+---
+
+## 3. Структура папок проєкту
+
+```plaintext
+/
+├── backend/                         # FastAPI-застосунок
+│   ├── main.py                      # Маршрути, dependencies, CORS і RBAC-перевірки
+│   ├── database.py                  # Engine і сесії SQLAlchemy для MariaDB
+│   ├── models.py                    # SQLAlchemy-моделі трьох логічних БД
+│   ├── schemas.py                   # Pydantic-контракти API
+│   ├── crud.py                      # Операції читання й запису
+│   ├── calculator.py                # Правила IDC для proportions і cut
+│   ├── ml_service.py                # Демонстраційний прогноз ціни
+│   └── security.py                  # JWT і хешування паролів
+├── frontend/
+│   ├── src/
+│   │   ├── pug/                     # Layout і сторінки інтерфейсу
+│   │   ├── scss/                    # Стилі та дизайн-токени
+│   │   └── js/                      # Клієнтська логіка, API і auth-модулі
+│   ├── dist/                        # Згенерований Gulp результат, не редагується вручну
+│   ├── gulpfile.js                  # Pug/SCSS/JS/images pipeline і BrowserSync
+│   └── package.json                 # Команди frontend та API-аудиту
+├── scripts/
+│   ├── seed_db.py                   # Перестворення й наповнення локальних БД
+│   ├── recalc_grades.py             # Допоміжний перерахунок оцінок
+│   └── audit-api.mjs                # Безпечний локальний API contract/smoke audit
+├── data/                            # CSV-набір для локального seed
+├── docs/                            # Runbook, план робіт, прогрес і архітектура
+├── .codex/                          # Правила й локальні навички агента
+├── AGENTS.md                        # Робочі інструкції для агентів
+├── requirements.txt                 # Python-залежності
+└── .env                             # Приватна локальна конфігурація, не комітується
+```
+
+---
+
+## 4. Backend і API
+
+`backend/main.py` є точкою входу застосунку. Він створює FastAPI, налаштовує CORS для локальних адрес `localhost` і `127.0.0.1` з довільним портом та оголошує маршрути.
+
+### Автентифікація й ролі
+
+- `POST /token` приймає form-data логін і пароль та повертає JWT Bearer token.
+- `get_current_user` перевіряє JWT і завантажує користувача з БД.
+- Роль `admin` потрібна для керування користувачами й оновлення ринкової ціни; роль `gemologist` призначена для роботи зі звітами.
+- Frontend передає токен у `Authorization: Bearer …`; API доступний на окремому локальному origin через CORS.
+
+Поточний seed зберігає тестові паролі у відкритому вигляді для сумісності з історичною логікою. Це відомий технічний борг, а не допустима production-поведінка: перехід до bcrypt-значень і обов’язкового `SECRET_KEY` зафіксовано в [плані робіт](./work_plan.md).
+
+### Предметні маршрути
+
+| Група | Призначення |
+| --- | --- |
+| `/diamonds/` | Список, пошук, створення, оновлення, видалення та отримання звіту за ID. |
+| `/users/`, `/users/me`, `/experts/` | Керування користувачами, профіль поточного користувача та перелік експертів. |
+| `/market/mappings`, `/market/price` | Публічні довідники оцінок і поточний ринковий індекс; зміна індексу — лише для admin. |
+| `/statistics/expert-performance` | Агрегована статистика експертів. |
+| `/docs`, `/openapi.json` | Swagger UI та машинозчитуваний API-контракт FastAPI. |
+
+Поточний контракт без зміни даних перевіряє `scripts/audit-api.mjs`. Скрипт приймає лише локальний HTTP API, виконує GET-запити й CORS preflight та зберігає ігноровані Git звіти у `docs/audits/`.
+
+---
+
+## 5. Дані та доменна логіка
+
+Один SQLAlchemy engine підключається до MariaDB, а моделі вказують логічну схему (MariaDB database) через `__table_args__`.
+
+| База | Призначення | Поточний стан |
+| --- | --- | --- |
+| `diamond_oltp` | `experts`, `diamond_reports`: оперативна робота експертів і звітів | Реалізовано |
+| `diamond_market` | `grade_mappings`, `market_price_reference`: довідники й індекс | Реалізовано |
+| `diamond_analytics` | Майбутні результати ML-аналітики | Створюється seed-скриптом, але таблиці й потік відсутні |
+
+Під час створення звіту `crud.create_diamond_report()`:
+
+1. генерує ID формату `DR-00001`;
+2. обчислює `proportions_grade` через `DiamondCalculator.evaluate_proportions()`, якщо його не передано;
+3. обчислює `cut_grade` як найгіршу з оцінок proportions, polish і symmetry;
+4. за відсутності ціни викликає `MLService.predict_price()`;
+5. зберігає звіт у `diamond_oltp`.
+
+`MLService` бере останній ринковий індекс з `diamond_market` і застосовує евристичні коефіцієнти. Випадкова варіація означає, що результат не є відтворюваним чи навченим ML-прогнозом; це треба змінити перед аналітичним або production-використанням.
+
+---
+
+## 6. Frontend
+
+Gulp перетворює Pug на HTML, SCSS на CSS, копіює JavaScript та зображення у `frontend/dist`. BrowserSync віддає `dist` як статичний сайт і стежить за файлами `frontend/src`.
+
+Клієнтський JavaScript містить базовий API-клієнт із фіксованою локальною адресою API, модуль входу та сторінкову логіку для landing, login, dashboard і створення звіту. Це окремий frontend без SSR, React чи TypeScript. Адреса API та зберігання токена потребують окремої конфігурації перед розгортанням на домені.
+
+---
+
+## 7. Середовища, гілки й майбутнє розгортання
+
+| Контур | База даних | Статус |
+| --- | --- | --- |
+| `local-dev` | MariaDB / XAMPP | Поточна підтримувана розробка |
+| `main` | PostgreSQL | Майбутній deploy-кандидат, ще не налаштований |
+
+Відмінності середовищ мають задаватися конфігурацією, драйвером і версіонованими міграціями, а не умовами на назву Git-гілки. До окремого етапу міграції MariaDB залишається єдиною підтримуваною runtime-БД.
+
+Планований PostgreSQL-контур потребує: явного `DATABASE_URL`, Alembic-міграцій, безпечного seed/backfill, звірки даних, rollback-плану, Dockerfile та deployment-конфігурації. Вибір провайдера backend і схема розгортання frontend на shared hosting не вважаються реалізованими.
+
+---
+
+## 8. Межі поточної реалізації
+
+- Автоматизованих pytest, integration або E2E тестів ще немає; локальний API-аудитор є smoke/contract перевіркою, а не заміною тестового набору.
+- `/experts/` і частина інтеграції frontend ↔ API потребують окремого функціонального рев’ю.
+- Моделі, seed і CRUD мають бути звірені перед PostgreSQL-міграцією; зокрема `diamond_analytics` ще не має реалізованого аналітичного шару.
+- Поточні JWT, CORS, зберігання токена й seed-облікові дані придатні лише для локального MVP та мають пройти security hardening до публічного домену.
+
+Детальний порядок цих робіт підтримується у [work_plan.md](./work_plan.md); архітектурні рішення та зміни структури потрібно відображати в цьому документі й у [progress.md](./progress.md).
