@@ -1,23 +1,22 @@
 import mysql.connector
 import pandas as pd
-import os
 import random
 import math
 import sys
-from dotenv import load_dotenv
+from pathlib import Path
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from backend import models, database 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from backend import database, models
+from backend.config import get_mariadb_connection_options, get_required_env
+from backend.security import get_password_hash
 
-load_dotenv()
 
-def get_connection(db_name=None):
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", ""),
-        database=db_name
-    )
+
+def get_connection(db_name: str | None = None):
+    options = get_mariadb_connection_options()
+    if db_name is not None:
+        options["database"] = db_name
+    return mysql.connector.connect(**options)
 
 def generate_dimensions(carat, shape, depth_pct):
     # Базова імітація розмірів в залежності від форми
@@ -51,16 +50,20 @@ def generate_dimensions(carat, shape, depth_pct):
     return length, width, depth_mm
 
 def seed_data():
+    # Перевіряємо конфігурацію до будь-якого руйнівного SQL-запиту.
+    admin_password = get_required_env("SEED_ADMIN_PASSWORD")
+    gemologist_password = get_required_env("SEED_GEMOLOGIST_PASSWORD")
+
     raw_conn = get_connection()
     raw_cursor = raw_conn.cursor()
     
-    print(" -> [1/5] Перестворення баз даних...")
+    print(" -> [1/5] Перестворення локальних баз даних...")
     raw_cursor.execute("DROP DATABASE IF EXISTS diamond_oltp")
     raw_cursor.execute("DROP DATABASE IF EXISTS diamond_market")
-    # Analytics можна залишити, якщо там нічого важливого
+    raw_cursor.execute("DROP DATABASE IF EXISTS diamond_analytics")
     raw_cursor.execute("CREATE DATABASE diamond_oltp")
     raw_cursor.execute("CREATE DATABASE diamond_market")
-    raw_cursor.execute("CREATE DATABASE IF NOT EXISTS diamond_analytics")
+    raw_cursor.execute("CREATE DATABASE diamond_analytics")
     
     raw_conn.commit()
     raw_cursor.close()
@@ -118,13 +121,15 @@ def seed_data():
     cursor = conn.cursor()
 
     print(" -> [4/5] Додавання експертів...")
+    admin_password_hash = get_password_hash(admin_password)
+    gemologist_password_hash = get_password_hash(gemologist_password)
     experts_data = [
-        (1, 'admin', 'admin_pass', 'admin', 'System', 'Admin', 'Zero'),
-        (2, 'expert_1', 'pass_1', 'gemologist', 'Expert', 'One', 'First'),
-        (3, 'expert_2', 'pass_2', 'gemologist', 'Expert', 'Two', 'Second'),
-        (4, 'expert_3', 'pass_3', 'gemologist', 'Expert', 'Three', 'Third'),
-        (5, 'expert_4', 'pass_4', 'gemologist', 'Expert', 'Four', 'Fourth'),
-        (6, 'expert_5', 'pass_5', 'gemologist', 'Expert', 'Five', 'Fifth'),
+        (1, "admin", admin_password_hash, "admin", "System", "Admin", "Zero"),
+        (2, "expert_1", gemologist_password_hash, "gemologist", "Expert", "One", "First"),
+        (3, "expert_2", gemologist_password_hash, "gemologist", "Expert", "Two", "Second"),
+        (4, "expert_3", gemologist_password_hash, "gemologist", "Expert", "Three", "Third"),
+        (5, "expert_4", gemologist_password_hash, "gemologist", "Expert", "Four", "Fourth"),
+        (6, "expert_5", gemologist_password_hash, "gemologist", "Expert", "Five", "Fifth"),
     ]
     cursor.executemany(
         "INSERT INTO experts (expert_id, username, password_hash, role, first_name, last_name, middle_name) VALUES (%s, %s, %s, %s, %s, %s, %s)",
@@ -132,11 +137,10 @@ def seed_data():
     )
 
     print(" -> [5/5] Генерація звітів...")
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DATA_PATH = os.path.join(BASE_DIR, '..', 'data', 'diamonds_dataset.csv')
+    data_path = Path(__file__).resolve().parent.parent / "data" / "diamonds_dataset.csv"
     
     try:
-        df = pd.read_csv(DATA_PATH)
+        df = pd.read_csv(data_path)
         df['sale_date'] = df['sale_date'].where(pd.notnull(df['sale_date']), None)
         
         count = 0

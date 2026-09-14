@@ -94,3 +94,23 @@ class MarketPriceRef(Base):
     updated_by = Column(Integer, nullable=True)
     updated_at = Column(TIMESTAMP, server_default=func.now())
     notes = Column(String(255), nullable=True)
+
+
+class MlResult(Base):
+    """Зарезервований результат майбутнього ML-потоку.
+
+    Модель відповідає наявній MariaDB-таблиці. Запис і читання результатів
+    не додаються до цього етапу: їхній API та доменний життєвий цикл будуть
+    окремою задачею разом із версіонованими міграціями.
+    """
+
+    __tablename__ = "ml_results"
+    __table_args__ = {"schema": "diamond_analytics"}
+
+    report_id = Column(String(20), primary_key=True)
+    predicted_price = Column(DECIMAL(15, 2), nullable=True)
+    predicted_class = Column(String(50), nullable=True)
+    cluster_label = Column(String(50), nullable=True)
+    som_x = Column(Integer, nullable=True)
+    som_y = Column(Integer, nullable=True)
+    processed_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)

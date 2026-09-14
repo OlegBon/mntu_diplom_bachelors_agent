@@ -18,7 +18,7 @@
 | `/market/*` | Залишити; прибрати frontend hardcode mappings/ціни та додати admin UI пізніше. |
 | `/statistics/expert-performance` | Залишити після рішення про публічність usernames; додати analytics UI пізніше. |
 
-Повних дублікатів endpoint-ів не знайдено. Окремо прибрати або узгодити: невикористаний `crud.get_diamonds()`, старий `scripts/seed_db-start.py`, дубльовані frontend API origin/mappings/формулу ціни. Фактична БД містить неописаний у моделях `diamond_analytics.ml_results`; до міграції треба формально включити його в контур або окремо прибрати після рішення щодо даних.
+Повних дублікатів endpoint-ів не знайдено. Окремо прибрати або узгодити: невикористаний `crud.get_diamonds()` та дубльовані frontend API origin/mappings/формулу ціни. `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як зарезервовану SQLAlchemy-модель.
 
 ### Уже реалізовано
 
@@ -30,12 +30,13 @@
 
 ### Пріоритет 1 — стабільний локальний MVP
 
-- [ ] Зафіксувати безпечну конфігурацію: `.env.example`, обов’язковий `SECRET_KEY`, явний `DATABASE_URL`, без production-дефолтів.
-- [ ] Прибрати перевірку паролів у відкритому вигляді; хешувати seed-користувачів bcrypt.
-- [ ] Усунути розходження актуального `seed_db.py`, legacy `seed_db-start.py`, моделей і фактичної MariaDB; перевірити запуск із чистої локальної MariaDB.
+- [x] Зафіксувати безпечну конфігурацію: `.env.example`, обов’язковий `SECRET_KEY`, явний `DATABASE_URL` або `DB_*`, без production-дефолтів.
+- [x] Прибрати перевірку паролів у відкритому вигляді; seed-користувачі хешуються bcrypt.
+- [x] Усунути розходження актуального `seed_db.py`, legacy `seed_db-start.py` і моделей: seed відтворює всі три схеми, а `ml_results` формалізовано моделлю.
+- [ ] Після окремого дозволу виконати й задокументувати руйнівну перевірку clean seed MariaDB та API smoke-flow.
 - [ ] Виправити `/experts/`, `POST/PUT/DELETE /diamonds/*`, 404-відповіді та owner/admin RBAC; синхронізувати API response models із UI.
 - [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, detail/passport і редагування звітів.
-- [ ] Визначити долю `diamond_analytics.ml_results`: описати моделлю й міграцією або безпечно прибрати окремим погодженим кроком.
+- [x] Визначити долю `diamond_analytics.ml_results`: зберігаємо таблицю як зарезервований аналітичний шар, описуємо моделлю та відтворюємо порожньою через локальний seed; API/ML — окрема задача.
 
 ### Пріоритет 2 — якість і тестування
 

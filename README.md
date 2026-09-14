@@ -29,17 +29,18 @@
 mntu_diplom/
 ├── .venv/            # Віртуальне середовище Python
 ├── .gitignore        # Файл для ігнорування системного сміття
-├── .env              # Налаштування підключення до БД (не потрапляє в Git)
+├── .env              # Приватні локальні змінні середовища (не потрапляє в Git)
+├── .env.example      # Безпечний шаблон змінних без реальних значень
 ├── requirements.txt  # Залежності Python
 ├── data/
 │ └── diamonds_dataset.csv
 ├── scripts/
-│ ├── seed_db-start.py # Скрипт наповнення бази
-│ ├── seed_db.py       # Скрипт наповнення бази (з генерацією вимірів)
+│ ├── seed_db.py       # Єдиний руйнівний локальний seed усіх трьох схем
 │ └── recalc_grades.py # Скрипт масового перерахунку оцінок (Backfill)
 ├── backend/           # FastAPI додаток (Python)
 │ ├── __init__.py      # Щоб Python вважав цю папку модулем
 │ ├── calculator.py    # Логіка оцінки (IDC Rules)
+│ ├── config.py        # Валідація локальної конфігурації без fallback-секретів
 │ ├── ml_service.py    # Сервіс прогнозування ціни (ML Mock)
 │ ├── crud.py          # Операції з БД (Repository pattern)
 │ ├── database.py      # Налаштування SQLAlchemy (Singleton)
@@ -47,8 +48,6 @@ mntu_diplom/
 │ ├── models.py        # Опис таблиць бази даних (ORM)
 │ ├── schemas.py       # Валідація даних (Pydantic)
 │ ├── security.py      # Авторизація та JWT
-│ ├── Dockerfile       # Конфігурація для Docker (Render)
-│ └── render.yaml      # Опис сервісів для Render (Blueprint)
 └── frontend/          # Фронтенд на Pug/SCSS
   ├── src/             # Вихідні коди (Pug, SCSS, JS Modules)
   ├── dist/            # Скомпільований результат (HTML/CSS/JS)
@@ -104,7 +103,7 @@ mntu_diplom/
 
 - [x] **JWT Auth:** Система автентифікації на токенах.
 - [x] **RBAC:** Розділення прав Admins vs Experts.
-- [x] **Security:** Хешування паролів, CORS Middleware.
+- [x] **Security foundation:** bcrypt-хешування для нового локального seed, обов’язковий `SECRET_KEY`, CORS Middleware.
 
 ### 🔜 У розробці
 
@@ -114,24 +113,16 @@ mntu_diplom/
 
 ## ⚙️ Налаштування конфігурації (.env)
 
-Створіть файл `.env` у корені проєкту та вкажіть параметри вашої БД:
-
-```ini
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=
-DB_PORT=3306
-SECRET_KEY=... ... ...
-```
+Скопіюйте `.env.example` у приватний `.env`, задайте унікальний `SECRET_KEY` і параметри MariaDB. Для руйнівного seed додайте локальні `SEED_ADMIN_PASSWORD` та `SEED_GEMOLOGIST_PASSWORD`; у БД зберігатимуться лише їх bcrypt-хеші. Реальні значення не комітуються й не документуються.
 
 ## 🗄️ Налаштування Бази Даних (Local)
 
 Проєкт використовує MariaDB через XAMPP.
 
 1. Запустіть **XAMPP Control Panel**.
-2. Натисніть **Start** навпроти модулів **Apache** та **MySQL**.
+2. Натисніть **Start** навпроти модуля **MySQL**.
 3. Переконайтеся, що у файлі `.env` налаштування співпадають з вашим XAMPP (зазвичай порт 3306, user: root).
-4. Виконайте первинне наповнення бази (перебуваючи в корені проєкту):
+4. Лише якщо всі локальні дані можна втратити, виконайте первинне наповнення трьох баз (перебуваючи в корені проєкту):
    ```bash
    python scripts/seed_db.py
    ```
@@ -144,8 +135,8 @@ SECRET_KEY=... ... ...
 2. Встановіть залежності:
    pip install -r requirements.txt
 
-3. Запустіть сервер:
-   uvicorn backend.main:app --reload
+3. Запустіть сервер з кореня репозиторію:
+   python -m uvicorn backend.main:app --reload
 
 4. Відкрийте документацію API (Swagger UI):
    http://127.0.0.1:8000/docs
@@ -176,10 +167,7 @@ npm start
 
 Для чистової збірки (без запуску сервера): `npm run build`
 
-**Тестові дані:**
-
-- **Admin** (повний доступ): `admin` / `admin_pass`
-- **Gemologist** (робота зі звітами): `expert_1` / `pass_1`
+Після запуску seed використовуйте локальні облікові записи, але паролі беруться лише з ваших приватних `SEED_*` змінних у `.env`.
 
 ## 🛠 Технологічний стек
 

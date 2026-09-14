@@ -7,6 +7,12 @@
 - Запущений MySQL/MariaDB у XAMPP на параметрах із приватного `.env`. Apache для поточного FastAPI/Gulp запуску не потрібен.
 - Поточна перевірена конфігурація: Python 3.13.7, Node.js 24.18.0, npm 12.0.1, MariaDB 10.4.32.
 
+## Конфігурація `.env`
+
+Скопіюй `.env.example` у приватний `.env` та задай усі значення безпечними локальними даними. Застосунок потребує непорожній `SECRET_KEY`; для БД можна вказати `DATABASE_URL` або окремі `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` і `DB_NAME`. Значення `.env` не комітуються й не потрапляють у документацію.
+
+`SEED_ADMIN_PASSWORD` і `SEED_GEMOLOGIST_PASSWORD` застосовуються лише руйнівним `scripts/seed_db.py`: він записує в БД тільки bcrypt-хеші. Після першого переходу на цей seed старі облікові дані з наявної БД більше не підходять; виконай seed лише тоді, коли локальні дані можна втратити.
+
 ## Backend
 
 Команди нижче запускай з кореня репозиторію. Якщо термінал уже відкрито в папці `backend`, спершу виконай `cd ..`.
@@ -37,7 +43,7 @@ python -m uvicorn backend.main:app --reload
 
 ## Дані
 
-`scripts/seed_db.py` видаляє та створює заново `diamond_oltp` і `diamond_market`. Перед запуском переконайся, що це локальна тестова MariaDB і дані можна втратити.
+`scripts/seed_db.py` видаляє та створює заново `diamond_oltp`, `diamond_market` і `diamond_analytics`, включно з порожньою зарезервованою `ml_results`. Перед запуском переконайся, що це локальна тестова MariaDB і дані можна втратити.
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\seed_db.py

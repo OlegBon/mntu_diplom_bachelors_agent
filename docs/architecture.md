@@ -121,7 +121,7 @@ Backend запускають із кореня репозиторію через
 | --- | --- | --- |
 | `diamond_oltp` | `experts`, `diamond_reports`: оперативна робота експертів і звітів | Реалізовано |
 | `diamond_market` | `grade_mappings`, `market_price_reference`: довідники й індекс | Реалізовано |
-| `diamond_analytics` | Майбутні результати ML-аналітики | Створюється seed-скриптом, але таблиці й потік відсутні |
+| `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 
 Під час створення звіту `crud.create_diamond_report()`:
 

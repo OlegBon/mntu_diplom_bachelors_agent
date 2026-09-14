@@ -46,7 +46,7 @@ Diamant ID — дипломний вебзастосунок для веденн
 | --- | --- |
 | Backend/API | Python 3.13, FastAPI, Uvicorn, Pydantic 2 |
 | Дані | SQLAlchemy 2, MariaDB через `mysql-connector-python`; локально — XAMPP |
-| Безпека | JWT (`python-jose`), `passlib`/bcrypt; поточний seed має технічний борг відкритих тестових паролів |
+| Безпека | JWT (`python-jose`), прямий `bcrypt`; seed бере локальні паролі лише з приватного `.env` і записує bcrypt-хеші |
 | Доменна логіка | Власний IDC-калькулятор і евристичний `MLService` |
 | Frontend | Gulp 5, Pug, SCSS/Sass, vanilla JavaScript, BrowserSync |
 | Дані для seed | Pandas і `data/diamonds_dataset.csv` |
@@ -106,7 +106,7 @@ cmd /c "cd frontend && npm run audit:api"
 | --- | --- | --- |
 | `diamond_oltp` | `experts`, `diamond_reports`: користувачі й оперативні звіти | Реалізовано |
 | `diamond_market` | `grade_mappings`, `market_price_reference`: довідники й індекс | Реалізовано |
-| `diamond_analytics` | Майбутні результати ML та аналітика | Лише зарезервовано seed-скриптом |
+| `diamond_analytics` | Зарезервовані ML-результати в `ml_results` | Модель і чистий seed є; запис, читання та ML-потік ще не реалізовані |
 
 ### Основні API-групи
 
