@@ -5,8 +5,108 @@ import { loginUser } from "./modules/api.js";
 const API_URL = "http://127.0.0.1:8000"; // Адреса твого Python сервера
 
 // === ЗМІННІ ДЛЯ DASHBOARD ===
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    '"': "&quot;",
+  })[character]);
+}
+
+function renderPublicNavigation() {
+  const navList = document.getElementById("nav-list");
+  if (!navList) return;
+
+  navList.replaceChildren();
+  for (const [href, label] of [["/", "Головна"], ["/#public-passport", "Перевірити паспорт"]]) {
+    const item = document.createElement("li");
+    const link = document.createElement("a");
+    link.href = href;
+    link.textContent = label;
+    item.append(link);
+    navList.append(item);
+  }
+}
+
 let currentPage = 1;
 const itemsPerPage = 50;
+
+function createNavigationLink(href, label, className = "") {
+  const item = document.createElement("li");
+  if (className) item.className = className;
+  const link = document.createElement("a");
+  link.href = href;
+  link.textContent = label;
+  item.append(link);
+  return item;
+}
+
+function applyApprovedNavigation(isAuthenticated) {
+  const navList = document.getElementById("nav-list");
+  const authBlock = document.getElementById("auth-block");
+  const sessionName = document.getElementById("header-session-name");
+  if (!navList || !authBlock || !sessionName) return;
+
+  navList.replaceChildren();
+  authBlock.replaceChildren();
+
+  if (!isAuthenticated) {
+    navList.append(createNavigationLink("/#public-passport", "Перевірити паспорт"));
+    const mobileLogin = createNavigationLink("/login.html", "Увійти", "mobile-login");
+    navList.append(mobileLogin);
+    const loginLink = document.createElement("a");
+    loginLink.className = "header-session-action header-login";
+    loginLink.href = "/login.html";
+    loginLink.textContent = "Увійти";
+    authBlock.append(loginLink);
+    sessionName.hidden = true;
+    return;
+  }
+
+  const username = localStorage.getItem("username") || "Користувач";
+  const isAdmin = username === "admin";
+  sessionName.textContent = isAdmin ? "Admin" : username;
+  sessionName.hidden = false;
+  const links = isAdmin
+    ? [
+        ["/dashboard.html", "Всі звіти"],
+        ["/experts.html", "Експерти"],
+        ["/references.html", "Довідники"],
+        ["/ml-analysis.html", "Аналітика"],
+        ["/profile.html", "Профіль"],
+      ]
+    : [
+        ["/dashboard.html", "Всі звіти"],
+        ["/create-report.html", "Новий звіт"],
+        ["/profile.html", "Профіль"],
+      ];
+
+  for (const [href, label] of links) {
+    navList.append(createNavigationLink(href, label));
+  }
+
+  const mobileAccount = document.createElement("li");
+  mobileAccount.className = "mobile-account";
+  const accountName = document.createElement("span");
+  accountName.className = "mobile-account-name";
+  accountName.textContent = isAdmin ? "Admin" : username;
+  const mobileLogout = document.createElement("button");
+  mobileLogout.type = "button";
+  mobileLogout.className = "mobile-logout";
+  mobileLogout.textContent = "Вийти";
+  mobileLogout.addEventListener("click", logout);
+  mobileAccount.append(accountName, mobileLogout);
+  navList.append(mobileAccount);
+
+  const logoutButton = document.createElement("button");
+  logoutButton.type = "button";
+  logoutButton.className = "header-session-action header-logout";
+  logoutButton.textContent = "Вийти";
+  logoutButton.addEventListener("click", logout);
+  authBlock.append(logoutButton);
+}
 
 // === MAPPINGS (Для перекладу кодів з бази в текст) ===
 const MAPPINGS = {
@@ -103,9 +203,11 @@ function updateHeaderUI(isAuthenticated) {
       displayName = "Bondarenko O.";
     }
 
+    const safeDisplayName = escapeHtml(displayName);
+
     authBlock.innerHTML = `
             <div class="user-trigger" id="user-trigger">
-                <span class="user-name ${roleClass}">${displayName}</span>
+                <span class="user-name ${roleClass}">${safeDisplayName}</span>
                 <span class="arrow-icon">▼</span>
             </div>
             <div class="user-dropdown-menu" id="user-dropdown">
@@ -250,7 +352,7 @@ function renderTableRows(reports, tableElement) {
     if (item.cut_grade === 0)
       cutBadge = `<span class="status-badge active">Ex</span>`;
     else if (item.cut_grade === 1)
-      cutBadge = `<span class="status-badge" style="background:#f3e8ff; color:#6b21a8">VG</span>`;
+      cutBadge = `<span class="status-badge very-good">VG</span>`;
 
     const statusBadge = item.is_sold
       ? `<span class="status-badge sold">Sold</span>`
@@ -293,6 +395,7 @@ function renderTableRows(reports, tableElement) {
 document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
   updateHeaderUI(isAuthenticated);
+  applyApprovedNavigation(isAuthenticated);
 
   // === DASHBOARD INITIALIZATION ===
   if (isAuthenticated && document.querySelector(".data-table")) {
@@ -328,6 +431,10 @@ document.addEventListener("DOMContentLoaded", () => {
     burgerBtn.addEventListener("click", () => {
       burgerBtn.classList.toggle("is-active");
       mainNav.classList.toggle("is-active");
+      burgerBtn.setAttribute(
+        "aria-expanded",
+        String(mainNav.classList.contains("is-active")),
+      );
     });
   }
 

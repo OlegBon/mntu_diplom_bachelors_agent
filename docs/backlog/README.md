@@ -27,7 +27,7 @@
 
 | Файл | Тема |
 | --- | --- |
-| [030-product-ux-and-visual-foundation.md](./030-product-ux-and-visual-foundation.md) | Навігація, дизайн-система й редизайн оболонки продукту. |
+| [035-admin-report-rbac.md](./035-admin-report-rbac.md) | Server-side заборона створення звітів для admin. |
 | [040-report-core-and-reference-data.md](./040-report-core-and-reference-data.md) | Життєвий цикл звіту, поля каменю та довідники. |
 | [050-media-assets.md](./050-media-assets.md) | Безпечні завантаження та доступ до медіа звіту. |
 | [060-reports-dashboard.md](./060-reports-dashboard.md) | Робочий список, пошук, фільтри й пагінація звітів. |

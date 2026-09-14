@@ -6,14 +6,18 @@ $bg-color: #f8fafc;
 $text-color: #1e293b;
 $white: #ffffff;
 $border-color: #e2e8f0;
-$bg-linear-gradient: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+$surface-subtle: #eff6ff;
+$surface-muted: #f1f5f9;
+$text-muted: #64748b;
+$text-strong: #0f172a;
+$focus-ring: rgba(37, 99, 235, 0.22);
 
 // --- Тіні ---
 $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 12px 28px rgba(15, 23, 42, 0.08);
 
 // --- Layout ---
-$container-width: 1200px;
+$container-width: 1280px;
 $spacer: 1rem;
 
 // --- Fonts ---

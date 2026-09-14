@@ -4,6 +4,41 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-14 — product-ux-surface-polish (завершено)
+
+- **Задача:** завершити точкове візуальне узгодження hero, mobile-header і footer після UX-рев’ю.
+- **Змінені файли:** `frontend/src/scss/_product-ux.scss`, `docs/progress.md`.
+- **Рішення:** desktop hero починається після відступу `3rem` від header і не має скруглених кутів; на mobile між username та burger є відступ `1rem`. Footer синхронізовано з header за white surface, border, нейтральним текстом, sapphire hover і видимими focus-станами.
+- **Перевірки:** `npm run build`, `npm test` (5 passed), `npm run test:e2e` (1 passed), `git diff --check`; Playwright-візуальна перевірка desktop full-page і mobile авторизованого header. Вбудований Browser у цій сесії недоступний, застосовано Playwright fallback.
+- **Нові змінні середовища:** немає.
+
+## 2026-09-14 — product-ux-header-access-refinement (завершено)
+
+- **Задача:** закрити UX-уточнення header: mobile-вхід для гостя, видимий username авторизованого користувача та узгоджені desktop-дії сесії.
+- **Змінені файли:** `frontend/src/pug/layout/main.pug`, `frontend/src/js/main.js`, `frontend/src/scss/_product-ux.scss`, `docs/guides/product-ux-foundation.md`, `docs/progress.md`.
+- **Рішення:** у mobile burger-меню гостя є `Увійти`; для авторизованого користувача username розташований перед burger-кнопкою. На desktop `Увійти` і `Вийти` є однаково оформленими текстовими діями, відокремленими лінією від основного меню. Для desktop landing додано верхній відступ `1.5rem` між header і hero.
+- **Перевірки:** `npm run build`, `npm test` (5 passed), `npm run test:e2e` (1 passed), `git diff --check`; Playwright screenshot на `390×844` для guest-menu та gemologist-header, `1440×900` для desktop landing. Вбудований Browser у цій сесії недоступний, застосовано Playwright fallback.
+- **Нові змінні середовища:** немає.
+
+## 2026-09-14 — product-ux-navigation-refinement (завершено)
+
+- **Задача:** уточнити погоджену навігацію ролей, вирівнювання desktop-header, mobile-меню та поведінку hero після візуального рев’ю.
+- **Змінені файли:** `frontend/src/js/main.js`, `frontend/src/scss/_product-ux.scss`, `docs/guides/product-ux-foundation.md`, `docs/backlog/{README,035-admin-report-rbac.md}`, `docs/work_plan.md`, `docs/progress.md`.
+- **Рішення:** гість бачить `Перевірити паспорт` і кнопку `Увійти`; gemologist — `Всі звіти`, `Новий звіт`, `Профіль` і окрему дію `Вийти`; admin — `Всі звіти`, `Експерти`, `Довідники`, `Аналітика`, `Профіль` і `Вийти`, без створення звітів. На mobile в burger-меню видно ім’я користувача та одну дію виходу, без дублювання профілю.
+- **Перевірки:** `npm run build`, `npm test` (5 passed), `npm run test:e2e` (1 passed), `git diff --check`; Playwright-візуальна перевірка на `1440×900` та `390×844` для гостя, gemologist і admin. Вбудований Browser у цій сесії недоступний, застосовано Playwright fallback.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** приховання пункту «Новий звіт» для admin є лише UI-логікою; чинний `POST /diamonds/` ще не забороняє цю дію на сервері. Це зафіксовано як [035 — admin report RBAC](./backlog/035-admin-report-rbac.md).
+
+## 2026-09-14 — product-ux-visual-foundation (завершено)
+
+- **Задача:** реалізувати погоджену UX і візуальну основу Diamant ID до наступних вертикальних зрізів звітів, медіа та admin UI.
+- **Змінені файли:** `frontend/src/pug/{layout/main,pages/index}.pug`, `frontend/src/scss/{_variables,_product-ux,main}.scss`, `frontend/src/js/main.js`, `frontend/gulpfile.js`, `frontend/src/img/diamond-inspection-hero.png`, `docs/guides/product-ux-foundation.md`, `docs/work_plan.md`, `docs/backlog/{README,030-product-ux-and-visual-foundation.md}`.
+- **Рішення:** desktop-логотип лишається зліва, а навігація — праворуч перед профілем/виходом; public landing використовує один предметний macro-asset каменю. Dashboard залишається table-first, wizard — двоколонковим на desktop; фіолетовий legacy badge замінено холодним синім. Публічна навігація створюється через DOM API, а назва користувача екранується перед legacy template.
+- **Asset pipeline:** для Gulp 5 додано `encoding: false` під час копіювання `src/img`, бо UTF-8 decoding пошкоджував байти PNG; перевірено ідентичність SHA-256 source/dist.
+- **Перевірки:** `npm run build`, `npm test` (5 passed), `npm run test:e2e` (1 passed), `git diff --check`; Playwright screenshot перевірив landing на `1440×900` та `390×844`, а dashboard і create-report на desktop. Вбудований Browser у цій сесії був недоступний, тому застосовано Playwright fallback.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** API-фільтри, публічний паспорт/QR, profile/admin UI та реальні upload/media не імітуються в цьому UI-шарі; вони залишаються окремими backlog-зрізами.
+
 ## 2026-09-14 — migration-foundation (завершено)
 
 - **Задача:** ввести Alembic для трьох локальних MariaDB databases до зміни моделі звіту.

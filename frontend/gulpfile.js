@@ -78,7 +78,9 @@ function scripts() {
 // Картинки
 function images() {
   return gulp
-    .src(paths.img.src, { allowEmpty: true })
+    // Gulp 5 decodes source files as UTF-8 unless binary mode is explicit.
+    // Images must stay byte-for-byte intact when copied to dist.
+    .src(paths.img.src, { allowEmpty: true, encoding: false })
     .pipe(gulp.dest(paths.img.dest));
 }
 
