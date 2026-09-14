@@ -67,6 +67,9 @@ function applyApprovedNavigation(isAuthenticated) {
 
   const username = localStorage.getItem("username") || "Користувач";
   const isAdmin = username === "admin";
+  const createReportAction = document.getElementById("create-report-action");
+  if (createReportAction) createReportAction.hidden = isAdmin;
+
   sessionName.textContent = isAdmin ? "Admin" : username;
   sessionName.hidden = false;
   const links = isAdmin
