@@ -60,6 +60,28 @@ Alembic є джерелом істини для структури таблиц�
 таблиці й дані він не видаляє. `upgrade head` змінює схему, тому перед ним
 зроби резервну копію даних, якщо вони цінні.
 
+Поточний репозиторій має revision `0002_report_core`. Для наявної локальної БД,
+що вже позначена `0001_initial_schema`, ця revision створює нормалізовані
+`stones`, `report_events`, `stone_valuations`, `reference_values`, доповнює
+`diamond_reports` lifecycle-полями й переносить legacy-звіти у draft. Перед
+застосуванням звір generated SQL без зміни БД:
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head --sql
+```
+
+Після резервної копії та окремого підтвердження застосуй revision, а потім
+переконайся, що версія стала `0002_report_core`:
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head
+.\.venv\Scripts\python.exe -m alembic -c alembic.ini current
+```
+
+Не запускай `downgrade` для цієї БД: він вилучить нові нормалізовані таблиці й
+колонки. Для перевірки нового API після upgrade потрібен restart backend;
+чинний `/diamonds/*` та frontend не змінюються цією revision.
+
 Для наявної локальної БД без `alembic_version` спочатку перевір поточний стан:
 
 ```powershell
