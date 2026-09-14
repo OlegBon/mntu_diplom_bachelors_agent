@@ -1,4 +1,5 @@
 from sqlalchemy import Column, DateTime, Integer, String, DECIMAL, ForeignKey, Enum, TIMESTAMP, Boolean, UniqueConstraint, Text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -21,6 +22,21 @@ class DiamondReport(Base):
 
     report_id = Column(String(20), primary_key=True, index=True)
     report_date = Column(DateTime, nullable=False)
+    # Compatibility fields below remain while the legacy /diamonds API is used.
+    # New report-domain code reads the normalized Stone and lifecycle columns.
+    stone_id = Column(Integer, ForeignKey("diamond_oltp.stones.stone_id"), nullable=True, index=True)
+    stone = relationship("Stone", foreign_keys=[stone_id])
+    status = Column(String(16), nullable=False, default="draft", server_default="draft")
+    created_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, nullable=True)
+    issued_at = Column(DateTime, nullable=True)
+    issued_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=True)
+    system_proportions_grade = Column(Integer, nullable=True)
+    system_cut_grade = Column(Integer, nullable=True)
+    calculation_rule_version = Column(String(32), nullable=True)
+    expert_proportions_grade = Column(Integer, nullable=True)
+    expert_cut_grade = Column(Integer, nullable=True)
+    expert_confirmed_at = Column(DateTime, nullable=True)
     
     # --- Форма (Обов'язкове поле) ---
     shape = Column(String(50), nullable=False) 
@@ -72,6 +88,95 @@ class DiamondReport(Base):
     is_sold = Column(Boolean, default=False)
     days_on_market = Column(Integer, nullable=True)
     sale_date = Column(DateTime, nullable=True)
+
+
+class Stone(Base):
+    """Stable physical identity and commercial state of a diamond."""
+
+    __tablename__ = "stones"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    stone_id = Column(Integer, primary_key=True, index=True)
+    legacy_source_report_id = Column(String(20), unique=True, nullable=True)
+    shape = Column(String(50), nullable=False)
+    measurements_length = Column(DECIMAL(5, 2), nullable=True)
+    measurements_width = Column(DECIMAL(5, 2), nullable=True)
+    measurements_depth = Column(DECIMAL(5, 2), nullable=True)
+    table_percent = Column(DECIMAL(5, 2), nullable=True)
+    depth_percent = Column(DECIMAL(5, 2), nullable=True)
+    crown_angle = Column(DECIMAL(5, 2), nullable=True)
+    pavilion_angle = Column(DECIMAL(5, 2), nullable=True)
+    girdle_thickness = Column(String(50), nullable=True)
+    culet_size = Column(String(50), nullable=True)
+    carat_weight = Column(DECIMAL(10, 2), nullable=True)
+    color_grade = Column(Integer, nullable=True)
+    clarity_grade = Column(Integer, nullable=True)
+    polish_grade = Column(Integer, nullable=True)
+    symmetry_grade = Column(Integer, nullable=True)
+    fluorescence_grade = Column(Integer, nullable=True)
+    origin = Column(String(24), nullable=False, default="unknown", server_default="unknown")
+    legacy_origin_code = Column(Integer, nullable=True)
+    treatment_status = Column(String(24), nullable=False, default="not_assessed", server_default="not_assessed")
+    identification_status = Column(String(24), nullable=False, default="preliminary", server_default="preliminary")
+    identification_method = Column(String(255), nullable=True)
+    identification_conclusion = Column(Text, nullable=True)
+    market_status = Column(String(24), nullable=False, default="not_for_sale", server_default="not_for_sale")
+    legacy_sale_date = Column(DateTime, nullable=True)
+    legacy_days_on_market = Column(Integer, nullable=True)
+    created_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, nullable=True)
+
+
+class ReportEvent(Base):
+    """Append-only audit history for a report lifecycle action."""
+
+    __tablename__ = "report_events"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    event_id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(String(20), ForeignKey("diamond_oltp.diamond_reports.report_id"), nullable=False, index=True)
+    action = Column(String(32), nullable=False)
+    from_status = Column(String(16), nullable=True)
+    to_status = Column(String(16), nullable=True)
+    actor_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=True)
+    reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class StoneValuation(Base):
+    """A versioned, explicitly sourced amount; legacy report.price is excluded."""
+
+    __tablename__ = "stone_valuations"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    valuation_id = Column(Integer, primary_key=True, index=True)
+    stone_id = Column(Integer, ForeignKey("diamond_oltp.stones.stone_id"), nullable=False, index=True)
+    valuation_kind = Column(String(32), nullable=False)
+    amount = Column(DECIMAL(14, 2), nullable=False)
+    currency_code = Column(String(3), nullable=False)
+    unit = Column(String(24), nullable=False)
+    source_name = Column(String(255), nullable=False)
+    source_reference = Column(String(255), nullable=True)
+    observed_at = Column(DateTime, nullable=False)
+    created_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class ReferenceValue(Base):
+    """Text reference data used by the report-domain API and future admin UI."""
+
+    __tablename__ = "reference_values"
+    __table_args__ = (
+        UniqueConstraint("category", "code", name="uix_reference_category_code"),
+        {"schema": "diamond_market"},
+    )
+
+    reference_id = Column(Integer, primary_key=True, index=True)
+    category = Column(String(50), nullable=False)
+    code = Column(String(50), nullable=False)
+    label = Column(String(100), nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
 
 class GradeMapping(Base):
     __tablename__ = "grade_mappings"

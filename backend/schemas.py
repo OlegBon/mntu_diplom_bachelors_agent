@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Literal, Optional
 from datetime import datetime
 
 # Схема для створення юзера (з паролем)
@@ -126,3 +126,93 @@ class MarketPriceResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# New report-domain contract. Legacy Diamond* schemas stay untouched until the
+# dashboard and wizard move from /diamonds to /reports.
+ReportStatus = Literal["draft", "review", "issued", "void"]
+Origin = Literal["unknown", "natural", "lab_grown", "other"]
+TreatmentStatus = Literal["not_assessed", "none_detected", "disclosed", "confirmed"]
+IdentificationStatus = Literal["preliminary", "confirmed", "inconclusive"]
+MarketStatus = Literal["not_for_sale", "available", "reserved", "sold", "withdrawn"]
+
+
+class StoneDraft(BaseModel):
+    shape: str = Field(min_length=1, max_length=50)
+    carat_weight: float = Field(gt=0, le=100)
+    color_grade: int = Field(ge=0, le=99)
+    clarity_grade: int = Field(ge=0, le=99)
+    measurements_length: float = Field(gt=0, le=999)
+    measurements_width: float = Field(gt=0, le=999)
+    measurements_depth: float = Field(gt=0, le=999)
+    table_percent: float = Field(gt=0, le=100)
+    depth_percent: float = Field(gt=0, le=100)
+    crown_angle: float = Field(gt=0, le=90)
+    pavilion_angle: float = Field(gt=0, le=90)
+    girdle_thickness: Optional[str] = Field(default=None, max_length=50)
+    culet_size: Optional[str] = Field(default=None, max_length=50)
+    polish_grade: int = Field(ge=0, le=99)
+    symmetry_grade: int = Field(ge=0, le=99)
+    fluorescence_grade: int = Field(ge=0, le=99)
+    origin: Origin = "unknown"
+    treatment_status: TreatmentStatus = "not_assessed"
+    identification_status: IdentificationStatus = "preliminary"
+    identification_method: Optional[str] = Field(default=None, max_length=255)
+    identification_conclusion: Optional[str] = None
+    market_status: MarketStatus = "not_for_sale"
+
+
+class ReportCreate(BaseModel):
+    stone: StoneDraft
+    expert_comment: Optional[str] = None
+    expert_proportions_grade: Optional[int] = Field(default=None, ge=0, le=99)
+    expert_cut_grade: Optional[int] = Field(default=None, ge=0, le=99)
+
+
+class ReportUpdate(BaseModel):
+    stone: StoneDraft
+    expert_comment: Optional[str] = None
+    expert_proportions_grade: Optional[int] = Field(default=None, ge=0, le=99)
+    expert_cut_grade: Optional[int] = Field(default=None, ge=0, le=99)
+
+
+class ReportTransition(BaseModel):
+    target_status: ReportStatus
+    reason: Optional[str] = Field(default=None, max_length=2_000)
+
+
+class StoneResponse(StoneDraft):
+    model_config = ConfigDict(from_attributes=True)
+    stone_id: int
+    legacy_origin_code: Optional[int] = None
+
+
+class ReportEventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    event_id: int
+    action: str
+    from_status: Optional[str]
+    to_status: Optional[str]
+    actor_id: Optional[int]
+    reason: Optional[str]
+    created_at: datetime
+
+
+class ReportResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    report_id: str
+    status: ReportStatus
+    report_date: datetime
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    issued_at: Optional[datetime]
+    expert_id: Optional[int]
+    issued_by_id: Optional[int]
+    expert_comment: Optional[str]
+    system_proportions_grade: Optional[int]
+    system_cut_grade: Optional[int]
+    calculation_rule_version: Optional[str]
+    expert_proportions_grade: Optional[int]
+    expert_cut_grade: Optional[int]
+    expert_confirmed_at: Optional[datetime]
+    stone: StoneResponse
