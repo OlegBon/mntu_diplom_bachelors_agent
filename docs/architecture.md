@@ -4,7 +4,7 @@
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 14 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Реалізовано CRUD звітів, ролі `admin`/`gemologist`, довідники ринкових оцінок, IDC-калькулятор, демонстраційний розрахунок ціни та базовий автоматизований test-контур. Alembic має перевірену стартову ревізію `0001_initial_schema`; поточна локальна MariaDB позначена цією ревізією й проходить `alembic check`. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
+> **Статус на 14 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Ядро звіту застосоване revision `0002_report_core`: нормалізовані `Stone`, `ReportEvent`, server reference data та приватний `/reports` API готові. Чинний frontend поки продовжує працювати з compatibility API `/diamonds/*` до задач UI. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
 
 ---
 
@@ -106,7 +106,9 @@ Backend запускають із кореня репозиторію через
 
 | Група | Призначення |
 | --- | --- |
-| `/diamonds/` | Список, пошук, створення, оновлення, видалення та отримання звіту за ID. |
+| `/diamonds/` | Тимчасовий compatibility API для чинних dashboard і create-form. |
+| `/reports` | Приватний API ядра: draft, stone, lifecycle, події та RBAC. |
+| `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
 | `/users/`, `/users/me`, `/experts/` | Керування користувачами, профіль поточного користувача та перелік експертів. |
 | `/market/mappings`, `/market/price` | Публічні довідники оцінок і поточний ринковий індекс; зміна індексу — лише для admin. |
 | `/statistics/expert-performance` | Агрегована статистика експертів. |
@@ -122,8 +124,8 @@ Backend запускають із кореня репозиторію через
 
 | База | Призначення | Поточний стан |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, `diamond_reports`: оперативна робота експертів і звітів | Реалізовано |
-| `diamond_market` | `grade_mappings`, `market_price_reference`: довідники й індекс | Реалізовано |
+| `diamond_oltp` | `experts`, compatibility `diamond_reports`, `stones`, `report_events`, `stone_valuations` і lifecycle-колонки | Revision `0002_report_core` застосовано локально |
+| `diamond_market` | `grade_mappings`, legacy demo-індекс і `reference_values` | Revision `0002_report_core` застосовано локально |
 | `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 
 Під час створення звіту `crud.create_diamond_report()`:
@@ -134,7 +136,7 @@ Backend запускають із кореня репозиторію через
 4. за відсутності ціни викликає `MLService.predict_price()`;
 5. зберігає звіт у `diamond_oltp`.
 
-`MLService` бере останній ринковий індекс з `diamond_market` і застосовує евристичні коефіцієнти. Випадкова варіація означає, що результат не є відтворюваним чи навченим ML-прогнозом; це треба змінити перед аналітичним або production-використанням.
+`MLService` бере останній ринковий індекс з `diamond_market` і застосовує евристичні коефіцієнти. Випадкова варіація означає, що результат не є відтворюваним чи навченим ML-прогнозом; це треба змінити перед аналітичним або production-використанням. Новий `StoneValuation` не отримує автоматично старий `price`: суми матимуть тип, валюту, джерело і дату за [ADR-002](./decisions/002-financial-calculation-contract.md).
 
 ---
 

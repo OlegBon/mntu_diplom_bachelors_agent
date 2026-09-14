@@ -4,10 +4,12 @@
 **Для чого читати:** щоб зрозуміти фактичну поведінку локального MVP перед
 роботою зі звітами, API або frontend.
 
-> Це guide реалізованого стану. Цільову модель із каменем, кількома звітами,
-> статусами `draft → review → issued → void`, медіа й публічним паспортом
-> описано в [ADR-001](../decisions/001-report-domain-contract.md); вона ще не
-> реалізована.
+> Це guide фактичного runtime-стану MariaDB. Приватна модель
+> `Stone → Report → ReportEvent` застосована revision `0002_report_core`.
+> Чинний frontend ще використовує legacy `/diamonds/*` до задач dashboard,
+> wizard і private detail.
+> Повний контракт описано в [ADR-001](../decisions/001-report-domain-contract.md)
+> і плані перенесення [ADR-003](../decisions/003-report-core-migration-plan.md).
 
 ## 1. Ролі та доступ
 
@@ -15,8 +17,8 @@
 
 | Роль | Фактичні можливості |
 | --- | --- |
-| `gemologist` | Вхід, створення звіту, редагування власного звіту в межах чинної update-схеми. |
-| `admin` | Усі можливості gemologist, перегляд користувачів, керування користувачами й ринковою ціною, редагування будь-якого звіту, видалення звітів. |
+| `gemologist` | Вхід, створення первинного legacy-звіту, редагування власного legacy-звіту в межах чинної update-схеми. |
+| `admin` | Перегляд користувачів, керування користувачами й ринковою ціною, редагування/видалення legacy-звітів; не створює первинні звіти. |
 
 `POST /token` повертає JWT. Frontend зберігає токен у `localStorage` і додає
 `Authorization: Bearer …` у запити через свій API-клієнт. Відсутність токена
@@ -24,9 +26,10 @@
 
 ## 2. Що зараз є «звітом»
 
-Поточний запис `diamond_oltp.diamond_reports` одночасно містить дані каменю,
-експертний коментар, розраховані оцінки, ціну й простий стан продажу. Окремих
-сутностей Stone, Sale, MediaAsset, PublicPassport або ReportEvent ще немає.
+Compatibility-запис `diamond_oltp.diamond_reports` досі містить legacy-поля,
+але кожен report тепер прив’язаний до окремого `Stone`. `ReportEvent` зберігає
+створення та зміну статусу; `MediaAsset`, Sale і PublicPassport залишаються
+наступними задачами.
 
 Під час `POST /diamonds/` сервер:
 
@@ -82,7 +85,7 @@ Dashboard завантажує `/diamonds/` із `skip`, `limit`, `status`, `sor
 | Операція | Фактичний доступ |
 | --- | --- |
 | `GET /diamonds/`, `GET /diamonds/{id}` | Публічні API-методи; це не public passport і буде змінено майбутнім приватним контрактом. |
-| `POST /diamonds/` | Будь-який авторизований користувач. |
+| `POST /diamonds/` | Лише `gemologist`; admin отримує `403`. |
 | `PUT /diamonds/{id}` | Власник звіту або admin; оновлюються лише `is_sold` і `price`. |
 | `DELETE /diamonds/{id}` | Лише admin. |
 
@@ -117,7 +120,10 @@ upload відсутній, а контрольованого файлового 
 Він не перевіряє повний flow report → passport або сумісність міграцій із
 MariaDB.
 
-Перед роботою зі звітами звіряйте цей guide з [архітектурою](../architecture.md),
-[ADR-001](../decisions/001-report-domain-contract.md) і відповідною активною
-задачею backlog. Для будь-якої нової функціональності додаються лише критичні
-нові тести; чинні тести не змінюються без окремого погодження.
+Новий `/reports` API приватний: gemologist бачить власні reports і створює
+draft, а admin переходить `review → issued/void`; кожна дія пишеться в
+`ReportEvent`. Imported legacy записи є draft і не вважаються автоматично
+виданими. Перед роботою зі звітами звіряйте цей guide з
+[архітектурою](../architecture.md), [ADR-001](../decisions/001-report-domain-contract.md),
+[ADR-003](../decisions/003-report-core-migration-plan.md) і відповідною
+активною задачею backlog.

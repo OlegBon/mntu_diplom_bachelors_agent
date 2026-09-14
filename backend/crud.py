@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, asc
-from datetime import date
+from datetime import date, datetime, timezone
 import random
 
 from . import models, schemas
@@ -8,6 +8,239 @@ from .security import get_password_hash
 
 from .calculator import DiamondCalculator
 from .ml_service import MLService
+
+
+REPORT_RULE_VERSION = "idc-demo-v1"
+
+
+class ReportDomainError(ValueError):
+    """A controlled violation of the new report-domain contract."""
+
+
+def _next_report_id(db: Session) -> str:
+    last_report = db.query(models.DiamondReport).order_by(models.DiamondReport.report_id.desc()).first()
+    if last_report:
+        try:
+            next_number = int(last_report.report_id.split("-")[1]) + 1
+        except (IndexError, ValueError):
+            next_number = db.query(models.DiamondReport).count() + 1
+    else:
+        next_number = 1
+    return f"DR-{next_number:05d}"
+
+
+def _legacy_origin_code(origin: str) -> int:
+    return {"natural": 0, "lab_grown": 1, "unknown": 2, "other": 3}[origin]
+
+
+def _system_grades(stone: schemas.StoneDraft) -> tuple[int, int]:
+    proportions = DiamondCalculator.evaluate_proportions(
+        stone.table_percent,
+        stone.depth_percent,
+        stone.crown_angle,
+        stone.pavilion_angle,
+    )
+    cut = DiamondCalculator.calculate_final_cut(proportions, stone.polish_grade, stone.symmetry_grade)
+    return proportions, cut
+
+
+def _append_report_event(
+    db: Session,
+    *,
+    report_id: str,
+    action: str,
+    actor_id: int | None,
+    from_status: str | None,
+    to_status: str | None,
+    reason: str | None = None,
+) -> models.ReportEvent:
+    event = models.ReportEvent(
+        report_id=report_id,
+        action=action,
+        actor_id=actor_id,
+        from_status=from_status,
+        to_status=to_status,
+        reason=reason,
+    )
+    db.add(event)
+    return event
+
+
+def _apply_stone_draft(stone: models.Stone, payload: schemas.StoneDraft) -> None:
+    for key, value in payload.model_dump().items():
+        setattr(stone, key, value)
+    stone.updated_at = datetime.now(timezone.utc)
+
+
+def _sync_legacy_report_fields(report: models.DiamondReport, stone: models.Stone) -> None:
+    """Keep old projections usable; no financial or confirmation data is copied."""
+    for key in (
+        "shape", "measurements_length", "measurements_width", "measurements_depth",
+        "table_percent", "depth_percent", "crown_angle", "pavilion_angle",
+        "girdle_thickness", "culet_size", "carat_weight", "color_grade",
+        "clarity_grade", "polish_grade", "symmetry_grade", "fluorescence_grade",
+    ):
+        setattr(report, key, getattr(stone, key))
+    report.stone_origin = _legacy_origin_code(stone.origin)
+    report.is_sold = stone.market_status == "sold"
+
+
+def get_report_domain(db: Session, report_id: str) -> models.DiamondReport | None:
+    return db.query(models.DiamondReport).filter(models.DiamondReport.report_id == report_id).first()
+
+
+def get_report_domain_list(
+    db: Session,
+    *,
+    current_user: models.Expert,
+    status: str | None,
+    skip: int,
+    limit: int,
+) -> list[models.DiamondReport]:
+    query = db.query(models.DiamondReport).filter(models.DiamondReport.stone_id.is_not(None))
+    if current_user.role != "admin":
+        query = query.filter(models.DiamondReport.expert_id == current_user.expert_id)
+    if status:
+        query = query.filter(models.DiamondReport.status == status)
+    return query.order_by(desc(models.DiamondReport.created_at), desc(models.DiamondReport.report_id)).offset(skip).limit(limit).all()
+
+
+def create_report_domain(
+    db: Session,
+    *,
+    payload: schemas.ReportCreate,
+    author: models.Expert,
+) -> models.DiamondReport:
+    now = datetime.now(timezone.utc)
+    stone = models.Stone(**payload.stone.model_dump(), created_at=now, updated_at=now)
+    db.add(stone)
+    db.flush()
+    system_proportions, system_cut = _system_grades(payload.stone)
+    is_confirmed = payload.expert_proportions_grade is not None and payload.expert_cut_grade is not None
+    report = models.DiamondReport(
+        report_id=_next_report_id(db),
+        report_date=now,
+        stone_id=stone.stone_id,
+        status="draft",
+        created_at=now,
+        updated_at=now,
+        expert_id=author.expert_id,
+        expert_comment=payload.expert_comment,
+        system_proportions_grade=system_proportions,
+        system_cut_grade=system_cut,
+        calculation_rule_version=REPORT_RULE_VERSION,
+        expert_proportions_grade=payload.expert_proportions_grade,
+        expert_cut_grade=payload.expert_cut_grade,
+        expert_confirmed_at=now if is_confirmed else None,
+        cut_grade=system_cut,
+        proportions_grade=system_proportions,
+        evaluation_time_sec=0,
+        report_notes_length=len(payload.expert_comment or ""),
+        report_sentiment=0,
+        price=None,
+        is_investment_grade=False,
+        is_report_rejected=False,
+        is_sold=stone.market_status == "sold",
+    )
+    _sync_legacy_report_fields(report, stone)
+    db.add(report)
+    db.flush()
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="created",
+        actor_id=author.expert_id,
+        from_status=None,
+        to_status="draft",
+    )
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+def update_report_domain(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    payload: schemas.ReportUpdate,
+) -> models.DiamondReport:
+    if report.status != "draft":
+        raise ReportDomainError("Only draft reports can be edited")
+    if report.stone is None:
+        raise ReportDomainError("Report has no normalized stone")
+    _apply_stone_draft(report.stone, payload.stone)
+    system_proportions, system_cut = _system_grades(payload.stone)
+    report.expert_comment = payload.expert_comment
+    report.system_proportions_grade = system_proportions
+    report.system_cut_grade = system_cut
+    report.calculation_rule_version = REPORT_RULE_VERSION
+    report.expert_proportions_grade = payload.expert_proportions_grade
+    report.expert_cut_grade = payload.expert_cut_grade
+    report.expert_confirmed_at = datetime.now(timezone.utc) if (
+        payload.expert_proportions_grade is not None and payload.expert_cut_grade is not None
+    ) else None
+    report.updated_at = datetime.now(timezone.utc)
+    report.cut_grade = system_cut
+    report.proportions_grade = system_proportions
+    report.report_notes_length = len(payload.expert_comment or "")
+    _sync_legacy_report_fields(report, report.stone)
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+def transition_report_domain(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    target_status: str,
+    actor: models.Expert,
+    reason: str | None,
+) -> models.DiamondReport:
+    current_status = report.status
+    is_admin = actor.role == "admin"
+    is_owner = actor.expert_id == report.expert_id
+    allowed = (
+        (current_status == "draft" and target_status == "review" and (is_owner or is_admin))
+        or (current_status == "review" and target_status in {"draft", "issued", "void"} and is_admin)
+        or (current_status == "issued" and target_status == "void" and is_admin)
+    )
+    if not allowed:
+        raise ReportDomainError("This report status transition is not allowed")
+    if target_status == "issued" and (
+        report.expert_proportions_grade is None or report.expert_cut_grade is None
+    ):
+        raise ReportDomainError("Issued reports require expert-confirmed proportions and cut grades")
+
+    now = datetime.now(timezone.utc)
+    report.status = target_status
+    report.updated_at = now
+    if target_status == "issued":
+        report.issued_at = now
+        report.issued_by_id = actor.expert_id
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="status_changed",
+        actor_id=actor.expert_id,
+        from_status=current_status,
+        to_status=target_status,
+        reason=reason,
+    )
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+def get_report_events(db: Session, report_id: str) -> list[models.ReportEvent]:
+    return db.query(models.ReportEvent).filter(models.ReportEvent.report_id == report_id).order_by(models.ReportEvent.event_id).all()
+
+
+def get_reference_values(db: Session, category: str | None = None) -> list[models.ReferenceValue]:
+    query = db.query(models.ReferenceValue).filter(models.ReferenceValue.is_active.is_(True))
+    if category:
+        query = query.filter(models.ReferenceValue.category == category)
+    return query.order_by(models.ReferenceValue.category, models.ReferenceValue.sort_order, models.ReferenceValue.code).all()
 
 # Отримати користувача за логіном (для авторизації)
 def get_user_by_username(db: Session, username: str):

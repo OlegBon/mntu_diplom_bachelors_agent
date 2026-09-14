@@ -60,7 +60,7 @@
 - [x] 030 — UX і візуальна основа: погоджені right-aligned desktop menu, сапфірова дизайн-система, responsive shell, public landing і правила інтерфейсних станів — [product-ux-foundation.md](./guides/product-ux-foundation.md).
 - [x] 035 — RBAC створення звіту: `POST /diamonds/` дозволений лише ролі `gemologist`; для admin повертається `403`, а обидва сценарії покриті API/integration-тестами. Frontend не показує admin пункт «Новий звіт» ані в header, ані на dashboard; `/dashboard.html` і `/create-report.html` вимагають локальної сесії, а прямий перехід admin на форму повертає до списку звітів.
 - [x] [037 — Фінансовий контракт](./decisions/002-financial-calculation-contract.md): поточний `price` визначено як legacy-значення, `6000` — технічний demo-індекс без валюти й одиниці; цільові суми та правила `Decimal` зафіксовано для 040.
-- [ ] [040 — Ядро звіту й довідники](./backlog/040-report-core-and-reference-data.md): стани, дані каменю, валідація й серверні mappings.
+- [x] [040 — Ядро звіту й довідники](./decisions/003-report-core-migration-plan.md): `Stone`, lifecycle `draft → review → issued → void`, audit events, серверні довідники, приватний `/reports` API й Alembic `0002_report_core` застосовані до локальної MariaDB; 1 000 legacy-записів збережено як draft без фінансової перекласифікації.
 - [ ] [050 — Медіа звітів](./backlog/050-media-assets.md): upload, приватне storage і метадані.
 - [ ] [055 — UI-примітиви](./backlog/055-ui-primitives.md): спільні Pug/SCSS-компоненти після ядра звіту, до dashboard і wizard; не залежить від медіа.
 - [ ] [060 — Dashboard звітів](./backlog/060-reports-dashboard.md): фактичний список, фільтри, пошук і пагінація.

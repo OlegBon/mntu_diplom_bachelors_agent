@@ -4,6 +4,16 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-14 — report-core-and-reference-data (завершено)
+
+- **Задача:** реалізувати ядро звіту, нормалізовані дані каменю, lifecycle, server reference data та безпечне перенесення чинної локальної MariaDB.
+- **Змінені файли:** `backend/{models,schemas,crud,main}.py`, `alembic/versions/0002_report_core_and_reference_data.py`, `tests/{api/test_report_domain.py,unit/test_migration_foundation.py}`, `docs/{architecture,local-start,work_plan,progress}.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/decisions/003-report-core-migration-plan.md`, `docs/backlog/{README.md,040-report-core-and-reference-data.md}` (задачу видалено після реалізації).
+- **Рішення:** введено `Stone → DiamondReport → ReportEvent`; legacy `/diamonds/*` лишається compatibility API до UI-зрізів, а новий `/reports` є приватним. `gemologist` створює власні draft, admin не створює первинні звіти та керує `review → draft/issued/void`. Системні grades відокремлено від експертного підтвердження; `issued` потребує явних expert grades. `StoneValuation` не отримує legacy `price` автоматично.
+- **MariaDB:** застосовано `0002_report_core`; `alembic current` підтвердив head. Backfill створив 1 000 `Stone`, 1 000 `ReportEvent` і залишив усі 1 000 reports у `draft`; 690 origin перенесено як `lab_grown`, 44 як `natural`, 266 з legacy-кодами `2/3` — як `unknown`. Створено 30 текстових server reference values. Нічого не видалено, seed/downgrade не запускалися.
+- **Перевірки:** `alembic upgrade head --sql`; `python -m pytest` — 19 passed; `alembic history`; MariaDB counts/status/origin checks; тимчасовий Uvicorn smoke на `:8001` підтвердив OpenAPI-маршрути `/reports`, `/reports/{report_id}/transitions`, `/reference-values` і `401` для анонімного `/reports`. `git diff --check` — успішний.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** frontend поки не використовує `/reports`; міграція не створює `MediaAsset`, Sale або PublicPassport. Авторитетні ринкові ціни, scheduler та ML залишаються окремими задачами; поточний `price` — legacy unclassified value.
+
 ## 2026-09-14 — financial-calculation-rules (завершено)
 
 - **Задача:** інвентаризувати поточні ціни, market-дані й demo-ML та зафіксувати фінансовий контракт до зміни ядра звіту.

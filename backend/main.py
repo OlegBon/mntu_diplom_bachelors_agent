@@ -112,6 +112,114 @@ def read_experts(
 def read_user_me(current_user: models.Expert = Depends(get_current_user)):
     return current_user
 
+
+def require_report_access(report: models.DiamondReport, current_user: models.Expert) -> None:
+    if current_user.role != "admin" and report.expert_id != current_user.expert_id:
+        raise HTTPException(status_code=403, detail="You do not have access to this report")
+
+
+@app.get("/reports", response_model=List[schemas.ReportResponse])
+def read_report_domain_list(
+    skip: int = 0,
+    limit: int = 50,
+    report_status: Optional[schemas.ReportStatus] = None,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    return crud.get_report_domain_list(
+        db,
+        current_user=current_user,
+        status=report_status,
+        skip=skip,
+        limit=limit,
+    )
+
+
+@app.post("/reports", response_model=schemas.ReportResponse)
+def create_report_domain(
+    payload: schemas.ReportCreate,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    if current_user.role != "gemologist":
+        raise HTTPException(status_code=403, detail="Only gemologists can create primary reports")
+    return crud.create_report_domain(db, payload=payload, author=current_user)
+
+
+@app.get("/reports/{report_id}", response_model=schemas.ReportResponse)
+def read_report_domain(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    require_report_access(report, current_user)
+    return report
+
+
+@app.put("/reports/{report_id}", response_model=schemas.ReportResponse)
+def update_report_domain(
+    report_id: str,
+    payload: schemas.ReportUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    require_report_access(report, current_user)
+    try:
+        return crud.update_report_domain(db, report=report, payload=payload)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.post("/reports/{report_id}/transitions", response_model=schemas.ReportResponse)
+def transition_report_domain(
+    report_id: str,
+    payload: schemas.ReportTransition,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    require_report_access(report, current_user)
+    try:
+        return crud.transition_report_domain(
+            db,
+            report=report,
+            target_status=payload.target_status,
+            actor=current_user,
+            reason=payload.reason,
+        )
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.get("/reports/{report_id}/events", response_model=List[schemas.ReportEventResponse])
+def read_report_domain_events(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    require_report_access(report, current_user)
+    return crud.get_report_events(db, report_id)
+
+
+@app.get("/reference-values")
+def read_reference_values(
+    category: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    return crud.get_reference_values(db, category)
+
 # Створення юзера (тільки для адміна)
 @app.post("/users/", response_model=schemas.ExpertBase)
 def create_user(
