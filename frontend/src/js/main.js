@@ -67,6 +67,9 @@ function applyApprovedNavigation(isAuthenticated) {
 
   const username = localStorage.getItem("username") || "Користувач";
   const isAdmin = username === "admin";
+  const createReportAction = document.getElementById("create-report-action");
+  if (createReportAction) createReportAction.hidden = isAdmin;
+
   sessionName.textContent = isAdmin ? "Admin" : username;
   sessionName.hidden = false;
   const links = isAdmin
@@ -162,7 +165,7 @@ async function apiRequest(endpoint, method = "GET", data = null) {
 
     if (response.status === 401) {
       console.warn("Unauthorized or Token Expired");
-      // Тут можна додати редірект на логін, якщо треба
+      logout("/login.html");
       return null;
     }
 
@@ -394,6 +397,24 @@ function renderTableRows(reports, tableElement) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
+  const isAdmin = localStorage.getItem("username") === "admin";
+  const currentPath = window.location.pathname;
+  const isProtectedPage = ["/dashboard.html", "/create-report.html"].includes(currentPath);
+  const isCreateReportPage = currentPath.endsWith("/create-report.html");
+
+  if (!isAuthenticated && isProtectedPage) {
+    window.location.replace("/login.html");
+    return;
+  }
+
+  if (isAdmin && isCreateReportPage) {
+    window.location.replace("/dashboard.html");
+    return;
+  }
+
+  const protectedPage = document.querySelector("[data-protected-page]");
+  if (protectedPage) protectedPage.hidden = false;
+
   updateHeaderUI(isAuthenticated);
   applyApprovedNavigation(isAuthenticated);
 

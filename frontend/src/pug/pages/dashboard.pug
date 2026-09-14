@@ -1,14 +1,14 @@
 extends ../layout/main
 
 block content
-    .dashboard-page
+    .dashboard-page(hidden data-protected-page="true")
         //- Верхня частина: Заголовок і Кнопка
         .page-header
             div
                 h1.page-title Всі звіти
                 p.page-subtitle Управління сертифікатами та оцінками
             
-            a.btn.btn-primary(href="/create-report.html")
+            a#create-report-action.btn.btn-primary(href="/create-report.html")
                 span +
                 | Новий звіт
 
