@@ -152,6 +152,10 @@ body {
   &:hover, &:focus-visible { background: variables.$primary-hover; color: variables.$white; }
 }
 
+.dashboard-page #create-report-action[hidden] {
+  display: none !important;
+}
+
 .btn-outline {
   border-color: variables.$border-color;
   background: variables.$white;
