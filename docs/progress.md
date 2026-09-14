@@ -4,6 +4,14 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-14 — financial-calculation-rules (завершено)
+
+- **Задача:** інвентаризувати поточні ціни, market-дані й demo-ML та зафіксувати фінансовий контракт до зміни ядра звіту.
+- **Змінені файли:** `docs/decisions/002-financial-calculation-contract.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/backlog/{README.md,037-financial-calculation-rules.md}` (задачу видалено з активного backlog), `docs/work_plan.md`, `docs/progress.md`.
+- **Рішення:** `price` — legacy-значення без автоматичного перенесення; `6000` — технічний demo-індекс без підтверджених валюти, одиниці та джерела; demo-евристика не є ML-моделлю чи ринковою/експертною ціною. Цільові `market_reference`, `system_prediction`, `expert_appraisal`, `asking_price` і `sale_price` мають бути окремими величинами в 040, із `Decimal`/`Numeric`, метаданими й погодженою міграцією.
+- **Перевірки:** статичний аудит моделей, Pydantic-схем, CRUD, API, seed, wizard, dashboard і наявних тестів; перевірка внутрішніх Markdown-посилань та `git diff --check`. Runtime- і DB-тести не запускалися, бо код, залежності, конфігурація й схема не змінювалися.
+- **Нові змінні середовища:** немає.
+
 ## 2026-09-14 — admin-report-rbac (завершено)
 
 - **Задача:** закрити server-side розбіжність із погодженою роллю admin: admin не створює первинні експертні звіти.
