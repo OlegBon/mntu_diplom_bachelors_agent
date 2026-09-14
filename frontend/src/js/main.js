@@ -46,23 +46,29 @@ function createNavigationLink(href, label, className = "") {
 function applyApprovedNavigation(isAuthenticated) {
   const navList = document.getElementById("nav-list");
   const authBlock = document.getElementById("auth-block");
-  if (!navList || !authBlock) return;
+  const sessionName = document.getElementById("header-session-name");
+  if (!navList || !authBlock || !sessionName) return;
 
   navList.replaceChildren();
   authBlock.replaceChildren();
 
   if (!isAuthenticated) {
     navList.append(createNavigationLink("/#public-passport", "Перевірити паспорт"));
+    const mobileLogin = createNavigationLink("/login.html", "Увійти", "mobile-login");
+    navList.append(mobileLogin);
     const loginLink = document.createElement("a");
-    loginLink.className = "btn btn-primary header-login";
+    loginLink.className = "header-session-action header-login";
     loginLink.href = "/login.html";
     loginLink.textContent = "Увійти";
     authBlock.append(loginLink);
+    sessionName.hidden = true;
     return;
   }
 
   const username = localStorage.getItem("username") || "Користувач";
   const isAdmin = username === "admin";
+  sessionName.textContent = isAdmin ? "Admin" : username;
+  sessionName.hidden = false;
   const links = isAdmin
     ? [
         ["/dashboard.html", "Всі звіти"],
@@ -96,7 +102,7 @@ function applyApprovedNavigation(isAuthenticated) {
 
   const logoutButton = document.createElement("button");
   logoutButton.type = "button";
-  logoutButton.className = "header-logout";
+  logoutButton.className = "header-session-action header-logout";
   logoutButton.textContent = "Вийти";
   logoutButton.addEventListener("click", logout);
   authBlock.append(logoutButton);
