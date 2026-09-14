@@ -65,6 +65,8 @@ MCP-сервери — необов’язкова можливість сере
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m uvicorn backend.main:app --reload
+.\.venv\Scripts\python.exe -m alembic -c alembic.ini current
+.\.venv\Scripts\python.exe -m alembic -c alembic.ini check
 .\.venv\Scripts\python.exe scripts\seed_db.py
 cmd /c "cd frontend && npm run build"
 cmd /c "cd frontend && npm start"
@@ -74,7 +76,7 @@ cmd /c "cd frontend && npm test"
 cmd /c "cd frontend && npm run test:e2e"
 ```
 
-`seed_db.py` руйнівно перестворює локальні бази. Не запускай його без окремого підтвердження користувача. Якщо `npm.ps1` блокується execution policy, використовуй `cmd /c npm ...`, не змінюючи системну policy.
+`seed_db.py` руйнівно перестворює локальні бази. `alembic upgrade`, `downgrade` і `stamp` змінюють схему або її версію: не запускай їх без окремого підтвердження користувача. Якщо `npm.ps1` блокується execution policy, використовуй `cmd /c npm ...`, не змінюючи системну policy.
 
 ## Архітектурні завдання
 

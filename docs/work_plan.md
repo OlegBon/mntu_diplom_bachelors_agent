@@ -56,7 +56,7 @@
 
 - [x] [010 — Контракт предметної області звіту](./decisions/001-report-domain-contract.md): камінь, звіт, продаж, медіа, паспорт, RBAC, API-контракти та план backfill.
 - [x] [015 — Guide поточного доменного workflow](./guides/current-domain-and-report-workflow.md): фактична логіка ролей, звіту, ціни, dashboard, файлів і меж MVP відокремлена від запланованого контракту.
-- [ ] [020 — Основа версіонованих міграцій](./backlog/020-migration-foundation.md): Alembic для MariaDB до великих змін схеми.
+- [x] 020 — Основа версіонованих міграцій: Alembic `0001_initial_schema`, безпечний bootstrap databases, migration-aware seed і перевірений MariaDB rollback; команди — у [local-start.md](./local-start.md).
 - [ ] [030 — UX і візуальна основа](./backlog/030-product-ux-and-visual-foundation.md): меню, дизайн-система, responsive-оболонка та редизайн.
 - [ ] [040 — Ядро звіту й довідники](./backlog/040-report-core-and-reference-data.md): стани, дані каменю, валідація й серверні mappings.
 - [ ] [050 — Медіа звітів](./backlog/050-media-assets.md): upload, приватне storage і метадані.

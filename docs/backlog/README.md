@@ -27,7 +27,6 @@
 
 | Файл | Тема |
 | --- | --- |
-| [020-migration-foundation.md](./020-migration-foundation.md) | Alembic для версіонованих змін локальної MariaDB-схеми. |
 | [030-product-ux-and-visual-foundation.md](./030-product-ux-and-visual-foundation.md) | Навігація, дизайн-система й редизайн оболонки продукту. |
 | [040-report-core-and-reference-data.md](./040-report-core-and-reference-data.md) | Життєвий цикл звіту, поля каменю та довідники. |
 | [050-media-assets.md](./050-media-assets.md) | Безпечні завантаження та доступ до медіа звіту. |
