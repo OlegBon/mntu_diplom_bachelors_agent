@@ -4,7 +4,7 @@
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 14 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Реалізовано CRUD звітів, ролі `admin`/`gemologist`, довідники ринкових оцінок, IDC-калькулятор, демонстраційний розрахунок ціни та базовий автоматизований test-контур. Docker, PostgreSQL, Alembic, завершений ML-потік і публічний паспорт ще не реалізовані.
+> **Статус на 14 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Реалізовано CRUD звітів, ролі `admin`/`gemologist`, довідники ринкових оцінок, IDC-калькулятор, демонстраційний розрахунок ціни та базовий автоматизований test-контур. Alembic і стартова ревізія підготовлені, але потребують окремого безпечного stamp на наявній БД. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
 
 ---
 
@@ -47,7 +47,7 @@ graph TD
 
 Backend запускають із кореня репозиторію через `python -m uvicorn backend.main:app --reload`; frontend — командами `npm run build` або `npm start` із папки `frontend`. Повні, перевірені команди є в [local-start.md](./local-start.md).
 
-`scripts/seed_db.py` — **руйнівний локальний seed**: він перестворює `diamond_oltp` і `diamond_market`, створює `diamond_analytics`, а потім наповнює довідники, експертів і звіти з `data/diamonds_dataset.csv`. Його не можна запускати проти цінних даних або майбутнього production-середовища.
+`scripts/bootstrap_mariadb_databases.py` безпечно створює лише відсутні локальні databases. `alembic/` містить версіоновану структуру таблиць. `scripts/seed_db.py` — **руйнівний локальний seed**: він перестворює `diamond_oltp`, `diamond_market` і `diamond_analytics`, застосовує `alembic upgrade head`, а потім наповнює довідники, експертів і звіти з `data/diamonds_dataset.csv`. Його не можна запускати проти цінних даних або майбутнього production-середовища.
 
 ---
 
@@ -73,10 +73,13 @@ Backend запускають із кореня репозиторію через
 │   ├── gulpfile.js                  # Pug/SCSS/JS/images pipeline і BrowserSync
 │   └── package.json                 # Команди frontend та API-аудиту
 ├── scripts/
+│   ├── bootstrap_mariadb_databases.py # Створення відсутніх локальних databases
 │   ├── seed_db.py                   # Перестворення й наповнення локальних БД
 │   ├── recalc_grades.py             # Допоміжний перерахунок оцінок
 │   └── audit-api.mjs                # Безпечний локальний API contract/smoke audit
 ├── data/                            # CSV-набір для локального seed
+├── alembic/                         # Версіоновані зміни MariaDB-схеми
+├── alembic.ini                      # Конфігурація Alembic
 ├── docs/                            # Runbook, план робіт, прогрес і архітектура
 ├── .codex/                          # Правила й локальні навички агента
 ├── AGENTS.md                        # Робочі інструкції для агентів
