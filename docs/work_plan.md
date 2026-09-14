@@ -59,8 +59,10 @@
 - [x] 020 — Основа версіонованих міграцій: Alembic `0001_initial_schema`, безпечний bootstrap databases, migration-aware seed і перевірений MariaDB rollback; команди — у [local-start.md](./local-start.md).
 - [x] 030 — UX і візуальна основа: погоджені right-aligned desktop menu, сапфірова дизайн-система, responsive shell, public landing і правила інтерфейсних станів — [product-ux-foundation.md](./guides/product-ux-foundation.md).
 - [ ] [035 — Server-side RBAC створення звіту](./backlog/035-admin-report-rbac.md): admin не створює первинні експертні звіти; потрібні `403` і тести для обох ролей.
+- [ ] [037 — Фінансові розрахунки та контракт ціни](./backlog/037-financial-calculation-rules.md): розмежувати ринкову довідку, системний прогноз, експертну оцінку й факт продажу; визначити точність, валюту, джерело та округлення до зміни моделі звіту.
 - [ ] [040 — Ядро звіту й довідники](./backlog/040-report-core-and-reference-data.md): стани, дані каменю, валідація й серверні mappings.
 - [ ] [050 — Медіа звітів](./backlog/050-media-assets.md): upload, приватне storage і метадані.
+- [ ] [055 — UI-примітиви](./backlog/055-ui-primitives.md): спільні Pug/SCSS-компоненти після ядра звіту, до dashboard і wizard; не залежить від медіа.
 - [ ] [060 — Dashboard звітів](./backlog/060-reports-dashboard.md): фактичний список, фільтри, пошук і пагінація.
 - [ ] [070 — Майстер створення звіту](./backlog/070-report-creation-wizard.md): draft, live preview, валідація та вкладення.
 - [ ] [080 — Приватний перегляд і редагування](./backlog/080-report-detail-and-editing.md): RBAC, transitions, аудит подій.

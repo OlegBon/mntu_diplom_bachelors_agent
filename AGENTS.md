@@ -17,6 +17,7 @@
 | `.codex/rules/python-backend.md` | Python, FastAPI, SQLAlchemy, Pydantic або скрипти. |
 | `.codex/rules/frontend.md` | Pug, SCSS, JavaScript або Gulp. |
 | `.codex/rules/database.md` | MariaDB/PostgreSQL, SQL, seed або міграції. |
+| `.codex/rules/local-finance.md` | Ціна, оцінка, прогноз, продаж, валюта, ринкові дані або округлення. |
 | `.codex/rules/security.md` | Ввід користувача, авторизація, API, файли та env. |
 | `.codex/rules/testing.md` | Проєктування або додавання тестів. |
 | `.codex/rules/local-quality-and-performance.md` | UI-якість, доступність, зображення, анімації або продуктивність. |

@@ -28,8 +28,10 @@
 | Файл | Тема |
 | --- | --- |
 | [035-admin-report-rbac.md](./035-admin-report-rbac.md) | Server-side заборона створення звітів для admin. |
+| [037-financial-calculation-rules.md](./037-financial-calculation-rules.md) | Точний контракт ціни, оцінки, прогнозу й продажу. |
 | [040-report-core-and-reference-data.md](./040-report-core-and-reference-data.md) | Життєвий цикл звіту, поля каменю та довідники. |
 | [050-media-assets.md](./050-media-assets.md) | Безпечні завантаження та доступ до медіа звіту. |
+| [055-ui-primitives.md](./055-ui-primitives.md) | Повторно використовувані Pug/SCSS-примітиви для робочих екранів. |
 | [060-reports-dashboard.md](./060-reports-dashboard.md) | Робочий список, пошук, фільтри й пагінація звітів. |
 | [070-report-creation-wizard.md](./070-report-creation-wizard.md) | Майстер створення й збереження чернетки. |
 | [080-report-detail-and-editing.md](./080-report-detail-and-editing.md) | Приватний перегляд, редагування та зміна станів звіту. |
