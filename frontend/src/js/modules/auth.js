@@ -7,5 +7,5 @@ export const checkAuth = () => {
 // Вихід із системи
 export const logout = (destination = "/") => {
   localStorage.clear();
-  window.location.href = destination;
+  window.location.href = typeof destination === "string" ? destination : "/";
 };
