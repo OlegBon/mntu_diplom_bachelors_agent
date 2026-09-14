@@ -169,6 +169,7 @@ body {
     min-height: min(42rem, calc(100vh - 4.75rem));
     overflow: hidden;
     background: variables.$white;
+    border-radius: 0;
     text-align: left;
   }
 
@@ -312,7 +313,7 @@ body {
 }
 
 @media (min-width: 901px) {
-  .public-home { margin-top: 1.5rem; }
+  .public-home { margin-top: 3rem; }
 }
 
 @media (max-width: 900px) {
@@ -347,7 +348,7 @@ body {
       .mobile-account-name { color: variables.$text-strong; font-size: 0.85rem; font-weight: 700; }
       .mobile-logout { width: fit-content; border: 0; padding: 0.6rem 0.75rem; background: transparent; color: variables.$secondary-color; font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
     }
-    .header-right { margin-left: auto; }
+    .header-right { margin-left: auto; gap: 1rem; }
     .header-auth { display: none; }
     .header-session-name:not([hidden]) { display: inline-block; }
     .burger-btn { display: inline-flex; }
@@ -365,6 +366,33 @@ body {
 
   .dashboard-page .filters-bar { grid-template-columns: 1fr 1fr; }
   .dashboard-page .search-group { grid-column: 1 / -1; }
+}
+
+.main-footer {
+  background: variables.$white;
+  border-top: 1px solid variables.$border-color;
+  box-shadow: none;
+  color: variables.$secondary-color;
+
+  .footer-links a {
+    color: variables.$secondary-color;
+
+    &:hover,
+    &:focus-visible { color: variables.$primary-color; }
+
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 3px; }
+  }
+
+  .footer-copyright .footer-brand {
+    color: variables.$text-strong;
+
+    &:hover,
+    &:focus-visible { color: variables.$primary-color; }
+
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 3px; }
+  }
+
+  .footer-links .separator { color: variables.$border-color; }
 }
 
 @media (max-width: 560px) {

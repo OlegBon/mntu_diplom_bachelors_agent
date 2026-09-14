@@ -4,6 +4,14 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-14 — product-ux-surface-polish (завершено)
+
+- **Задача:** завершити точкове візуальне узгодження hero, mobile-header і footer після UX-рев’ю.
+- **Змінені файли:** `frontend/src/scss/_product-ux.scss`, `docs/progress.md`.
+- **Рішення:** desktop hero починається після відступу `3rem` від header і не має скруглених кутів; на mobile між username та burger є відступ `1rem`. Footer синхронізовано з header за white surface, border, нейтральним текстом, sapphire hover і видимими focus-станами.
+- **Перевірки:** `npm run build`, `npm test` (5 passed), `npm run test:e2e` (1 passed), `git diff --check`; Playwright-візуальна перевірка desktop full-page і mobile авторизованого header. Вбудований Browser у цій сесії недоступний, застосовано Playwright fallback.
+- **Нові змінні середовища:** немає.
+
 ## 2026-09-14 — product-ux-header-access-refinement (завершено)
 
 - **Задача:** закрити UX-уточнення header: mobile-вхід для гостя, видимий username авторизованого користувача та узгоджені desktop-дії сесії.
