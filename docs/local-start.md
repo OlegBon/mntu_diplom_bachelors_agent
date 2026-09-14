@@ -59,3 +59,15 @@ cmd /c "cd frontend && npm start"
 Gulp/Browsersync зазвичай віддає збірку на `http://localhost:3000`; якщо порт зайнятий, він обере інший локальний порт. API дозволяє CORS-запити лише з `localhost` або `127.0.0.1` з номером порту, тому зміна локального порту не блокує вхід. `frontend/dist` генерується автоматично.
 
 Перший старт BrowserSync може завершитися через кілька секунд після завершення Gulp-збірки. Зупиняй backend або frontend через `Ctrl+C` у відповідному терміналі.
+
+## Автоматизовані тести
+
+Тести не використовують локальні дані XAMPP: backend набір створює SQLite у пам’яті, а frontend browser smoke підіймає тимчасовий BrowserSync.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest
+cmd /c "cd frontend && npm test"
+cmd /c "cd frontend && npm run test:e2e"
+```
+
+Перед першим browser E2E один раз встанови локальний браузер Playwright: `cmd /c "cd frontend && npx playwright install chromium chromium-headless-shell"`. Поточний E2E перевіряє лише відображення login-сторінки й не виконує вхід під реальним користувачем.

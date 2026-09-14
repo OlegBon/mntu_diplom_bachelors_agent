@@ -9,9 +9,12 @@
     "start": "gulp",
     "build": "gulp build",
     "clean": "gulp clean",
-    "audit:api": "node ../scripts/audit-api.mjs"
+    "audit:api": "node ../scripts/audit-api.mjs",
+    "test": "npm run build && node --test tests/auth-and-api.test.mjs tests/page-dom.test.mjs",
+    "test:e2e": "playwright test -c playwright.config.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "browser-sync": "^3.0.4",
     "del": "^6.1.1",
     "gulp": "^5.0.1",
@@ -20,6 +23,7 @@
     "gulp-plumber": "^1.2.1",
     "gulp-pug": "^5.0.0",
     "gulp-sass": "^6.0.1",
+    "jsdom": "^30.0.1",
     "sass": "^1.97.2"
   }
 }

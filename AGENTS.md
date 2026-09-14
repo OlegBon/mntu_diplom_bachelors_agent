@@ -69,6 +69,9 @@ MCP-сервери — необов’язкова можливість сере
 cmd /c "cd frontend && npm run build"
 cmd /c "cd frontend && npm start"
 cmd /c "cd frontend && npm run audit:api"
+.\.venv\Scripts\python.exe -m pytest
+cmd /c "cd frontend && npm test"
+cmd /c "cd frontend && npm run test:e2e"
 ```
 
 `seed_db.py` руйнівно перестворює локальні бази. Не запускай його без окремого підтвердження користувача. Якщо `npm.ps1` блокується execution policy, використовуй `cmd /c npm ...`, не змінюючи системну policy.
@@ -116,8 +119,8 @@ cmd /c "cd frontend && npm run audit:api"
 
 ## Тестування
 
-Тестової інфраструктури поки немає. Не імітуй її наявність.
-
-- Потрібні майбутні напрями тестування вже ведуться у `docs/work_plan.md`: unit для IDC/ML, API для auth/RBAC/CRUD, integration для БД і E2E для frontend.
-- До появи `pytest` і browser-тестів виконуй доступні smoke-перевірки та документуй обмеження.
-- Коли тестовий контур буде створено, використовуй `python-testing` і онови цей розділ командами запуску.
+- Backend: `pytest` з маркерами `unit`, `api`, `integration`; виконуй `\.venv\Scripts\python.exe -m pytest` або вибірково `-m unit` / `-m api`.
+- API/integration-тести застосовують SQLite у пам’яті зі schema translation і не підключаються до XAMPP/MariaDB, не запускають `seed_db.py` та не використовують `.env`-облікові дані.
+- Frontend: `cmd /c "cd frontend && npm test"` спершу збирає Pug/SCSS/JS, а потім запускає Node unit-тести модулів і jsdom DOM smoke.
+- Browser: `cmd /c "cd frontend && npm run test:e2e"` запускає Playwright із тимчасовим BrowserSync і не викликає API. Chromium потрібно один раз встановити через `npx playwright install chromium chromium-headless-shell`.
+- Базове покриття не є ціллю якості саме по собі; пріоритет — IDC, auth/RBAC, CRUD і граничні відповіді. Розширені flows login → dashboard → create → detail/edit додавати разом із відповідними UI-зрізами.
