@@ -259,6 +259,7 @@ body {
   .data-table th { color: #475569; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.01em; text-transform: none; }
   .data-table td { color: variables.$text-strong; }
   .id-link { color: variables.$primary-color; font-weight: 600; }
+  .status-badge.very-good { background: #dbeafe; color: #1d4ed8; }
 }
 
 .create-report-page {

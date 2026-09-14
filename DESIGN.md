@@ -1,5 +1,8 @@
 # Design System: Diamant ID
 
+> Актуальна UX-основа: [product-ux-foundation.md](./docs/guides/product-ux-foundation.md).
+> На desktop навігація розташовується праворуч від логотипу, перед профілем і виходом.
+
 Цей документ визначає принципи дизайну та компоненти для **Diamant ID** — системи ідентифікації й оцінювання діамантів. Він спирається на наявний Gulp/Pug/SCSS frontend і є єдиним джерелом візуальних правил.
 
 ## Design Philosophy (філософія дизайну)

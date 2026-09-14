@@ -277,7 +277,7 @@ function renderTableRows(reports, tableElement) {
     if (item.cut_grade === 0)
       cutBadge = `<span class="status-badge active">Ex</span>`;
     else if (item.cut_grade === 1)
-      cutBadge = `<span class="status-badge" style="background:#f3e8ff; color:#6b21a8">VG</span>`;
+      cutBadge = `<span class="status-badge very-good">VG</span>`;
 
     const statusBadge = item.is_sold
       ? `<span class="status-badge sold">Sold</span>`
