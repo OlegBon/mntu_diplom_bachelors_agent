@@ -5,6 +5,31 @@ import { loginUser } from "./modules/api.js";
 const API_URL = "http://127.0.0.1:8000"; // Адреса твого Python сервера
 
 // === ЗМІННІ ДЛЯ DASHBOARD ===
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    '"': "&quot;",
+  })[character]);
+}
+
+function renderPublicNavigation() {
+  const navList = document.getElementById("nav-list");
+  if (!navList) return;
+
+  navList.replaceChildren();
+  for (const [href, label] of [["/", "Головна"], ["/#public-passport", "Перевірити паспорт"]]) {
+    const item = document.createElement("li");
+    const link = document.createElement("a");
+    link.href = href;
+    link.textContent = label;
+    item.append(link);
+    navList.append(item);
+  }
+}
+
 let currentPage = 1;
 const itemsPerPage = 50;
 
@@ -103,9 +128,11 @@ function updateHeaderUI(isAuthenticated) {
       displayName = "Bondarenko O.";
     }
 
+    const safeDisplayName = escapeHtml(displayName);
+
     authBlock.innerHTML = `
             <div class="user-trigger" id="user-trigger">
-                <span class="user-name ${roleClass}">${displayName}</span>
+                <span class="user-name ${roleClass}">${safeDisplayName}</span>
                 <span class="arrow-icon">▼</span>
             </div>
             <div class="user-dropdown-menu" id="user-dropdown">
@@ -293,6 +320,7 @@ function renderTableRows(reports, tableElement) {
 document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
   updateHeaderUI(isAuthenticated);
+  if (!isAuthenticated) renderPublicNavigation();
 
   // === DASHBOARD INITIALIZATION ===
   if (isAuthenticated && document.querySelector(".data-table")) {
@@ -328,6 +356,10 @@ document.addEventListener("DOMContentLoaded", () => {
     burgerBtn.addEventListener("click", () => {
       burgerBtn.classList.toggle("is-active");
       mainNav.classList.toggle("is-active");
+      burgerBtn.setAttribute(
+        "aria-expanded",
+        String(mainNav.classList.contains("is-active")),
+      );
     });
   }
 

@@ -1,73 +1,33 @@
 extends ../layout/main
 
 block content
-    //- Hero Section
-    section.hero-section
-        .hero-content
-            .hero-badge 💎 Diamond ID System
-            h1.hero-title
-                | Інтелектуальна система
-                br
-                | ідентифікації та оцінки діамантів
-            p.hero-subtitle
-                | Миттєвий аналіз фізичних характеристик та ринкової вартості
-                br
-                | на основі алгоритмів машинного навчання.
-            
-            form#public-search-form.hero-search
-                input#search-input(type="text" placeholder="Паспорт, напр DR-00321" required)
-                button.btn.btn-primary(type="submit")
-                    span 🔍
-                    | Пошук
+    .public-home
+        section.hero-section
+            .hero-copy
+                h1 Ідентифікація та оцінювання діамантів
+                p Надійна перевірка паспортів та експертні звіти про діаманти — в одному робочому середовищі.
+                .hero-actions
+                    a.btn.btn-primary(href="#public-passport") Перевірити паспорт
+                    a.text-action(href="/login.html") Увійти для роботи зі звітами
+            img.hero-image(src="img/diamond-inspection-hero.png" alt="Діамант у гемологічному пінцеті" width="1792" height="896")
 
-    //- Features Section
-    section.features-section
-        h2.section-title Чому Diamond ID?
-        .features-grid
-            .feature-card
-                .feature-icon 🧠
-                h3 AI-Аналітика
-                p Використання нейромереж для точного визначення характеристик та класифікації каменів.
-            .feature-icon-card
-                .feature-icon ⚡
-                h3 Миттєва Оцінка
-                p Автоматичний розрахунок Cut Grade за стандартами IDC та актуальною ринковою ціною.
-            .feature-card
-                .feature-icon 📄
-                h3 Цифровий Паспорт
-                p Кожен звіт захищений унікальним ID та QR-кодом для швидкої перевірки автентичності.
+        section#public-passport.public-passport
+            .passport-intro
+                h2 Перевірка, якій можна довіряти
+                p Введіть номер виданого звіту, щоб перейти до його публічного паспорта. Публічні дані будуть доступні лише після запуску відповідного функціоналу.
+            form#public-search-form.passport-search
+                label(for="search-input") Номер звіту
+                .passport-search-controls
+                    input#search-input(type="search" placeholder="Наприклад, DR-00321" required autocomplete="off")
+                    button.btn.btn-primary(type="submit") Перевірити
 
-    //- Recent Diamonds Section
-    section.recent-section
-        .section-header
-            h2 Останні оцінені камені
-            p Публічний реєстр сертифікованих діамантів
-
-        .diamonds-grid
-                //- Генеруємо 4 приклади карток
-                each val, index in [1, 2, 3, 4]
-                    //- Оновлені назви форм (як у базі)
-                    - var shapes = ['Round', 'Princess', 'Oval', 'Emerald']
-                    - var carats = ['1.05', '0.90', '2.10', '1.50']
-                    - var colors = ['D', 'E', 'G', 'F']
-                    - var clarities = ['VVS1', 'VS1', 'SI1', 'IF']
-                    - var prices = ['12,500', '4,200', '28,000', '5,800']
-                    
-                    .diamond-card
-                        .diamond-img 💎
-                        .diamond-id DR-0000#{val}
-                        h3 #{shapes[index]} #{carats[index]} ct
-                        
-                        .specs-list
-                            .spec-item
-                                span.label Color
-                                span.value= colors[index]
-                            .spec-item
-                                span.label Clarity
-                                span.value= clarities[index]
-                            .spec-item
-                                span.label Price
-                                span.value $#{prices[index]}
-                        
-                        a.btn.btn-sm.btn-outline(href=`/view-report.html?id=DR-0000${val}`) 
-                            | Переглянути паспорт
+        section.public-principles(aria-label="Можливості Diamant ID")
+            article
+                h2 Експертні звіти
+                p Послідовна фіксація характеристик каменю та результатів оцінювання.
+            article
+                h2 Контроль даних
+                p Чітке розмежування експертного висновку й розрахункового результату системи.
+            article
+                h2 Перевірка паспорта
+                p Окремий публічний маршрут для виданих звітів — після реалізації паспорта й QR.

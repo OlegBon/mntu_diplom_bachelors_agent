@@ -336,7 +336,7 @@ ul {
   text-align: center;
   padding: 4rem 1rem;
   // background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
-  background: variables.$bg-linear-gradient;
+  background: variables.$surface-subtle;
   border-radius: 12px;
   margin-bottom: 3rem;
 
@@ -445,7 +445,7 @@ ul {
   .feature-card,
   .feature-icon-card {
     // background: variables.$white;
-    background: variables.$bg-linear-gradient;
+    background: variables.$surface-subtle;
     padding: 2rem;
     border-radius: 12px;
     border: 1px solid variables.$border-color;
@@ -1383,3 +1383,5 @@ ul {
   // Внутрішній відступ тексту, щоб він не наїхав на стрілку
   padding-right: 2.5rem !important;
 }
+
+@import "product-ux";

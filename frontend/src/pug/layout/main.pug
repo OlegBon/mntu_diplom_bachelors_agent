@@ -2,36 +2,32 @@ doctype html
 html(lang="uk")
     head
         meta(charset="UTF-8")
-        meta(name="viewport", content="width=device-width, initial-scale=1.0")
-        title Diamond ID System
-        link(rel="stylesheet", href="css/main.css")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        title Diamant ID
+        link(rel="stylesheet" href="css/main.css")
         link(rel="preconnect" href="https://fonts.googleapis.com")
         link(rel="preconnect" href="https://fonts.gstatic.com" crossorigin)
-        link(href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet")
+        link(href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet")
 
     body
         header.main-header
             .container
                 .header-content
-                    //- Логотип (зліва)
-                    a.logo(href="/")
-                        span.logo-icon 💎
-                        span.logo-text Diamond ID
-                    
-                    //- Навігація (по центру на десктопі, схована на мобайл)
-                    nav#main-nav.main-nav
+                    a.logo(href="/" aria-label="Diamant ID — головна")
+                        span.logo-mark(aria-hidden="true")
+                            svg(viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true")
+                                path(d="M4 8.5 8.5 4h7L20 8.5 12 20 4 8.5Z")
+                                path(d="m4 8.5 8 11.5L20 8.5M8.5 4 12 8.5 15.5 4M4 8.5h16")
+                        span.logo-text Diamant ID
+
+                    nav#main-nav.main-nav(aria-label="Основна навігація")
                         ul#nav-list
                             li: a(href="/") Головна
-                            li: a(href="#") Про систему
+                            li: a(href="#public-passport") Перевірити паспорт
 
-                    //- Група правих елементів (Auth + Burger)
                     .header-right
-                        //- 3. Авторизація (юзер або вхід)
                         .header-auth#auth-block
-                            //- JS наповнить це
-
-                        //- Бургер (тільки мобайл, завжди справа)
-                        button#burger-btn.burger-btn(type="button" aria-label="Menu")
+                        button#burger-btn.burger-btn(type="button" aria-label="Відкрити меню" aria-expanded="false")
                             span
                             span
                             span
@@ -43,17 +39,14 @@ html(lang="uk")
         footer.main-footer
             .container
                 .footer-content
-                    //- Блок 1: Копірайт (На мобайл буде другим)
                     p.footer-copyright
                         | &copy; 
                         span#copyright-year 2026
                         | &nbsp;
-                        a.footer-brand(href="/") Diamond ID System
-                    
-                    //- Блок 2: Посилання (На мобайл буде першим)
+                        a.footer-brand(href="/") Diamant ID
                     .footer-links
-                        a(href="#") Privacy Policy
+                        a(href="#") Політика конфіденційності
                         span.separator |
-                        a(href="#") Documentation
+                        a(href="#") Документація
 
         script(type="module" src="js/main.js")
