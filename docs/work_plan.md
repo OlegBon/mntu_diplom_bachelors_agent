@@ -48,10 +48,27 @@
 - [ ] Розширити browser E2E: реальний login → dashboard → створення → detail/edit звіту після відповідних UI-зрізів і безпечної test-auth стратегії.
 - [ ] Окремо усунути попередження SQLAlchemy 2 (`declarative_base`) і Pydantic 2 (`class Config`, `.dict()`), підтвердивши сумісність API-тестами.
 
-### Пріоритет 3 — PostgreSQL і тестовий домен
+### Пріоритет 3 — завершення локального MVP
+
+Детальна активна декомпозиція ведеться у [docs/backlog](./backlog/README.md).
+Ціль етапу — завершити локальний workflow експертного звіту до переходу до
+перевіреного ML та PostgreSQL/deployment.
+
+- [ ] [010 — Контракт предметної області звіту](./backlog/010-report-domain-contract.md): камінь, звіт, продаж, медіа, паспорт, RBAC і API-контракти.
+- [ ] [020 — Основа версіонованих міграцій](./backlog/020-migration-foundation.md): Alembic для MariaDB до великих змін схеми.
+- [ ] [030 — UX і візуальна основа](./backlog/030-product-ux-and-visual-foundation.md): меню, дизайн-система, responsive-оболонка та редизайн.
+- [ ] [040 — Ядро звіту й довідники](./backlog/040-report-core-and-reference-data.md): стани, дані каменю, валідація й серверні mappings.
+- [ ] [050 — Медіа звітів](./backlog/050-media-assets.md): upload, приватне storage і метадані.
+- [ ] [060 — Dashboard звітів](./backlog/060-reports-dashboard.md): фактичний список, фільтри, пошук і пагінація.
+- [ ] [070 — Майстер створення звіту](./backlog/070-report-creation-wizard.md): draft, live preview, валідація та вкладення.
+- [ ] [080 — Приватний перегляд і редагування](./backlog/080-report-detail-and-editing.md): RBAC, transitions, аудит подій.
+- [ ] [090 — Публічний паспорт і QR](./backlog/090-public-passport-and-qr.md): окремий безпечний public flow для `issued`.
+- [ ] [100 — Профіль і admin UI](./backlog/100-profile-and-admin-ui.md): експерти, ролі, довідники та ринкові дані.
+
+### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
 
 - [ ] Відокремити конфігурацію БД від MariaDB-специфічного коду, зберігши локальну MariaDB.
-- [ ] Ввести версіоновані міграції (Alembic), базовий seed/backfill і rollback-процедуру.
+- [ ] Після локального MVP реалізувати перевірений ML-контур: датасет, versioned model artifact, валідація метрик, відтворюваний прогноз і окремі аналітичні результати.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.
 - [ ] Підготувати Dockerfile й deployment-конфігурацію для обраного backend-провайдера; frontend — для shared hosting.
 - [ ] Налаштувати CORS, env secrets, health-check, домени/TLS та ручний smoke-test до публічного запуску.
