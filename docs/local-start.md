@@ -43,7 +43,39 @@ python -m uvicorn backend.main:app --reload
 
 ## Дані
 
-`scripts/seed_db.py` видаляє та створює заново `diamond_oltp`, `diamond_market` і `diamond_analytics`, включно з порожньою зарезервованою `ml_results`. Перед запуском переконайся, що це локальна тестова MariaDB і дані можна втратити.
+### Alembic і локальна схема
+
+Alembic є джерелом істини для структури таблиць. Три логічні схеми Diamant ID
+у MariaDB є окремими databases, тому на **новому порожньому** локальному
+середовищі спочатку потрібно створити лише відсутні databases, а потім
+застосувати міграції:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\bootstrap_mariadb_databases.py
+.\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head
+```
+
+`bootstrap_mariadb_databases.py` виконує тільки `CREATE DATABASE IF NOT EXISTS`
+для `diamond_oltp`, `diamond_market` і `diamond_analytics`: наявні databases,
+таблиці й дані він не видаляє. `upgrade head` змінює схему, тому перед ним
+зроби резервну копію даних, якщо вони цінні.
+
+Для наявної локальної БД без `alembic_version` спочатку перевір поточний стан:
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic -c alembic.ini current
+```
+
+Якщо таблиці вже відповідають перевіреній стартовій схемі, її можна позначити
+командою `stamp 0001_initial_schema`. Це записує версію в `alembic_version`,
+тому виконуй stamp лише після резервної копії та окремого підтвердження.
+**Лише після stamp** запускай `alembic check`: він порівнює ORM metadata з
+MariaDB і має завершитися без нових upgrade-операцій. Не застосовуй `downgrade`
+до БД із потрібними даними: початковий downgrade видаляє таблиці.
+
+### Руйнiвний seed
+
+`scripts/seed_db.py` видаляє та створює заново `diamond_oltp`, `diamond_market` і `diamond_analytics`, а таблиці після цього створює через `alembic upgrade head`. Перед запуском переконайся, що це локальна тестова MariaDB і дані можна втратити.
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\seed_db.py

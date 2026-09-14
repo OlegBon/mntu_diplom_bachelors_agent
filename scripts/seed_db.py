@@ -5,6 +5,9 @@ import math
 import sys
 from pathlib import Path
 
+from alembic import command
+from alembic.config import Config
+
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from backend import database, models
 from backend.config import get_mariadb_connection_options, get_required_env
@@ -17,6 +20,12 @@ def get_connection(db_name: str | None = None):
     if db_name is not None:
         options["database"] = db_name
     return mysql.connector.connect(**options)
+
+
+def run_migrations() -> None:
+    """Build fresh tables only through the versioned Alembic history."""
+    alembic_config = Config(str(Path(__file__).resolve().parent.parent / "alembic.ini"))
+    command.upgrade(alembic_config, "head")
 
 def generate_dimensions(carat, shape, depth_pct):
     # Базова імітація розмірів в залежності від форми
@@ -69,8 +78,8 @@ def seed_data():
     raw_cursor.close()
     raw_conn.close()
 
-    print(" -> [2/5] Створення таблиць...")
-    models.Base.metadata.create_all(bind=database.engine)
+    print(" -> [2/5] Створення таблиць через Alembic...")
+    run_migrations()
 
     # --- MARKET ---
     print(" -> [3/5] Наповнення Market (Mappings)...")
