@@ -58,6 +58,7 @@
 - [x] [015 — Guide поточного доменного workflow](./guides/current-domain-and-report-workflow.md): фактична логіка ролей, звіту, ціни, dashboard, файлів і меж MVP відокремлена від запланованого контракту.
 - [x] 020 — Основа версіонованих міграцій: Alembic `0001_initial_schema`, безпечний bootstrap databases, migration-aware seed і перевірений MariaDB rollback; команди — у [local-start.md](./local-start.md).
 - [x] 030 — UX і візуальна основа: погоджені right-aligned desktop menu, сапфірова дизайн-система, responsive shell, public landing і правила інтерфейсних станів — [product-ux-foundation.md](./guides/product-ux-foundation.md).
+- [ ] [035 — Server-side RBAC створення звіту](./backlog/035-admin-report-rbac.md): admin не створює первинні експертні звіти; потрібні `403` і тести для обох ролей.
 - [ ] [040 — Ядро звіту й довідники](./backlog/040-report-core-and-reference-data.md): стани, дані каменю, валідація й серверні mappings.
 - [ ] [050 — Медіа звітів](./backlog/050-media-assets.md): upload, приватне storage і метадані.
 - [ ] [060 — Dashboard звітів](./backlog/060-reports-dashboard.md): фактичний список, фільтри, пошук і пагінація.

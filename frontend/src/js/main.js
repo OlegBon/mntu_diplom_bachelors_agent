@@ -33,6 +33,75 @@ function renderPublicNavigation() {
 let currentPage = 1;
 const itemsPerPage = 50;
 
+function createNavigationLink(href, label, className = "") {
+  const item = document.createElement("li");
+  if (className) item.className = className;
+  const link = document.createElement("a");
+  link.href = href;
+  link.textContent = label;
+  item.append(link);
+  return item;
+}
+
+function applyApprovedNavigation(isAuthenticated) {
+  const navList = document.getElementById("nav-list");
+  const authBlock = document.getElementById("auth-block");
+  if (!navList || !authBlock) return;
+
+  navList.replaceChildren();
+  authBlock.replaceChildren();
+
+  if (!isAuthenticated) {
+    navList.append(createNavigationLink("/#public-passport", "Перевірити паспорт"));
+    const loginLink = document.createElement("a");
+    loginLink.className = "btn btn-primary header-login";
+    loginLink.href = "/login.html";
+    loginLink.textContent = "Увійти";
+    authBlock.append(loginLink);
+    return;
+  }
+
+  const username = localStorage.getItem("username") || "Користувач";
+  const isAdmin = username === "admin";
+  const links = isAdmin
+    ? [
+        ["/dashboard.html", "Всі звіти"],
+        ["/experts.html", "Експерти"],
+        ["/references.html", "Довідники"],
+        ["/ml-analysis.html", "Аналітика"],
+        ["/profile.html", "Профіль"],
+      ]
+    : [
+        ["/dashboard.html", "Всі звіти"],
+        ["/create-report.html", "Новий звіт"],
+        ["/profile.html", "Профіль"],
+      ];
+
+  for (const [href, label] of links) {
+    navList.append(createNavigationLink(href, label));
+  }
+
+  const mobileAccount = document.createElement("li");
+  mobileAccount.className = "mobile-account";
+  const accountName = document.createElement("span");
+  accountName.className = "mobile-account-name";
+  accountName.textContent = isAdmin ? "Admin" : username;
+  const mobileLogout = document.createElement("button");
+  mobileLogout.type = "button";
+  mobileLogout.className = "mobile-logout";
+  mobileLogout.textContent = "Вийти";
+  mobileLogout.addEventListener("click", logout);
+  mobileAccount.append(accountName, mobileLogout);
+  navList.append(mobileAccount);
+
+  const logoutButton = document.createElement("button");
+  logoutButton.type = "button";
+  logoutButton.className = "header-logout";
+  logoutButton.textContent = "Вийти";
+  logoutButton.addEventListener("click", logout);
+  authBlock.append(logoutButton);
+}
+
 // === MAPPINGS (Для перекладу кодів з бази в текст) ===
 const MAPPINGS = {
   colors: [
@@ -320,7 +389,7 @@ function renderTableRows(reports, tableElement) {
 document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
   updateHeaderUI(isAuthenticated);
-  if (!isAuthenticated) renderPublicNavigation();
+  applyApprovedNavigation(isAuthenticated);
 
   // === DASHBOARD INITIALIZATION ===
   if (isAuthenticated && document.querySelector(".data-table")) {

@@ -21,7 +21,8 @@ body {
   box-shadow: none;
 
   .header-content {
-    min-height: 4.75rem;
+    height: 4.5rem;
+    min-height: 4.5rem;
     display: flex;
     align-items: center;
     gap: 1.5rem;
@@ -50,18 +51,22 @@ body {
 
   .main-nav {
     margin-left: auto;
+    align-self: stretch;
+    display: flex;
+    align-items: stretch;
 
     ul {
       display: flex;
       align-items: center;
-      gap: 0.2rem;
+      gap: 0.65rem;
+      height: 100%;
     }
 
-    a {
+    li a {
       display: inline-flex;
       align-items: center;
-      min-height: 3.1rem;
-      padding: 0 0.75rem;
+      height: 100%;
+      padding: 0;
       border-bottom: 2px solid transparent;
       color: variables.$secondary-color;
       font-size: 0.9rem;
@@ -87,6 +92,24 @@ body {
 
     .btn { min-height: 2.5rem; }
   }
+
+  .header-logout {
+    min-height: 2.5rem;
+    border: 0;
+    border-left: 1px solid variables.$border-color;
+    padding: 0 0 0 1rem;
+    background: transparent;
+    color: variables.$secondary-color;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover, &:focus-visible { color: variables.$primary-color; }
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+  }
+
+  .mobile-account { display: none; }
 }
 
 .btn {
@@ -127,12 +150,11 @@ body {
 
   .hero-section {
     position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    align-items: stretch;
+    display: block;
     min-height: min(42rem, calc(100vh - 4.75rem));
     overflow: hidden;
     background: variables.$white;
+    text-align: left;
   }
 
   .hero-copy {
@@ -141,7 +163,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    max-width: 42rem;
+    max-width: 46rem;
     padding: clamp(3rem, 8vw, 7.5rem) clamp(1.5rem, 7vw, 7rem);
 
     h1 {
@@ -179,6 +201,9 @@ body {
   }
 
   .hero-image {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
     width: 100%;
     height: 100%;
     min-height: 34rem;
@@ -273,7 +298,7 @@ body {
 
 @media (max-width: 900px) {
   .main-header {
-    .header-content { min-height: 4.25rem; gap: 0.8rem; }
+    .header-content { height: 4.25rem; min-height: 4.25rem; gap: 0.8rem; }
     .main-nav {
       position: absolute;
       top: calc(100% + 1px);
@@ -287,17 +312,31 @@ body {
 
       &.is-active { display: block; }
       ul { display: grid; gap: 0.25rem; }
-      a { width: 100%; min-height: 2.75rem; border-bottom: 0; border-left: 2px solid transparent; }
-      a.is-active { border-left-color: variables.$primary-color; }
+      li a { width: 100%; min-height: 2.75rem; border-bottom: 0; border-left: 2px solid transparent; }
+      li a.is-active { border-left-color: variables.$primary-color; }
+
+      .mobile-account {
+        display: grid;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+        padding: 0.75rem 0;
+        border-top: 1px solid variables.$border-color;
+      }
+
+      .mobile-account-name { color: variables.$text-strong; font-size: 0.85rem; font-weight: 700; }
+      .mobile-logout { width: fit-content; border: 0; padding: 0.6rem 0.75rem; background: transparent; color: variables.$secondary-color; font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
     }
     .header-right { margin-left: auto; }
+    .header-auth { display: none; }
     .burger-btn { display: inline-flex; }
   }
 
   .public-home {
-    .hero-section { grid-template-columns: 1fr; }
-    .hero-image { order: -1; min-height: 18rem; max-height: 26rem; object-position: 72% center; }
-    .hero-copy { padding-top: 3rem; }
+    .hero-section { display: flex; flex-direction: column; min-height: 0; }
+    .hero-image { position: relative; inset: auto; order: -1; min-height: 18rem; max-height: 26rem; object-position: 72% center; }
+    .hero-copy { max-width: none; padding-top: 3rem; text-align: center; }
+    .hero-copy h1, .hero-copy p { margin-left: auto; margin-right: auto; }
+    .hero-actions { justify-content: center; }
     .public-passport { grid-template-columns: 1fr; }
     .public-principles { grid-template-columns: 1fr; gap: 1.25rem; }
   }
