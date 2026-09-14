@@ -27,7 +27,6 @@
 
 | Файл | Тема |
 | --- | --- |
-| [035-admin-report-rbac.md](./035-admin-report-rbac.md) | Server-side заборона створення звітів для admin. |
 | [037-financial-calculation-rules.md](./037-financial-calculation-rules.md) | Точний контракт ціни, оцінки, прогнозу й продажу. |
 | [040-report-core-and-reference-data.md](./040-report-core-and-reference-data.md) | Життєвий цикл звіту, поля каменю та довідники. |
 | [050-media-assets.md](./050-media-assets.md) | Безпечні завантаження та доступ до медіа звіту. |

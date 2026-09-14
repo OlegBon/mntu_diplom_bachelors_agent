@@ -4,6 +4,14 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-14 — admin-report-rbac (завершено)
+
+- **Задача:** закрити server-side розбіжність із погодженою роллю admin: admin не створює первинні експертні звіти.
+- **Змінені файли:** `backend/main.py`, `tests/api/test_admin_report_rbac.py`, `docs/backlog/README.md`, `docs/backlog/035-admin-report-rbac.md` (видалено після реалізації), `docs/work_plan.md`, `docs/progress.md`.
+- **Рішення:** `POST /diamonds/` після JWT-автентифікації перевіряє роль на сервері та приймає створення лише від `gemologist`; admin отримує контрольований `403`. UI-приховування «Новий звіт» більше не є єдиним бар’єром.
+- **Перевірки:** `python -m pytest` — 17 passed; smoke-import `from backend.main import app` — успішний; `git diff --check` — успішний. Є наявні попередження SQLAlchemy 2 (`declarative_base`) і Pydantic 2 (`class Config`, `.dict()`), їх не змінювали в межах RBAC-задачі.
+- **Нові змінні середовища:** немає.
+
 ## 2026-09-14 — finance-and-ui-primitives-plan (завершено)
 
 - **Задача:** запланувати правила точних фінансових розрахунків і рефакторинг UI-примітивів до реалізації ядра звіту, dashboard та wizard.

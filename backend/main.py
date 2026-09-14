@@ -176,6 +176,9 @@ def create_report(
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user) # Тільки авторизовані
 ):
+    if current_user.role != "gemologist":
+        raise HTTPException(status_code=403, detail="Only gemologists can create reports")
+
     # Тут пізніше ми додамо виклик ML:
     # ml_results = ml_service.predict_price(diamond_data)
     # diamond_data.price = ml_results.price
