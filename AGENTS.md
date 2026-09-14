@@ -124,3 +124,6 @@ cmd /c "cd frontend && npm run test:e2e"
 - Frontend: `cmd /c "cd frontend && npm test"` спершу збирає Pug/SCSS/JS, а потім запускає Node unit-тести модулів і jsdom DOM smoke.
 - Browser: `cmd /c "cd frontend && npm run test:e2e"` запускає Playwright із тимчасовим BrowserSync і не викликає API. Chromium потрібно один раз встановити через `npx playwright install chromium chromium-headless-shell`.
 - Базове покриття не є ціллю якості саме по собі; пріоритет — IDC, auth/RBAC, CRUD і граничні відповіді. Розширені flows login → dashboard → create → detail/edit додавати разом із відповідними UI-зрізами.
+
+Під час створення нової функціональності створюй лише найважливіші unit, integration і component тести.
+Під час редагування вже наявної функціональності тести редагувати не можна.
