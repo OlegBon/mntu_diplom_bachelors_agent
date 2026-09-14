@@ -4,7 +4,7 @@
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 14 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Для нового ядра звіту код і Alembic revision `0002_report_core` готові, але поточна MariaDB ще потребує окремо погодженого `upgrade head`. До нього чинний frontend продовжує працювати з compatibility API `/diamonds/*`. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
+> **Статус на 14 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Ядро звіту застосоване revision `0002_report_core`: нормалізовані `Stone`, `ReportEvent`, server reference data та приватний `/reports` API готові. Чинний frontend поки продовжує працювати з compatibility API `/diamonds/*` до задач UI. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
 
 ---
 
@@ -107,7 +107,7 @@ Backend запускають із кореня репозиторію через
 | Група | Призначення |
 | --- | --- |
 | `/diamonds/` | Тимчасовий compatibility API для чинних dashboard і create-form. |
-| `/reports` | Новий приватний API ядра: draft, stone, lifecycle, події та RBAC; стає доступним у MariaDB після revision `0002_report_core`. |
+| `/reports` | Приватний API ядра: draft, stone, lifecycle, події та RBAC. |
 | `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
 | `/users/`, `/users/me`, `/experts/` | Керування користувачами, профіль поточного користувача та перелік експертів. |
 | `/market/mappings`, `/market/price` | Публічні довідники оцінок і поточний ринковий індекс; зміна індексу — лише для admin. |
@@ -124,8 +124,8 @@ Backend запускають із кореня репозиторію через
 
 | База | Призначення | Поточний стан |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, legacy `diamond_reports`; у revision 0002 — `stones`, `report_events`, `stone_valuations` і lifecycle-колонки | Код і migration готові, застосування до MariaDB очікує підтвердження |
-| `diamond_market` | `grade_mappings`, legacy demo-індекс; у revision 0002 — `reference_values` | Код і migration готові, застосування до MariaDB очікує підтвердження |
+| `diamond_oltp` | `experts`, compatibility `diamond_reports`, `stones`, `report_events`, `stone_valuations` і lifecycle-колонки | Revision `0002_report_core` застосовано локально |
+| `diamond_market` | `grade_mappings`, legacy demo-індекс і `reference_values` | Revision `0002_report_core` застосовано локально |
 | `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 
 Під час створення звіту `crud.create_diamond_report()`:
