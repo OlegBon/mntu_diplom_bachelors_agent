@@ -27,7 +27,6 @@
 
 | Файл | Тема |
 | --- | --- |
-| [037-financial-calculation-rules.md](./037-financial-calculation-rules.md) | Точний контракт ціни, оцінки, прогнозу й продажу. |
 | [040-report-core-and-reference-data.md](./040-report-core-and-reference-data.md) | Життєвий цикл звіту, поля каменю та довідники. |
 | [050-media-assets.md](./050-media-assets.md) | Безпечні завантаження та доступ до медіа звіту. |
 | [055-ui-primitives.md](./055-ui-primitives.md) | Повторно використовувані Pug/SCSS-примітиви для робочих екранів. |
