@@ -4,6 +4,14 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-14 — hero-text-edge-fade (завершено)
+
+- **Задача:** повернути погоджений локальний білий edge-fade під текстом desktop hero.
+- **Змінені файли:** `frontend/src/scss/_product-ux.scss`, `docs/guides/product-ux-foundation.md`, `docs/progress.md`.
+- **Рішення:** псевдоелемент hero створює білий перехід лише зліва направо на desktop: текст має стабільний контраст, а діамант і правий край фото не тонуються. На mobile градієнт вимкнений, бо фото та текст розташовані окремими блоками.
+- **Перевірки:** `npm run build`, `npm test` (5 passed), `npm run test:e2e` (1 passed), `git diff --check`; Playwright screenshots hero на `1440×900` і `390×844`. Вбудований Browser у цій сесії недоступний, застосовано Playwright fallback.
+- **Нові змінні середовища:** немає.
+
 ## 2026-09-14 — product-ux-surface-polish (завершено)
 
 - **Задача:** завершити точкове візуальне узгодження hero, mobile-header і footer після UX-рев’ю.
