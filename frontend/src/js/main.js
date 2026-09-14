@@ -397,6 +397,14 @@ function renderTableRows(reports, tableElement) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
+  const isAdmin = localStorage.getItem("username") === "admin";
+  const isCreateReportPage = window.location.pathname.endsWith("/create-report.html");
+
+  if (isAuthenticated && isAdmin && isCreateReportPage) {
+    window.location.replace("/dashboard.html");
+    return;
+  }
+
   updateHeaderUI(isAuthenticated);
   applyApprovedNavigation(isAuthenticated);
 
