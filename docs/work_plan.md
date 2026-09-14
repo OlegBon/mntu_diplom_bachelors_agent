@@ -12,13 +12,13 @@
 | --- | --- |
 | `/`, `/token` | Залишити; посилити auth/configuration. |
 | `/users/*` | Залишити; обмежити ролі й створити admin/profile UI пізніше. |
-| `/experts/` | Виправити: маршрут не повертає зібраний список. |
-| `GET /diamonds/*` | Залишити; синхронізувати response model із dashboard і створити detail/passport UI. |
-| `POST/PUT/DELETE /diamonds/*` | Виправити: помилкове поле часу, owner/admin RBAC, 404; потім додати create/edit UI. |
+| `/experts/` | Залишити: авторизований список не-admin експертів працює. |
+| `GET /diamonds/*` | Залишити: dashboard-контракт містить `shape` і `cut_grade`; створити detail/passport UI. |
+| `POST/PUT/DELETE /diamonds/*` | Залишити: час записується в секундах, update має owner/admin RBAC, update/delete повертають 404; далі create/edit UI. |
 | `/market/*` | Залишити; прибрати frontend hardcode mappings/ціни та додати admin UI пізніше. |
 | `/statistics/expert-performance` | Залишити після рішення про публічність usernames; додати analytics UI пізніше. |
 
-Повних дублікатів endpoint-ів не знайдено. Окремо прибрати або узгодити: невикористаний `crud.get_diamonds()` та дубльовані frontend API origin/mappings/формулу ціни. `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як зарезервовану SQLAlchemy-модель.
+Повних дублікатів endpoint-ів не знайдено. Невикористаний CRUD-дублікат `crud.get_diamonds()` вилучено. Окремо лишаються дубльовані frontend API origin/mappings/формула ціни. `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як зарезервовану SQLAlchemy-модель.
 
 ### Уже реалізовано
 
@@ -33,8 +33,8 @@
 - [x] Зафіксувати безпечну конфігурацію: `.env.example`, обов’язковий `SECRET_KEY`, явний `DATABASE_URL` або `DB_*`, без production-дефолтів.
 - [x] Прибрати перевірку паролів у відкритому вигляді; seed-користувачі хешуються bcrypt.
 - [x] Усунути розходження актуального `seed_db.py`, legacy `seed_db-start.py` і моделей: seed відтворює всі три схеми, а `ml_results` формалізовано моделлю.
-- [ ] Після окремого дозволу виконати й задокументувати руйнівну перевірку clean seed MariaDB та API smoke-flow.
-- [ ] Виправити `/experts/`, `POST/PUT/DELETE /diamonds/*`, 404-відповіді та owner/admin RBAC; синхронізувати API response models із UI.
+- [x] Виконати clean seed MariaDB та API smoke-flow: bcrypt-login admin і першого експерта, `npm run audit:api` — 10/10.
+- [x] Виправити `/experts/`, `POST/PUT/DELETE /diamonds/*`, 404-відповіді та owner/admin RBAC; синхронізувати API response models із dashboard.
 - [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, detail/passport і редагування звітів.
 - [x] Визначити долю `diamond_analytics.ml_results`: зберігаємо таблицю як зарезервований аналітичний шар, описуємо моделлю та відтворюємо порожньою через локальний seed; API/ML — окрема задача.
 

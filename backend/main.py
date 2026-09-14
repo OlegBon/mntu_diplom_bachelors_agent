@@ -105,7 +105,7 @@ def read_experts(
     current_user: models.Expert = Depends(get_current_user) # Перевірка токена
 ):
     experts = crud.get_active_experts(db)
-    return 
+    return experts
 
 # Ендпоінт "Я" (профіль поточного юзера)
 @app.get("/users/me", response_model=schemas.ExpertBase)
@@ -210,7 +210,12 @@ def update_report(
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user)
 ):
-    return crud.update_diamond_report(db, report_id, update_data)
+    report = crud.get_diamond_report(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Diamond report not found")
+    if current_user.role != "admin" and report.expert_id != current_user.expert_id:
+        raise HTTPException(status_code=403, detail="Only the report owner or an admin can update reports")
+    return crud.update_diamond_report(db, report, update_data)
 
 # Видалення звіту (тільки для адміна)
 @app.delete("/diamonds/{report_id}")
@@ -221,7 +226,10 @@ def delete_report(
 ):
     if current_user.role != 'admin':
         raise HTTPException(status_code=403, detail="Only admins can delete reports")
-    crud.delete_diamond_report(db, report_id)
+    report = crud.get_diamond_report(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Diamond report not found")
+    crud.delete_diamond_report(db, report)
     return {"message": "Report deleted"}
 
 # Статистика експертів

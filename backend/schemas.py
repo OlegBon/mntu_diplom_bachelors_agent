@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime, datetime
+from datetime import datetime
 
 # Схема для створення юзера (з паролем)
 class UserCreate(BaseModel):
@@ -84,9 +84,11 @@ class ExpertStats(BaseModel):
 class DiamondReportSchema(BaseModel):
     report_id: str
     report_date: datetime
+    shape: str
     carat_weight: float
     color_grade: int
     clarity_grade: int
+    cut_grade: int
     price: float
     is_sold: bool
 

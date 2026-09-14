@@ -168,7 +168,9 @@ def create_diamond_report(db: Session, diamond: schemas.DiamondCreate, expert_id
         
         # Дефолтні поля
         is_sold=False,
-        evaluation_time_min=random.randint(5, 40),
+        # The source dataset stores this value in minutes; the OLTP schema uses
+        # seconds, so preserve the same 5–40 minute demo range explicitly.
+        evaluation_time_sec=random.randint(5, 40) * 60,
         report_notes_length=0,
         report_sentiment=0
     )
@@ -178,27 +180,22 @@ def create_diamond_report(db: Session, diamond: schemas.DiamondCreate, expert_id
     db.refresh(db_diamond)
     return db_diamond
 
-# Функція для отримання список з пагінацією
-def get_diamonds(db: Session, skip: int = 0, limit: int = 20):
-    return db.query(models.DiamondReport).offset(skip).limit(limit).all()
-
 # Функція для оновлення звіту
-def update_diamond_report(db: Session, report_id: str, updates: schemas.DiamondUpdate):
-    db_report = db.query(models.DiamondReport).filter(models.DiamondReport.report_id == report_id).first()
-    if db_report:
-        for key, value in updates.dict(exclude_unset=True).items():
-            setattr(db_report, key, value)
-        db.commit()
-        db.refresh(db_report)
-    return db_report
+def update_diamond_report(
+    db: Session,
+    report: models.DiamondReport,
+    updates: schemas.DiamondUpdate,
+):
+    for key, value in updates.dict(exclude_unset=True).items():
+        setattr(report, key, value)
+    db.commit()
+    db.refresh(report)
+    return report
 
 # Функція для видалення звіту
-def delete_diamond_report(db: Session, report_id: str):
-    db_report = db.query(models.DiamondReport).filter(models.DiamondReport.report_id == report_id).first()
-    if db_report:
-        db.delete(db_report)
-        db.commit()
-    return db_report
+def delete_diamond_report(db: Session, report: models.DiamondReport):
+    db.delete(report)
+    db.commit()
 
 # Функція для отримання статистики гемологів (SQL GROUP BY)
 from sqlalchemy import func
