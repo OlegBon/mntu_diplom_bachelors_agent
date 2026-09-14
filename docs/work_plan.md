@@ -54,7 +54,7 @@
 Ціль етапу — завершити локальний workflow експертного звіту до переходу до
 перевіреного ML та PostgreSQL/deployment.
 
-- [ ] [010 — Контракт предметної області звіту](./backlog/010-report-domain-contract.md): камінь, звіт, продаж, медіа, паспорт, RBAC і API-контракти.
+- [x] [010 — Контракт предметної області звіту](./decisions/001-report-domain-contract.md): камінь, звіт, продаж, медіа, паспорт, RBAC, API-контракти та план backfill.
 - [ ] [020 — Основа версіонованих міграцій](./backlog/020-migration-foundation.md): Alembic для MariaDB до великих змін схеми.
 - [ ] [030 — UX і візуальна основа](./backlog/030-product-ux-and-visual-foundation.md): меню, дизайн-система, responsive-оболонка та редизайн.
 - [ ] [040 — Ядро звіту й довідники](./backlog/040-report-core-and-reference-data.md): стани, дані каменю, валідація й серверні mappings.
