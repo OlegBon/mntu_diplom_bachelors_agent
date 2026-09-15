@@ -4,7 +4,7 @@
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), детальна карта таблиць і зв’язків — у [db-schema.md](./db-schema.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 15 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Ядро звіту застосоване revision `0002_report_core`, а revision `0003_media_assets` додає приватні файли звіту з метаданими й RBAC. Чинний frontend поки продовжує працювати з compatibility API `/diamonds/*` до задач UI. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
+> **Статус на 15 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`, `0003_media_assets` і `0004_report_wizard` формують ядро, приватні файли та authoring-вимоги звіту. Dashboard і wizard використовують приватний `/reports`; compatibility API `/diamonds/*` лишається лише для ще не перенесених detail/edit сценаріїв. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
 
 ---
 
@@ -126,8 +126,8 @@ Backend запускають із кореня репозиторію через
 
 | База | Призначення | Поточний стан |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, compatibility `diamond_reports`, `stones`, `report_events`, `stone_valuations`, `media_assets` і lifecycle-колонки | Revisions `0002_report_core` і `0003_media_assets` застосовано локально |
-| `diamond_market` | `grade_mappings`, legacy demo-індекс і `reference_values` | Revision `0002_report_core` застосовано локально |
+| `diamond_oltp` | `experts`, compatibility `diamond_reports`, `stones`, `report_events`, `stone_valuations`, `media_assets` і lifecycle-колонки | Revisions до `0004_report_wizard` застосовано локально |
+| `diamond_market` | `grade_mappings`, legacy demo-індекс і `reference_values` | `0004_report_wizard` доповнює geometry-довідники |
 | `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 
 Під час створення звіту `crud.create_diamond_report()`:
@@ -137,6 +137,13 @@ Backend запускають із кореня репозиторію через
 3. обчислює `cut_grade` як найгіршу з оцінок proportions, polish і symmetry;
 4. за відсутності ціни викликає `MLService.predict_price()`;
 5. зберігає звіт у `diamond_oltp`.
+
+Новий wizard створює звіт через `POST /reports`: сервер призначає остаточний
+`report_id`, зберігає окрему `examination_date` і встановлює
+`market_status=not_for_sale`. `GET /reports/next-id` лише показує наступний
+номер без резервування, а `POST /reports/preview` повертає розрахункові IDC
+grades і необов'язковий детермінований demo-прогноз. Такий прогноз не є
+`price` і не зберігається як фінансова величина звіту.
 
 `MLService` бере останній ринковий індекс з `diamond_market` і застосовує евристичні коефіцієнти. Випадкова варіація означає, що результат не є відтворюваним чи навченим ML-прогнозом; це треба змінити перед аналітичним або production-використанням. Новий `StoneValuation` не отримує автоматично старий `price`: суми матимуть тип, валюту, джерело і дату за [ADR-002](./decisions/002-financial-calculation-contract.md).
 

@@ -1,13 +1,14 @@
 # Поточна доменна логіка та workflow звіту
 
-**Стан коду:** 14 вересня 2026 року  
+**Стан коду:** 15 вересня 2026 року
 **Для чого читати:** щоб зрозуміти фактичну поведінку локального MVP перед
 роботою зі звітами, API або frontend.
 
 > Це guide фактичного runtime-стану MariaDB. Приватна модель
-> `Stone → Report → ReportEvent` застосована revision `0002_report_core`.
-> Dashboard використовує приватний `/reports`; wizard і private detail ще
-> використовують compatibility-шар до наступних UI-зрізів.
+> `Stone → Report → ReportEvent` застосована revision `0002_report_core`, а
+> `0004_report_wizard` додає authoring-поле й geometry-довідники. Dashboard і
+> wizard використовують приватний `/reports`; private detail лишається
+> наступним UI-зрізом.
 > Повний контракт описано в [ADR-001](../decisions/001-report-domain-contract.md)
 > і плані перенесення [ADR-003](../decisions/003-report-core-migration-plan.md).
 
@@ -17,7 +18,7 @@
 
 | Роль | Фактичні можливості |
 | --- | --- |
-| `gemologist` | Вхід, створення первинного legacy-звіту, редагування власного legacy-звіту в межах чинної update-схеми. |
+| `gemologist` | Вхід і створення власної чернетки через приватний `/reports`; legacy редагування лишається compatibility-функцією до 080. |
 | `admin` | Перегляд користувачів, керування користувачами й ринковою ціною, редагування/видалення legacy-звітів; не створює первинні звіти. |
 
 `POST /token` повертає JWT. Frontend зберігає токен у `localStorage` і додає

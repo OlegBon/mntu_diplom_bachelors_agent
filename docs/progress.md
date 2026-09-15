@@ -4,6 +4,16 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-15 — report-creation-wizard (реалізовано, очікує ручного smoke)
+
+- **Задача:** перевести форму «Новий звіт» на трикроковий wizard із приватним контрактом `POST /reports`, серверними довідниками, live IDC preview, валідацією та необов'язковими приватними вкладеннями.
+- **Змінені файли:** `backend/{crud,main,models,schemas}.py`, `alembic/versions/0004_report_wizard.py`, `frontend/src/{pug/pages/create-report.pug,scss/{main,_ui-primitives}.scss,js/{main.js,modules/{api,report-wizard}.js}}`, `tests/{api/test_report_domain.py,unit/test_migration_foundation.py}`, `frontend/tests/{auth-and-api,page-dom}.test.mjs`, `frontend/tests/e2e/report-wizard.spec.mjs`, `docs/{architecture,db-schema,work_plan,progress}.md`, `docs/backlog/070-report-creation-wizard.md`.
+- **Рішення:** `GET /reports/next-id` показує наступний номер без резервування; остаточний ID призначає `POST /reports`. Додано `examination_date`, geometry-довідники, server-side preview та детермінований `demo_price_usd`. Позначка `d` означає демонстраційний прогноз, а не ринкову, експертну чи продажну ціну; це значення не зберігається у фінансовому контракті звіту. Нова чернетка отримує `market_status=not_for_sale`; керування продажем перенесено до 080. Медіа після створення draft завантажуються через приватний API й необов'язкові.
+- **MariaDB:** за погодженням застосовано `0004_report_wizard` до локальної MariaDB. Seed, backfill і downgrade не запускалися.
+- **Перевірки:** `python -m pytest tests/api/test_report_domain.py` — 4 passed; `npm test` — 9 passed; `npx playwright test -c playwright.config.mjs tests/e2e/report-wizard.spec.mjs` — 1 passed; `git diff --check`. Playwright мокував API й не змінював MariaDB.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** потрібен один ручний локальний smoke: gemologist заповнює форму й зберігає реальний draft без медіа, після чого перевіряє redirect на dashboard, появу запису та наступний preview ID. Private detail/edit, зміну commercial status, transitions і public passport не реалізовано.
+
 ## 2026-09-15 — 060-reports-dashboard (завершено)
 
 - **Задача:** перевести dashboard із mock/legacy `/diamonds/` на робочий приватний список звітів.

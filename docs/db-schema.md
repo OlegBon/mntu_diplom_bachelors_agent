@@ -1,7 +1,7 @@
 # Схема бази даних
 
 Документ описує фактичну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0003_media_assets`. Це карта даних для розробки, API та
+Alembic revision `0004_report_wizard`. Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -183,6 +183,7 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 | `0001_initial_schema` | Початкові таблиці трьох логічних баз. |
 | `0002_report_core` | `Stone`, `ReportEvent`, `StoneValuation`, `reference_values`, lifecycle-колонки та backfill legacy reports. |
 | `0003_media_assets` | `media_assets` для приватних файлів і метаданих; без backfill legacy image-path полів. |
+| `0004_report_wizard` | `diamond_reports.examination_date` і довідники `girdle_thickness` / `culet_size` для майстра. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за
