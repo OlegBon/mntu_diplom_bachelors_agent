@@ -5,7 +5,7 @@ block content
         .page-header
             div
                 h1.page-title Всі звіти
-                p.page-subtitle Робочий список експертних звітів
+                p.page-subtitle Управління сертифікатами та оцінками
             a#create-report-action.btn.btn-primary(href="/create-report.html") Новий звіт
 
         .filters-container
@@ -15,38 +15,78 @@ block content
                     input#report-search(type="search" placeholder="Пошук за номером звіту" autocomplete="off")
                 button#toggle-filters.btn.btn-outline(type="button" aria-expanded="false" aria-controls="advanced-filters") Фільтри
                 .filter-control.filter-control--quick
-                    label(for="report-sort") Сортування
+                    label.sr-only(for="quick-report-status") Статус звіту
+                    select#quick-report-status.form-select
+                        option(value="") Усі статуси звіту
+                        option(value="draft") Чернетка
+                        option(value="review") На перевірці
+                        option(value="issued") Видано
+                        option(value="void") Анульовано
+                .filter-control.filter-control--quick
+                    label.sr-only(for="quick-market-status") Статус продажу
+                    select#quick-market-status.form-select
+                        option(value="") Усі статуси продажу
+                        option(value="not_for_sale") Не продається
+                        option(value="available") Доступний
+                        option(value="reserved") Зарезервовано
+                        option(value="sold") Продано
+                        option(value="withdrawn") Знято з продажу
+                .filter-control.filter-control--quick
+                    label.sr-only(for="report-sort") Сортування
                     select#report-sort.form-select
                         option(value="report_date_desc") Спочатку нові
                         option(value="report_date_asc") Спочатку старі
-                        option(value="report_id_asc") Номер: за зростанням
-                        option(value="report_id_desc") Номер: за спаданням
-                        option(value="carat_desc") Вага: від більшої
-                        option(value="carat_asc") Вага: від меншої
+                        option(value="price_desc") Ціна: від більшої
+                        option(value="price_asc") Ціна: від меншої
+                #expert-filter-wrap.filter-control.filter-control--quick(hidden)
+                    label.sr-only(for="expert-filter") Експерт
+                    select#expert-filter.form-select
+                        option(value="") Усі експерти
 
             #advanced-filters.advanced-filters
                 form#dashboard-filters.filters-grid
                     .filter-item
-                        label(for="report-status") Стан звіту
-                        select#report-status.form-select(name="report_status")
-                            option(value="") Усі стани
-                            option(value="draft") Чернетка
-                            option(value="review") На перевірці
-                            option(value="issued") Видано
-                            option(value="void") Анульовано
+                        label(for="shape-filter") Форма (Shape)
+                        select#shape-filter.form-select(name="shape")
+                            option(value="") Будь-яка
+                            option(value="Round") Round
+                            option(value="Princess") Princess
+                            option(value="Oval") Oval
+                            option(value="Emerald") Emerald
+                            option(value="Cushion") Cushion
+                            option(value="Radiant") Radiant
+                            option(value="Pear") Pear
+                            option(value="Heart") Heart
+                            option(value="Marquise") Marquise
+                            option(value="Asscher") Asscher
                     .filter-item
-                        label(for="market-status") Ринковий стан
-                        select#market-status.form-select(name="market_status")
-                            option(value="") Усі
-                            option(value="not_for_sale") Не продається
-                            option(value="available") Доступний
-                            option(value="reserved") Зарезервовано
-                            option(value="sold") Продано
-                            option(value="withdrawn") Знято з продажу
-                    #expert-filter-wrap.filter-item(hidden)
-                        label(for="expert-filter") Експерт
-                        select#expert-filter.form-select(name="expert_id")
-                            option(value="") Усі експерти
+                        label Вага (Carat)
+                        .range-inputs
+                            input#carat-min.form-control(type="number" name="carat_min" min="0" step="0.01" placeholder="Від")
+                            input#carat-max.form-control(type="number" name="carat_max" min="0" step="0.01" placeholder="До")
+                    .filter-item
+                        label(for="color-filter") Колір (Color)
+                        select#color-filter.form-select(name="color_grade")
+                            option(value="") Будь-який
+                    .filter-item
+                        label(for="clarity-filter") Чистота (Clarity)
+                        select#clarity-filter.form-select(name="clarity_grade")
+                            option(value="") Будь-яка
+                    .filter-item
+                        label(for="cut-filter") Якість (Cut)
+                        select#cut-filter.form-select(name="cut_grade")
+                            option(value="") Будь-яка
+                    .filter-item
+                        label Ціна (USD, demo)
+                        .range-inputs
+                            input#price-min.form-control(type="number" name="price_min" min="0" step="0.01" placeholder="Від")
+                            input#price-max.form-control(type="number" name="price_max" min="0" step="0.01" placeholder="До")
+                    .filter-item
+                        label(for="date-from") Дата створення: від
+                        input#date-from.form-control(type="date" name="date_from")
+                    .filter-item
+                        label(for="date-to") Дата створення: до
+                        input#date-to.form-control(type="date" name="date_to")
                     .filter-actions
                         button.btn.btn-primary.btn-sm(type="submit") Застосувати
                         button.btn.btn-outline.btn-sm(type="reset") Очистити
@@ -59,15 +99,26 @@ block content
             table.data-table
                 thead
                     tr
-                        th ID звіту
-                        th Дата
-                        th Форма
-                        th Вага (ct)
-                        th Колір
-                        th Чистота
-                        th Cut
-                        th Ціна
-                        th Статус
+                        th
+                            button.table-sort(type="button" data-sort-key="report_id" aria-label="Сортувати за ID звіту") ID звіту
+                        th
+                            button.table-sort(type="button" data-sort-key="report_date" aria-label="Сортувати за датою") Дата
+                        th
+                            button.table-sort(type="button" data-sort-key="shape" aria-label="Сортувати за формою") Форма
+                        th
+                            button.table-sort(type="button" data-sort-key="carat" aria-label="Сортувати за вагою") Вага (ct)
+                        th
+                            button.table-sort(type="button" data-sort-key="color" aria-label="Сортувати за кольором") Колір
+                        th
+                            button.table-sort(type="button" data-sort-key="clarity" aria-label="Сортувати за чистотою") Чистота
+                        th
+                            button.table-sort(type="button" data-sort-key="cut" aria-label="Сортувати за Cut") Cut
+                        th
+                            button.table-sort(type="button" data-sort-key="price" aria-label="Сортувати за ціною") Ціна (USD)
+                        th
+                            button.table-sort(type="button" data-sort-key="report_status" aria-label="Сортувати за статусом звіту") Статус звіту
+                        th
+                            button.table-sort(type="button" data-sort-key="market_status" aria-label="Сортувати за статусом продажу") Статус продажу
                         th Дії
                 tbody
 

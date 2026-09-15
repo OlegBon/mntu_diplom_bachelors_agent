@@ -1,6 +1,7 @@
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session, joinedload
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timedelta, timezone
+from decimal import Decimal
 import random
 
 from . import models, schemas
@@ -95,6 +96,16 @@ def get_report_domain_list(
     current_user: models.Expert,
     status: str | None,
     market_status: str | None,
+    shape: str | None,
+    color_grade: int | None,
+    clarity_grade: int | None,
+    cut_grade: int | None,
+    carat_min: Decimal | None,
+    carat_max: Decimal | None,
+    price_min: Decimal | None,
+    price_max: Decimal | None,
+    date_from: date | None,
+    date_to: date | None,
     expert_id: int | None,
     search: str | None,
     sort: schemas.ReportListSort,
@@ -115,6 +126,26 @@ def get_report_domain_list(
         query = query.filter(models.DiamondReport.status == status)
     if market_status:
         query = query.filter(models.Stone.market_status == market_status)
+    if shape:
+        query = query.filter(models.Stone.shape == shape.strip())
+    if color_grade is not None:
+        query = query.filter(models.Stone.color_grade == color_grade)
+    if clarity_grade is not None:
+        query = query.filter(models.Stone.clarity_grade == clarity_grade)
+    if cut_grade is not None:
+        query = query.filter(models.DiamondReport.system_cut_grade == cut_grade)
+    if carat_min is not None:
+        query = query.filter(models.Stone.carat_weight >= carat_min)
+    if carat_max is not None:
+        query = query.filter(models.Stone.carat_weight <= carat_max)
+    if price_min is not None:
+        query = query.filter(models.DiamondReport.price >= price_min)
+    if price_max is not None:
+        query = query.filter(models.DiamondReport.price <= price_max)
+    if date_from is not None:
+        query = query.filter(models.DiamondReport.report_date >= datetime.combine(date_from, time.min))
+    if date_to is not None:
+        query = query.filter(models.DiamondReport.report_date < datetime.combine(date_to + timedelta(days=1), time.min))
     if search:
         query = query.filter(models.DiamondReport.report_id.ilike(f"%{search.strip()}%"))
 
@@ -123,8 +154,22 @@ def get_report_domain_list(
         "report_date_asc": (asc(models.DiamondReport.report_date), asc(models.DiamondReport.report_id)),
         "report_id_asc": (asc(models.DiamondReport.report_id),),
         "report_id_desc": (desc(models.DiamondReport.report_id),),
+        "shape_asc": (asc(models.Stone.shape), asc(models.DiamondReport.report_id)),
+        "shape_desc": (desc(models.Stone.shape), desc(models.DiamondReport.report_id)),
         "carat_desc": (desc(models.Stone.carat_weight), desc(models.DiamondReport.report_id)),
         "carat_asc": (asc(models.Stone.carat_weight), asc(models.DiamondReport.report_id)),
+        "color_asc": (asc(models.Stone.color_grade), asc(models.DiamondReport.report_id)),
+        "color_desc": (desc(models.Stone.color_grade), desc(models.DiamondReport.report_id)),
+        "clarity_asc": (asc(models.Stone.clarity_grade), asc(models.DiamondReport.report_id)),
+        "clarity_desc": (desc(models.Stone.clarity_grade), desc(models.DiamondReport.report_id)),
+        "cut_asc": (asc(models.DiamondReport.system_cut_grade), asc(models.DiamondReport.report_id)),
+        "cut_desc": (desc(models.DiamondReport.system_cut_grade), desc(models.DiamondReport.report_id)),
+        "price_desc": (desc(models.DiamondReport.price), desc(models.DiamondReport.report_id)),
+        "price_asc": (asc(models.DiamondReport.price), asc(models.DiamondReport.report_id)),
+        "report_status_asc": (asc(models.DiamondReport.status), asc(models.DiamondReport.report_id)),
+        "report_status_desc": (desc(models.DiamondReport.status), desc(models.DiamondReport.report_id)),
+        "market_status_asc": (asc(models.Stone.market_status), asc(models.DiamondReport.report_id)),
+        "market_status_desc": (desc(models.Stone.market_status), desc(models.DiamondReport.report_id)),
     }
     total = query.count()
     reports = (

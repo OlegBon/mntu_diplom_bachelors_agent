@@ -100,12 +100,12 @@ def test_report_dashboard_list_paginates_searches_filters_and_scopes_visibility(
     admin_headers = auth_headers(client, experts["admin"].username)
 
     first_payload = report_payload()
-    first_payload["stone"]["market_status"] = "available"
+    first_payload["stone"].update({"market_status": "available", "shape": "Oval", "color_grade": 2, "clarity_grade": 3})
     first = client.post("/reports", json=first_payload, headers=owner_headers)
     assert first.status_code == 200
 
     second_payload = report_payload()
-    second_payload["stone"]["market_status"] = "sold"
+    second_payload["stone"].update({"market_status": "sold", "shape": "Round", "color_grade": 1, "clarity_grade": 1})
     second = client.post("/reports", json=second_payload, headers=owner_headers)
     assert second.status_code == 200
 
@@ -131,6 +131,14 @@ def test_report_dashboard_list_paginates_searches_filters_and_scopes_visibility(
     assert searched.json()["total"] == 1
     assert searched.json()["items"][0]["report_id"] == first.json()["report_id"]
 
+    advanced = client.get(
+        "/reports?shape=Oval&color_grade=2&clarity_grade=3&sort=shape_asc",
+        headers=owner_headers,
+    )
+    assert advanced.status_code == 200
+    assert advanced.json()["total"] == 1
+    assert advanced.json()["items"][0]["report_id"] == first.json()["report_id"]
+
     admin_filtered = client.get(
         f"/reports?expert_id={experts['other'].expert_id}", headers=admin_headers
     )
@@ -139,3 +147,4 @@ def test_report_dashboard_list_paginates_searches_filters_and_scopes_visibility(
     assert admin_filtered.json()["items"][0]["report_id"] == other.json()["report_id"]
 
     assert client.get("/reports?page_size=101", headers=owner_headers).status_code == 422
+    assert client.get("/reports?price_min=-1", headers=owner_headers).status_code == 422

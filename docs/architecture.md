@@ -108,7 +108,7 @@ Backend запускають із кореня репозиторію через
 | Група | Призначення |
 | --- | --- |
 | `/diamonds/` | Тимчасовий compatibility API для чинних dashboard і create-form. |
-| `/reports` | Приватний API ядра: draft, stone, lifecycle, події, RBAC і server-paginated dashboard list (`items`, `total`, сторінки, пошук і allow-list фільтрів/сортувань). Для локального demo-набору список також повертає legacy `price`, який UI маркує `USD … d`; це не ринкова чи експертна ціна. |
+| `/reports` | Приватний API ядра: draft, stone, lifecycle, події, RBAC і server-paginated dashboard list (`items`, `total`, сторінки, пошук, фільтри 4C/форми/діапазонів/дат і allow-list сортувань). Для локального demo-набору список також повертає legacy `price`, який UI маркує `USD … d`; це не ринкова чи експертна ціна. |
 | `/reports/{report_id}/media` | Приватні upload, список, читання й видалення вкладень owner/admin; без public serving. |
 | `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
 | `/users/`, `/users/me`, `/experts/` | Керування користувачами, профіль поточного користувача та перелік експертів. |

@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import timedelta
+from datetime import date, timedelta
+from decimal import Decimal
 from jose import JWTError, jwt
 
 from . import crud, database, media_storage, models, schemas, security
@@ -125,6 +126,16 @@ def read_report_domain_list(
     page_size: int = Query(default=25, ge=1, le=100),
     report_status: Optional[schemas.ReportStatus] = None,
     market_status: Optional[schemas.MarketStatus] = None,
+    shape: Optional[str] = Query(default=None, min_length=1, max_length=50),
+    color_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    clarity_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    cut_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    carat_min: Optional[Decimal] = Query(default=None, ge=0),
+    carat_max: Optional[Decimal] = Query(default=None, ge=0),
+    price_min: Optional[Decimal] = Query(default=None, ge=0),
+    price_max: Optional[Decimal] = Query(default=None, ge=0),
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
     expert_id: Optional[int] = Query(default=None, ge=1),
     search: Optional[str] = Query(default=None, min_length=1, max_length=20),
     sort: schemas.ReportListSort = "report_date_desc",
@@ -136,6 +147,16 @@ def read_report_domain_list(
         current_user=current_user,
         status=report_status,
         market_status=market_status,
+        shape=shape,
+        color_grade=color_grade,
+        clarity_grade=clarity_grade,
+        cut_grade=cut_grade,
+        carat_min=carat_min,
+        carat_max=carat_max,
+        price_min=price_min,
+        price_max=price_max,
+        date_from=date_from,
+        date_to=date_to,
         expert_id=expert_id,
         search=search,
         sort=sort,

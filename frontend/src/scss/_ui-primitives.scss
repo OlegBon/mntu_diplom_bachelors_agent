@@ -152,6 +152,17 @@
     label { color: variables.$secondary-color; font-size: 0.8rem; font-weight: 600; }
   }
 
+  .filter-control--quick { min-width: 9.5rem; }
+
+  .filters-bar {
+    align-items: end;
+    gap: 0.75rem;
+  }
+
+  .advanced-filters .filters-grid {
+    gap: 1rem;
+  }
+
   .filter-actions {
     display: flex;
     flex-wrap: wrap;
@@ -172,6 +183,11 @@
   .status-badge--review { background: variables.$surface-subtle; color: variables.$primary-hover; }
   .status-badge--issued { background: variables.$success-surface; color: variables.$success-text; }
   .status-badge--void { background: variables.$error-surface; color: variables.$error-color; }
+  .status-badge--market-not_for_sale { background: variables.$surface-muted; color: variables.$secondary-color; }
+  .status-badge--market-available { background: variables.$success-surface; color: variables.$success-text; }
+  .status-badge--market-reserved { background: variables.$surface-subtle; color: variables.$primary-hover; }
+  .status-badge--market-sold { background: variables.$surface-muted; color: variables.$text-strong; }
+  .status-badge--market-withdrawn { background: variables.$error-surface; color: variables.$error-color; }
 
   .report-price { position: relative; width: fit-content; }
   .report-price__toggle {
@@ -210,6 +226,26 @@
   .report-price__warning { margin-top: 0.5rem; color: variables.$secondary-color; }
   .report-price__missing { color: variables.$secondary-color; }
   .dashboard-demo-note { margin: 1rem 0 0; color: variables.$secondary-color; font-size: 0.875rem; }
+
+  .table-sort {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: left;
+    text-transform: inherit;
+    cursor: pointer;
+
+    &:hover, &:focus-visible { color: variables.$primary-color; }
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+  }
+
+  .date-primary,
+  .date-secondary { display: block; white-space: nowrap; }
+  .date-primary { font-size: 0.875rem; }
+  .date-secondary { color: variables.$secondary-color; font-size: 0.75rem; }
 
   .pagination .page-btn {
     width: auto;
@@ -264,6 +300,14 @@
     text-align: left;
 
     &:disabled { cursor: not-allowed; opacity: 0.55; }
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-page {
+    .filter-control--quick { min-width: 0; }
+    .filters-bar .filter-control--quick { flex: 1 1 10rem; }
+    .advanced-filters { padding: 1rem; }
   }
 }
 

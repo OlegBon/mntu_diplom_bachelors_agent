@@ -136,7 +136,18 @@ Origin = Literal["unknown", "natural", "lab_grown", "other"]
 TreatmentStatus = Literal["not_assessed", "none_detected", "disclosed", "confirmed"]
 IdentificationStatus = Literal["preliminary", "confirmed", "inconclusive"]
 MarketStatus = Literal["not_for_sale", "available", "reserved", "sold", "withdrawn"]
-ReportListSort = Literal["report_date_desc", "report_date_asc", "report_id_asc", "report_id_desc", "carat_desc", "carat_asc"]
+ReportListSort = Literal[
+    "report_date_desc", "report_date_asc",
+    "report_id_asc", "report_id_desc",
+    "shape_asc", "shape_desc",
+    "carat_desc", "carat_asc",
+    "color_asc", "color_desc",
+    "clarity_asc", "clarity_desc",
+    "cut_asc", "cut_desc",
+    "price_desc", "price_asc",
+    "report_status_asc", "report_status_desc",
+    "market_status_asc", "market_status_desc",
+]
 
 
 class StoneDraft(BaseModel):

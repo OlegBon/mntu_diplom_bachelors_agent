@@ -4,6 +4,8 @@ import { logout } from "./auth.js";
 const PAGE_SIZE = 25;
 const DEFAULT_SORT = "report_date_desc";
 const DATASET_PERIOD = "01.01.2023–31.12.2025";
+const REPORT_STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
+const MARKET_STATUS_LABELS = { not_for_sale: "Не продається", available: "Доступний", reserved: "Зарезервовано", sold: "Продано", withdrawn: "Знято" };
 
 function createElement(tagName, className, textContent) {
   const element = document.createElement(tagName);
@@ -12,8 +14,12 @@ function createElement(tagName, className, textContent) {
   return element;
 }
 
-function formatDate(value) {
-  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(value));
+function formatDateTime(value) {
+  const date = new Date(value);
+  return {
+    date: new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(date),
+    time: new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit" }).format(date),
+  };
 }
 
 function formatDemoPrice(value) {
@@ -32,20 +38,33 @@ function getUrlState() {
     search: params.get("search") || "",
     report_status: params.get("report_status") || "",
     market_status: params.get("market_status") || "",
-    sort: params.get("sort") || DEFAULT_SORT,
     expert_id: params.get("expert_id") || "",
+    sort: params.get("sort") || DEFAULT_SORT,
+    shape: params.get("shape") || "",
+    color_grade: params.get("color_grade") || "",
+    clarity_grade: params.get("clarity_grade") || "",
+    cut_grade: params.get("cut_grade") || "",
+    carat_min: params.get("carat_min") || "",
+    carat_max: params.get("carat_max") || "",
+    price_min: params.get("price_min") || "",
+    price_max: params.get("price_max") || "",
+    date_from: params.get("date_from") || "",
+    date_to: params.get("date_to") || "",
   };
 }
 
 function updateUrl(state) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(state)) {
-    if (value && !(key === "page" && Number(value) === 1) && !(key === "sort" && value === DEFAULT_SORT)) {
-      params.set(key, String(value));
-    }
+    if (value && !(key === "page" && Number(value) === 1) && !(key === "sort" && value === DEFAULT_SORT)) params.set(key, String(value));
   }
   const query = params.toString();
   window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+}
+
+function closeOverlays() {
+  for (const menu of document.querySelectorAll(".report-actions__menu:not([hidden]), .report-price__popover:not([hidden])")) menu.hidden = true;
+  for (const toggle of document.querySelectorAll(".report-actions__toggle[aria-expanded='true'], .report-price__toggle[aria-expanded='true']")) toggle.setAttribute("aria-expanded", "false");
 }
 
 function renderActions(reportId) {
@@ -63,10 +82,10 @@ function renderActions(reportId) {
     item.title = "Буде доступно після реалізації приватного перегляду звіту";
     menu.append(item);
   }
-  toggle.addEventListener("click", () => {
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
     const isOpen = menu.hidden;
-    for (const openedMenu of document.querySelectorAll(".report-actions__menu:not([hidden])")) openedMenu.hidden = true;
-    for (const openedToggle of document.querySelectorAll(".report-actions__toggle[aria-expanded='true']")) openedToggle.setAttribute("aria-expanded", "false");
+    closeOverlays();
     menu.hidden = !isOpen;
     toggle.setAttribute("aria-expanded", String(isOpen));
   });
@@ -75,36 +94,26 @@ function renderActions(reportId) {
 }
 
 function renderPrice(report) {
-  if (report.price === null || report.price === undefined) {
-    return createElement("span", "report-price__missing", "—");
-  }
+  if (report.price === null || report.price === undefined) return createElement("span", "report-price__missing", "—");
   const wrapper = createElement("div", "report-price");
   const toggle = createElement("button", "report-price__toggle");
   toggle.type = "button";
   toggle.setAttribute("aria-label", `Пояснення demo-ціни звіту ${report.report_id}`);
   toggle.setAttribute("aria-expanded", "false");
-  toggle.append(
-    document.createTextNode(`USD ${formatDemoPrice(report.price)} `),
-    createElement("sup", "report-price__indicator", "d"),
-  );
+  toggle.append(document.createTextNode(`USD ${formatDemoPrice(report.price)} `), createElement("sup", "report-price__indicator", "d"));
   const popover = createElement("div", "report-price__popover");
   popover.hidden = true;
-  const details = [
-    ["Тип", "Demo-значення"],
-    ["Джерело", "diamonds_dataset.csv"],
-    ["Дата фіксації", formatDate(report.report_date)],
-    ["Період набору", DATASET_PERIOD],
-  ];
-  for (const [label, value] of details) {
+  const date = formatDateTime(report.report_date);
+  for (const [label, value] of [["Тип", "Demo-значення"], ["Джерело", "diamonds_dataset.csv"], ["Дата фіксації", date.date], ["Період набору", DATASET_PERIOD]]) {
     const row = createElement("p", "report-price__detail");
     row.append(createElement("strong", "", `${label}: `), document.createTextNode(value));
     popover.append(row);
   }
   popover.append(createElement("p", "report-price__warning", "Не є актуальним ринковим котируванням."));
-  toggle.addEventListener("click", () => {
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
     const isOpen = popover.hidden;
-    for (const openedPopover of document.querySelectorAll(".report-price__popover:not([hidden])")) openedPopover.hidden = true;
-    for (const openedToggle of document.querySelectorAll(".report-price__toggle[aria-expanded='true']")) openedToggle.setAttribute("aria-expanded", "false");
+    closeOverlays();
     popover.hidden = !isOpen;
     toggle.setAttribute("aria-expanded", String(isOpen));
   });
@@ -118,6 +127,14 @@ function makeMappingLookup(mappings) {
   return (category, value) => lookup.get(`${category}:${value}`) || String(value ?? "—");
 }
 
+function populateGradeFilter(select, category, mappings) {
+  for (const mapping of mappings.filter((item) => item.category === category)) {
+    const option = createElement("option", "", mapping.grade_label);
+    option.value = String(mapping.grade_value);
+    select.append(option);
+  }
+}
+
 function createBadge(value, kind) {
   return createElement("span", `status-badge status-badge--${kind}`, value);
 }
@@ -126,8 +143,17 @@ function renderRows(tbody, reports, labelFor) {
   tbody.replaceChildren();
   for (const report of reports) {
     const row = document.createElement("tr");
-    const plainValues = [report.report_id, formatDate(report.report_date), report.stone.shape, report.stone.carat_weight];
-    for (const value of plainValues) row.append(createElement("td", "", value));
+    const idCell = document.createElement("td");
+    const idLink = createElement("a", "id-link", report.report_id);
+    idLink.href = `/report-detail.html?id=${encodeURIComponent(report.report_id)}`;
+    idLink.title = "Приватний перегляд звіту буде додано в задачі 080";
+    idCell.append(idLink);
+    row.append(idCell);
+    const dateCell = document.createElement("td");
+    const date = formatDateTime(report.report_date);
+    dateCell.append(createElement("strong", "date-primary", date.date), createElement("span", "date-secondary", date.time));
+    row.append(dateCell);
+    for (const value of [report.stone.shape, report.stone.carat_weight]) row.append(createElement("td", "", value));
     row.append(createElement("td", "", labelFor("color", report.stone.color_grade)));
     row.append(createElement("td", "", labelFor("clarity", report.stone.clarity_grade)));
     const cutCell = document.createElement("td");
@@ -136,9 +162,12 @@ function renderRows(tbody, reports, labelFor) {
     const priceCell = document.createElement("td");
     priceCell.append(renderPrice(report));
     row.append(priceCell);
-    const statusCell = document.createElement("td");
-    statusCell.append(createBadge(report.status, report.status));
-    row.append(statusCell);
+    const reportStatusCell = document.createElement("td");
+    reportStatusCell.append(createBadge(REPORT_STATUS_LABELS[report.status] || report.status, report.status));
+    row.append(reportStatusCell);
+    const marketStatusCell = document.createElement("td");
+    marketStatusCell.append(createBadge(MARKET_STATUS_LABELS[report.stone.market_status] || report.stone.market_status, `market-${report.stone.market_status}`));
+    row.append(marketStatusCell);
     const actionsCell = document.createElement("td");
     actionsCell.append(renderActions(report.report_id));
     row.append(actionsCell);
@@ -163,6 +192,10 @@ function renderPagination(container, page, totalPages, onPageChange) {
   container.append(makeButton("Наступна", page + 1, page === totalPages));
 }
 
+function toggleSort(currentSort, key) {
+  return currentSort === `${key}_asc` ? `${key}_desc` : `${key}_asc`;
+}
+
 export async function initDashboard() {
   const root = document.querySelector("[data-dashboard]");
   if (!root) return;
@@ -173,30 +206,38 @@ export async function initDashboard() {
   const form = root.querySelector("#dashboard-filters");
   const searchInput = root.querySelector("#report-search");
   const sortSelect = root.querySelector("#report-sort");
+  const reportStatusSelect = root.querySelector("#quick-report-status");
+  const marketStatusSelect = root.querySelector("#quick-market-status");
+  const expertSelect = root.querySelector("#expert-filter");
   const toggleFilters = root.querySelector("#toggle-filters");
   const filtersPanel = root.querySelector("#advanced-filters");
-  if (!token || !tbody || !pagination || !stateNode || !form || !searchInput || !sortSelect) return;
+  if (!token || !tbody || !pagination || !stateNode || !form || !searchInput || !sortSelect || !reportStatusSelect || !marketStatusSelect) return;
 
   let state = getUrlState();
   let labelFor = (_category, value) => String(value ?? "—");
   searchInput.value = state.search;
   sortSelect.value = state.sort;
+  reportStatusSelect.value = state.report_status;
+  marketStatusSelect.value = state.market_status;
   for (const control of [...form.elements].filter((element) => element.name)) control.value = state[control.name] || "";
 
   try {
     const [currentUser, mappings] = await Promise.all([getCurrentUser(token), getGradeMappings()]);
     labelFor = makeMappingLookup(mappings);
+    populateGradeFilter(root.querySelector("#color-filter"), "color", mappings);
+    populateGradeFilter(root.querySelector("#clarity-filter"), "clarity", mappings);
+    populateGradeFilter(root.querySelector("#cut-filter"), "cut", mappings);
+    for (const select of [root.querySelector("#color-filter"), root.querySelector("#clarity-filter"), root.querySelector("#cut-filter")]) select.value = state[select.name] || "";
     const expertFilter = root.querySelector("#expert-filter-wrap");
-    if (currentUser.role === "admin" && expertFilter) {
+    if (currentUser.role === "admin" && expertFilter && expertSelect) {
       const experts = await getExperts(token);
-      const select = root.querySelector("#expert-filter");
       for (const expert of experts) {
         const option = createElement("option", "", expert.username);
         option.value = String(expert.expert_id);
-        select.append(option);
+        expertSelect.append(option);
       }
       expertFilter.hidden = false;
-      select.value = state.expert_id;
+      expertSelect.value = state.expert_id;
     }
   } catch (error) {
     if (error instanceof ApiRequestError && error.status === 401) {
@@ -234,18 +275,28 @@ export async function initDashboard() {
     window.clearTimeout(searchTimer);
     searchTimer = window.setTimeout(() => load({ ...state, page: 1, search: searchInput.value.trim() }), 300);
   });
-  sortSelect.addEventListener("change", () => load({ ...state, page: 1, sort: sortSelect.value }));
+  for (const [control, key] of [[sortSelect, "sort"], [reportStatusSelect, "report_status"], [marketStatusSelect, "market_status"], [expertSelect, "expert_id"]]) {
+    if (control) control.addEventListener("change", () => load({ ...state, page: 1, [key]: control.value }));
+  }
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const data = new FormData(form);
-    load({ ...state, page: 1, report_status: String(data.get("report_status") || ""), market_status: String(data.get("market_status") || ""), expert_id: String(data.get("expert_id") || "") });
+    const advancedFilters = Object.fromEntries(new FormData(form).entries());
+    load({ ...state, ...advancedFilters, page: 1 });
   });
-  form.addEventListener("reset", () => window.setTimeout(() => load({ ...state, page: 1, report_status: "", market_status: "", expert_id: "" }), 0));
+  form.addEventListener("reset", () => window.setTimeout(() => {
+    const cleared = Object.fromEntries([...form.elements].filter((element) => element.name).map((element) => [element.name, ""]));
+    load({ ...state, ...cleared, page: 1 });
+  }, 0));
   if (toggleFilters && filtersPanel) {
     toggleFilters.addEventListener("click", () => {
       const isOpen = filtersPanel.classList.toggle("is-visible");
       toggleFilters.setAttribute("aria-expanded", String(isOpen));
     });
   }
+  for (const button of root.querySelectorAll(".table-sort")) {
+    button.addEventListener("click", () => load({ ...state, page: 1, sort: toggleSort(state.sort, button.dataset.sortKey) }));
+  }
+  document.addEventListener("click", closeOverlays);
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeOverlays(); });
   await load(state);
 }

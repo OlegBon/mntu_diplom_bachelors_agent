@@ -72,11 +72,15 @@ test("dashboard renders the private report page and its row action menu", async 
   await expect(page.getByRole("cell", { name: "DR-00042", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Пояснення demo-ціни звіту DR-00042" }).click();
   await expect(page.getByText("diamonds_dataset.csv")).toBeVisible();
+  await page.getByRole("heading", { name: "Всі звіти" }).click();
+  await expect(page.getByText("diamonds_dataset.csv")).toBeHidden();
   await page.getByRole("button", { name: "Відкрити дії для звіту DR-00042" }).click();
   await expect(page.getByRole("button", { name: "Переглянути" })).toBeDisabled();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Переглянути" })).toBeHidden();
 
-  await page.getByRole("button", { name: "Фільтри" }).click();
-  await page.getByLabel("Стан звіту").selectOption("draft");
-  await page.getByRole("button", { name: "Застосувати" }).click();
+  await page.getByLabel("Статус звіту").selectOption("draft");
   await expect(page).toHaveURL(/report_status=draft/);
+  await page.getByRole("button", { name: "Сортувати за ціною" }).click();
+  await expect(page).toHaveURL(/sort=price_asc/);
 });
