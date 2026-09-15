@@ -45,9 +45,15 @@ def _system_grades(stone: schemas.StoneDraft) -> tuple[int, int]:
     return proportions, cut
 
 
-def preview_report_calculation(stone: schemas.StoneDraft) -> schemas.ReportCalculationPreview:
+def preview_report_calculation(stone: schemas.ReportCalculationInput) -> schemas.ReportCalculationPreview:
     """Calculate the server-authoritative IDC preview without persisting data."""
-    proportions, cut = _system_grades(stone)
+    proportions = DiamondCalculator.evaluate_proportions(
+        stone.table_percent,
+        stone.depth_percent,
+        stone.crown_angle,
+        stone.pavilion_angle,
+    )
+    cut = DiamondCalculator.calculate_final_cut(proportions, stone.polish_grade, stone.symmetry_grade)
     return schemas.ReportCalculationPreview(
         system_proportions_grade=proportions,
         system_cut_grade=cut,

@@ -42,6 +42,10 @@ function stoneFromForm(formData) {
   };
 }
 
+function calculationInput(formData) {
+  return Object.fromEntries(requiredPreviewNames.map((name) => [name, number(formData, name)]));
+}
+
 export async function initReportWizard() {
   const form = document.getElementById("wizard-form");
   if (!form) return;
@@ -81,7 +85,7 @@ export async function initReportWizard() {
     clearTimeout(previewTimer);
     const data = new FormData(form);
     if (requiredPreviewNames.every((name) => data.get(name) !== "")) previewTimer = setTimeout(async () => {
-      try { const preview = await previewReportCalculation(stoneFromForm(data), token); document.getElementById("res-prop").textContent = preview.system_proportions_grade; document.getElementById("res-final").textContent = preview.system_cut_grade; document.getElementById("calculation-rule-version").textContent = `Правило: ${preview.calculation_rule_version}`; } catch { /* incomplete non-IDC fields are expected while typing */ }
+      try { const preview = await previewReportCalculation(calculationInput(data), token); document.getElementById("res-prop").textContent = preview.system_proportions_grade; document.getElementById("res-final").textContent = preview.system_cut_grade; document.getElementById("calculation-rule-version").textContent = `Правило: ${preview.calculation_rule_version}`; } catch { /* invalid values are handled by native fields */ }
     }, 300);
   });
   form.addEventListener("submit", async (event) => {

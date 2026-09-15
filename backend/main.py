@@ -197,7 +197,7 @@ def preview_next_report_id(
 
 @app.post("/reports/preview", response_model=schemas.ReportCalculationPreview)
 def preview_report_calculation(
-    stone: schemas.StoneDraft,
+    stone: schemas.ReportCalculationInput,
     current_user: models.Expert = Depends(get_current_user),
 ):
     if current_user.role != "gemologist":

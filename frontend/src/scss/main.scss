@@ -1222,11 +1222,10 @@ ul {
   }
 
   .form-status {
-    padding: 0.75rem;
-    border: 1px solid variables.$border-color;
+    padding: 0;
+    border: 0;
 
     &.is-error {
-      border-color: #dc2626;
       color: #991b1b;
     }
   }

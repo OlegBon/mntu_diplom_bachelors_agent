@@ -149,6 +149,12 @@
   border-radius: 0;
 }
 
+.create-report-page .form-group .form-control,
+.create-report-page .form-group .form-select {
+  border-radius: 2px;
+  min-height: var(--control-height, 2.75rem);
+}
+
 .dashboard-page {
   .filters-container { border-color: variables.$border-color; }
   .filters-bar { background: transparent; border: 0; }

@@ -257,6 +257,17 @@ class ReportCalculationPreview(BaseModel):
     calculation_rule_version: str
 
 
+class ReportCalculationInput(BaseModel):
+    """Only the values required for an unsaved IDC preview."""
+
+    table_percent: float = Field(gt=0, le=100)
+    depth_percent: float = Field(gt=0, le=100)
+    crown_angle: float = Field(gt=0, le=90)
+    pavilion_angle: float = Field(gt=0, le=90)
+    polish_grade: int = Field(ge=0, le=99)
+    symmetry_grade: int = Field(ge=0, le=99)
+
+
 class ReferenceValueResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
