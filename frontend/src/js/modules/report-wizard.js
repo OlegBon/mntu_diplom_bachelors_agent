@@ -56,6 +56,7 @@ export async function initReportWizard() {
   const next = document.getElementById("next-btn");
   const previous = document.getElementById("prev-btn");
   const save = document.getElementById("save-btn");
+  let gradeLabels = new Map();
   let currentStep = 1;
   const updateStep = () => {
     steps.forEach((step) => { const active = Number(step.dataset.step) === currentStep; step.classList.toggle("active", active); step.hidden = !active; });
@@ -77,6 +78,9 @@ export async function initReportWizard() {
     document.querySelectorAll("[data-grade-category]").forEach((select) => {
       const entries = mappings.filter((entry) => entry.category === select.dataset.gradeCategory);
       setOptions(select, entries, "grade_value", "grade_label");
+      if (["polish", "symmetry", "cut"].includes(select.dataset.gradeCategory)) {
+        entries.forEach((entry) => gradeLabels.set(`${select.dataset.gradeCategory}:${entry.grade_value}`, entry.grade_label));
+      }
     });
   } catch (error) { setStatus(status, `Не вдалося завантажити довідники: ${error.message}`, true); return; }
 
@@ -85,7 +89,14 @@ export async function initReportWizard() {
     clearTimeout(previewTimer);
     const data = new FormData(form);
     if (requiredPreviewNames.every((name) => data.get(name) !== "")) previewTimer = setTimeout(async () => {
-      try { const preview = await previewReportCalculation(calculationInput(data), token); document.getElementById("res-prop").textContent = preview.system_proportions_grade; document.getElementById("res-final").textContent = preview.system_cut_grade; document.getElementById("calculation-rule-version").textContent = `Правило: ${preview.calculation_rule_version}`; } catch { /* invalid values are handled by native fields */ }
+      try {
+        const preview = await previewReportCalculation(calculationInput(data), token);
+        document.getElementById("res-prop").textContent = gradeLabels.get(`cut:${preview.system_proportions_grade}`) || preview.system_proportions_grade;
+        document.getElementById("res-pol").textContent = gradeLabels.get(`polish:${data.get("polish_grade")}`) || data.get("polish_grade");
+        document.getElementById("res-sym").textContent = gradeLabels.get(`symmetry:${data.get("symmetry_grade")}`) || data.get("symmetry_grade");
+        document.getElementById("res-final").textContent = gradeLabels.get(`cut:${preview.system_cut_grade}`) || preview.system_cut_grade;
+        document.getElementById("calculation-rule-version").textContent = `Правило: ${preview.calculation_rule_version}`;
+      } catch { /* invalid values are handled by native fields */ }
     }, 300);
   });
   form.addEventListener("submit", async (event) => {

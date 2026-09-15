@@ -146,9 +146,9 @@ block content
                                     small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
 
                     .wizard-actions
+                        button#save-btn.btn.btn-primary(type="submit" hidden) Зберегти чернетку
                         button#prev-btn.btn.btn-outline(type="button" disabled) Назад
                         button#next-btn.btn.btn-primary(type="button") Далі
-                        button#save-btn.btn.btn-primary(type="submit" hidden) Зберегти чернетку
 
             .calc-column
                 .calc-card
@@ -158,6 +158,12 @@ block content
                     .calc-group
                         label Proportions
                         .calc-value.placeholder#res-prop --
+                    .calc-group
+                        label Polish
+                        .calc-value.placeholder#res-pol --
+                    .calc-group
+                        label Symmetry
+                        .calc-value.placeholder#res-sym --
                     .calc-group.highlight
                         label Final Cut Grade
                         .calc-value.placeholder#res-final --
