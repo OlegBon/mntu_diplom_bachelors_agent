@@ -393,10 +393,10 @@ function renderTableRows(reports, tableElement) {
                 <td>${statusBadge}</td>
                 
                 <td>
-                    <div class="actions" style="display: flex; gap: 0.5rem; min-width: 100px;">
-                        <button class="btn-icon" title="Редагувати">✏️</button>
-                        <button class="btn-icon" title="Друк">🖨️</button>
-                        <a href="/view-report.html?id=${item.report_id}" class="btn-icon" title="Перегляд">👁️</a>
+                    <div class="actions">
+                        <button class="table-action" type="button">Редагувати</button>
+                        <button class="table-action" type="button">Друк</button>
+                        <a href="/view-report.html?id=${item.report_id}" class="table-action">Переглянути</a>
                     </div>
                 </td>
             </tr>

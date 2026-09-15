@@ -144,6 +144,10 @@
   .filters-container { border-color: variables.$border-color; }
   .filters-bar { background: transparent; border: 0; }
   .advanced-filters { margin-top: 0; }
+  .advanced-filters .filters-grid .filter-item {
+    .form-select,
+    .form-control { border-radius: 2px; }
+  }
   .status-badge { border-radius: 2px; }
 
   .pagination .page-btn {
