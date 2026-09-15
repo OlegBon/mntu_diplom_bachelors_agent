@@ -78,7 +78,8 @@
   .header-session-action {
     min-height: 2.5rem;
     border-left: 1px solid variables.$border-color;
-    padding-left: 1rem;
+    margin-left: 0.5rem;
+    padding-left: 1.5rem;
     background: transparent;
     color: variables.$primary-color;
 
@@ -90,6 +91,9 @@
     flex-direction: column;
     min-width: 0;
     max-width: 11rem;
+    margin-left: 0.25rem;
+    border-left: 1px solid variables.$border-color;
+    padding-left: 1.25rem;
     color: variables.$text-strong;
     line-height: 1.2;
   }
@@ -110,7 +114,17 @@
   }
 
   .mobile-account-name { color: variables.$text-strong; font-weight: 700; }
-  .mobile-logout { padding: 0.6rem 0.75rem; color: variables.$primary-color; }
+
+  .mobile-login a,
+  .mobile-logout {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+    padding: 0.6rem 0.75rem;
+    color: variables.$primary-color;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
 }
 
 .login-card,
@@ -151,8 +165,17 @@
 @media (max-width: 900px) {
   .main-header {
     .header-right { gap: 1.25rem; }
-    .header-session-name:not([hidden]) { display: inline-flex; max-width: 9rem; }
+    .header-session-name:not([hidden]) {
+      display: inline-flex;
+      max-width: 9rem;
+      margin-left: 0;
+      border-left: 0;
+      padding-left: 0;
+    }
     .header-session-role { display: none; }
     .main-nav li a { padding-left: 0.75rem; }
   }
 }
+
+// The former dashboard search icon has been removed; reserve no empty icon gutter.
+.dashboard-page .search-group input { padding: 0.6rem 0; }
