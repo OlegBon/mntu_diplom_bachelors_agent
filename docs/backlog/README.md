@@ -27,7 +27,6 @@
 
 | Файл | Тема |
 | --- | --- |
-| [060-reports-dashboard.md](./060-reports-dashboard.md) | Робочий список, пошук, фільтри й пагінація звітів. |
 | [070-report-creation-wizard.md](./070-report-creation-wizard.md) | Майстер створення й збереження чернетки. |
 | [080-report-detail-and-editing.md](./080-report-detail-and-editing.md) | Приватний перегляд, редагування та зміна станів звіту. |
 | [090-public-passport-and-qr.md](./090-public-passport-and-qr.md) | Публічний паспорт і QR для виданих звітів. |

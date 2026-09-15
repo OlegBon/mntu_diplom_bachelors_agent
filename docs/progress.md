@@ -4,6 +4,15 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-15 — 060-reports-dashboard (завершено)
+
+- **Задача:** перевести dashboard із mock/legacy `/diamonds/` на робочий приватний список звітів.
+- **Змінені файли:** `backend/{main,crud,schemas}.py`, `tests/api/test_report_domain.py`, `frontend/src/{pug/pages/dashboard.pug,js/{main,modules/{api,dashboard}.js},scss/{_variables,_ui-primitives}.scss}`, `frontend/tests/{auth-and-api,page-dom}.test.mjs`, `frontend/tests/e2e/dashboard.spec.mjs`, `DESIGN.md`, `docs/{architecture,work_plan,progress}.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/backlog/{README.md,060-reports-dashboard.md}` (задачу видалено після реалізації).
+- **Рішення:** `GET /reports` повертає `{items,total,page,page_size,total_pages}`, обмежує `page_size` до 100, застосовує allow-list сортувань, пошук за `report_id`, lifecycle і market-status фільтри. Gemologist бачить лише власні записи; admin бачить усі або одного обраного експерта. Dashboard зберігає параметри в URL, показує loading/empty/error, не використовує mock-рядки або legacy price. Колонка «Дії» має доступний overflow-control `⋮`; пункти detail/edit/print вимкнені до задачі 080, а bulk-операції не додані.
+- **Перевірки:** `python -m pytest tests/api/test_report_domain.py` — 3 passed; `npm test` — 8 passed; `npm run test:e2e` — 2 passed, включно з ізольованим dashboard flow через mock HTTP-відповіді; import FastAPI; `git diff --check`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** реальна browser-перевірка з локальною MariaDB та 1 000 записів має бути виконана вручну після запуску backend/frontend. Wizard, private detail/edit/print, lifecycle transitions, публічний паспорт і bulk-дії не входять до 060.
+
 ## 2026-09-15 — ui-primitives (завершено)
 
 - **Задача:** уніфікувати базові UI-примітиви перед наступними dashboard і wizard-зрізами.
