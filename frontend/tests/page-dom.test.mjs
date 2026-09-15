@@ -30,6 +30,11 @@ test("built report wizard provides private media inputs and explicit fallbacks",
   }
   assert.equal(document.querySelector("#plotting-preview")?.getAttribute("src"), "/img/plotting-placeholder.svg");
   assert.equal(document.querySelector("#stone-preview")?.getAttribute("src"), "/img/stone-placeholder.svg");
+  assert.equal(document.querySelectorAll(".stepper-tabs [role=tab]").length, 3);
+  assert.equal(document.querySelector("#report-id-preview")?.value, "Завантаження…");
+  assert.equal(document.querySelector("input[value='DR-2026-NEW']"), null);
+  assert.equal(document.querySelector("[name=examination_date]")?.getAttribute("type"), "date");
+  assert.equal(document.querySelector("[name=market_status]"), null);
 });
 
 test("built dashboard exposes real list controls without mock rows", async () => {

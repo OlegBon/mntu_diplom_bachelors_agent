@@ -38,6 +38,14 @@ export const getReportDashboard = (params, token) => {
   return requestApi(`/reports?${query.toString()}`, { token });
 };
 
+export const getReferenceValues = (token) => requestApi("/reference-values", { token });
+
+export const getNextReportId = (token) => requestApi("/reports/next-id", { token });
+
+export const previewReportCalculation = (stone, token) => requestApi("/reports/preview", { method: "POST", token, body: stone });
+
+export const createDomainReport = (payload, token) => requestApi("/reports", { method: "POST", token, body: payload });
+
 /**
  * Функція логіну (отримання токена)
  */

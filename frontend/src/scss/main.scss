@@ -1059,6 +1059,9 @@ ul {
     } // Chrome/Safari
 
     .tab {
+      appearance: none;
+      background: transparent;
+      border: 0;
       padding: 0.8rem 1rem; // Паддінги для мобайлу
       cursor: pointer;
       font-weight: 600;
@@ -1207,6 +1210,24 @@ ul {
       margin-top: 0.5rem;
       color: variables.$secondary-color;
       font-size: 0.8rem;
+    }
+  }
+
+  .form-help,
+  .form-status {
+    display: block;
+    margin-top: 0.5rem;
+    color: variables.$secondary-color;
+    font-size: 0.875rem;
+  }
+
+  .form-status {
+    padding: 0.75rem;
+    border: 1px solid variables.$border-color;
+
+    &.is-error {
+      border-color: #dc2626;
+      color: #991b1b;
     }
   }
 

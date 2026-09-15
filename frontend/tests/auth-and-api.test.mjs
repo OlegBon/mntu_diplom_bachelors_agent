@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getReportDashboard, loginUser } from "../src/js/modules/api.js";
+import { getNextReportId, getReportDashboard, getReferenceValues, loginUser } from "../src/js/modules/api.js";
 import { checkAuth, logout } from "../src/js/modules/auth.js";
 
 function installBrowserStubs() {
@@ -71,4 +71,19 @@ test("getReportDashboard omits empty filters and forwards the bearer token", asy
   assert.match(requestedUrl, /page=1/);
   assert.doesNotMatch(requestedUrl, /search=|report_status=/);
   assert.equal(requestedHeaders.Authorization, "Bearer test-token");
+});
+
+test("wizard API reads protected references and the non-reserving next report ID", async () => {
+  const paths = [];
+  globalThis.fetch = async (url, options) => {
+    paths.push([url, options.headers.Authorization]);
+    return { ok: true, json: async () => ({ report_id: "DR-01001" }) };
+  };
+
+  await getReferenceValues("test-token");
+  assert.equal((await getNextReportId("test-token")).report_id, "DR-01001");
+  assert.deepEqual(paths, [
+    ["http://127.0.0.1:8000/reference-values", "Bearer test-token"],
+    ["http://127.0.0.1:8000/reports/next-id", "Bearer test-token"],
+  ]);
 });
