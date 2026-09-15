@@ -32,12 +32,15 @@ test("built report wizard provides private media inputs and explicit fallbacks",
   assert.equal(document.querySelector("#stone-preview")?.getAttribute("src"), "/img/stone-placeholder.svg");
 });
 
-test("built dashboard uses text-only primary controls and pagination", async () => {
+test("built dashboard exposes real list controls without mock rows", async () => {
   const html = await readFile(dashboardPath, "utf8");
   const document = new JSDOM(html).window.document;
 
   assert.equal(document.querySelector("#create-report-action")?.textContent.trim(), "Новий звіт");
-  assert.equal(document.querySelector("#toggle-filters")?.textContent.trim(), "Фільтри");
-  assert.equal(document.querySelector(".pagination .page-btn")?.textContent.trim(), "Попередня");
-  assert.equal(document.querySelector(".actions .table-action")?.textContent.trim(), "Редагувати");
+  assert.equal(document.querySelector("#dashboard-filters")?.tagName, "FORM");
+  assert.equal(document.querySelector("#report-search")?.getAttribute("type"), "search");
+  assert.equal(document.querySelector("#report-status")?.getAttribute("name"), "report_status");
+  assert.equal(document.querySelector("#market-status")?.getAttribute("name"), "market_status");
+  assert.equal(document.querySelector(".data-table tbody")?.children.length, 0);
+  assert.equal(document.querySelector(".report-actions"), null);
 });
