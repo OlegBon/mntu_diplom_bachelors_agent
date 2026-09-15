@@ -1,6 +1,7 @@
 import { checkAuth, logout } from "./modules/auth.js";
 import { loginUser, uploadReportMedia } from "./modules/api.js";
 import { initDashboard } from "./modules/dashboard.js";
+import { initReportWizard } from "./modules/report-wizard.js";
 
 // === КОНФІГУРАЦІЯ API ===
 const API_URL = "http://127.0.0.1:8000"; // Адреса твого Python сервера
@@ -430,6 +431,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === DASHBOARD INITIALIZATION ===
   if (isAuthenticated) void initDashboard();
+  if (isAuthenticated && isCreateReportPage) void initReportWizard();
 
   // --- Mobile Menu ---
   const burgerBtn = document.getElementById("burger-btn");
@@ -482,7 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- Create Report Wizard Logic (KEEP EXISTING) ---
-  const wizardForm = document.getElementById("wizard-form");
+  const wizardForm = document.getElementById("legacy-wizard-form");
   if (wizardForm) {
     const dateInput = document.getElementById("input-date");
     if (dateInput) dateInput.valueAsDate = new Date();
@@ -629,7 +631,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Live Calculator Logic (Full) ---
   const calcInputs = document.querySelectorAll(
-    "#wizard-form input, #wizard-form select",
+    "#legacy-wizard-form input, #legacy-wizard-form select",
   );
   const resProp = document.getElementById("res-prop");
   const resPol = document.getElementById("res-pol");

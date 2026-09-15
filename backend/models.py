@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, String, DECIMAL, ForeignKey, Enum, TIMESTAMP, Boolean, UniqueConstraint, Text
+from sqlalchemy import Column, Date, DateTime, Integer, String, DECIMAL, ForeignKey, Enum, TIMESTAMP, Boolean, UniqueConstraint, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -22,6 +22,8 @@ class DiamondReport(Base):
 
     report_id = Column(String(20), primary_key=True, index=True)
     report_date = Column(DateTime, nullable=False)
+    # Factual date supplied by the expert; never infer it from creation time.
+    examination_date = Column(Date, nullable=True)
     # Compatibility fields below remain while the legacy /diamonds API is used.
     # New report-domain code reads the normalized Stone and lifecycle columns.
     stone_id = Column(Integer, ForeignKey("diamond_oltp.stones.stone_id"), nullable=True, index=True)

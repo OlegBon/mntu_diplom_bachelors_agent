@@ -1059,6 +1059,9 @@ ul {
     } // Chrome/Safari
 
     .tab {
+      appearance: none;
+      background: transparent;
+      border: 0;
       padding: 0.8rem 1rem; // Паддінги для мобайлу
       cursor: pointer;
       font-weight: 600;
@@ -1208,14 +1211,42 @@ ul {
       color: variables.$secondary-color;
       font-size: 0.8rem;
     }
+
+    .file-input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
+    .file-picker { display: inline-flex; margin-right: 0.5rem; }
+    .file-name { color: variables.$secondary-color; font-size: 0.85rem; }
+  }
+
+  .form-help,
+  .form-status {
+    display: block;
+    margin-top: 0.5rem;
+    color: variables.$secondary-color;
+    font-size: 0.875rem;
+  }
+
+  .form-status {
+    padding: 0;
+    border: 0;
+    margin-bottom: 1rem;
+
+    &.is-error {
+      color: #991b1b;
+    }
   }
 
   .wizard-actions {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     border-top: 1px solid variables.$border-color;
     padding-top: 2rem;
     margin-top: 2rem;
+
+    #prev-btn,
+    #save-btn,
+    #next-btn { white-space: nowrap; }
+    .save-label-mobile { display: none; }
   }
 
   // --- Права колонка (Sticky Calculator) ---
@@ -1284,6 +1315,34 @@ ul {
         }
       }
 
+      &[aria-invalid="true"] {
+        border-color: variables.$error-color;
+      }
+
+      .calc-group:not(.highlight):not(.forecast) {
+        label,
+        .calc-value {
+          color: variables.$secondary-color;
+        }
+
+        .calc-value { font-weight: 500; }
+      }
+
+      .calc-group.highlight .calc-value,
+      .calc-group.forecast .calc-value {
+        font-size: 1.15rem;
+        font-weight: 800;
+      }
+
+      .calc-group.highlight .calc-value { color: variables.$text-color; }
+      .calc-group.forecast .calc-value { color: variables.$primary-hover; }
+
+      .demo-marker {
+        color: variables.$primary-color;
+        font-weight: 700;
+        margin-left: 0.2rem;
+      }
+
       .highlight {
         background: #e0f2fe; // Light blue
         padding: 0.8rem;
@@ -1317,7 +1376,30 @@ ul {
           }
         }
       }
+
+      .calc-group:not(.highlight):not(.forecast) .calc-value {
+        font-family: variables.$font-main;
+        font-size: 0.9rem;
+        font-weight: 500;
+        opacity: 1;
+      }
+
+      .calc-group.highlight .calc-value,
+      .calc-group.highlight .calc-value.placeholder {
+        color: variables.$text-color;
+        opacity: 1;
+        font-family: variables.$font-main;
+        font-size: 1.15rem;
+        font-weight: 800;
+      }
     }
+  }
+}
+
+@media (max-width: 767px) {
+  .create-report-page .wizard-actions {
+    .save-label-desktop { display: none; }
+    .save-label-mobile { display: inline; }
   }
 }
 

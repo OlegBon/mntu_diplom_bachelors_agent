@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal, Optional
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 # Схема для створення юзера (з паролем)
@@ -177,6 +177,7 @@ class StoneDraft(BaseModel):
 
 class ReportCreate(BaseModel):
     stone: StoneDraft
+    examination_date: date
     expert_comment: Optional[str] = None
     expert_proportions_grade: Optional[int] = Field(default=None, ge=0, le=99)
     expert_cut_grade: Optional[int] = Field(default=None, ge=0, le=99)
@@ -184,6 +185,7 @@ class ReportCreate(BaseModel):
 
 class ReportUpdate(BaseModel):
     stone: StoneDraft
+    examination_date: date
     expert_comment: Optional[str] = None
     expert_proportions_grade: Optional[int] = Field(default=None, ge=0, le=99)
     expert_cut_grade: Optional[int] = Field(default=None, ge=0, le=99)
@@ -216,6 +218,7 @@ class ReportResponse(BaseModel):
     report_id: str
     status: ReportStatus
     report_date: datetime
+    examination_date: Optional[date]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     issued_at: Optional[datetime]
@@ -240,6 +243,42 @@ class ReportListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+class ReportIdPreview(BaseModel):
+    """A non-reserving preview; POST /reports remains authoritative."""
+
+    report_id: str
+
+
+class ReportCalculationPreview(BaseModel):
+    system_proportions_grade: int
+    system_cut_grade: int
+    calculation_rule_version: str
+    demo_price_usd: Optional[Decimal] = None
+
+
+class ReportCalculationInput(BaseModel):
+    """Only the values required for an unsaved IDC preview."""
+
+    table_percent: float = Field(gt=0, le=100)
+    depth_percent: float = Field(gt=0, le=100)
+    crown_angle: float = Field(gt=0, le=90)
+    pavilion_angle: float = Field(gt=0, le=90)
+    polish_grade: int = Field(ge=0, le=99)
+    symmetry_grade: int = Field(ge=0, le=99)
+    carat_weight: Optional[Decimal] = Field(default=None, gt=0, le=100)
+    color_grade: Optional[int] = Field(default=None, ge=0, le=99)
+    clarity_grade: Optional[int] = Field(default=None, ge=0, le=99)
+
+
+class ReferenceValueResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    category: str
+    code: str
+    label: str
+    sort_order: int
 
 
 class MediaAssetResponse(BaseModel):

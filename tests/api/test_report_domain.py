@@ -5,6 +5,7 @@ from tests.conftest import auth_headers
 
 def report_payload(*, confirmed: bool = False) -> dict[str, object]:
     payload: dict[str, object] = {
+        "examination_date": "2026-09-15",
         "stone": {
             "shape": "Round",
             "carat_weight": 1.0,
@@ -47,6 +48,7 @@ def test_new_report_domain_is_private_and_creates_a_draft_event(client, experts)
     assert created.status_code == 200
     body = created.json()
     assert body["status"] == "draft"
+    assert body["examination_date"] == "2026-09-15"
     assert body["price"] is None
     assert body["stone"]["origin"] == "natural"
     assert body["system_cut_grade"] is not None
@@ -57,6 +59,35 @@ def test_new_report_domain_is_private_and_creates_a_draft_event(client, experts)
     events = client.get(f"/reports/{report_id}/events", headers=owner_headers)
     assert events.status_code == 200
     assert events.json()[0]["action"] == "created"
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_report_wizard_preview_uses_server_contract_and_does_not_reserve_id(client, experts) -> None:
+    owner_headers = auth_headers(client, experts["owner"].username)
+    admin_headers = auth_headers(client, experts["admin"].username)
+
+    assert client.get("/reports/next-id").status_code == 401
+    assert client.get("/reports/next-id", headers=admin_headers).status_code == 403
+    assert client.post("/reports/preview", json=report_payload()["stone"]).status_code == 401
+    assert client.post("/reports/preview", json=report_payload()["stone"], headers=admin_headers).status_code == 403
+
+    first_preview = client.get("/reports/next-id", headers=owner_headers)
+    assert first_preview.status_code == 200
+    assert first_preview.json()["report_id"] == "DR-00001"
+
+    calculation = client.post("/reports/preview", json=report_payload()["stone"], headers=owner_headers)
+    assert calculation.status_code == 200
+    calculation_body = calculation.json()
+    assert calculation_body["system_proportions_grade"] == 0
+    assert calculation_body["system_cut_grade"] == 0
+    assert calculation_body["calculation_rule_version"] == "idc-demo-v1"
+    assert calculation_body["demo_price_usd"] is None
+
+    created = client.post("/reports", json=report_payload(), headers=owner_headers)
+    assert created.status_code == 200
+    assert created.json()["report_id"] == "DR-00001"
+    assert client.get("/reports/next-id", headers=owner_headers).json()["report_id"] == "DR-00002"
 
 
 @pytest.mark.api

@@ -4,212 +4,181 @@ block content
     .create-report-page(hidden data-protected-page="true")
         .page-header
             h1 Новий звіт
-            p.text-muted Заповнення даних для оцінки та сертифікації
+            p.text-muted Створення чернетки експертного звіту про камінь
 
         .report-grid
-            //- ---Ліва колонка: Введення даних ---
             .form-column
-                //- Навігація по кроках (Tabs)
-                .stepper-tabs
-                    //- Крок 1
-                    .tab.active(data-step="1")
-                        span.mobile-text 1. 4C
-                        span.desktop-text 1. Основні 4C
-                    
-                    //- Крок 2
-                    .tab(data-step="2")
+                .stepper-tabs(role="tablist" aria-label="Кроки створення звіту")
+                    button.tab.active(type="button" data-step="1" role="tab" aria-selected="true")
+                        span.mobile-text 1. Основне
+                        span.desktop-text 1. Ідентифікація та 4C
+                    button.tab(type="button" data-step="2" role="tab" aria-selected="false")
                         span.mobile-text 2. Геометрія
                         span.desktop-text 2. Геометрія (IDC)
-                    
-                    //- Крок 3
-                    .tab(data-step="3")
-                        span.mobile-text 3. Фініш
-                        span.desktop-text 3. Фініш та Медіа
+                    button.tab(type="button" data-step="3" role="tab" aria-selected="false")
+                        span.mobile-text 3. Висновок
+                        span.desktop-text 3. Висновок та медіа
 
-                form#wizard-form
-                    //- === Технічні поля (hidden) ===
-                    //- 1. Таймер часу оцінки
-                    input#start-time(type="hidden")
-                    
-                    //- 2. Розраховані системні оцінки (щоб зберегти в БД те, що нарахував калькулятор)
-                    input#calc-cut-grade(type="hidden" name="cut_grade")
-                    input#calc-proportions-grade(type="hidden" name="proportions_grade")
-                    input#calc-price(type="hidden" name="price")
+                form#wizard-form(novalidate)
+                    p#wizard-status.form-status(role="status" aria-live="polite" hidden)
 
-                    //- === Крок 1: Ідентифікація ===
-                    .step-content.active(data-step="1")
+                    .step-content.active(data-step="1" role="tabpanel")
                         h3 Ідентифікація
                         .form-group
-                            label Номер звіту (Auto ID)
-                            input.form-control.bg-light(type="text" value="DR-2026-NEW" disabled)
-
+                            label(for="report-id-preview") Наступний номер звіту
+                            input#report-id-preview.form-control.bg-light(type="text" value="Завантаження…" disabled aria-describedby="report-id-help")
+                            small#report-id-help.form-help Номер остаточно присвоюється сервером під час збереження.
                         .form-row
                             .form-group.half
-                                label Дата оцінки
-                                input.form-control(type="date" id="input-date" name="report_date" required)
+                                label(for="examination-date") Дата дослідження / оцінки
+                                input#examination-date.form-control(type="date" name="examination_date" required)
                             .form-group.half
-                                label Походження (Origin)
-                                select.form-select(name="stone_origin")
-                                    option(value="0") Natural (Природний)
-                                    option(value="1") Lab-Grown (Синтетичний)
+                                label(for="shape") Форма (Shape)
+                                select#shape.form-select(data-reference-category="shape" name="shape" required disabled)
+                                    option(value="") Завантаження довідника…
+                        .form-group
+                            label(for="origin") Походження (Origin)
+                            select#origin.form-select(data-reference-category="origin" name="origin" required disabled)
+                                option(value="") Завантаження довідника…
 
                         h3 Характеристики 4C
                         .form-group
-                            label Вага (Carat Weight)
-                            input.form-control(type="number" step="0.01" min="0.01" name="carat_weight" placeholder="ct" required)
-
+                            label(for="carat-weight") Вага (Carat Weight)
+                            input#carat-weight.form-control(type="number" step="0.01" min="0.01" max="100" name="carat_weight" placeholder="ct" required)
                         .form-row
                             .form-group.half
-                                label Колір (Color)
-                                select.form-select(name="color_grade")
-                                    option(value="0") D (Colorless)
-                                    option(value="1") E
-                                    option(value="2") F
-                                    option(value="3") G
-                                    option(value="4") H
-                                    option(value="5") I
-                                    option(value="6") J
+                                label(for="color-grade") Колір (Color)
+                                select#color-grade.form-select(data-grade-category="color" name="color_grade" required disabled)
+                                    option(value="") Завантаження довідника…
                             .form-group.half
-                                label Чистота (Clarity)
-                                select.form-select(name="clarity_grade")
-                                    option(value="0") FL (Flawless)
-                                    option(value="1") IF
-                                    option(value="2") VVS1
-                                    option(value="3") VVS2
-                                    option(value="4") VS1
-                                    option(value="5") VS2
-                                    option(value="6") SI1
+                                label(for="clarity-grade") Чистота (Clarity)
+                                select#clarity-grade.form-select(data-grade-category="clarity" name="clarity_grade" required disabled)
+                                    option(value="") Завантаження довідника…
 
-                    //- === Крок 2: Геометрія (IDC) ===
-                    .step-content(data-step="2")
+                    .step-content(data-step="2" role="tabpanel" hidden)
                         h3 Розміри (Dimensions)
                         .form-row.three-cols
                             .form-group
-                                label Length (mm)
-                                input.form-control(type="number" step="0.01" name="measurements_length" placeholder="min ø")
+                                label(for="measurements-length") Довжина (mm)
+                                input#measurements-length.form-control(type="number" step="0.01" min="0.01" name="measurements_length" placeholder="min. 0,01" required)
                             .form-group
-                                label Width (mm)
-                                input.form-control(type="number" step="0.01" name="measurements_width" placeholder="max ø")
+                                label(for="measurements-width") Ширина (mm)
+                                input#measurements-width.form-control(type="number" step="0.01" min="0.01" name="measurements_width" placeholder="max. 0,01" required)
                             .form-group
-                                label Depth (mm)
-                                input.form-control(type="number" step="0.01" name="measurements_depth" placeholder="depth")
+                                label(for="measurements-depth") Висота (mm)
+                                input#measurements-depth.form-control(type="number" step="0.01" min="0.01" name="measurements_depth" placeholder="depth" required)
 
-                        h3 Параметри огранювання (Proportions)
+                        h3 Параметри огранювання (IDC)
                         .form-row
                             .form-group.half
-                                label Table (%)
-                                input.form-control(type="number" step="0.1" name="table_percent" placeholder="57.0")
+                                label(for="table-percent") Table (%)
+                                input#table-percent.form-control(type="number" step="0.1" min="0.1" max="100" name="table_percent" placeholder="57,0" required)
                             .form-group.half
-                                label Total Depth (%)
-                                input.form-control(type="number" step="0.1" name="depth_percent" placeholder="61.5")
-
+                                label(for="depth-percent") Total Depth (%)
+                                input#depth-percent.form-control(type="number" step="0.1" min="0.1" max="100" name="depth_percent" placeholder="61,5" required)
                         .form-row
                             .form-group.half
-                                label Crown Angle (°)
-                                input.form-control(type="number" step="0.5" name="crown_angle" placeholder="34.5")
+                                label(for="crown-angle") Crown Angle (°)
+                                input#crown-angle.form-control(type="number" step="0.1" min="0.1" max="90" name="crown_angle" placeholder="34,5" required)
                             .form-group.half
-                                label Pavilion Angle (°)
-                                input.form-control(type="number" step="0.2" name="pavilion_angle" placeholder="40.8")
-
+                                label(for="pavilion-angle") Pavilion Angle (°)
+                                input#pavilion-angle.form-control(type="number" step="0.1" min="0.1" max="90" name="pavilion_angle" placeholder="40,8" required)
                         .form-row
                             .form-group.half
-                                label Girdle Thickness
-                                select.form-select(name="girdle_thickness")
-                                    option Medium
-                                    option Thin
-                                    option Thick
-                                    option Slightly Thick
+                                label(for="girdle-thickness") Girdle Thickness
+                                select#girdle-thickness.form-select(data-reference-category="girdle_thickness" name="girdle_thickness" disabled)
+                                    option(value="") Не зазначено
                             .form-group.half
-                                label Culet Size
-                                select.form-select(name="culet_size")
-                                    option None
-                                    option Very Small
-                                    option Small
-                                    option Medium
+                                label(for="culet-size") Culet Size
+                                select#culet-size.form-select(data-reference-category="culet_size" name="culet_size" disabled)
+                                    option(value="") Не зазначено
 
-                    //- === Крок 3: Фініш та Медіа ===
-                    .step-content(data-step="3")
+                    .step-content(data-step="3" role="tabpanel" hidden)
                         h3 Якість обробки (Finish)
                         .form-row
                             .form-group.half
-                                label Polish (Поліровка)
-                                select.form-select(name="polish_grade")
-                                    option(value="0") Excellent
-                                    option(value="1") Very Good
-                                    option(value="2") Good
+                                label(for="polish-grade") Polish (Поліровка)
+                                select#polish-grade.form-select(data-grade-category="polish" name="polish_grade" required disabled)
+                                    option(value="") Завантаження довідника…
                             .form-group.half
-                                label Symmetry (Симетрія)
-                                select.form-select(name="symmetry_grade")
-                                    option(value="0") Excellent
-                                    option(value="1") Very Good
-                                    option(value="2") Good
-
+                                label(for="symmetry-grade") Symmetry (Симетрія)
+                                select#symmetry-grade.form-select(data-grade-category="symmetry" name="symmetry_grade" required disabled)
+                                    option(value="") Завантаження довідника…
                         .form-group
-                            label Fluorescence (Флуоресценція)
-                            select.form-select(name="fluorescence_grade")
-                                option(value="0") None
-                                option(value="1") Faint
-                                option(value="2") Medium
-                                option(value="3") Strong
+                            label(for="fluorescence-grade") Fluorescence (Флуоресценція)
+                            select#fluorescence-grade.form-select(data-grade-category="fluorescence" name="fluorescence_grade" required disabled)
+                                option(value="") Завантаження довідника…
 
-                        h3 Медіа та Нотатки
+                        h3 Висновок експерта
+                        .form-row
+                            .form-group.half
+                                label(for="treatment-status") Ознаки обробки
+                                select#treatment-status.form-select(data-reference-category="treatment_status" name="treatment_status" required disabled)
+                                    option(value="") Завантаження довідника…
+                            .form-group.half
+                                label(for="identification-status") Рівень підтвердження
+                                select#identification-status.form-select(data-reference-category="identification_status" name="identification_status" required disabled)
+                                    option(value="") Завантаження довідника…
                         .form-group
-                            label Коментар експерта
-                            textarea.form-control(name="expert_comment" rows="3" placeholder="Опис включень, відтінків...")
-                        
+                            label(for="identification-method") Метод ідентифікації
+                            input#identification-method.form-control(type="text" name="identification_method" maxlength="255" placeholder="Наприклад, гемологічна експертиза")
+                        .form-group
+                            label(for="identification-conclusion") Висновок щодо ідентифікації
+                            textarea#identification-conclusion.form-control(name="identification_conclusion" rows="3")
+                        .form-group
+                            label(for="expert-comment") Коментар експерта
+                            textarea#expert-comment.form-control(name="expert_comment" rows="3" placeholder="Спостереження, включення та особливості каменю")
+
+                        h3 Медіа
+                        p.text-muted Комерційний стан не задається під час створення: нова чернетка має стан «Не виставлено на продаж». Змінити його можна буде у перегляді та редагуванні звіту.
                         .form-row
                             .form-group.half
                                 label(for="plotting-image") Схема дефектів (Plotting)
                                 .media-upload-card
                                     img#plotting-preview.media-upload-preview(src="/img/plotting-placeholder.svg" alt="Схема дефектів не додана" width="320" height="180")
-                                    input#plotting-image.form-control(type="file" name="plotting_image" accept="image/jpeg,image/png,image/webp")
+                                    input#plotting-image.file-input(type="file" name="plotting_image" accept="image/jpeg,image/png,image/webp")
+                                    label.btn.btn-outline.file-picker(for="plotting-image") Вибрати файл
+                                    span.file-name(data-file-name-for="plotting-image") Файл не вибрано
                                     small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
                             .form-group.half
-                                label(for="real-image") Фото каменя (Real Image)
+                                label(for="real-image") Фото каменя
                                 .media-upload-card
-                                    img#stone-preview.media-upload-preview(src="/img/stone-placeholder.svg" alt="Фото каменю не додано" width="320" height="180")
-                                    input#real-image.form-control(type="file" name="real_image" accept="image/jpeg,image/png,image/webp")
+                                    img#stone-preview.media-upload-preview(src="/img/stone-placeholder.svg" alt="Фото каменя не додано" width="320" height="180")
+                                    input#real-image.file-input(type="file" name="real_image" accept="image/jpeg,image/png,image/webp")
+                                    label.btn.btn-outline.file-picker(for="real-image") Вибрати файл
+                                    span.file-name(data-file-name-for="real-image") Файл не вибрано
                                     small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
 
                     .wizard-actions
                         button#prev-btn.btn.btn-outline(type="button" disabled) Назад
+                        button#save-btn.btn.btn-primary(type="submit" hidden)
+                            span.save-label-desktop Зберегти чернетку
+                            span.save-label-mobile Зберегти
                         button#next-btn.btn.btn-primary(type="button") Далі
-                        button#save-btn.btn.btn-primary(type="submit" style="display:none") Зберегти звіт
 
-            //- --- Права колонка: Live Calculator ---
             .calc-column
                 .calc-card
-                    h3 System Calculation
-                    p.text-muted Результати оцінки в реальному часі
-
+                    h3 Системний preview IDC
+                    p.text-muted Розрахунок виконується сервером за введеними параметрами. Це не експертне підтвердження та не оцінка вартості.
                     hr
-                    
-                    h4 IDC Cut Grade
-                    //- 1. Proportions (Step 2)
                     .calc-group
                         label Proportions
                         .calc-value.placeholder#res-prop --
-                    
-                    //- 2. Polish (Step 3) - НОВЕ
                     .calc-group
                         label Polish
                         .calc-value.placeholder#res-pol --
-
-                    //- 3. Symmetry (Step 3)
                     .calc-group
                         label Symmetry
                         .calc-value.placeholder#res-sym --
-                    
-                    //- 4. Final Grade (Найгірше з трьох)
                     .calc-group.highlight
                         label Final Cut Grade
                         .calc-value.placeholder#res-final --
-                    
                     hr
-                    
-                    //- Розрахунок ціни (Market Valuation)
-                    h4 Market Valuation
-                    .calc-group
-                        label Report Price
-                        //- Зелена ціна - це те, що піде в документ
-                        .calc-value.price#res-price $ --,--
+                    h4 Прогнозована ціна
+                    .calc-group.forecast
+                        label Системний прогноз (USD)
+                        .calc-value.placeholder
+                            span#res-price --
+                            sup#price-demo-marker.demo-marker(hidden) d
+                    p.text-muted.calc-demo-note#price-demo-note d — демонстраційний прогноз, не ринкова, експертна або продажна ціна.
+                    p.text-muted#calculation-rule-version Правило буде показано після введення параметрів огранювання.

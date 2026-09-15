@@ -185,6 +185,27 @@ def create_report_domain(
     return crud.create_report_domain(db, payload=payload, author=current_user)
 
 
+@app.get("/reports/next-id", response_model=schemas.ReportIdPreview)
+def preview_next_report_id(
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    if current_user.role != "gemologist":
+        raise HTTPException(status_code=403, detail="Only gemologists can create primary reports")
+    return schemas.ReportIdPreview(report_id=crud._next_report_id(db))
+
+
+@app.post("/reports/preview", response_model=schemas.ReportCalculationPreview)
+def preview_report_calculation(
+    stone: schemas.ReportCalculationInput,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    if current_user.role != "gemologist":
+        raise HTTPException(status_code=403, detail="Only gemologists can create primary reports")
+    return crud.preview_report_calculation(db, stone)
+
+
 @app.get("/reports/{report_id}", response_model=schemas.ReportResponse)
 def read_report_domain(
     report_id: str,
@@ -341,7 +362,7 @@ def delete_report_media(
     return {"message": "Media asset deleted"}
 
 
-@app.get("/reference-values")
+@app.get("/reference-values", response_model=List[schemas.ReferenceValueResponse])
 def read_reference_values(
     category: Optional[str] = None,
     db: Session = Depends(get_db),
