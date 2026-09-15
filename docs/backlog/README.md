@@ -28,5 +28,6 @@
 | Файл | Тема |
 | --- | --- |
 | [080-report-detail-and-editing.md](./080-report-detail-and-editing.md) | Приватний перегляд, редагування та зміна станів звіту. |
+| [085-legacy-api-retirement.md](./085-legacy-api-retirement.md) | Cleanup legacy `/diamonds/*` після detail/edit. |
 | [090-public-passport-and-qr.md](./090-public-passport-and-qr.md) | Публічний паспорт і QR для виданих звітів. |
 | [100-profile-and-admin-ui.md](./100-profile-and-admin-ui.md) | Профіль, керування експертами, ролями й довідниками. |

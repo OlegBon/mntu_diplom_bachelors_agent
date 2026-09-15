@@ -107,7 +107,7 @@ Backend запускають із кореня репозиторію через
 
 | Група | Призначення |
 | --- | --- |
-| `/diamonds/` | Тимчасовий compatibility API для чинних dashboard і create-form. |
+| `/diamonds/` | Legacy compatibility API. Поточні dashboard і wizard використовують `/reports`; detail/edit ще не реалізовані. |
 | `/reports` | Приватний API ядра: draft, stone, lifecycle, події, RBAC і server-paginated dashboard list (`items`, `total`, сторінки, пошук, фільтри lifecycle/продажу, 4C/форми/діапазонів/дат і allow-list сортувань). Dashboard передає `sold=true|false`; це зручна двостанова проєкція фактичного `market_status` (`sold` / усі інші стани), а не втрата його деталізації. Для локального demo-набору список також повертає legacy `price`, який UI маркує `USD … d`; це не ринкова чи експертна ціна. |
 | `/reports/{report_id}/media` | Приватні upload, список, читання й видалення вкладень owner/admin; без public serving. |
 | `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
@@ -130,7 +130,7 @@ Backend запускають із кореня репозиторію через
 | `diamond_market` | `grade_mappings`, legacy demo-індекс і `reference_values` | `0004_report_wizard` доповнює geometry-довідники |
 | `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 
-Під час створення звіту `crud.create_diamond_report()`:
+Legacy compatibility `crud.create_diamond_report()`:
 
 1. генерує ID формату `DR-00001`;
 2. обчислює `proportions_grade` через `DiamondCalculator.evaluate_proportions()`, якщо його не передано;
@@ -145,7 +145,11 @@ Backend запускають із кореня репозиторію через
 grades і необов'язковий детермінований demo-прогноз. Такий прогноз не є
 `price` і не зберігається як фінансова величина звіту.
 
-`MLService` бере останній ринковий індекс з `diamond_market` і застосовує евристичні коефіцієнти. Випадкова варіація означає, що результат не є відтворюваним чи навченим ML-прогнозом; це треба змінити перед аналітичним або production-використанням. Новий `StoneValuation` не отримує автоматично старий `price`: суми матимуть тип, валюту, джерело і дату за [ADR-002](./decisions/002-financial-calculation-contract.md).
+`MLService` лишається legacy-евристикою для `/diamonds/*`; він не є навченою
+ML-моделлю. Wizard не викликає його: його preview детермінований і не записує
+ціну. Новий `StoneValuation` не отримує автоматично старий `price`: суми
+матимуть тип, валюту, джерело і дату за
+[ADR-002](./decisions/002-financial-calculation-contract.md).
 
 ---
 

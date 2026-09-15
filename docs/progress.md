@@ -4,6 +4,16 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-15 — current-state-reconciliation-audit (завершено)
+
+- **Задача:** звірити фактичний стан коду після 070 з архітектурою, schema/runbook, guide, backlog і тестовими правилами перед стартом 080.
+- **Змінені файли:** `.codex/rules/testing.md`, `docs/{architecture,db-schema,local-start,work_plan,progress}.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/backlog/{README,080-report-detail-and-editing,085-legacy-api-retirement}.md`.
+- **Результат:** документація тепер фіксує, що dashboard і wizard використовують приватний `/reports`, а `/diamonds/*` є legacy compatibility API. Runbook доведено до Alembic `0004_report_wizard`; workflow описує фактичні RBAC, lifecycle, `examination_date`, server preview, media та межі demo-ціни. Правила тестування приведені у відповідність до чинних pytest/Node/Playwright наборів.
+- **Виявлені кодові доробки:** 080 мусить додати `report_updated` event для успішного `PUT /reports/{id}`, private detail/edit UI, явний admin-review/issue/void flow і детальний commercial state. Після 080 задача 085 прибере unreachable legacy frontend handler `/diamonds/*` та зафіксує долю compatibility маршрутів. Ці зміни не виконувалися в аудиті.
+- **Перевірки:** статично звірено FastAPI routes, CRUD/RBAC, Pydantic contracts, Alembic revisions, Pug/JS API-виклики, pytest/Node/Playwright набори та Markdown-посилання. `npm run build` — успішно; відомі Sass `@import` і Browserslist warnings залишилися без змін.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** аудит не запускав MariaDB migration/seed і не змінював runtime-дані. Реальний admin review UI і E2E з живою MariaDB ще відсутні.
+
 ## 2026-09-15 — report-creation-wizard (завершено)
 
 - **Задача:** перевести форму «Новий звіт» на трикроковий wizard із приватним контрактом `POST /reports`, серверними довідниками, live IDC preview, валідацією та необов'язковими приватними вкладеннями.
