@@ -77,7 +77,13 @@ export async function initReportWizard() {
     previous.disabled = currentStep === 1; next.hidden = currentStep === 3; save.hidden = currentStep !== 3;
   };
   tabs.forEach((tab) => tab.addEventListener("click", () => { currentStep = Number(tab.dataset.step); updateStep(); }));
-  next.addEventListener("click", () => { const active = steps.find((step) => Number(step.dataset.step) === currentStep); if (!active.querySelector(":invalid")) { currentStep += 1; updateStep(); } else active.querySelector(":invalid").reportValidity(); });
+  next.addEventListener("click", () => {
+    if (currentStep >= 3) return;
+    const active = steps.find((step) => Number(step.dataset.step) === currentStep);
+    const invalidField = active.querySelector(":invalid");
+    if (invalidField) invalidField.reportValidity();
+    else { currentStep += 1; updateStep(); }
+  });
   previous.addEventListener("click", () => { currentStep -= 1; updateStep(); });
   document.getElementById("examination-date").valueAsDate = new Date();
 
@@ -91,10 +97,8 @@ export async function initReportWizard() {
     document.querySelectorAll("[data-grade-category]").forEach((select) => {
       const entries = mappings.filter((entry) => entry.category === select.dataset.gradeCategory);
       setOptions(select, entries, "grade_value", "grade_label");
-      if (["polish", "symmetry", "cut"].includes(select.dataset.gradeCategory)) {
-        entries.forEach((entry) => gradeLabels.set(`${select.dataset.gradeCategory}:${entry.grade_value}`, entry.grade_label));
-      }
     });
+    mappings.forEach((entry) => gradeLabels.set(`${entry.category}:${entry.grade_value}`, entry.grade_label));
     renderInitialFinish();
   } catch (error) { setStatus(status, `Не вдалося завантажити довідники: ${error.message}`, true); return; }
 
@@ -114,7 +118,7 @@ export async function initReportWizard() {
     if (requiredPreviewNames.every((name) => data.get(name) !== "")) previewTimer = setTimeout(async () => {
       try {
         const preview = await previewReportCalculation(calculationInput(data), token);
-        document.getElementById("res-prop").textContent = gradeLabels.get(`cut:${preview.system_proportions_grade}`) || preview.system_proportions_grade;
+        document.getElementById("res-prop").textContent = gradeLabels.get(`proportions:${preview.system_proportions_grade}`) || preview.system_proportions_grade;
         document.getElementById("res-pol").textContent = gradeLabels.get(`polish:${data.get("polish_grade")}`) || data.get("polish_grade");
         document.getElementById("res-sym").textContent = gradeLabels.get(`symmetry:${data.get("symmetry_grade")}`) || data.get("symmetry_grade");
         document.getElementById("res-final").textContent = gradeLabels.get(`cut:${preview.system_cut_grade}`) || preview.system_cut_grade;
