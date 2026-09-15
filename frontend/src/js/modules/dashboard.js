@@ -5,7 +5,7 @@ const PAGE_SIZE = 25;
 const DEFAULT_SORT = "report_date_desc";
 const DATASET_PERIOD = "01.01.2023–31.12.2025";
 const REPORT_STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
-const MARKET_STATUS_LABELS = { not_for_sale: "Не продається", available: "Доступний", reserved: "Зарезервовано", sold: "Продано", withdrawn: "Знято" };
+const SALE_STATUS_LABELS = { false: "Не продано", true: "Продано" };
 
 function createElement(tagName, className, textContent) {
   const element = document.createElement(tagName);
@@ -37,7 +37,7 @@ function getUrlState() {
     page: Math.max(Number.parseInt(params.get("page") || "1", 10) || 1, 1),
     search: params.get("search") || "",
     report_status: params.get("report_status") || "",
-    market_status: params.get("market_status") || "",
+    sold: params.get("sold") || "",
     expert_id: params.get("expert_id") || "",
     sort: params.get("sort") || DEFAULT_SORT,
     shape: params.get("shape") || "",
@@ -165,9 +165,10 @@ function renderRows(tbody, reports, labelFor) {
     const reportStatusCell = document.createElement("td");
     reportStatusCell.append(createBadge(REPORT_STATUS_LABELS[report.status] || report.status, report.status));
     row.append(reportStatusCell);
-    const marketStatusCell = document.createElement("td");
-    marketStatusCell.append(createBadge(MARKET_STATUS_LABELS[report.stone.market_status] || report.stone.market_status, `market-${report.stone.market_status}`));
-    row.append(marketStatusCell);
+    const saleStatusCell = document.createElement("td");
+    const isSold = report.stone.market_status === "sold";
+    saleStatusCell.append(createBadge(SALE_STATUS_LABELS[String(isSold)], `sale-${isSold ? "sold" : "not-sold"}`));
+    row.append(saleStatusCell);
     const actionsCell = document.createElement("td");
     actionsCell.append(renderActions(report.report_id));
     row.append(actionsCell);
@@ -233,17 +234,17 @@ export async function initDashboard() {
   const form = root.querySelector("#dashboard-filters");
   const searchInput = root.querySelector("#report-search");
   const reportStatusSelect = root.querySelector("#quick-report-status");
-  const marketStatusSelect = root.querySelector("#quick-market-status");
+  const saleStatusSelect = root.querySelector("#quick-market-status");
   const expertSelect = root.querySelector("#expert-filter");
   const toggleFilters = root.querySelector("#toggle-filters");
   const filtersPanel = root.querySelector("#advanced-filters");
-  if (!token || !tbody || !pagination || !stateNode || !form || !searchInput || !reportStatusSelect || !marketStatusSelect) return;
+  if (!token || !tbody || !pagination || !stateNode || !form || !searchInput || !reportStatusSelect || !saleStatusSelect) return;
 
   let state = getUrlState();
   let labelFor = (_category, value) => String(value ?? "—");
   searchInput.value = state.search;
   reportStatusSelect.value = state.report_status;
-  marketStatusSelect.value = state.market_status;
+  saleStatusSelect.value = state.sold;
   for (const control of [...form.elements].filter((element) => element.name)) control.value = state[control.name] || "";
 
   try {
@@ -301,7 +302,7 @@ export async function initDashboard() {
     window.clearTimeout(searchTimer);
     searchTimer = window.setTimeout(() => load({ ...state, page: 1, search: searchInput.value.trim() }), 300);
   });
-  for (const [control, key] of [[reportStatusSelect, "report_status"], [marketStatusSelect, "market_status"], [expertSelect, "expert_id"]]) {
+  for (const [control, key] of [[reportStatusSelect, "report_status"], [saleStatusSelect, "sold"], [expertSelect, "expert_id"]]) {
     if (control) control.addEventListener("change", () => load({ ...state, page: 1, [key]: control.value }));
   }
   form.addEventListener("submit", (event) => {

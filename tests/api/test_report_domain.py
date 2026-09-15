@@ -126,6 +126,16 @@ def test_report_dashboard_list_paginates_searches_filters_and_scopes_visibility(
     assert sold.json()["total"] == 1
     assert sold.json()["items"][0]["report_id"] == second.json()["report_id"]
 
+    sale_filter = client.get("/reports?sold=true", headers=owner_headers)
+    assert sale_filter.status_code == 200
+    assert sale_filter.json()["total"] == 1
+    assert sale_filter.json()["items"][0]["report_id"] == second.json()["report_id"]
+
+    unsold_filter = client.get("/reports?sold=false", headers=owner_headers)
+    assert unsold_filter.status_code == 200
+    assert unsold_filter.json()["total"] == 1
+    assert unsold_filter.json()["items"][0]["report_id"] == first.json()["report_id"]
+
     searched = client.get(f"/reports?search={first.json()['report_id']}", headers=owner_headers)
     assert searched.status_code == 200
     assert searched.json()["total"] == 1

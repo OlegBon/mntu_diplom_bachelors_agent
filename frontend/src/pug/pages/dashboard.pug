@@ -26,11 +26,8 @@ block content
                     label.sr-only(for="quick-market-status") Статус продажу
                     select#quick-market-status.form-select
                         option(value="") Усі статуси продажу
-                        option(value="not_for_sale") Не продається
-                        option(value="available") Доступний
-                        option(value="reserved") Зарезервовано
-                        option(value="sold") Продано
-                        option(value="withdrawn") Знято з продажу
+                        option(value="false") Не продано
+                        option(value="true") Продано
                 #expert-filter-wrap.filter-control.filter-control--quick(hidden)
                     label.sr-only(for="expert-filter") Експерт
                     select#expert-filter.form-select
@@ -84,9 +81,9 @@ block content
                         button.btn.btn-primary.btn-sm(type="submit") Застосувати
                         button.btn.btn-outline.btn-sm(type="reset") Очистити
 
+        #dashboard-status.dashboard-status(role="status" aria-live="polite")
         p#dashboard-demo-note.dashboard-demo-note
             | Демо-дані: 1 000 звітів за 01.01.2023–31.12.2025. Значення ціни не є актуальним ринковим котируванням.
-        #dashboard-status.dashboard-status(role="status" aria-live="polite")
 
         .table-container(tabindex="0")
             table.data-table

@@ -166,6 +166,31 @@
   .filters-bar {
     align-items: end;
     gap: 0.75rem;
+
+    .search-group,
+    > #toggle-filters,
+    .filter-control--quick .form-select {
+      min-height: 2.75rem;
+    }
+
+    > #toggle-filters {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .filter-control--quick .form-select {
+      width: 100%;
+      border: 1px solid variables.$border-color;
+      border-radius: 2px;
+      padding: 0.55rem 2rem 0.55rem 0.75rem;
+      background-color: variables.$white;
+      color: variables.$text-strong;
+      font: 500 0.9rem/1.2 variables.$font-main;
+
+      &:hover { border-color: variables.$primary-color; }
+      &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+    }
   }
 
   .advanced-filters .filters-grid {
@@ -181,7 +206,8 @@
     white-space: nowrap;
   }
 
-  .dashboard-status { min-height: 1.5rem; margin: 1rem 0; }
+  .dashboard-status { margin: 0.75rem 0; }
+  .dashboard-status:empty { display: none; }
   .dashboard-state { margin: 0; color: variables.$secondary-color; }
   .dashboard-state--error { color: variables.$error-color; }
   .advanced-filters .filters-grid .filter-item {
@@ -194,11 +220,8 @@
   .status-badge--review { background: variables.$surface-subtle; color: variables.$primary-hover; }
   .status-badge--issued { background: variables.$success-surface; color: variables.$success-text; }
   .status-badge--void { background: variables.$error-surface; color: variables.$error-color; }
-  .status-badge--market-not_for_sale { background: variables.$surface-muted; color: variables.$secondary-color; }
-  .status-badge--market-available { background: variables.$success-surface; color: variables.$success-text; }
-  .status-badge--market-reserved { background: variables.$surface-subtle; color: variables.$primary-hover; }
-  .status-badge--market-sold { background: variables.$surface-muted; color: variables.$text-strong; }
-  .status-badge--market-withdrawn { background: variables.$error-surface; color: variables.$error-color; }
+  .status-badge--sale-not-sold { background: variables.$surface-muted; color: variables.$secondary-color; }
+  .status-badge--sale-sold { background: variables.$success-surface; color: variables.$success-text; }
 
   .report-price { position: relative; width: fit-content; }
   .report-price__toggle {
@@ -237,7 +260,7 @@
   .report-price__warning { margin-top: 0.5rem; color: variables.$secondary-color; }
   .report-price__missing { color: variables.$secondary-color; }
   .dashboard-demo-note {
-    margin: 1rem 0 0.5rem;
+    margin: 0.75rem 0 0.5rem;
     color: variables.$secondary-color;
     font-size: 0.875rem;
     text-align: center;
@@ -350,6 +373,7 @@
     .pagination .page-btn { min-width: 2.25rem; width: 2.25rem; height: 2.25rem; padding: 0; }
     .pagination .page-btn--context,
     .pagination__ellipsis { display: none; }
+    #create-report-action { margin-inline: auto; }
   }
 }
 

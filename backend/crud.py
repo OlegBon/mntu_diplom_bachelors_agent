@@ -96,6 +96,7 @@ def get_report_domain_list(
     current_user: models.Expert,
     status: str | None,
     market_status: str | None,
+    sold: bool | None,
     shape: str | None,
     color_grade: int | None,
     clarity_grade: int | None,
@@ -126,6 +127,10 @@ def get_report_domain_list(
         query = query.filter(models.DiamondReport.status == status)
     if market_status:
         query = query.filter(models.Stone.market_status == market_status)
+    if sold is True:
+        query = query.filter(models.Stone.market_status == "sold")
+    elif sold is False:
+        query = query.filter(models.Stone.market_status != "sold")
     if shape:
         query = query.filter(models.Stone.shape == shape.strip())
     if color_grade is not None:
