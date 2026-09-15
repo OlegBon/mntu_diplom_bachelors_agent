@@ -4,6 +4,14 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-15 — database-schema-documentation (завершено)
+
+- **Задача:** створити єдину фактичну карту локальної MariaDB-схеми Diamant ID після `0002_report_core`.
+- **Змінені файли:** `docs/db-schema.md`, `docs/architecture.md`, `docs/progress.md`.
+- **Результат:** описано три логічні MariaDB databases, контрольовані значення, зв’язки, ключі, compatibility-межі `diamond_reports`, фінансовий контракт, індекси/unique constraints і Alembic revisions. Документ не містить секретів, SQL для ручної зміни даних або інструкцій destructive repair.
+- **Перевірки:** статично звірено `backend/models.py`, `0001_initial_schema`, `0002_report_core`; read-only підтверджено `0002_report_core`, 1 000 reports/stones/events та стан `draft` у локальній MariaDB; `git diff --check` — успішно.
+- **Нові змінні середовища:** немає.
+
 ## 2026-09-14 — report-core-and-reference-data (завершено)
 
 - **Задача:** реалізувати ядро звіту, нормалізовані дані каменю, lifecycle, server reference data та безпечне перенесення чинної локальної MariaDB.
