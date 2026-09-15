@@ -246,6 +246,9 @@ export async function initDashboard() {
   reportStatusSelect.value = state.report_status;
   saleStatusSelect.value = state.sold;
   for (const control of [...form.elements].filter((element) => element.name)) control.value = state[control.name] || "";
+  const expertFilter = root.querySelector("#expert-filter-wrap");
+  // This only prevents a visual layout shift. The API still determines the real role and access.
+  if (expertFilter) expertFilter.hidden = localStorage.getItem("username") !== "admin";
 
   try {
     const [currentUser, mappings] = await Promise.all([getCurrentUser(token), getGradeMappings()]);
@@ -254,7 +257,6 @@ export async function initDashboard() {
     populateGradeFilter(root.querySelector("#clarity-filter"), "clarity", mappings);
     populateGradeFilter(root.querySelector("#cut-filter"), "cut", mappings);
     for (const select of [root.querySelector("#color-filter"), root.querySelector("#clarity-filter"), root.querySelector("#cut-filter")]) select.value = state[select.name] || "";
-    const expertFilter = root.querySelector("#expert-filter-wrap");
     if (expertFilter) expertFilter.hidden = currentUser.role !== "admin";
     if (currentUser.role === "admin" && expertFilter && expertSelect) {
       const experts = await getExperts(token);

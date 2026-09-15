@@ -375,7 +375,7 @@
     .pagination .page-btn--context,
     .pagination__ellipsis { display: none; }
     #create-report-action {
-      width: 100%;
+      width: calc(100% - 2rem);
       margin-inline: auto;
     }
   }
