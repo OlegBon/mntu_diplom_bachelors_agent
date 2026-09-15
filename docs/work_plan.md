@@ -67,7 +67,8 @@
 - [ ] [080 — Приватний перегляд і редагування](./backlog/080-report-detail-and-editing.md): RBAC, transitions, аудит подій; додати `report_updated` event для кожного успішного draft update, бо поточний `PUT /reports/{id}` ще не поповнює історію змін.
 - [ ] [085 — Прибирання legacy API](./backlog/085-legacy-api-retirement.md): після 080 прибрати unreachable frontend handler `/diamonds/*` та погоджено визначити долю compatibility маршрутів.
 - [ ] [090 — Публічний паспорт і QR](./backlog/090-public-passport-and-qr.md): окремий безпечний public flow для `issued`.
-- [ ] [100 — Профіль і admin UI](./backlog/100-profile-and-admin-ui.md): експерти, ролі, довідники та ринкові дані.
+- [ ] [100 — Профіль і admin UI](./backlog/100-profile-and-admin-ui.md): експерти, ролі та довідники; UI ринкових даних залежить від 110.
+- [ ] [110 — Авторитетні ринкові дані й валютні курси](./backlog/110-authoritative-market-data-and-fx.md): обрати законне джерело, зберігати незмінні snapshot-и з provenance, реалізувати ручне admin-оновлення, а scheduler розглядати лише після цього. Не змінює demo `USD … d` або історичні значення автоматично.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
 
