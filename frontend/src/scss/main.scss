@@ -1324,10 +1324,12 @@ ul {
 
       .calc-group.highlight .calc-value,
       .calc-group.forecast .calc-value {
-        color: variables.$primary-color;
         font-size: 1.15rem;
         font-weight: 800;
       }
+
+      .calc-group.highlight .calc-value { color: variables.$text-color; }
+      .calc-group.forecast .calc-value { color: variables.$primary-hover; }
 
       .demo-marker {
         color: variables.$primary-color;
