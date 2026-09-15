@@ -1236,7 +1236,7 @@ ul {
 
   .wizard-actions {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     border-top: 1px solid variables.$border-color;
     padding-top: 2rem;
@@ -1369,6 +1369,21 @@ ul {
             margin-top: -5px;
           }
         }
+      }
+
+      .calc-group:not(.highlight):not(.forecast) .calc-value {
+        font-family: variables.$font-main;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .calc-group.highlight .calc-value,
+      .calc-group.highlight .calc-value.placeholder {
+        color: variables.$text-color;
+        opacity: 1;
+        font-family: variables.$font-main;
+        font-size: 1.15rem;
+        font-weight: 800;
       }
     }
   }
