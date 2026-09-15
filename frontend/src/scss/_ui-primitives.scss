@@ -1,0 +1,158 @@
+@use "variables";
+
+// Canonical visual primitives. Large work surfaces stay flat; compact controls
+// use only a 2px radius to preserve an explicit, technical interface.
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: variables.$text-strong;
+  font: 600 0.925rem/1.2 variables.$font-main;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+
+  &:hover { transform: none; }
+  &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+  &:disabled, &.disabled { cursor: not-allowed; opacity: 0.5; }
+
+  &.btn-sm { min-height: 2.25rem; padding: 0.45rem 0.75rem; font-size: 0.85rem; }
+}
+
+.btn-primary {
+  border-color: variables.$primary-color;
+  background: variables.$primary-color;
+  color: variables.$white;
+
+  &:hover, &:focus-visible { border-color: variables.$primary-hover; background: variables.$primary-hover; color: variables.$white; }
+}
+
+.btn-outline {
+  border-color: variables.$border-color;
+  background: variables.$white;
+  color: variables.$primary-color;
+
+  &:hover, &:focus-visible { border-color: variables.$primary-color; background: variables.$surface-subtle; color: variables.$primary-hover; }
+}
+
+.form-control,
+.form-select,
+.passport-search input,
+.dashboard-page .search-group,
+.dashboard-page .search-group input {
+  border-radius: 2px;
+}
+
+.form-control,
+.form-select,
+.passport-search input {
+  &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 1px; }
+}
+
+.main-nav li a,
+.main-footer .footer-links a,
+.main-footer .footer-brand,
+.header-session-action,
+.mobile-logout,
+.table-action {
+  color: variables.$secondary-color;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease, background-color 160ms ease;
+
+  &:hover, &:focus-visible { color: variables.$primary-color; }
+  &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+}
+
+.main-header {
+  .header-content { gap: 2rem; }
+
+  .main-nav ul { gap: 1.25rem; }
+
+  .header-session-action {
+    min-height: 2.5rem;
+    border-left: 1px solid variables.$border-color;
+    padding-left: 1rem;
+    background: transparent;
+    color: variables.$primary-color;
+
+    &:hover, &:focus-visible { color: variables.$primary-hover; }
+  }
+
+  .header-session-name:not([hidden]) {
+    display: inline-flex;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 11rem;
+    color: variables.$text-strong;
+    line-height: 1.2;
+  }
+
+  .header-session-username {
+    overflow: hidden;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .header-session-role,
+  .mobile-account-role {
+    color: variables.$secondary-color;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .mobile-account-name { color: variables.$text-strong; font-weight: 700; }
+  .mobile-logout { padding: 0.6rem 0.75rem; color: variables.$primary-color; }
+}
+
+.login-card,
+.dashboard-page .filters-container,
+.dashboard-page .filters-bar,
+.dashboard-page .advanced-filters,
+.dashboard-page .table-container,
+.create-report-page .form-column,
+.create-report-page .calc-column .calc-card,
+.create-report-page .media-upload-card,
+.create-report-page .media-upload-preview,
+.create-report-page .highlight {
+  border-radius: 0;
+}
+
+.dashboard-page {
+  .filters-container { border-color: variables.$border-color; }
+  .filters-bar { background: transparent; border: 0; }
+  .advanced-filters { margin-top: 0; }
+  .status-badge { border-radius: 2px; }
+
+  .pagination .page-btn {
+    width: auto;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    padding: 0 0.75rem;
+    border-radius: 2px;
+    color: variables.$text-strong;
+    font: 600 0.875rem/1 variables.$font-main;
+
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+  }
+
+  .actions { gap: 0.75rem; }
+  .table-action { border: 0; background: transparent; padding: 0; cursor: pointer; }
+}
+
+@media (max-width: 900px) {
+  .main-header {
+    .header-right { gap: 1.25rem; }
+    .header-session-name:not([hidden]) { display: inline-flex; max-width: 9rem; }
+    .header-session-role { display: none; }
+    .main-nav li a { padding-left: 0.75rem; }
+  }
+}

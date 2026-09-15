@@ -9,7 +9,6 @@ block content
                 p.page-subtitle Управління сертифікатами та оцінками
             
             a#create-report-action.btn.btn-primary(href="/create-report.html")
-                span +
                 | Новий звіт
 
         //- Панель фільтрів
@@ -17,13 +16,11 @@ block content
             //- Верхній рядок (Швидкі фільтри)
             .filters-bar
                 .search-group
-                    span.search-icon 🔍
                     input(type="text" placeholder="Пошук за номером звіту...")
                 
                 //- Кнопка (відкриває детальні фільтри)
                 button#toggle-filters.btn.btn-outline.btn-icon-text
-                    span ⚙️
-                    span.hide-mobile Фільтри
+                    | Фільтри
 
                 .filters-group
                     //- Основні фільтри
@@ -173,14 +170,14 @@ block content
                                     span.status-badge.sold Sold
                             td
                                 .actions
-                                    button.btn-icon(title="Редагувати") ✏️
-                                    button.btn-icon(title="Друк") 🖨️
-                                    a.btn-icon(href=`/view-report.html?id=${item.id}` title="Переглянути") 👁️
+                                    button.table-action(type="button") Редагувати
+                                    button.table-action(type="button") Друк
+                                    a.table-action(href=`/view-report.html?id=${item.id}`) Переглянути
 
         //- Пагінація
         .pagination
-            button.page-btn.disabled &laquo;
+            button.page-btn.disabled(type="button") Попередня
             button.page-btn.active 1
             button.page-btn 2
             button.page-btn 3
-            button.page-btn &raquo;
+            button.page-btn(type="button") Наступна

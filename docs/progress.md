@@ -4,6 +4,15 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-15 — ui-primitives (завершено)
+
+- **Задача:** уніфікувати базові UI-примітиви перед наступними dashboard і wizard-зрізами.
+- **Змінені файли:** `frontend/src/{scss/{main,_ui-primitives}.scss,js/main.js,pug/pages/{dashboard,create-report}.pug}`, `frontend/tests/page-dom.test.mjs`, `DESIGN.md`, `docs/{work_plan,progress}.md`, `docs/backlog/{README.md,055-ui-primitives.md}` (задачу видалено після реалізації).
+- **Рішення:** `_ui-primitives.scss` є канонічним останнім шаром повторно використовуваних control-стилів. Великі поверхні flat (`0`), кнопки/inputs/select/badges/pagination — `2px`; кнопки мають лише текст. Header, footer і session-actions мають спільні hover/focus правила. Username — темний identity-block із нейтральною роллю; desktop розміщує його перед синім `Вийти`, mobile показує ім’я поруч із burger, повну роль — усередині меню. Admin не маркується червоним лише через роль.
+- **Перевірки:** `npm run build`; `npm test` — 7 passed; browser QA через Playwright fallback (вбудований Browser недоступний): desktop landing `1440×900`, desktop create-report авторизованого expert, mobile dashboard menu `390×844`; `git diff --check`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** task не переносить dashboard/wizard на `/reports`, не прибирає legacy mock rows або hardcoded mappings, не реалізує нові функції таблиці чи pagination. Ці межі лишаються задачами 060 і 070.
+
 ## 2026-09-15 — media-assets (завершено)
 
 - **Задача:** реалізувати приватні вкладення звітів: локальне сховище, метадані, API, RBAC і UI fallback.
