@@ -25,6 +25,7 @@ frontend/dist/
 frontend/test-results/
 frontend/playwright-report/
 docs/audits/
+storage/
 .sass-cache/
 npm-debug.log*
 yarn-debug.log*

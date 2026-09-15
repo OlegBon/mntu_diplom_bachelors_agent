@@ -216,3 +216,17 @@ class ReportResponse(BaseModel):
     expert_cut_grade: Optional[int]
     expert_confirmed_at: Optional[datetime]
     stone: StoneResponse
+
+
+class MediaAssetResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    media_id: int
+    report_id: str
+    asset_type: str
+    original_filename: str
+    mime_type: str
+    size_bytes: int
+    sha256: str
+    uploaded_by_id: int
+    created_at: datetime
+    is_public: bool

@@ -27,7 +27,6 @@
 
 | Файл | Тема |
 | --- | --- |
-| [050-media-assets.md](./050-media-assets.md) | Безпечні завантаження та доступ до медіа звіту. |
 | [055-ui-primitives.md](./055-ui-primitives.md) | Повторно використовувані Pug/SCSS-примітиви для робочих екранів. |
 | [060-reports-dashboard.md](./060-reports-dashboard.md) | Робочий список, пошук, фільтри й пагінація звітів. |
 | [070-report-creation-wizard.md](./070-report-creation-wizard.md) | Майстер створення й збереження чернетки. |

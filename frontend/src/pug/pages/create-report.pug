@@ -159,11 +159,17 @@ block content
                         
                         .form-row
                             .form-group.half
-                                label Схема дефектів (Plotting)
-                                input.form-control(type="file" name="plotting_image")
+                                label(for="plotting-image") Схема дефектів (Plotting)
+                                .media-upload-card
+                                    img#plotting-preview.media-upload-preview(src="/img/plotting-placeholder.svg" alt="Схема дефектів не додана" width="320" height="180")
+                                    input#plotting-image.form-control(type="file" name="plotting_image" accept="image/jpeg,image/png,image/webp")
+                                    small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
                             .form-group.half
-                                label Фото каменя (Real Image)
-                                input.form-control(type="file" name="real_image")
+                                label(for="real-image") Фото каменя (Real Image)
+                                .media-upload-card
+                                    img#stone-preview.media-upload-preview(src="/img/stone-placeholder.svg" alt="Фото каменю не додано" width="320" height="180")
+                                    input#real-image.form-control(type="file" name="real_image" accept="image/jpeg,image/png,image/webp")
+                                    small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
 
                     .wizard-actions
                         button#prev-btn.btn.btn-outline(type="button" disabled) &larr; Назад

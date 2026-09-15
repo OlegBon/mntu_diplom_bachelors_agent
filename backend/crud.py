@@ -236,6 +236,49 @@ def get_report_events(db: Session, report_id: str) -> list[models.ReportEvent]:
     return db.query(models.ReportEvent).filter(models.ReportEvent.report_id == report_id).order_by(models.ReportEvent.event_id).all()
 
 
+def get_media_assets(db: Session, report_id: str) -> list[models.MediaAsset]:
+    return (
+        db.query(models.MediaAsset)
+        .filter(models.MediaAsset.report_id == report_id)
+        .order_by(models.MediaAsset.media_id)
+        .all()
+    )
+
+
+def get_media_asset(db: Session, report_id: str, media_id: int) -> models.MediaAsset | None:
+    return (
+        db.query(models.MediaAsset)
+        .filter(models.MediaAsset.report_id == report_id, models.MediaAsset.media_id == media_id)
+        .first()
+    )
+
+
+def create_media_asset(
+    db: Session,
+    *,
+    report_id: str,
+    uploaded_by_id: int,
+    asset_type: str,
+    storage_data: dict[str, object],
+) -> models.MediaAsset:
+    asset = models.MediaAsset(
+        report_id=report_id,
+        uploaded_by_id=uploaded_by_id,
+        asset_type=asset_type,
+        is_public=False,
+        **storage_data,
+    )
+    db.add(asset)
+    db.commit()
+    db.refresh(asset)
+    return asset
+
+
+def delete_media_asset(db: Session, asset: models.MediaAsset) -> None:
+    db.delete(asset)
+    db.commit()
+
+
 def get_reference_values(db: Session, category: str | None = None) -> list[models.ReferenceValue]:
     query = db.query(models.ReferenceValue).filter(models.ReferenceValue.is_active.is_(True))
     if category:

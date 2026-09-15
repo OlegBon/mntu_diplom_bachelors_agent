@@ -1182,6 +1182,32 @@ ul {
     textarea.form-control {
       resize: vertical;
     }
+
+    .media-upload-card {
+      border: 1px solid variables.$border-color;
+      border-radius: 8px;
+      background: variables.$surface-subtle;
+      padding: 0.75rem;
+    }
+
+    .media-upload-preview {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border: 1px solid variables.$border-color;
+      border-radius: 6px;
+      background: variables.$white;
+      margin-bottom: 0.75rem;
+    }
+
+    .media-upload-help {
+      display: block;
+      margin-top: 0.5rem;
+      color: variables.$secondary-color;
+      font-size: 0.8rem;
+    }
   }
 
   .wizard-actions {

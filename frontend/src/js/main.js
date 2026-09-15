@@ -1,5 +1,5 @@
 import { checkAuth, logout } from "./modules/auth.js";
-import { loginUser } from "./modules/api.js";
+import { loginUser, uploadReportMedia } from "./modules/api.js";
 
 // === КОНФІГУРАЦІЯ API ===
 const API_URL = "http://127.0.0.1:8000"; // Адреса твого Python сервера
@@ -517,6 +517,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const nextBtn = document.getElementById("next-btn");
     const prevBtn = document.getElementById("prev-btn");
     const saveBtn = document.getElementById("save-btn");
+    const mediaInputs = [
+      { input: document.getElementById("plotting-image"), preview: document.getElementById("plotting-preview"), assetType: "plotting_diagram" },
+      { input: document.getElementById("real-image"), preview: document.getElementById("stone-preview"), assetType: "stone_photo" },
+    ];
+
+    mediaInputs.forEach(({ input, preview }) => {
+      if (!input || !preview) return;
+      input.addEventListener("change", () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const objectUrl = URL.createObjectURL(file);
+        preview.src = objectUrl;
+        preview.alt = `Попередній перегляд: ${file.name}`;
+        preview.addEventListener("load", () => URL.revokeObjectURL(objectUrl), { once: true });
+      });
+    });
 
     let currentStep = 1;
     const totalSteps = steps.length;
@@ -608,7 +624,26 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await apiRequest("/diamonds/", "POST", payload);
 
       if (result) {
-        alert(`✅ Звіт ${result.report_id} успішно створено!`);
+        const selectedMedia = mediaInputs.filter(({ input }) => input?.files?.[0]);
+        let mediaUploadFailed = false;
+        for (const { input, assetType } of selectedMedia) {
+          try {
+            await uploadReportMedia(
+              result.report_id,
+              assetType,
+              input.files[0],
+              localStorage.getItem("token"),
+            );
+          } catch (error) {
+            console.error("Report media upload failed", error);
+            mediaUploadFailed = true;
+          }
+        }
+        alert(
+          mediaUploadFailed
+            ? `Звіт ${result.report_id} створено, але одне або кілька вкладень не завантажилися.`
+            : `✅ Звіт ${result.report_id} успішно створено!`,
+        );
         window.location.href = "/dashboard.html";
       } else {
         btn.disabled = false;

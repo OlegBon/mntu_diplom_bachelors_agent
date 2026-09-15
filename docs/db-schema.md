@@ -1,7 +1,7 @@
 # Схема бази даних
 
 Документ описує фактичну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0002_report_core`. Це карта даних для розробки, API та
+Alembic revision `0003_media_assets`. Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -13,7 +13,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 
 | База | Таблиці | Призначення |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `stone_valuations` | Оперативні користувачі, звіти, фізичні камені, lifecycle та майбутні фінансові записи. |
+| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, фізичні камені, lifecycle, приватні вкладення та майбутні фінансові записи. |
 | `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference` | Числові та текстові довідники; legacy demo-індекс ціни. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
@@ -41,6 +41,8 @@ erDiagram
     STONES ||--o{ DIAMOND_REPORTS : "has reports"
     DIAMOND_REPORTS ||--o{ REPORT_EVENTS : "records lifecycle"
     EXPERTS ||--o{ REPORT_EVENTS : "acts"
+    DIAMOND_REPORTS ||--o{ MEDIA_ASSETS : "contains"
+    EXPERTS ||--o{ MEDIA_ASSETS : "uploads"
     STONES ||--o{ STONE_VALUATIONS : "has values"
     EXPERTS ||--o{ STONE_VALUATIONS : "records"
 ```
@@ -110,6 +112,25 @@ Append-only журнал lifecycle. `event_id` — первинний ключ; 
 Migration `0002` створила по одній події `legacy_import` для кожного
 перенесеного report і не виводила з цього факту ні видачу, ні підтвердження.
 
+### `media_assets`
+
+Метадані приватних вкладень звіту. Сам файл не зберігається у MariaDB і не
+комітиться: локально він лежить під gitignored `storage/reports/<report-id>/`
+або в каталозі `MEDIA_STORAGE_PATH`.
+
+| Поля | Призначення |
+| --- | --- |
+| `media_id`, `report_id`, `uploaded_by_id` | Первинний ключ і обов’язкові FK на звіт та автора upload. |
+| `asset_type` | `stone_photo`, `plotting_diagram`, `instrument_image` або `supporting_document`. |
+| `storage_key`, `original_filename` | Згенерований сервером ключ і відображувана назва; клієнтський шлях не використовується. |
+| `mime_type`, `size_bytes`, `sha256` | Перевірені сервером тип, розмір і контрольний хеш файлу. |
+| `created_at`, `is_public` | Технічний час і майбутня ознака видимості; за замовчуванням `false`. |
+
+API не монтує storage як static directory: читання проходить тільки через
+авторизований endpoint owner/admin. `is_public` ще не відкриває файл — це
+окреме рішення для публічного паспорта. Legacy `plotting_image` і `real_image`
+не переносилися, бо містять непідтверджені placeholder-шляхи, а не файли.
+
 ### `stone_valuations`
 
 Майбутні versioned фінансові величини каменю. `valuation_id` — первинний ключ;
@@ -161,6 +182,7 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 | --- | --- |
 | `0001_initial_schema` | Початкові таблиці трьох логічних баз. |
 | `0002_report_core` | `Stone`, `ReportEvent`, `StoneValuation`, `reference_values`, lifecycle-колонки та backfill legacy reports. |
+| `0003_media_assets` | `media_assets` для приватних файлів і метаданих; без backfill legacy image-path полів. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за
