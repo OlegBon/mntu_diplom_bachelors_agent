@@ -1235,11 +1235,16 @@ ul {
   }
 
   .wizard-actions {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
     border-top: 1px solid variables.$border-color;
     padding-top: 2rem;
     margin-top: 2rem;
+
+    #prev-btn { justify-self: start; }
+    #save-btn { justify-self: center; }
+    #next-btn { justify-self: end; }
   }
 
   // --- Права колонка (Sticky Calculator) ---
@@ -1306,6 +1311,12 @@ ul {
             font-size: 1.2rem;
           } // Green price
         }
+      }
+
+      .demo-marker {
+        color: variables.$primary-color;
+        font-weight: 700;
+        margin-left: 0.2rem;
       }
 
       .highlight {

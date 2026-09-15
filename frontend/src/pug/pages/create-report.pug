@@ -150,8 +150,8 @@ block content
                                     small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
 
                     .wizard-actions
-                        button#save-btn.btn.btn-primary(type="submit" hidden) Зберегти чернетку
                         button#prev-btn.btn.btn-outline(type="button" disabled) Назад
+                        button#save-btn.btn.btn-primary(type="submit" hidden) Зберегти чернетку
                         button#next-btn.btn.btn-primary(type="button") Далі
 
             .calc-column
@@ -175,6 +175,8 @@ block content
                     h4 Демо-прогноз
                     .calc-group
                         label Системний прогноз (USD)
-                        .calc-value.placeholder#res-price --
+                        .calc-value.placeholder
+                            span#res-price --
+                            sup#price-demo-marker.demo-marker(hidden) d
                     p.text-muted.calc-demo-note#price-demo-note d — демонстраційний прогноз, не ринкова, експертна або продажна ціна.
                     p.text-muted#calculation-rule-version Правило буде показано після введення параметрів огранювання.

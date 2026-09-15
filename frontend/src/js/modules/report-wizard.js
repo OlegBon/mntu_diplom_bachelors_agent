@@ -118,9 +118,12 @@ export async function initReportWizard() {
         document.getElementById("res-pol").textContent = gradeLabels.get(`polish:${data.get("polish_grade")}`) || data.get("polish_grade");
         document.getElementById("res-sym").textContent = gradeLabels.get(`symmetry:${data.get("symmetry_grade")}`) || data.get("symmetry_grade");
         document.getElementById("res-final").textContent = gradeLabels.get(`cut:${preview.system_cut_grade}`) || preview.system_cut_grade;
-        document.getElementById("res-price").textContent = preview.demo_price_usd === null
+        const price = document.getElementById("res-price");
+        const priceMarker = document.getElementById("price-demo-marker");
+        price.textContent = preview.demo_price_usd === null
           ? "--"
-          : `USD ${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(preview.demo_price_usd)} d`;
+          : `USD ${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(preview.demo_price_usd)}`;
+        priceMarker.hidden = preview.demo_price_usd === null;
         document.getElementById("calculation-rule-version").textContent = `Правило: ${preview.calculation_rule_version}`;
       } catch { /* invalid values are handled by native fields */ }
     }, 300);

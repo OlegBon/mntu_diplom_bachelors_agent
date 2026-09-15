@@ -631,7 +631,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Live Calculator Logic (Full) ---
   const calcInputs = document.querySelectorAll(
-    "#wizard-form input, #wizard-form select",
+    "#legacy-wizard-form input, #legacy-wizard-form select",
   );
   const resProp = document.getElementById("res-prop");
   const resPol = document.getElementById("res-pol");
