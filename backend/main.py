@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import FastAPI, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -119,20 +119,35 @@ def require_report_access(report: models.DiamondReport, current_user: models.Exp
         raise HTTPException(status_code=403, detail="You do not have access to this report")
 
 
-@app.get("/reports", response_model=List[schemas.ReportResponse])
+@app.get("/reports", response_model=schemas.ReportListResponse)
 def read_report_domain_list(
-    skip: int = 0,
-    limit: int = 50,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=100),
     report_status: Optional[schemas.ReportStatus] = None,
+    market_status: Optional[schemas.MarketStatus] = None,
+    expert_id: Optional[int] = Query(default=None, ge=1),
+    search: Optional[str] = Query(default=None, min_length=1, max_length=20),
+    sort: schemas.ReportListSort = "report_date_desc",
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
-    return crud.get_report_domain_list(
+    reports, total = crud.get_report_domain_list(
         db,
         current_user=current_user,
         status=report_status,
-        skip=skip,
-        limit=limit,
+        market_status=market_status,
+        expert_id=expert_id,
+        search=search,
+        sort=sort,
+        page=page,
+        page_size=page_size,
+    )
+    return schemas.ReportListResponse(
+        items=reports,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
     )
 
 

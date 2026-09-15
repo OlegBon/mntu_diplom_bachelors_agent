@@ -90,3 +90,52 @@ def test_report_domain_transition_requires_confirmation_and_admin_issuance(clien
     )
     assert voided.status_code == 200
     assert voided.json()["status"] == "void"
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_report_dashboard_list_paginates_searches_filters_and_scopes_visibility(client, experts) -> None:
+    owner_headers = auth_headers(client, experts["owner"].username)
+    other_headers = auth_headers(client, experts["other"].username)
+    admin_headers = auth_headers(client, experts["admin"].username)
+
+    first_payload = report_payload()
+    first_payload["stone"]["market_status"] = "available"
+    first = client.post("/reports", json=first_payload, headers=owner_headers)
+    assert first.status_code == 200
+
+    second_payload = report_payload()
+    second_payload["stone"]["market_status"] = "sold"
+    second = client.post("/reports", json=second_payload, headers=owner_headers)
+    assert second.status_code == 200
+
+    other = client.post("/reports", json=report_payload(), headers=other_headers)
+    assert other.status_code == 200
+
+    owner_page = client.get("/reports?page=1&page_size=1", headers=owner_headers)
+    assert owner_page.status_code == 200
+    owner_body = owner_page.json()
+    assert owner_body["total"] == 2
+    assert owner_body["page"] == 1
+    assert owner_body["page_size"] == 1
+    assert owner_body["total_pages"] == 2
+    assert len(owner_body["items"]) == 1
+
+    sold = client.get("/reports?market_status=sold", headers=owner_headers)
+    assert sold.status_code == 200
+    assert sold.json()["total"] == 1
+    assert sold.json()["items"][0]["report_id"] == second.json()["report_id"]
+
+    searched = client.get(f"/reports?search={first.json()['report_id']}", headers=owner_headers)
+    assert searched.status_code == 200
+    assert searched.json()["total"] == 1
+    assert searched.json()["items"][0]["report_id"] == first.json()["report_id"]
+
+    admin_filtered = client.get(
+        f"/reports?expert_id={experts['other'].expert_id}", headers=admin_headers
+    )
+    assert admin_filtered.status_code == 200
+    assert admin_filtered.json()["total"] == 1
+    assert admin_filtered.json()["items"][0]["report_id"] == other.json()["report_id"]
+
+    assert client.get("/reports?page_size=101", headers=owner_headers).status_code == 422

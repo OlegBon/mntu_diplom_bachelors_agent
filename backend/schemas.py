@@ -135,6 +135,7 @@ Origin = Literal["unknown", "natural", "lab_grown", "other"]
 TreatmentStatus = Literal["not_assessed", "none_detected", "disclosed", "confirmed"]
 IdentificationStatus = Literal["preliminary", "confirmed", "inconclusive"]
 MarketStatus = Literal["not_for_sale", "available", "reserved", "sold", "withdrawn"]
+ReportListSort = Literal["report_date_desc", "report_date_asc", "report_id_asc", "report_id_desc", "carat_desc", "carat_asc"]
 
 
 class StoneDraft(BaseModel):
@@ -216,6 +217,16 @@ class ReportResponse(BaseModel):
     expert_cut_grade: Optional[int]
     expert_confirmed_at: Optional[datetime]
     stone: StoneResponse
+
+
+class ReportListResponse(BaseModel):
+    """Server-paginated, access-scoped report list for the dashboard."""
+
+    items: list[ReportResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
 
 
 class MediaAssetResponse(BaseModel):

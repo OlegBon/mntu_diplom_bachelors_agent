@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import desc, asc
+from sqlalchemy import asc, desc
+from sqlalchemy.orm import Session, joinedload
 from datetime import date, datetime, timezone
 import random
 
@@ -94,15 +94,46 @@ def get_report_domain_list(
     *,
     current_user: models.Expert,
     status: str | None,
-    skip: int,
-    limit: int,
-) -> list[models.DiamondReport]:
-    query = db.query(models.DiamondReport).filter(models.DiamondReport.stone_id.is_not(None))
+    market_status: str | None,
+    expert_id: int | None,
+    search: str | None,
+    sort: schemas.ReportListSort,
+    page: int,
+    page_size: int,
+) -> tuple[list[models.DiamondReport], int]:
+    """Return an access-scoped dashboard page and its total row count."""
+    query = (
+        db.query(models.DiamondReport)
+        .join(models.Stone, models.DiamondReport.stone_id == models.Stone.stone_id)
+        .options(joinedload(models.DiamondReport.stone))
+    )
     if current_user.role != "admin":
         query = query.filter(models.DiamondReport.expert_id == current_user.expert_id)
+    elif expert_id is not None:
+        query = query.filter(models.DiamondReport.expert_id == expert_id)
     if status:
         query = query.filter(models.DiamondReport.status == status)
-    return query.order_by(desc(models.DiamondReport.created_at), desc(models.DiamondReport.report_id)).offset(skip).limit(limit).all()
+    if market_status:
+        query = query.filter(models.Stone.market_status == market_status)
+    if search:
+        query = query.filter(models.DiamondReport.report_id.ilike(f"%{search.strip()}%"))
+
+    sort_columns = {
+        "report_date_desc": (desc(models.DiamondReport.report_date), desc(models.DiamondReport.report_id)),
+        "report_date_asc": (asc(models.DiamondReport.report_date), asc(models.DiamondReport.report_id)),
+        "report_id_asc": (asc(models.DiamondReport.report_id),),
+        "report_id_desc": (desc(models.DiamondReport.report_id),),
+        "carat_desc": (desc(models.Stone.carat_weight), desc(models.DiamondReport.report_id)),
+        "carat_asc": (asc(models.Stone.carat_weight), asc(models.DiamondReport.report_id)),
+    }
+    total = query.count()
+    reports = (
+        query.order_by(*sort_columns[sort])
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return reports, total
 
 
 def create_report_domain(
