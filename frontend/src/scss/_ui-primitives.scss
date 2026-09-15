@@ -375,7 +375,7 @@
     .pagination .page-btn--context,
     .pagination__ellipsis { display: none; }
     #create-report-action {
-      width: calc(100% - 2rem);
+      width: calc(100% - 4rem);
       margin-inline: auto;
     }
   }
@@ -383,6 +383,12 @@
 
 @media (max-width: 900px) {
   .main-header {
+    .main-nav {
+      display: none !important;
+
+      &.is-active { display: block !important; }
+    }
+
     .header-right { gap: 1.25rem; }
     .header-session-name:not([hidden]) {
       display: inline-flex;
