@@ -1313,6 +1313,22 @@ ul {
         }
       }
 
+      .calc-group:not(.highlight):not(.forecast) {
+        label,
+        .calc-value {
+          color: variables.$secondary-color;
+        }
+
+        .calc-value { font-weight: 500; }
+      }
+
+      .calc-group.highlight .calc-value,
+      .calc-group.forecast .calc-value {
+        color: variables.$primary-color;
+        font-size: 1.15rem;
+        font-weight: 800;
+      }
+
       .demo-marker {
         color: variables.$primary-color;
         font-weight: 700;
