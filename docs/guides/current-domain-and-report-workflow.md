@@ -1,135 +1,104 @@
 # Поточна доменна логіка та workflow звіту
 
 **Стан коду:** 15 вересня 2026 року
-**Для чого читати:** щоб зрозуміти фактичну поведінку локального MVP перед
-роботою зі звітами, API або frontend.
 
-> Це guide фактичного runtime-стану MariaDB. Приватна модель
-> `Stone → Report → ReportEvent` застосована revision `0002_report_core`, а
-> `0004_report_wizard` додає authoring-поле й geometry-довідники. Dashboard і
-> wizard використовують приватний `/reports`; private detail лишається
-> наступним UI-зрізом.
-> Повний контракт описано в [ADR-001](../decisions/001-report-domain-contract.md)
-> і плані перенесення [ADR-003](../decisions/003-report-core-migration-plan.md).
+Цей guide описує фактичну локальну поведінку Diamant ID, а не цільову модель
+із диплома. За стратегічним контрактом звертайтеся до
+[ADR-001](../decisions/001-report-domain-contract.md), а за активною
+реалізацією — до [work plan](../work_plan.md) і backlog.
 
-## 1. Ролі та доступ
+## Ролі та межі доступу
 
-У локальному MVP є дві ролі:
-
-| Роль | Фактичні можливості |
+| Роль | Фактичні можливості приватного `/reports` API |
 | --- | --- |
-| `gemologist` | Вхід і створення власної чернетки через приватний `/reports`; legacy редагування лишається compatibility-функцією до 080. |
-| `admin` | Перегляд користувачів, керування користувачами й ринковою ціною, редагування/видалення legacy-звітів; не створює первинні звіти. |
+| `gemologist` | Створює власні `draft`, бачить лише власні reports, редагує власні `draft`, передає їх у `review`, працює з вкладеннями власних `draft`. |
+| `admin` | Бачить усі reports, читає та редагує `draft`, може передати `draft` у `review`, керує `review → draft/issued/void` і `issued → void`; не створює первинні звіти. |
 
-`POST /token` повертає JWT. Frontend зберігає токен у `localStorage` і додає
-`Authorization: Bearer …` у запити через свій API-клієнт. Відсутність токена
-переховує робочі сторінки на рівні UI, але це не замінює серверну авторизацію.
+Усі приватні маршрути перевіряють JWT. Приховування UI не замінює server-side
+RBAC. Гість не має доступу до `/reports`; публічного паспорта або QR ще немає.
 
-## 2. Що зараз є «звітом»
+## Звіт, камінь і lifecycle
 
-Compatibility-запис `diamond_oltp.diamond_reports` досі містить legacy-поля,
-але кожен report тепер прив’язаний до окремого `Stone`. `ReportEvent` зберігає
-створення та зміну статусу; `MediaAsset`, Sale і PublicPassport залишаються
-наступними задачами.
+Локальна модель — `Stone → DiamondReport → ReportEvent`. Новий report має
+окремий normalized `Stone`; legacy-колонки у `diamond_reports` поки лишаються
+compatibility projection для старого `/diamonds/*` API.
 
-Під час `POST /diamonds/` сервер:
+Життєвий цикл:
 
-1. створює послідовний ID формату `DR-00001`;
-2. записує поточного користувача як `expert_id`;
-3. обчислює proportions і cut, **лише якщо** вони не передані в запиті;
-4. викликає демонстраційний прогноз ціни, якщо `price` не передано або це `0`;
-5. створює постійний запис одразу, без чернетки, review, issue чи void.
+```text
+draft --(owner або admin)--> review --(admin)--> issued
+                               |                  |
+                               +--(admin)--> draft +--(admin)--> void
+                               +--(admin)--> void
+```
 
-Отже, поточне «Зберегти звіт» не є процесом видачі сертифіката. Це створення
-одного оперативного запису. Чинний `report_id` — ідентифікатор запису, а не
-QR-паспорт чи криптографічне підтвердження.
+`issued` можливий лише за наявності явно підтверджених експертом proportions і
+cut grades. Створення та status transition записуються в `ReportEvent`.
+Поточний `PUT /reports/{id}` обмежено `draft`, але ще не пише окрему подію
+редагування; це обов'язкова частина задачі 080.
 
-## 3. Дані каменю та розрахунок
+## Створення чернетки
 
-Наявна форма/API працюють із:
+Wizard `/create-report.html` має рівно три кроки: ідентифікація/4C,
+геометрія/IDC та висновок/медіа. Він використовує приватні маршрути:
 
-- формою каменю, вагою, кольором і чистотою;
-- довжиною, шириною, глибиною, table/depth percent, кутами crown/pavilion;
-- girdle, culet, polish, symmetry, fluorescence й `stone_origin`;
-- текстовим коментарем експерта.
-
-`DiamondCalculator` розраховує proportions і фінальний cut за обмеженим
-набором параметрів. Поточна формула фінального cut застосовує правило
-найгіршого з proportions, polish і symmetry. Це не повна експертна методика
-IDC 2013 і не може самостійно підтвердити природне походження, синтетичність,
-обробки чи якість полірування за інструментальними доказами.
-
-`stone_origin` наразі є числовим полем із історичним mapping natural/lab.
-Воно не містить методу визначення, доказів або рівня впевненості. Цільова
-заміна описана в ADR-001.
-
-## 4. Ціна й продаж
-
-Наразі `price` — одне legacy-поле без окремої семантики валюти, оцінки,
-пропозиції чи фактичного продажу. Якщо його не подано, `MLService` бере
-технічний demo-індекс і застосовує евристичну формулу з випадковою варіацією.
-Це демонстрація, не навчена ML-модель і не факт ринкової ціни. Цільове
-розмежування величин зафіксовано в [ADR-002](../decisions/002-financial-calculation-contract.md).
-
-Поля `is_sold`, `sale_date` і `days_on_market` є в моделі. Поточний API update
-приймає лише `is_sold` та `price`; майстер нового звіту завжди створює запис із
-`is_sold = false`. Станів `available`, `reserved` або `withdrawn` ще немає.
-
-## 5. Dashboard, detail і редагування
-
-Dashboard завантажує `/diamonds/` із `skip`, `limit`, `status`, `sort_by` та
-`search`. Він відображає фактичні рядки API, але частина mappings і логіки UI
-ще дублюється у frontend. Пагінація у backend реалізована через `OFFSET`.
-
-Поточні серверні межі доступу:
-
-| Операція | Фактичний доступ |
+| Маршрут | Призначення |
 | --- | --- |
-| `GET /diamonds/`, `GET /diamonds/{id}` | Публічні API-методи; це не public passport і буде змінено майбутнім приватним контрактом. |
-| `POST /diamonds/` | Лише `gemologist`; admin отримує `403`. |
-| `PUT /diamonds/{id}` | Власник звіту або admin; оновлюються лише `is_sold` і `price`. |
-| `DELETE /diamonds/{id}` | Лише admin. |
+| `GET /reference-values` | Текстові довідники форми, походження, geometry, treatment та identification. |
+| `GET /market/mappings` | Числові grade mappings. |
+| `GET /reports/next-id` | Нерезервований preview номера; доступний лише gemologist. |
+| `POST /reports/preview` | Серверний live IDC preview без збереження. |
+| `POST /reports` | Авторитетне створення `draft`; сервер призначає ID. |
 
-Меню `⋮` у dashboard показує точки входу `Переглянути`, `Редагувати` і `Друк`,
-але вони не виконують дію до private detail/edit workflow задачі `080`.
+`examination_date` за замовчуванням заповнюється поточною датою в UI, але
+експерт може вказати фактичну дату дослідження/оцінки. Вона не замінює
+технічні `created_at` або `updated_at`.
 
-Для 1 000 локальних demo-записів за 01.01.2023–31.12.2025 dashboard показує
-непорожнє legacy-поле `price` як `USD … d`. `d` відкриває пояснення джерела
-`diamonds_dataset.csv`, дати запису й меж набору. Це лише наочне demo-значення,
-не поточне ринкове котирування, не ціна продажу і не підстава змінювати історичний
-запис після оновлення валюти чи довідника.
+Новий draft отримує `market_status=not_for_sale`. Продаж, інші комерційні стани
+та їхнє відображення належать private detail/edit у задачі 080.
 
-## 6. Файли та зображення
+## IDC і ціна
 
-У формі є inputs `plotting_image` і `real_image`, а модель має однойменні
-рядкові поля. Проте клієнт зараз формує JSON payload без цих файлів, endpoint
-upload відсутній, а контрольованого файлового storage немає. Тому файл,
-вибраний у браузері, не зберігається в системі.
+`DiamondCalculator` серверно обчислює proportions та фінальний cut за правилом
+найгіршого з proportions, polish і symmetry. Це обмежений локальний IDC
+розрахунок, а не повна експертна методика IDC 2013.
 
-Поточні рядкові поля не є доказовим медіасховищем і не повинні відкриватися як
-публічні URL. Цільовий `MediaAsset` описано в ADR-001 і backlog-задачі `050`.
+Preview може повернути `demo_price_usd`. У wizard це позначається як `USD … d`:
+`d` означає детермінований демонстраційний прогноз, не ринкову, експертну чи
+продажну ціну. Він не зберігається в `DiamondReport.price`.
 
-## 7. Публічний паспорт і QR
+Для 1 000 legacy demo-записів dashboard показує наявне `price` так само з
+позначкою `d`; набір охоплює 01.01.2023–31.12.2025. Його не можна трактувати
+як поточне котирування чи автоматично переоцінювати після оновлення довідника.
 
-Публічного паспорта, QR-коду, публічного токена, відкликання посилання або
-окремого безпечного public endpoint ще немає. Тому наявні публічні `GET
-/diamonds/*` не можна трактувати як готовий механізм перевірки звіту.
+`MLService.predict_price()` лишається старою compatibility-евристикою для
+legacy `/diamonds/*`: це не навчена ML-модель і не частина нового wizard flow.
 
-Цільова політика: лише виданий і явно опублікований звіт, мінімальний склад
-даних, без цін, персональних і внутрішніх даних. Реалізація належить задачі
-`090-public-passport-and-qr`.
+## Dashboard, legacy API та наступний UI
 
-## 8. Перевірки та межі локального MVP
+Dashboard вже використовує приватний `GET /reports`: server-side pagination,
+пошук, фільтри, сортування і RBAC. Меню `⋮` містить лише неактивні точки входу
+до detail/edit/print до завершення 080.
 
-Наявний тестовий контур містить pytest для бізнес-логіки й API з SQLite у
-пам'яті, Node/jsdom для JS-модулів і Playwright browser smoke для login.
-Він не перевіряє повний flow report → passport або сумісність міграцій із
-MariaDB.
+`/diamonds/*` досі існує як compatibility API, але поточні dashboard і wizard
+на нього не спираються. У `frontend/src/js/main.js` лишився невикористаний
+legacy handler для `/diamonds/*`; його прибирання разом із рішенням про долю
+старих маршрутів винесено в окрему після-080 задачу, щоб не змішувати
+перенесення UI з cleanup.
 
-Новий `/reports` API приватний: gemologist бачить власні reports і створює
-draft, а admin переходить `review → issued/void`; кожна дія пишеться в
-`ReportEvent`. Imported legacy записи є draft і не вважаються автоматично
-виданими. Перед роботою зі звітами звіряйте цей guide з
-[архітектурою](../architecture.md), [ADR-001](../decisions/001-report-domain-contract.md),
-[ADR-003](../decisions/003-report-core-migration-plan.md) і відповідною
-активною задачею backlog.
+## Вкладення
+
+Після створення draft wizard за потреби завантажує plotting або фото через
+`POST /reports/{report_id}/media`. Файли зберігаються приватно поза БД і Git,
+у gitignored storage; до `draft` допускаються upload/delete лише owner/admin.
+Публічних URL для media немає.
+
+## Перевірки та межі
+
+Тести: pytest API/integration використовують SQLite у пам'яті; Node/jsdom
+перевіряє frontend-модулі та DOM; Playwright має login, dashboard і wizard
+flows із mock HTTP. Вони не замінюють реальний MariaDB E2E або повний
+admin-review UI.
+
+Перед public deployment ще потрібні detail/edit, public passport/QR,
+перевірений ML-контур, PostgreSQL-portability та security hardening.

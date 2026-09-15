@@ -60,7 +60,8 @@ Alembic є джерелом істини для структури таблиц�
 таблиці й дані він не видаляє. `upgrade head` змінює схему, тому перед ним
 зроби резервну копію даних, якщо вони цінні.
 
-Поточний репозиторій має revisions `0002_report_core` і `0003_media_assets`. Для наявної локальної БД,
+Поточний репозиторій має revisions `0002_report_core`, `0003_media_assets` і
+`0004_report_wizard`. Для наявної локальної БД,
 що вже позначена `0001_initial_schema`, ця revision створює нормалізовані
 `stones`, `report_events`, `stone_valuations`, `reference_values`, доповнює
 `diamond_reports` lifecycle-полями й переносить legacy-звіти у draft. Перед
@@ -71,7 +72,7 @@ Alembic є джерелом істини для структури таблиц�
 ```
 
 Після резервної копії та окремого підтвердження застосуй revision, а потім
-переконайся, що версія стала `0003_media_assets`:
+переконайся, що версія стала `0004_report_wizard`:
 
 ```powershell
 .\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head
@@ -81,7 +82,9 @@ Alembic є джерелом істини для структури таблиц�
 Не запускай `downgrade` для цієї БД: він вилучить нові нормалізовані таблиці й
 колонки. Revision `0003_media_assets` створює лише metadata приватних
 вкладень і не переносить legacy `plotting_image`/`real_image`. Для перевірки
-API після upgrade перезапусти backend; чинний `/diamonds/*` зберігає
+Revision `0004_report_wizard` додає nullable `examination_date` для report та
+довідники geometry, не змінюючи legacy-записи. Після upgrade перезапусти
+backend; чинний `/diamonds/*` зберігає
 сумісність, а create-form після створення звіту дозавантажує вибрані
 JPEG/PNG/WebP-файли через захищений `/reports/{id}/media`.
 

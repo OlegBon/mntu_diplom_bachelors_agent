@@ -13,12 +13,11 @@
 | `/`, `/token` | Залишити; посилити auth/configuration. |
 | `/users/*` | Залишити; обмежити ролі й створити admin/profile UI пізніше. |
 | `/experts/` | Залишити: авторизований список не-admin експертів працює. |
-| `GET /diamonds/*` | Залишити: dashboard-контракт містить `shape` і `cut_grade`; створити detail/passport UI. |
-| `POST/PUT/DELETE /diamonds/*` | Залишити: час записується в секундах, update має owner/admin RBAC, update/delete повертають 404; далі create/edit UI. |
+| `/diamonds/*` | Тимчасово зберегти як legacy compatibility API; чинні dashboard і wizard вже використовують `/reports`. Після 080 провести usage-аудит і погоджене прибирання в 085. |
 | `/market/*` | Залишити; прибрати frontend hardcode mappings/ціни та додати admin UI пізніше. |
 | `/statistics/expert-performance` | Залишити після рішення про публічність usernames; додати analytics UI пізніше. |
 
-Повних дублікатів endpoint-ів не знайдено. Невикористаний CRUD-дублікат `crud.get_diamonds()` вилучено. Окремо лишаються дубльовані frontend API origin/mappings/формула ціни. `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як зарезервовану SQLAlchemy-модель.
+Повних дублікатів endpoint-ів не знайдено. Невикористаний CRUD-дублікат `crud.get_diamonds()` вилучено. Dashboard і wizard перенесені на `/reports`, але `frontend/src/js/main.js` ще містить unreachable legacy handler `/diamonds/*`; його безпечне вилучення заплановано після 080. `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як зарезервовану SQLAlchemy-модель.
 
 ### Уже реалізовано
 
@@ -65,7 +64,8 @@
 - [x] 055 — UI-примітиви: канонічні SCSS controls, flat large surfaces, 2px compact controls, спільні nav/footer/session-actions, text-only кнопки, filter/pagination стилі й DOM-перевірка. Наступні UI-зрізи мають використовувати `_ui-primitives.scss`.
 - [x] 060 — Dashboard звітів: приватний `/reports`, server-driven список, пошук, швидкі статуси звіту та двостанова проєкція продажу «Продано / Не продано», розширені фільтри 4C/форми/діапазонів/дат, RBAC, URL-параметри, пагінація, клікабельні server-side сортування, вітрина з 4C/бейджами й demo-ціною `USD … d`, а також меню дій `⋮`; приватний detail/edit/print залишаються 080.
 - [x] 070 — Майстер створення звіту: три кроки, серверні довідники, `examination_date`, preview наступного ID, live IDC preview, детермінований demo-прогноз `USD … d`, валідація, приватні вкладення та підтверджене ручне збереження `draft`. Detail/edit, commercial state і transitions лишаються 080.
-- [ ] [080 — Приватний перегляд і редагування](./backlog/080-report-detail-and-editing.md): RBAC, transitions, аудит подій.
+- [ ] [080 — Приватний перегляд і редагування](./backlog/080-report-detail-and-editing.md): RBAC, transitions, аудит подій; додати `report_updated` event для кожного успішного draft update, бо поточний `PUT /reports/{id}` ще не поповнює історію змін.
+- [ ] [085 — Прибирання legacy API](./backlog/085-legacy-api-retirement.md): після 080 прибрати unreachable frontend handler `/diamonds/*` та погоджено визначити долю compatibility маршрутів.
 - [ ] [090 — Публічний паспорт і QR](./backlog/090-public-passport-and-qr.md): окремий безпечний public flow для `issued`.
 - [ ] [100 — Профіль і admin UI](./backlog/100-profile-and-admin-ui.md): експерти, ролі, довідники та ринкові дані.
 
