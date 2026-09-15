@@ -45,6 +45,16 @@ def _system_grades(stone: schemas.StoneDraft) -> tuple[int, int]:
     return proportions, cut
 
 
+def preview_report_calculation(stone: schemas.StoneDraft) -> schemas.ReportCalculationPreview:
+    """Calculate the server-authoritative IDC preview without persisting data."""
+    proportions, cut = _system_grades(stone)
+    return schemas.ReportCalculationPreview(
+        system_proportions_grade=proportions,
+        system_cut_grade=cut,
+        calculation_rule_version=REPORT_RULE_VERSION,
+    )
+
+
 def _append_report_event(
     db: Session,
     *,
@@ -201,6 +211,7 @@ def create_report_domain(
     report = models.DiamondReport(
         report_id=_next_report_id(db),
         report_date=now,
+        examination_date=payload.examination_date,
         stone_id=stone.stone_id,
         status="draft",
         created_at=now,
@@ -252,6 +263,7 @@ def update_report_domain(
     _apply_stone_draft(report.stone, payload.stone)
     system_proportions, system_cut = _system_grades(payload.stone)
     report.expert_comment = payload.expert_comment
+    report.examination_date = payload.examination_date
     report.system_proportions_grade = system_proportions
     report.system_cut_grade = system_cut
     report.calculation_rule_version = REPORT_RULE_VERSION
