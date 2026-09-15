@@ -48,6 +48,15 @@
   border-radius: 2px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .form-control,
 .form-select,
 .passport-search input {
@@ -144,11 +153,142 @@
   .filters-container { border-color: variables.$border-color; }
   .filters-bar { background: transparent; border: 0; }
   .advanced-filters { margin-top: 0; }
+
+  .filter-control {
+    display: grid;
+    gap: 0.25rem;
+
+    label { color: variables.$secondary-color; font-size: 0.8rem; font-weight: 600; }
+  }
+  .filter-control[hidden] { display: none !important; }
+
+  .filter-control--quick { min-width: 9.5rem; }
+
+  .filters-bar {
+    align-items: end;
+    gap: 0.75rem;
+
+    .search-group,
+    > #toggle-filters,
+    .filter-control--quick .form-select {
+      min-height: 2.75rem;
+    }
+
+    > #toggle-filters {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .filter-control--quick .form-select {
+      width: 100%;
+      border: 1px solid variables.$border-color;
+      border-radius: 2px;
+      padding: 0.55rem 2rem 0.55rem 0.75rem;
+      background-color: variables.$white;
+      color: variables.$text-strong;
+      font: 500 0.9rem/1.2 variables.$font-main;
+
+      &:hover { border-color: variables.$primary-color; }
+      &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+    }
+  }
+
+  .advanced-filters .filters-grid {
+    gap: 1rem;
+  }
+
+  .filter-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+    margin-top: 0;
+    align-self: end;
+    white-space: nowrap;
+  }
+
+  .dashboard-status { margin: 0.75rem 0; }
+  .dashboard-status:empty { display: none; }
+  .dashboard-state { margin: 0; color: variables.$secondary-color; }
+  .dashboard-state--error { color: variables.$error-color; }
   .advanced-filters .filters-grid .filter-item {
     .form-select,
     .form-control { border-radius: 2px; }
   }
   .status-badge { border-radius: 2px; }
+  .status-badge--cut { background: variables.$surface-muted; color: variables.$text-strong; }
+  .status-badge--draft { background: variables.$surface-muted; color: variables.$secondary-color; }
+  .status-badge--review { background: variables.$surface-subtle; color: variables.$primary-hover; }
+  .status-badge--issued { background: variables.$success-surface; color: variables.$success-text; }
+  .status-badge--void { background: variables.$error-surface; color: variables.$error-color; }
+  .status-badge--sale-not-sold { background: variables.$surface-muted; color: variables.$secondary-color; }
+  .status-badge--sale-sold { background: variables.$success-surface; color: variables.$success-text; }
+
+  .report-price { position: relative; width: fit-content; }
+  .report-price__toggle {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: variables.$text-strong;
+    font: 600 0.875rem/1.2 variables.$font-main;
+    cursor: pointer;
+
+    &:hover, &:focus-visible { color: variables.$primary-color; }
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+  }
+
+  .report-price__indicator {
+    color: variables.$primary-color;
+    font-size: 0.7em;
+    font-weight: 700;
+  }
+
+  .report-price__popover {
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    width: max-content;
+    max-width: min(18rem, 75vw);
+    border: 1px solid variables.$border-color;
+    padding: 0.75rem;
+    background: variables.$white;
+    box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.12);
+  }
+
+  .report-price__detail,
+  .report-price__warning { margin: 0; font-size: 0.8rem; line-height: 1.45; }
+  .report-price__warning { margin-top: 0.5rem; color: variables.$secondary-color; }
+  .report-price__missing { color: variables.$secondary-color; }
+  .dashboard-demo-note {
+    margin: 0.75rem 0 0.5rem;
+    color: variables.$secondary-color;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .table-sort {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: left;
+    text-transform: inherit;
+    cursor: pointer;
+
+    &:hover, &:focus-visible { color: variables.$primary-color; }
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+    &[data-sort-direction]::after { margin-left: 0.35rem; color: variables.$primary-color; font-size: 0.7em; }
+    &[data-sort-direction="asc"]::after { content: "▲"; }
+    &[data-sort-direction="desc"]::after { content: "▼"; }
+  }
+
+  .date-primary,
+  .date-secondary { display: block; white-space: nowrap; }
+  .date-primary { font-size: 0.875rem; }
+  .date-secondary { color: variables.$secondary-color; font-size: 0.75rem; }
 
   .pagination .page-btn {
     width: auto;
@@ -164,10 +304,94 @@
 
   .actions { gap: 0.75rem; }
   .table-action { border: 0; background: transparent; padding: 0; cursor: pointer; }
+
+  .report-actions { position: relative; width: fit-content; }
+  .report-actions__toggle {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    border: 1px solid variables.$border-color;
+    border-radius: 2px;
+    background: variables.$white;
+    color: variables.$text-strong;
+    font-size: 1.125rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover, &:focus-visible { border-color: variables.$primary-color; color: variables.$primary-color; }
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-top: 1rem;
+  }
+
+  .pagination .page-btn--icon {
+    padding: 0;
+    font-size: 1.25rem;
+  }
+
+  .pagination__ellipsis {
+    min-width: 1.5rem;
+    color: variables.$secondary-color;
+    text-align: center;
+  }
+
+  .report-actions__menu {
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + 0.25rem);
+    right: 0;
+    min-width: 9rem;
+    border: 1px solid variables.$border-color;
+    background: variables.$white;
+    box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.12);
+  }
+
+  .report-actions__item {
+    display: block;
+    width: 100%;
+    border: 0;
+    padding: 0.65rem 0.75rem;
+    background: transparent;
+    color: variables.$secondary-color;
+    font: 600 0.875rem/1.2 variables.$font-main;
+    text-align: left;
+
+    &:disabled { cursor: not-allowed; opacity: 0.55; }
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-page {
+    .filter-control--quick { min-width: 0; }
+    .filters-bar .filter-control--quick { flex: 1 1 10rem; }
+    .advanced-filters { padding: 1rem; }
+    .pagination { gap: 0.2rem; }
+    .pagination .page-btn { min-width: 2.25rem; width: 2.25rem; height: 2.25rem; padding: 0; }
+    .pagination .page-btn--context,
+    .pagination__ellipsis { display: none; }
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-page #create-report-action {
+    width: calc(100% - 4rem);
+    margin-inline: auto;
+  }
 }
 
 @media (max-width: 900px) {
   .main-header {
+    .main-nav {
+      display: none !important;
+
+      &.is-active { display: block !important; }
+    }
+
     .header-right { gap: 1.25rem; }
     .header-session-name:not([hidden]) {
       display: inline-flex;

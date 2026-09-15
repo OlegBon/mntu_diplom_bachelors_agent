@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import FastAPI, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import timedelta
+from datetime import date, timedelta
+from decimal import Decimal
 from jose import JWTError, jwt
 
 from . import crud, database, media_storage, models, schemas, security
@@ -119,20 +120,57 @@ def require_report_access(report: models.DiamondReport, current_user: models.Exp
         raise HTTPException(status_code=403, detail="You do not have access to this report")
 
 
-@app.get("/reports", response_model=List[schemas.ReportResponse])
+@app.get("/reports", response_model=schemas.ReportListResponse)
 def read_report_domain_list(
-    skip: int = 0,
-    limit: int = 50,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=100),
     report_status: Optional[schemas.ReportStatus] = None,
+    market_status: Optional[schemas.MarketStatus] = None,
+    sold: Optional[bool] = None,
+    shape: Optional[str] = Query(default=None, min_length=1, max_length=50),
+    color_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    clarity_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    cut_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    carat_min: Optional[Decimal] = Query(default=None, ge=0),
+    carat_max: Optional[Decimal] = Query(default=None, ge=0),
+    price_min: Optional[Decimal] = Query(default=None, ge=0),
+    price_max: Optional[Decimal] = Query(default=None, ge=0),
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
+    expert_id: Optional[int] = Query(default=None, ge=1),
+    search: Optional[str] = Query(default=None, min_length=1, max_length=20),
+    sort: schemas.ReportListSort = "report_date_desc",
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
-    return crud.get_report_domain_list(
+    reports, total = crud.get_report_domain_list(
         db,
         current_user=current_user,
         status=report_status,
-        skip=skip,
-        limit=limit,
+        market_status=market_status,
+        sold=sold,
+        shape=shape,
+        color_grade=color_grade,
+        clarity_grade=clarity_grade,
+        cut_grade=cut_grade,
+        carat_min=carat_min,
+        carat_max=carat_max,
+        price_min=price_min,
+        price_max=price_max,
+        date_from=date_from,
+        date_to=date_to,
+        expert_id=expert_id,
+        search=search,
+        sort=sort,
+        page=page,
+        page_size=page_size,
+    )
+    return schemas.ReportListResponse(
+        items=reports,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
     )
 
 

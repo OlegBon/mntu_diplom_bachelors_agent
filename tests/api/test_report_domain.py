@@ -47,7 +47,7 @@ def test_new_report_domain_is_private_and_creates_a_draft_event(client, experts)
     assert created.status_code == 200
     body = created.json()
     assert body["status"] == "draft"
-    assert "price" not in body
+    assert body["price"] is None
     assert body["stone"]["origin"] == "natural"
     assert body["system_cut_grade"] is not None
 
@@ -90,3 +90,71 @@ def test_report_domain_transition_requires_confirmation_and_admin_issuance(clien
     )
     assert voided.status_code == 200
     assert voided.json()["status"] == "void"
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_report_dashboard_list_paginates_searches_filters_and_scopes_visibility(client, experts) -> None:
+    owner_headers = auth_headers(client, experts["owner"].username)
+    other_headers = auth_headers(client, experts["other"].username)
+    admin_headers = auth_headers(client, experts["admin"].username)
+
+    first_payload = report_payload()
+    first_payload["stone"].update({"market_status": "available", "shape": "Oval", "color_grade": 2, "clarity_grade": 3})
+    first = client.post("/reports", json=first_payload, headers=owner_headers)
+    assert first.status_code == 200
+
+    second_payload = report_payload()
+    second_payload["stone"].update({"market_status": "sold", "shape": "Round", "color_grade": 1, "clarity_grade": 1})
+    second = client.post("/reports", json=second_payload, headers=owner_headers)
+    assert second.status_code == 200
+
+    other = client.post("/reports", json=report_payload(), headers=other_headers)
+    assert other.status_code == 200
+
+    owner_page = client.get("/reports?page=1&page_size=1", headers=owner_headers)
+    assert owner_page.status_code == 200
+    owner_body = owner_page.json()
+    assert owner_body["total"] == 2
+    assert owner_body["page"] == 1
+    assert owner_body["page_size"] == 1
+    assert owner_body["total_pages"] == 2
+    assert len(owner_body["items"]) == 1
+
+    sold = client.get("/reports?market_status=sold", headers=owner_headers)
+    assert sold.status_code == 200
+    assert sold.json()["total"] == 1
+    assert sold.json()["items"][0]["report_id"] == second.json()["report_id"]
+
+    sale_filter = client.get("/reports?sold=true", headers=owner_headers)
+    assert sale_filter.status_code == 200
+    assert sale_filter.json()["total"] == 1
+    assert sale_filter.json()["items"][0]["report_id"] == second.json()["report_id"]
+
+    unsold_filter = client.get("/reports?sold=false", headers=owner_headers)
+    assert unsold_filter.status_code == 200
+    assert unsold_filter.json()["total"] == 1
+    assert unsold_filter.json()["items"][0]["report_id"] == first.json()["report_id"]
+
+    searched = client.get(f"/reports?search={first.json()['report_id']}", headers=owner_headers)
+    assert searched.status_code == 200
+    assert searched.json()["total"] == 1
+    assert searched.json()["items"][0]["report_id"] == first.json()["report_id"]
+
+    advanced = client.get(
+        "/reports?shape=Oval&color_grade=2&clarity_grade=3&sort=shape_asc",
+        headers=owner_headers,
+    )
+    assert advanced.status_code == 200
+    assert advanced.json()["total"] == 1
+    assert advanced.json()["items"][0]["report_id"] == first.json()["report_id"]
+
+    admin_filtered = client.get(
+        f"/reports?expert_id={experts['other'].expert_id}", headers=admin_headers
+    )
+    assert admin_filtered.status_code == 200
+    assert admin_filtered.json()["total"] == 1
+    assert admin_filtered.json()["items"][0]["report_id"] == other.json()["report_id"]
+
+    assert client.get("/reports?page_size=101", headers=owner_headers).status_code == 422
+    assert client.get("/reports?price_min=-1", headers=owner_headers).status_code == 422

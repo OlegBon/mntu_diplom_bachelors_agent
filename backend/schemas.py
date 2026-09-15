@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal, Optional
 from datetime import datetime
+from decimal import Decimal
 
 # Схема для створення юзера (з паролем)
 class UserCreate(BaseModel):
@@ -135,6 +136,18 @@ Origin = Literal["unknown", "natural", "lab_grown", "other"]
 TreatmentStatus = Literal["not_assessed", "none_detected", "disclosed", "confirmed"]
 IdentificationStatus = Literal["preliminary", "confirmed", "inconclusive"]
 MarketStatus = Literal["not_for_sale", "available", "reserved", "sold", "withdrawn"]
+ReportListSort = Literal[
+    "report_date_desc", "report_date_asc",
+    "report_id_asc", "report_id_desc",
+    "shape_asc", "shape_desc",
+    "carat_desc", "carat_asc",
+    "color_asc", "color_desc",
+    "clarity_asc", "clarity_desc",
+    "cut_asc", "cut_desc",
+    "price_desc", "price_asc",
+    "report_status_asc", "report_status_desc",
+    "market_status_asc", "market_status_desc",
+]
 
 
 class StoneDraft(BaseModel):
@@ -215,7 +228,18 @@ class ReportResponse(BaseModel):
     expert_proportions_grade: Optional[int]
     expert_cut_grade: Optional[int]
     expert_confirmed_at: Optional[datetime]
+    price: Optional[Decimal]
     stone: StoneResponse
+
+
+class ReportListResponse(BaseModel):
+    """Server-paginated, access-scoped report list for the dashboard."""
+
+    items: list[ReportResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
 
 
 class MediaAssetResponse(BaseModel):

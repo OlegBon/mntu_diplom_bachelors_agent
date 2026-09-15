@@ -6,8 +6,8 @@
 
 > Це guide фактичного runtime-стану MariaDB. Приватна модель
 > `Stone → Report → ReportEvent` застосована revision `0002_report_core`.
-> Чинний frontend ще використовує legacy `/diamonds/*` до задач dashboard,
-> wizard і private detail.
+> Dashboard використовує приватний `/reports`; wizard і private detail ще
+> використовують compatibility-шар до наступних UI-зрізів.
 > Повний контракт описано в [ADR-001](../decisions/001-report-domain-contract.md)
 > і плані перенесення [ADR-003](../decisions/003-report-core-migration-plan.md).
 
@@ -89,9 +89,14 @@ Dashboard завантажує `/diamonds/` із `skip`, `limit`, `status`, `sor
 | `PUT /diamonds/{id}` | Власник звіту або admin; оновлюються лише `is_sold` і `price`. |
 | `DELETE /diamonds/{id}` | Лише admin. |
 
-Посилання на `view-report.html` і кнопки редагування/друку у dashboard ще не
-утворюють завершений private detail/edit workflow. Це задачі `060`–`080` у
-[backlog](../backlog/README.md).
+Меню `⋮` у dashboard показує точки входу `Переглянути`, `Редагувати` і `Друк`,
+але вони не виконують дію до private detail/edit workflow задачі `080`.
+
+Для 1 000 локальних demo-записів за 01.01.2023–31.12.2025 dashboard показує
+непорожнє legacy-поле `price` як `USD … d`. `d` відкриває пояснення джерела
+`diamonds_dataset.csv`, дати запису й меж набору. Це лише наочне demo-значення,
+не поточне ринкове котирування, не ціна продажу і не підстава змінювати історичний
+запис після оновлення валюти чи довідника.
 
 ## 6. Файли та зображення
 

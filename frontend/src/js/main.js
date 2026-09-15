@@ -1,5 +1,6 @@
 import { checkAuth, logout } from "./modules/auth.js";
 import { loginUser, uploadReportMedia } from "./modules/api.js";
+import { initDashboard } from "./modules/dashboard.js";
 
 // === КОНФІГУРАЦІЯ API ===
 const API_URL = "http://127.0.0.1:8000"; // Адреса твого Python сервера
@@ -425,35 +426,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const protectedPage = document.querySelector("[data-protected-page]");
   if (protectedPage) protectedPage.hidden = false;
 
-  updateHeaderUI(isAuthenticated);
   applyApprovedNavigation(isAuthenticated);
 
   // === DASHBOARD INITIALIZATION ===
-  if (isAuthenticated && document.querySelector(".data-table")) {
-    // 1. Завантажуємо дані
-    loadDashboard(1);
-
-    // 2. Обробка зміни фільтрів
-    const filtersGroup = document.querySelector(".filters-group");
-    if (filtersGroup) {
-      filtersGroup.addEventListener("change", (e) => {
-        if (e.target.tagName === "SELECT") {
-          loadDashboard(1); // Перезавантаження при зміні Select
-        }
-      });
-    }
-
-    // 3. Обробка пошуку
-    const searchInput = document.querySelector(".search-bar input");
-    const searchBtn = document.querySelector(".search-bar button");
-
-    if (searchBtn && searchInput) {
-      searchBtn.addEventListener("click", () => loadDashboard(1));
-      searchInput.addEventListener("keyup", (e) => {
-        if (e.key === "Enter") loadDashboard(1);
-      });
-    }
-  }
+  if (isAuthenticated) void initDashboard();
 
   // --- Mobile Menu ---
   const burgerBtn = document.getElementById("burger-btn");
@@ -502,17 +478,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const query = document.getElementById("search-input").value.trim();
       if (query)
         window.location.href = `/view-report.html?id=${encodeURIComponent(query)}`;
-    });
-  }
-
-  // --- Advanced Filters Toggle ---
-  const toggleFiltersBtn = document.getElementById("toggle-filters");
-  const advancedFiltersPanel = document.getElementById("advanced-filters");
-  if (toggleFiltersBtn && advancedFiltersPanel) {
-    toggleFiltersBtn.addEventListener("click", () => {
-      advancedFiltersPanel.classList.toggle("is-visible");
-      toggleFiltersBtn.classList.toggle("btn-primary");
-      toggleFiltersBtn.classList.toggle("btn-outline");
     });
   }
 

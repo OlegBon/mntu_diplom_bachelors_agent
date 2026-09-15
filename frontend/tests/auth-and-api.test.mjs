@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loginUser } from "../src/js/modules/api.js";
+import { getReportDashboard, loginUser } from "../src/js/modules/api.js";
 import { checkAuth, logout } from "../src/js/modules/auth.js";
 
 function installBrowserStubs() {
@@ -52,4 +52,23 @@ test("loginUser rejects an unsuccessful response", async () => {
   } finally {
     console.error = originalConsoleError;
   }
+});
+
+test("getReportDashboard omits empty filters and forwards the bearer token", async () => {
+  let requestedUrl = "";
+  let requestedHeaders;
+  globalThis.fetch = async (url, options) => {
+    requestedUrl = url;
+    requestedHeaders = options.headers;
+    return { ok: true, json: async () => ({ items: [], total: 0, page: 1, page_size: 25, total_pages: 0 }) };
+  };
+
+  await getReportDashboard(
+    { page: 1, page_size: 25, search: "", report_status: "", sort: "report_date_desc" },
+    "test-token",
+  );
+
+  assert.match(requestedUrl, /page=1/);
+  assert.doesNotMatch(requestedUrl, /search=|report_status=/);
+  assert.equal(requestedHeaders.Authorization, "Bearer test-token");
 });

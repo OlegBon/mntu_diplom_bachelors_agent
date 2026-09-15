@@ -1,6 +1,7 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import desc, asc
-from datetime import date, datetime, timezone
+from sqlalchemy import asc, desc
+from sqlalchemy.orm import Session, joinedload
+from datetime import date, datetime, time, timedelta, timezone
+from decimal import Decimal
 import random
 
 from . import models, schemas
@@ -94,15 +95,95 @@ def get_report_domain_list(
     *,
     current_user: models.Expert,
     status: str | None,
-    skip: int,
-    limit: int,
-) -> list[models.DiamondReport]:
-    query = db.query(models.DiamondReport).filter(models.DiamondReport.stone_id.is_not(None))
+    market_status: str | None,
+    sold: bool | None,
+    shape: str | None,
+    color_grade: int | None,
+    clarity_grade: int | None,
+    cut_grade: int | None,
+    carat_min: Decimal | None,
+    carat_max: Decimal | None,
+    price_min: Decimal | None,
+    price_max: Decimal | None,
+    date_from: date | None,
+    date_to: date | None,
+    expert_id: int | None,
+    search: str | None,
+    sort: schemas.ReportListSort,
+    page: int,
+    page_size: int,
+) -> tuple[list[models.DiamondReport], int]:
+    """Return an access-scoped dashboard page and its total row count."""
+    query = (
+        db.query(models.DiamondReport)
+        .join(models.Stone, models.DiamondReport.stone_id == models.Stone.stone_id)
+        .options(joinedload(models.DiamondReport.stone))
+    )
     if current_user.role != "admin":
         query = query.filter(models.DiamondReport.expert_id == current_user.expert_id)
+    elif expert_id is not None:
+        query = query.filter(models.DiamondReport.expert_id == expert_id)
     if status:
         query = query.filter(models.DiamondReport.status == status)
-    return query.order_by(desc(models.DiamondReport.created_at), desc(models.DiamondReport.report_id)).offset(skip).limit(limit).all()
+    if market_status:
+        query = query.filter(models.Stone.market_status == market_status)
+    if sold is True:
+        query = query.filter(models.Stone.market_status == "sold")
+    elif sold is False:
+        query = query.filter(models.Stone.market_status != "sold")
+    if shape:
+        query = query.filter(models.Stone.shape == shape.strip())
+    if color_grade is not None:
+        query = query.filter(models.Stone.color_grade == color_grade)
+    if clarity_grade is not None:
+        query = query.filter(models.Stone.clarity_grade == clarity_grade)
+    if cut_grade is not None:
+        query = query.filter(models.DiamondReport.system_cut_grade == cut_grade)
+    if carat_min is not None:
+        query = query.filter(models.Stone.carat_weight >= carat_min)
+    if carat_max is not None:
+        query = query.filter(models.Stone.carat_weight <= carat_max)
+    if price_min is not None:
+        query = query.filter(models.DiamondReport.price >= price_min)
+    if price_max is not None:
+        query = query.filter(models.DiamondReport.price <= price_max)
+    if date_from is not None:
+        query = query.filter(models.DiamondReport.report_date >= datetime.combine(date_from, time.min))
+    if date_to is not None:
+        query = query.filter(models.DiamondReport.report_date < datetime.combine(date_to + timedelta(days=1), time.min))
+    if search:
+        query = query.filter(models.DiamondReport.report_id.ilike(f"%{search.strip()}%"))
+
+    sort_columns = {
+        "report_date_desc": (desc(models.DiamondReport.report_date), desc(models.DiamondReport.report_id)),
+        "report_date_asc": (asc(models.DiamondReport.report_date), asc(models.DiamondReport.report_id)),
+        "report_id_asc": (asc(models.DiamondReport.report_id),),
+        "report_id_desc": (desc(models.DiamondReport.report_id),),
+        "shape_asc": (asc(models.Stone.shape), asc(models.DiamondReport.report_id)),
+        "shape_desc": (desc(models.Stone.shape), desc(models.DiamondReport.report_id)),
+        "carat_desc": (desc(models.Stone.carat_weight), desc(models.DiamondReport.report_id)),
+        "carat_asc": (asc(models.Stone.carat_weight), asc(models.DiamondReport.report_id)),
+        "color_asc": (asc(models.Stone.color_grade), asc(models.DiamondReport.report_id)),
+        "color_desc": (desc(models.Stone.color_grade), desc(models.DiamondReport.report_id)),
+        "clarity_asc": (asc(models.Stone.clarity_grade), asc(models.DiamondReport.report_id)),
+        "clarity_desc": (desc(models.Stone.clarity_grade), desc(models.DiamondReport.report_id)),
+        "cut_asc": (asc(models.DiamondReport.system_cut_grade), asc(models.DiamondReport.report_id)),
+        "cut_desc": (desc(models.DiamondReport.system_cut_grade), desc(models.DiamondReport.report_id)),
+        "price_desc": (desc(models.DiamondReport.price), desc(models.DiamondReport.report_id)),
+        "price_asc": (asc(models.DiamondReport.price), asc(models.DiamondReport.report_id)),
+        "report_status_asc": (asc(models.DiamondReport.status), asc(models.DiamondReport.report_id)),
+        "report_status_desc": (desc(models.DiamondReport.status), desc(models.DiamondReport.report_id)),
+        "market_status_asc": (asc(models.Stone.market_status), asc(models.DiamondReport.report_id)),
+        "market_status_desc": (desc(models.Stone.market_status), desc(models.DiamondReport.report_id)),
+    }
+    total = query.count()
+    reports = (
+        query.order_by(*sort_columns[sort])
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return reports, total
 
 
 def create_report_domain(
