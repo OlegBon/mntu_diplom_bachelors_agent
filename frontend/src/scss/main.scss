@@ -1235,16 +1235,16 @@ ul {
   }
 
   .wizard-actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     border-top: 1px solid variables.$border-color;
     padding-top: 2rem;
     margin-top: 2rem;
 
-    #prev-btn { justify-self: start; }
-    #save-btn { justify-self: center; }
-    #next-btn { justify-self: end; }
+    #prev-btn,
+    #save-btn,
+    #next-btn { white-space: nowrap; }
     .save-label-mobile { display: none; }
   }
 
