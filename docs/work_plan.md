@@ -64,7 +64,7 @@
 - [x] 050 — Медіа звітів: `MediaAsset`, gitignored private storage, signature/type/size checks, owner/admin RBAC та локальні placeholders. Legacy image-path рядки не вважаються вкладеннями й не переносилися; public media лишається частиною 090.
 - [x] 055 — UI-примітиви: канонічні SCSS controls, flat large surfaces, 2px compact controls, спільні nav/footer/session-actions, text-only кнопки, filter/pagination стилі й DOM-перевірка. Наступні UI-зрізи мають використовувати `_ui-primitives.scss`.
 - [x] 060 — Dashboard звітів: приватний `/reports`, server-driven список, пошук, швидкі статуси звіту та двостанова проєкція продажу «Продано / Не продано», розширені фільтри 4C/форми/діапазонів/дат, RBAC, URL-параметри, пагінація, клікабельні server-side сортування, вітрина з 4C/бейджами й demo-ціною `USD … d`, а також меню дій `⋮`; приватний detail/edit/print залишаються 080.
-- [~] [070 — Майстер створення звіту](./backlog/070-report-creation-wizard.md): реалізовано draft, live preview, валідацію, API та mock E2E; очікується ручне збереження реальної локальної чернетки перед закриттям.
+- [x] 070 — Майстер створення звіту: три кроки, серверні довідники, `examination_date`, preview наступного ID, live IDC preview, детермінований demo-прогноз `USD … d`, валідація, приватні вкладення та підтверджене ручне збереження `draft`. Detail/edit, commercial state і transitions лишаються 080.
 - [ ] [080 — Приватний перегляд і редагування](./backlog/080-report-detail-and-editing.md): RBAC, transitions, аудит подій.
 - [ ] [090 — Публічний паспорт і QR](./backlog/090-public-passport-and-qr.md): окремий безпечний public flow для `issued`.
 - [ ] [100 — Профіль і admin UI](./backlog/100-profile-and-admin-ui.md): експерти, ролі, довідники та ринкові дані.
