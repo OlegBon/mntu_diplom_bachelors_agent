@@ -1245,6 +1245,7 @@ ul {
     #prev-btn { justify-self: start; }
     #save-btn { justify-self: center; }
     #next-btn { justify-self: end; }
+    .save-label-mobile { display: none; }
   }
 
   // --- Права колонка (Sticky Calculator) ---
@@ -1375,6 +1376,7 @@ ul {
         font-family: variables.$font-main;
         font-size: 0.9rem;
         font-weight: 500;
+        opacity: 1;
       }
 
       .calc-group.highlight .calc-value,
@@ -1386,6 +1388,13 @@ ul {
         font-weight: 800;
       }
     }
+  }
+}
+
+@media (max-width: 767px) {
+  .create-report-page .wizard-actions {
+    .save-label-desktop { display: none; }
+    .save-label-mobile { display: inline; }
   }
 }
 
