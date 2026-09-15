@@ -4,6 +4,16 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-15 — media-assets (завершено)
+
+- **Задача:** реалізувати приватні вкладення звітів: локальне сховище, метадані, API, RBAC і UI fallback.
+- **Змінені файли:** `backend/{config,media_storage,models,schemas,crud,main}.py`, `alembic/versions/0003_media_assets.py`, `.env.example`, `.gitignore`, `frontend/src/{pug/pages/create-report.pug,scss/main.scss,js/{main.js,modules/api.js},img/*.svg}`, `tests/{api/test_report_media.py,unit/test_migration_foundation.py}`, `frontend/tests/page-dom.test.mjs`, `docs/{architecture,db-schema,local-start,work_plan,progress}.md`, `docs/backlog/{README.md,050-media-assets.md}` (задачу видалено після реалізації).
+- **Рішення:** `media_assets` зберігає тип, server-generated storage key, MIME, розмір, SHA-256, автора, дату та `is_public=false`. Файли зберігаються поза БД і Git у `storage/reports/<report-id>/`; FastAPI не відкриває каталог статично. Доступ на upload/list/content/delete перевіряється server-side для owner/admin, а зміни дозволені лише у `draft`. JPEG/PNG/WebP обмежені 10 MB, PDF — 20 MB; declared MIME звіряється з сигнатурою файла. `plotting_image` і `real_image` legacy-звітів не перенесено, бо це непідтверджені placeholder-шляхи.
+- **MariaDB:** за погодженням застосовано `0003_media_assets` поверх `0002_report_core`; `alembic current` підтвердив `0003_media_assets (head)`, таблиця `diamond_oltp.media_assets` існує. Seed, backfill і downgrade не запускалися.
+- **Перевірки:** `alembic upgrade head --sql`; `python -m pytest` — 21 passed; import FastAPI; `npm run build`; `npm test` — 6 passed; `npm run test:e2e` — 1 passed; `git diff --check`. API-тести використовують SQLite і temporary storage, не XAMPP.
+- **Нові змінні середовища:** `MEDIA_STORAGE_PATH` — необов’язковий абсолютний шлях до приватного storage; за відсутності застосовується gitignored `storage/reports`.
+- **Обмеження:** UI поки підключений до compatibility create-form; task 070 переведе майстер на новий `/reports` контракт. `is_public` не відкриває файли і не створює public URL — це задача 090. Production object storage, антивірус/асинхронна обробка та видалення orphan-файлів — окреме hardening після локального MVP.
+
 ## 2026-09-15 — database-schema-documentation (завершено)
 
 - **Задача:** створити єдину фактичну карту локальної MariaDB-схеми Diamant ID після `0002_report_core`.
