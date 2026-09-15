@@ -70,7 +70,14 @@ function applyApprovedNavigation(isAuthenticated) {
   const createReportAction = document.getElementById("create-report-action");
   if (createReportAction) createReportAction.hidden = isAdmin;
 
-  sessionName.textContent = isAdmin ? "Admin" : username;
+  sessionName.replaceChildren();
+  const sessionUsername = document.createElement("span");
+  sessionUsername.className = "header-session-username";
+  sessionUsername.textContent = isAdmin ? "Admin" : username;
+  const sessionRole = document.createElement("span");
+  sessionRole.className = "header-session-role";
+  sessionRole.textContent = isAdmin ? "Адміністратор" : "Експерт";
+  sessionName.append(sessionUsername, sessionRole);
   sessionName.hidden = false;
   const links = isAdmin
     ? [
@@ -95,12 +102,15 @@ function applyApprovedNavigation(isAuthenticated) {
   const accountName = document.createElement("span");
   accountName.className = "mobile-account-name";
   accountName.textContent = isAdmin ? "Admin" : username;
+  const accountRole = document.createElement("span");
+  accountRole.className = "mobile-account-role";
+  accountRole.textContent = isAdmin ? "Адміністратор" : "Експерт";
   const mobileLogout = document.createElement("button");
   mobileLogout.type = "button";
   mobileLogout.className = "mobile-logout";
   mobileLogout.textContent = "Вийти";
   mobileLogout.addEventListener("click", logout);
-  mobileAccount.append(accountName, mobileLogout);
+  mobileAccount.append(accountName, accountRole, mobileLogout);
   navList.append(mobileAccount);
 
   const logoutButton = document.createElement("button");
@@ -383,10 +393,10 @@ function renderTableRows(reports, tableElement) {
                 <td>${statusBadge}</td>
                 
                 <td>
-                    <div class="actions" style="display: flex; gap: 0.5rem; min-width: 100px;">
-                        <button class="btn-icon" title="Редагувати">✏️</button>
-                        <button class="btn-icon" title="Друк">🖨️</button>
-                        <a href="/view-report.html?id=${item.report_id}" class="btn-icon" title="Перегляд">👁️</a>
+                    <div class="actions">
+                        <button class="table-action" type="button">Редагувати</button>
+                        <button class="table-action" type="button">Друк</button>
+                        <a href="/view-report.html?id=${item.report_id}" class="table-action">Переглянути</a>
                     </div>
                 </td>
             </tr>

@@ -62,7 +62,7 @@
 - [x] [037 — Фінансовий контракт](./decisions/002-financial-calculation-contract.md): поточний `price` визначено як legacy-значення, `6000` — технічний demo-індекс без валюти й одиниці; цільові суми та правила `Decimal` зафіксовано для 040.
 - [x] [040 — Ядро звіту й довідники](./decisions/003-report-core-migration-plan.md): `Stone`, lifecycle `draft → review → issued → void`, audit events, серверні довідники, приватний `/reports` API й Alembic `0002_report_core` застосовані до локальної MariaDB; 1 000 legacy-записів збережено як draft без фінансової перекласифікації.
 - [x] 050 — Медіа звітів: `MediaAsset`, gitignored private storage, signature/type/size checks, owner/admin RBAC та локальні placeholders. Legacy image-path рядки не вважаються вкладеннями й не переносилися; public media лишається частиною 090.
-- [ ] [055 — UI-примітиви](./backlog/055-ui-primitives.md): спільні Pug/SCSS-компоненти після ядра звіту, до dashboard і wizard; не залежить від медіа.
+- [x] 055 — UI-примітиви: канонічні SCSS controls, flat large surfaces, 2px compact controls, спільні nav/footer/session-actions, text-only кнопки, filter/pagination стилі й DOM-перевірка. Наступні UI-зрізи мають використовувати `_ui-primitives.scss`.
 - [ ] [060 — Dashboard звітів](./backlog/060-reports-dashboard.md): фактичний список, фільтри, пошук і пагінація.
 - [ ] [070 — Майстер створення звіту](./backlog/070-report-creation-wizard.md): draft, live preview, валідація та вкладення.
 - [ ] [080 — Приватний перегляд і редагування](./backlog/080-report-detail-and-editing.md): RBAC, transitions, аудит подій.

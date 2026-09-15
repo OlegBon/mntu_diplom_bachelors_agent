@@ -27,7 +27,6 @@
 
 | Файл | Тема |
 | --- | --- |
-| [055-ui-primitives.md](./055-ui-primitives.md) | Повторно використовувані Pug/SCSS-примітиви для робочих екранів. |
 | [060-reports-dashboard.md](./060-reports-dashboard.md) | Робочий список, пошук, фільтри й пагінація звітів. |
 | [070-report-creation-wizard.md](./070-report-creation-wizard.md) | Майстер створення й збереження чернетки. |
 | [080-report-detail-and-editing.md](./080-report-detail-and-editing.md) | Приватний перегляд, редагування та зміна станів звіту. |
