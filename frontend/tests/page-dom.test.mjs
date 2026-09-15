@@ -34,6 +34,9 @@ test("built report wizard provides private media inputs and explicit fallbacks",
   assert.equal(document.querySelector("#report-id-preview")?.value, "Завантаження…");
   assert.equal(document.querySelector("input[value='DR-2026-NEW']"), null);
   assert.equal(document.querySelector("[name=examination_date]")?.getAttribute("type"), "date");
+  assert.equal(document.querySelector("[name=examination_date]")?.required, true);
+  assert.equal(document.querySelector("[name=carat_weight]")?.getAttribute("min"), "0.01");
+  assert.equal(document.querySelector("[name=table_percent]")?.required, true);
   assert.equal(document.querySelector("[name=market_status]"), null);
 });
 

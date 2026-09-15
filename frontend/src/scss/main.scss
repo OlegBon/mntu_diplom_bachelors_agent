@@ -1314,6 +1314,10 @@ ul {
         }
       }
 
+      &[aria-invalid="true"] {
+        border-color: variables.$error-color;
+      }
+
       .calc-group:not(.highlight):not(.forecast) {
         label,
         .calc-value {

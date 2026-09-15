@@ -76,16 +76,36 @@ export async function initReportWizard() {
     tabs.forEach((tab) => { const active = Number(tab.dataset.step) === currentStep; tab.classList.toggle("active", active); tab.setAttribute("aria-selected", String(active)); });
     previous.disabled = currentStep === 1; next.hidden = currentStep === 3; save.hidden = currentStep !== 3;
   };
-  tabs.forEach((tab) => tab.addEventListener("click", () => { currentStep = Number(tab.dataset.step); updateStep(); }));
-  next.addEventListener("click", () => {
-    if (currentStep >= 3) return;
+  const validateCurrentStep = () => {
     const active = steps.find((step) => Number(step.dataset.step) === currentStep);
     const invalidField = active.querySelector(":invalid");
-    if (invalidField) invalidField.reportValidity();
-    else { currentStep += 1; updateStep(); }
+    if (!invalidField) return true;
+    invalidField.setAttribute("aria-invalid", "true");
+    setStatus(status, `Заповніть коректно обов’язкові поля кроку ${currentStep}.`, true);
+    invalidField.reportValidity();
+    return false;
+  };
+  tabs.forEach((tab) => tab.addEventListener("click", () => {
+    const targetStep = Number(tab.dataset.step);
+    if (targetStep > currentStep && !validateCurrentStep()) return;
+    currentStep = targetStep;
+    updateStep();
+  }));
+  next.addEventListener("click", () => {
+    if (currentStep >= 3) return;
+    if (validateCurrentStep()) { currentStep += 1; updateStep(); }
   });
   previous.addEventListener("click", () => { currentStep -= 1; updateStep(); });
   document.getElementById("examination-date").valueAsDate = new Date();
+  form.addEventListener("invalid", (event) => {
+    event.target.setAttribute("aria-invalid", "true");
+  }, true);
+  form.addEventListener("input", (event) => {
+    if (event.target.validity?.valid) {
+      event.target.removeAttribute("aria-invalid");
+      if (status.classList.contains("is-error")) setStatus(status, "");
+    }
+  });
 
   try {
     const [references, mappings, nextId] = await Promise.all([getReferenceValues(token), getGradeMappings(), getNextReportId(token)]);
@@ -133,7 +153,8 @@ export async function initReportWizard() {
     }, 300);
   });
   form.addEventListener("submit", async (event) => {
-    event.preventDefault(); if (!form.reportValidity()) return;
+    event.preventDefault();
+    if (!validateCurrentStep() || !form.reportValidity()) return;
     save.disabled = true; setStatus(status, "Збереження чернетки…");
     try {
       const data = new FormData(form); const created = await createDomainReport({ examination_date: data.get("examination_date"), stone: stoneFromForm(data), expert_comment: data.get("expert_comment") || null }, token);
