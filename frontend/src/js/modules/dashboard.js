@@ -255,6 +255,7 @@ export async function initDashboard() {
     populateGradeFilter(root.querySelector("#cut-filter"), "cut", mappings);
     for (const select of [root.querySelector("#color-filter"), root.querySelector("#clarity-filter"), root.querySelector("#cut-filter")]) select.value = state[select.name] || "";
     const expertFilter = root.querySelector("#expert-filter-wrap");
+    if (expertFilter) expertFilter.hidden = currentUser.role !== "admin";
     if (currentUser.role === "admin" && expertFilter && expertSelect) {
       const experts = await getExperts(token);
       for (const expert of experts) {

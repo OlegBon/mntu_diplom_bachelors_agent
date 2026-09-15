@@ -160,6 +160,7 @@
 
     label { color: variables.$secondary-color; font-size: 0.8rem; font-weight: 600; }
   }
+  .filter-control[hidden] { display: none !important; }
 
   .filter-control--quick { min-width: 9.5rem; }
 
@@ -373,7 +374,10 @@
     .pagination .page-btn { min-width: 2.25rem; width: 2.25rem; height: 2.25rem; padding: 0; }
     .pagination .page-btn--context,
     .pagination__ellipsis { display: none; }
-    #create-report-action { margin-inline: auto; }
+    #create-report-action {
+      width: 100%;
+      margin-inline: auto;
+    }
   }
 }
 
