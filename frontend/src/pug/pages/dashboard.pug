@@ -8,45 +8,51 @@ block content
                 p.page-subtitle Робочий список експертних звітів
             a#create-report-action.btn.btn-primary(href="/create-report.html") Новий звіт
 
-        form#dashboard-filters.filters-container
+        .filters-container
             .filters-bar
                 .search-group
                     label.sr-only(for="report-search") Пошук за номером звіту
-                    input#report-search(type="search" name="search" placeholder="Пошук за номером звіту" autocomplete="off")
-                .filter-control
-                    label(for="report-status") Стан звіту
-                    select#report-status.form-select(name="report_status")
-                        option(value="") Усі стани
-                        option(value="draft") Чернетка
-                        option(value="review") На перевірці
-                        option(value="issued") Видано
-                        option(value="void") Анульовано
-                .filter-control
-                    label(for="market-status") Ринковий стан
-                    select#market-status.form-select(name="market_status")
-                        option(value="") Усі
-                        option(value="not_for_sale") Не продається
-                        option(value="available") Доступний
-                        option(value="reserved") Зарезервовано
-                        option(value="sold") Продано
-                        option(value="withdrawn") Знято з продажу
-                .filter-control
+                    input#report-search(type="search" placeholder="Пошук за номером звіту" autocomplete="off")
+                button#toggle-filters.btn.btn-outline(type="button" aria-expanded="false" aria-controls="advanced-filters") Фільтри
+                .filter-control.filter-control--quick
                     label(for="report-sort") Сортування
-                    select#report-sort.form-select(name="sort")
+                    select#report-sort.form-select
                         option(value="report_date_desc") Спочатку нові
                         option(value="report_date_asc") Спочатку старі
                         option(value="report_id_asc") Номер: за зростанням
                         option(value="report_id_desc") Номер: за спаданням
                         option(value="carat_desc") Вага: від більшої
                         option(value="carat_asc") Вага: від меншої
-                #expert-filter-wrap.filter-control(hidden)
-                    label(for="expert-filter") Експерт
-                    select#expert-filter.form-select(name="expert_id")
-                        option(value="") Усі експерти
-            .filter-actions
-                button.btn.btn-primary(type="submit") Застосувати
-                button.btn.btn-outline(type="reset") Очистити
 
+            #advanced-filters.advanced-filters
+                form#dashboard-filters.filters-grid
+                    .filter-item
+                        label(for="report-status") Стан звіту
+                        select#report-status.form-select(name="report_status")
+                            option(value="") Усі стани
+                            option(value="draft") Чернетка
+                            option(value="review") На перевірці
+                            option(value="issued") Видано
+                            option(value="void") Анульовано
+                    .filter-item
+                        label(for="market-status") Ринковий стан
+                        select#market-status.form-select(name="market_status")
+                            option(value="") Усі
+                            option(value="not_for_sale") Не продається
+                            option(value="available") Доступний
+                            option(value="reserved") Зарезервовано
+                            option(value="sold") Продано
+                            option(value="withdrawn") Знято з продажу
+                    #expert-filter-wrap.filter-item(hidden)
+                        label(for="expert-filter") Експерт
+                        select#expert-filter.form-select(name="expert_id")
+                            option(value="") Усі експерти
+                    .filter-actions
+                        button.btn.btn-primary.btn-sm(type="submit") Застосувати
+                        button.btn.btn-outline.btn-sm(type="reset") Очистити
+
+        p#dashboard-demo-note.dashboard-demo-note
+            | Демо-дані: 1 000 звітів за 01.01.2023–31.12.2025. Значення ціни не є актуальним ринковим котируванням.
         #dashboard-status.dashboard-status(role="status" aria-live="polite")
 
         .table-container(tabindex="0")
@@ -56,10 +62,12 @@ block content
                         th ID звіту
                         th Дата
                         th Форма
-                        th Вага
-                        th Походження
-                        th Стан звіту
-                        th Ринковий стан
+                        th Вага (ct)
+                        th Колір
+                        th Чистота
+                        th Cut
+                        th Ціна
+                        th Статус
                         th Дії
                 tbody
 

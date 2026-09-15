@@ -481,17 +481,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Advanced Filters Toggle ---
-  const toggleFiltersBtn = document.getElementById("toggle-filters");
-  const advancedFiltersPanel = document.getElementById("advanced-filters");
-  if (toggleFiltersBtn && advancedFiltersPanel) {
-    toggleFiltersBtn.addEventListener("click", () => {
-      advancedFiltersPanel.classList.toggle("is-visible");
-      toggleFiltersBtn.classList.toggle("btn-primary");
-      toggleFiltersBtn.classList.toggle("btn-outline");
-    });
-  }
-
   // --- Create Report Wizard Logic (KEEP EXISTING) ---
   const wizardForm = document.getElementById("wizard-form");
   if (wizardForm) {

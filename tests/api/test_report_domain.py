@@ -47,7 +47,7 @@ def test_new_report_domain_is_private_and_creates_a_draft_event(client, experts)
     assert created.status_code == 200
     body = created.json()
     assert body["status"] == "draft"
-    assert "price" not in body
+    assert body["price"] is None
     assert body["stone"]["origin"] == "natural"
     assert body["system_cut_grade"] is not None
 

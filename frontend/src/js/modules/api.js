@@ -29,6 +29,8 @@ export const getCurrentUser = (token) => requestApi("/users/me", { token });
 
 export const getExperts = (token) => requestApi("/experts/", { token });
 
+export const getGradeMappings = () => requestApi("/market/mappings");
+
 export const getReportDashboard = (params, token) => {
   const query = new URLSearchParams(
     Object.entries(params).filter(([, value]) => value !== "" && value !== null && value !== undefined),

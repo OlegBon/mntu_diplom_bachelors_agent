@@ -18,6 +18,7 @@ const dashboardResponse = {
       expert_proportions_grade: null,
       expert_cut_grade: null,
       expert_confirmed_at: null,
+      price: "6931.00",
       stone: {
         stone_id: 42,
         shape: "Round",
@@ -58,15 +59,23 @@ test("dashboard renders the private report page and its row action menu", async 
     localStorage.setItem("username", "expert_1");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 2, username: "expert_1", first_name: "Test", last_name: "Expert", role: "gemologist" } }));
+  await page.route("**/market/mappings", (route) => route.fulfill({ json: [
+    { category: "color", grade_value: 0, grade_label: "D" },
+    { category: "clarity", grade_value: 0, grade_label: "FL" },
+    { category: "cut", grade_value: 0, grade_label: "Excellent" },
+  ] }));
   await page.route("**/reports?**", (route) => route.fulfill({ json: dashboardResponse }));
 
   await page.goto("/dashboard.html");
 
   await expect(page.getByRole("heading", { name: "Всі звіти" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "DR-00042", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Пояснення demo-ціни звіту DR-00042" }).click();
+  await expect(page.getByText("diamonds_dataset.csv")).toBeVisible();
   await page.getByRole("button", { name: "Відкрити дії для звіту DR-00042" }).click();
   await expect(page.getByRole("button", { name: "Переглянути" })).toBeDisabled();
 
+  await page.getByRole("button", { name: "Фільтри" }).click();
   await page.getByLabel("Стан звіту").selectOption("draft");
   await page.getByRole("button", { name: "Застосувати" }).click();
   await expect(page).toHaveURL(/report_status=draft/);

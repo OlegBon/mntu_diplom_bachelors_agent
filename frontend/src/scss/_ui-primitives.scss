@@ -167,6 +167,49 @@
     .form-control { border-radius: 2px; }
   }
   .status-badge { border-radius: 2px; }
+  .status-badge--cut { background: variables.$surface-muted; color: variables.$text-strong; }
+  .status-badge--draft { background: variables.$surface-muted; color: variables.$secondary-color; }
+  .status-badge--review { background: variables.$surface-subtle; color: variables.$primary-hover; }
+  .status-badge--issued { background: variables.$success-surface; color: variables.$success-text; }
+  .status-badge--void { background: variables.$error-surface; color: variables.$error-color; }
+
+  .report-price { position: relative; width: fit-content; }
+  .report-price__toggle {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: variables.$text-strong;
+    font: 600 0.875rem/1.2 variables.$font-main;
+    cursor: pointer;
+
+    &:hover, &:focus-visible { color: variables.$primary-color; }
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+  }
+
+  .report-price__indicator {
+    color: variables.$primary-color;
+    font-size: 0.7em;
+    font-weight: 700;
+  }
+
+  .report-price__popover {
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    width: max-content;
+    max-width: min(18rem, 75vw);
+    border: 1px solid variables.$border-color;
+    padding: 0.75rem;
+    background: variables.$white;
+    box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.12);
+  }
+
+  .report-price__detail,
+  .report-price__warning { margin: 0; font-size: 0.8rem; line-height: 1.45; }
+  .report-price__warning { margin-top: 0.5rem; color: variables.$secondary-color; }
+  .report-price__missing { color: variables.$secondary-color; }
+  .dashboard-demo-note { margin: 1rem 0 0; color: variables.$secondary-color; font-size: 0.875rem; }
 
   .pagination .page-btn {
     width: auto;

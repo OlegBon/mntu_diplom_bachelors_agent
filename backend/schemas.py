@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal, Optional
 from datetime import datetime
+from decimal import Decimal
 
 # Схема для створення юзера (з паролем)
 class UserCreate(BaseModel):
@@ -216,6 +217,7 @@ class ReportResponse(BaseModel):
     expert_proportions_grade: Optional[int]
     expert_cut_grade: Optional[int]
     expert_confirmed_at: Optional[datetime]
+    price: Optional[Decimal]
     stone: StoneResponse
 
 
