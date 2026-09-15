@@ -56,8 +56,8 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_report_core_revision_is_the_only_committed_head():
+def test_alembic_media_assets_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0002_report_core"]
+    assert script_directory.get_heads() == ["0003_media_assets"]

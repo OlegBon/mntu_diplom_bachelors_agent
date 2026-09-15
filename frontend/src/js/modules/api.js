@@ -28,3 +28,21 @@ export const loginUser = async (username, password) => {
     throw error;
   }
 };
+
+/** Upload one selected report file after the report itself exists. */
+export const uploadReportMedia = async (reportId, assetType, file, token) => {
+  const formData = new FormData();
+  formData.append("asset_type", assetType);
+  formData.append("file", file);
+
+  const response = await fetch(`${BASE_URL}/reports/${encodeURIComponent(reportId)}/media`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("Не вдалося завантажити вкладення звіту");
+  }
+  return response.json();
+};

@@ -49,3 +49,11 @@ def get_mariadb_connection_options() -> dict[str, str | int]:
         "user": database_url.username,
         "password": database_url.password or "",
     }
+
+
+def get_media_storage_root() -> Path:
+    """Return the local private media directory without creating it on import."""
+    configured_path = os.getenv("MEDIA_STORAGE_PATH")
+    if configured_path and configured_path.strip():
+        return Path(configured_path.strip()).expanduser().resolve()
+    return (PROJECT_ROOT / "storage" / "reports").resolve()

@@ -1,12 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import timedelta
 from jose import JWTError, jwt
 
-from . import models, schemas, database, crud, security
+from . import crud, database, media_storage, models, schemas, security
 
 app = FastAPI(title="Diamond ID System API")
 
@@ -210,6 +211,96 @@ def read_report_domain_events(
         raise HTTPException(status_code=404, detail="Report not found")
     require_report_access(report, current_user)
     return crud.get_report_events(db, report_id)
+
+
+def get_report_for_media(
+    db: Session,
+    report_id: str,
+    current_user: models.Expert,
+) -> models.DiamondReport:
+    """Authorize an existing report, including a temporary legacy-compatible one."""
+    report = crud.get_report_domain(db, report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    require_report_access(report, current_user)
+    return report
+
+
+@app.get("/reports/{report_id}/media", response_model=List[schemas.MediaAssetResponse])
+def read_report_media(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    get_report_for_media(db, report_id, current_user)
+    return crud.get_media_assets(db, report_id)
+
+
+@app.post("/reports/{report_id}/media", response_model=schemas.MediaAssetResponse)
+async def upload_report_media(
+    report_id: str,
+    asset_type: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    report = get_report_for_media(db, report_id, current_user)
+    if report.status != "draft":
+        raise HTTPException(status_code=422, detail="Only draft reports can receive media assets")
+    try:
+        storage_data = media_storage.store_upload(
+            report_id=report_id,
+            asset_type=asset_type,
+            upload=file,
+        )
+        try:
+            return crud.create_media_asset(
+                db,
+                report_id=report_id,
+                uploaded_by_id=current_user.expert_id,
+                asset_type=asset_type,
+                storage_data=storage_data,
+            )
+        except Exception:
+            media_storage.remove_stored_file(str(storage_data["storage_key"]))
+            raise
+    finally:
+        await file.close()
+
+
+@app.get("/reports/{report_id}/media/{media_id}/content")
+def read_report_media_content(
+    report_id: str,
+    media_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    get_report_for_media(db, report_id, current_user)
+    asset = crud.get_media_asset(db, report_id, media_id)
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Media asset not found")
+    path = media_storage.get_storage_path(asset.storage_key)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Media file not found")
+    return FileResponse(path, media_type=asset.mime_type, filename=asset.original_filename)
+
+
+@app.delete("/reports/{report_id}/media/{media_id}")
+def delete_report_media(
+    report_id: str,
+    media_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    report = get_report_for_media(db, report_id, current_user)
+    if report.status != "draft":
+        raise HTTPException(status_code=422, detail="Only draft reports can remove media assets")
+    asset = crud.get_media_asset(db, report_id, media_id)
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Media asset not found")
+    crud.delete_media_asset(db, asset)
+    media_storage.remove_stored_file(asset.storage_key)
+    return {"message": "Media asset deleted"}
 
 
 @app.get("/reference-values")

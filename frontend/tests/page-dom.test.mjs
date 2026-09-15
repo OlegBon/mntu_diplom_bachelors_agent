@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const loginPath = path.resolve(testDir, "../dist/login.html");
+const createReportPath = path.resolve(testDir, "../dist/create-report.html");
 
 test("built login page exposes accessible authentication fields", async () => {
   const html = await readFile(loginPath, "utf8");
@@ -15,4 +16,17 @@ test("built login page exposes accessible authentication fields", async () => {
   assert.equal(document.querySelector("#login-form")?.tagName, "FORM");
   assert.equal(document.querySelector("#username")?.getAttribute("autocomplete"), "username");
   assert.equal(document.querySelector("#password")?.getAttribute("autocomplete"), "current-password");
+});
+
+test("built report wizard provides private media inputs and explicit fallbacks", async () => {
+  const html = await readFile(createReportPath, "utf8");
+  const document = new JSDOM(html).window.document;
+
+  for (const inputId of ["plotting-image", "real-image"]) {
+    const input = document.querySelector(`#${inputId}`);
+    assert.equal(input?.getAttribute("type"), "file");
+    assert.equal(input?.getAttribute("accept"), "image/jpeg,image/png,image/webp");
+  }
+  assert.equal(document.querySelector("#plotting-preview")?.getAttribute("src"), "/img/plotting-placeholder.svg");
+  assert.equal(document.querySelector("#stone-preview")?.getAttribute("src"), "/img/stone-placeholder.svg");
 });

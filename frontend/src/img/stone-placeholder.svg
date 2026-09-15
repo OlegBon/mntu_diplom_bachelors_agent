@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Фото каменю не додано</title>
+  <desc id="desc">Нейтральний placeholder для приватного фото каменю у звіті.</desc>
+  <rect width="640" height="360" fill="#eff6ff"/>
+  <path d="M320 76 416 142 380 252H260L224 142Z" fill="#dbeafe" stroke="#2563eb" stroke-width="4"/>
+  <path d="m224 142 96 110 96-110m-96-66v176m-96-110h192" fill="none" stroke="#2563eb" stroke-width="4" stroke-linejoin="round"/>
+  <text x="320" y="306" fill="#475569" font-family="Arial, sans-serif" font-size="22" text-anchor="middle">Фото каменю не додано</text>
+</svg>

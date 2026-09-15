@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Схема дефектів не додана</title>
+  <desc id="desc">Нейтральний placeholder для plotting-діаграми у звіті.</desc>
+  <rect width="640" height="360" fill="#eff6ff"/>
+  <circle cx="320" cy="164" r="88" fill="#fff" stroke="#2563eb" stroke-width="4"/>
+  <path d="M232 164h176M320 76v176M258 102l124 124M382 102 258 226" fill="none" stroke="#93c5fd" stroke-width="3"/>
+  <circle cx="282" cy="136" r="7" fill="#2563eb"/><circle cx="352" cy="185" r="7" fill="#2563eb"/><circle cx="329" cy="116" r="7" fill="#2563eb"/>
+  <text x="320" y="306" fill="#475569" font-family="Arial, sans-serif" font-size="22" text-anchor="middle">Схема дефектів не додана</text>
+</svg>
