@@ -132,7 +132,7 @@ export async function initReportWizard() {
   });
 
   let previewTimer;
-  form.addEventListener("input", () => {
+  const schedulePreview = () => {
     clearTimeout(previewTimer);
     const data = new FormData(form);
     if (requiredPreviewNames.every((name) => data.get(name) !== "")) previewTimer = setTimeout(async () => {
@@ -151,7 +151,9 @@ export async function initReportWizard() {
         document.getElementById("calculation-rule-version").textContent = `Правило: ${preview.calculation_rule_version}`;
       } catch { /* invalid values are handled by native fields */ }
     }, 300);
-  });
+  };
+  form.addEventListener("input", schedulePreview);
+  form.addEventListener("change", schedulePreview);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!validateCurrentStep() || !form.reportValidity()) return;

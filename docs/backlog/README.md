@@ -27,7 +27,6 @@
 
 | Файл | Тема |
 | --- | --- |
-| [070-report-creation-wizard.md](./070-report-creation-wizard.md) | Майстер створення й збереження чернетки. |
 | [080-report-detail-and-editing.md](./080-report-detail-and-editing.md) | Приватний перегляд, редагування та зміна станів звіту. |
 | [090-public-passport-and-qr.md](./090-public-passport-and-qr.md) | Публічний паспорт і QR для виданих звітів. |
 | [100-profile-and-admin-ui.md](./100-profile-and-admin-ui.md) | Профіль, керування експертами, ролями й довідниками. |
