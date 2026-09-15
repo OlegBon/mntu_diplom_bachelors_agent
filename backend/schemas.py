@@ -255,6 +255,7 @@ class ReportCalculationPreview(BaseModel):
     system_proportions_grade: int
     system_cut_grade: int
     calculation_rule_version: str
+    demo_price_usd: Optional[Decimal] = None
 
 
 class ReportCalculationInput(BaseModel):
@@ -266,6 +267,9 @@ class ReportCalculationInput(BaseModel):
     pavilion_angle: float = Field(gt=0, le=90)
     polish_grade: int = Field(ge=0, le=99)
     symmetry_grade: int = Field(ge=0, le=99)
+    carat_weight: Optional[Decimal] = Field(default=None, gt=0, le=100)
+    color_grade: Optional[int] = Field(default=None, ge=0, le=99)
+    clarity_grade: Optional[int] = Field(default=None, ge=0, le=99)
 
 
 class ReferenceValueResponse(BaseModel):

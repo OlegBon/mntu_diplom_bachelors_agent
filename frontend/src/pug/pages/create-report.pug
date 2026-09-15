@@ -60,29 +60,29 @@ block content
                         .form-row.three-cols
                             .form-group
                                 label(for="measurements-length") Довжина (mm)
-                                input#measurements-length.form-control(type="number" step="0.01" min="0.01" name="measurements_length" required)
+                                input#measurements-length.form-control(type="number" step="0.01" min="0.01" name="measurements_length" placeholder="min. 0,01" required)
                             .form-group
                                 label(for="measurements-width") Ширина (mm)
-                                input#measurements-width.form-control(type="number" step="0.01" min="0.01" name="measurements_width" required)
+                                input#measurements-width.form-control(type="number" step="0.01" min="0.01" name="measurements_width" placeholder="max. 0,01" required)
                             .form-group
                                 label(for="measurements-depth") Висота (mm)
-                                input#measurements-depth.form-control(type="number" step="0.01" min="0.01" name="measurements_depth" required)
+                                input#measurements-depth.form-control(type="number" step="0.01" min="0.01" name="measurements_depth" placeholder="depth" required)
 
                         h3 Параметри огранювання (IDC)
                         .form-row
                             .form-group.half
                                 label(for="table-percent") Table (%)
-                                input#table-percent.form-control(type="number" step="0.1" min="0.1" max="100" name="table_percent" required)
+                                input#table-percent.form-control(type="number" step="0.1" min="0.1" max="100" name="table_percent" placeholder="57,0" required)
                             .form-group.half
                                 label(for="depth-percent") Total Depth (%)
-                                input#depth-percent.form-control(type="number" step="0.1" min="0.1" max="100" name="depth_percent" required)
+                                input#depth-percent.form-control(type="number" step="0.1" min="0.1" max="100" name="depth_percent" placeholder="61,5" required)
                         .form-row
                             .form-group.half
                                 label(for="crown-angle") Crown Angle (°)
-                                input#crown-angle.form-control(type="number" step="0.1" min="0.1" max="90" name="crown_angle" required)
+                                input#crown-angle.form-control(type="number" step="0.1" min="0.1" max="90" name="crown_angle" placeholder="34,5" required)
                             .form-group.half
                                 label(for="pavilion-angle") Pavilion Angle (°)
-                                input#pavilion-angle.form-control(type="number" step="0.1" min="0.1" max="90" name="pavilion_angle" required)
+                                input#pavilion-angle.form-control(type="number" step="0.1" min="0.1" max="90" name="pavilion_angle" placeholder="40,8" required)
                         .form-row
                             .form-group.half
                                 label(for="girdle-thickness") Girdle Thickness
@@ -136,13 +136,17 @@ block content
                                 label(for="plotting-image") Схема дефектів (Plotting)
                                 .media-upload-card
                                     img#plotting-preview.media-upload-preview(src="/img/plotting-placeholder.svg" alt="Схема дефектів не додана" width="320" height="180")
-                                    input#plotting-image.form-control(type="file" name="plotting_image" accept="image/jpeg,image/png,image/webp")
+                                    input#plotting-image.file-input(type="file" name="plotting_image" accept="image/jpeg,image/png,image/webp")
+                                    label.btn.btn-outline.file-picker(for="plotting-image") Вибрати файл
+                                    span.file-name(data-file-name-for="plotting-image") Файл не вибрано
                                     small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
                             .form-group.half
                                 label(for="real-image") Фото каменя
                                 .media-upload-card
                                     img#stone-preview.media-upload-preview(src="/img/stone-placeholder.svg" alt="Фото каменя не додано" width="320" height="180")
-                                    input#real-image.form-control(type="file" name="real_image" accept="image/jpeg,image/png,image/webp")
+                                    input#real-image.file-input(type="file" name="real_image" accept="image/jpeg,image/png,image/webp")
+                                    label.btn.btn-outline.file-picker(for="real-image") Вибрати файл
+                                    span.file-name(data-file-name-for="real-image") Файл не вибрано
                                     small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
 
                     .wizard-actions
@@ -168,4 +172,9 @@ block content
                         label Final Cut Grade
                         .calc-value.placeholder#res-final --
                     hr
+                    h4 Демо-прогноз
+                    .calc-group
+                        label Системний прогноз (USD)
+                        .calc-value.placeholder#res-price --
+                    p.text-muted.calc-demo-note#price-demo-note d — демонстраційний прогноз, не ринкова, експертна або продажна ціна.
                     p.text-muted#calculation-rule-version Правило буде показано після введення параметрів огранювання.

@@ -198,11 +198,12 @@ def preview_next_report_id(
 @app.post("/reports/preview", response_model=schemas.ReportCalculationPreview)
 def preview_report_calculation(
     stone: schemas.ReportCalculationInput,
+    db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
     if current_user.role != "gemologist":
         raise HTTPException(status_code=403, detail="Only gemologists can create primary reports")
-    return crud.preview_report_calculation(stone)
+    return crud.preview_report_calculation(db, stone)
 
 
 @app.get("/reports/{report_id}", response_model=schemas.ReportResponse)

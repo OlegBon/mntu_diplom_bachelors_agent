@@ -1,7 +1,7 @@
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session, joinedload
 from datetime import date, datetime, time, timedelta, timezone
-from decimal import Decimal
+from decimal import Decimal, getcontext
 import random
 
 from . import models, schemas
@@ -45,7 +45,7 @@ def _system_grades(stone: schemas.StoneDraft) -> tuple[int, int]:
     return proportions, cut
 
 
-def preview_report_calculation(stone: schemas.ReportCalculationInput) -> schemas.ReportCalculationPreview:
+def preview_report_calculation(db: Session, stone: schemas.ReportCalculationInput) -> schemas.ReportCalculationPreview:
     """Calculate the server-authoritative IDC preview without persisting data."""
     proportions = DiamondCalculator.evaluate_proportions(
         stone.table_percent,
@@ -54,10 +54,21 @@ def preview_report_calculation(stone: schemas.ReportCalculationInput) -> schemas
         stone.pavilion_angle,
     )
     cut = DiamondCalculator.calculate_final_cut(proportions, stone.polish_grade, stone.symmetry_grade)
+    demo_price = None
+    market = db.query(models.MarketPriceRef).order_by(models.MarketPriceRef.id.desc()).first()
+    if market and stone.carat_weight is not None and stone.color_grade is not None and stone.clarity_grade is not None:
+        demo_price = (
+            Decimal(market.price_index_value)
+            * getcontext().power(stone.carat_weight, Decimal("1.3"))
+            * (Decimal("1") - Decimal(stone.color_grade) * Decimal("0.05"))
+            * (Decimal("1") - Decimal(stone.clarity_grade) * Decimal("0.07"))
+            * (Decimal("1") - Decimal(cut) * Decimal("0.10"))
+        ).quantize(Decimal("0.01"))
     return schemas.ReportCalculationPreview(
         system_proportions_grade=proportions,
         system_cut_grade=cut,
         calculation_rule_version=REPORT_RULE_VERSION,
+        demo_price_usd=demo_price,
     )
 
 

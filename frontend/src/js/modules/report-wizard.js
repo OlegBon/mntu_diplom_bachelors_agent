@@ -43,7 +43,12 @@ function stoneFromForm(formData) {
 }
 
 function calculationInput(formData) {
-  return Object.fromEntries(requiredPreviewNames.map((name) => [name, number(formData, name)]));
+  return {
+    ...Object.fromEntries(requiredPreviewNames.map((name) => [name, number(formData, name)])),
+    carat_weight: formData.get("carat_weight") === "" ? null : String(formData.get("carat_weight")),
+    color_grade: formData.get("color_grade") === "" ? null : number(formData, "color_grade"),
+    clarity_grade: formData.get("clarity_grade") === "" ? null : number(formData, "clarity_grade"),
+  };
 }
 
 export async function initReportWizard() {
@@ -57,6 +62,14 @@ export async function initReportWizard() {
   const previous = document.getElementById("prev-btn");
   const save = document.getElementById("save-btn");
   let gradeLabels = new Map();
+  const renderInitialFinish = () => {
+    ["polish", "symmetry"].forEach((category) => {
+      const select = document.querySelector(`[data-grade-category="${category}"]`);
+      const target = document.getElementById(category === "polish" ? "res-pol" : "res-sym");
+      target.textContent = gradeLabels.get(`${category}:${select.value}`) || "--";
+      target.classList.toggle("placeholder", target.textContent === "--");
+    });
+  };
   let currentStep = 1;
   const updateStep = () => {
     steps.forEach((step) => { const active = Number(step.dataset.step) === currentStep; step.classList.toggle("active", active); step.hidden = !active; });
@@ -82,7 +95,17 @@ export async function initReportWizard() {
         entries.forEach((entry) => gradeLabels.set(`${select.dataset.gradeCategory}:${entry.grade_value}`, entry.grade_label));
       }
     });
+    renderInitialFinish();
   } catch (error) { setStatus(status, `Не вдалося завантажити довідники: ${error.message}`, true); return; }
+
+  [["plotting-image", "plotting-preview"], ["real-image", "stone-preview"]].forEach(([inputId, previewId]) => {
+    const input = document.getElementById(inputId);
+    input.addEventListener("change", () => {
+      const file = input.files[0];
+      document.querySelector(`[data-file-name-for="${inputId}"]`).textContent = file ? file.name : "Файл не вибрано";
+      if (file) document.getElementById(previewId).src = URL.createObjectURL(file);
+    });
+  });
 
   let previewTimer;
   form.addEventListener("input", () => {
@@ -95,6 +118,9 @@ export async function initReportWizard() {
         document.getElementById("res-pol").textContent = gradeLabels.get(`polish:${data.get("polish_grade")}`) || data.get("polish_grade");
         document.getElementById("res-sym").textContent = gradeLabels.get(`symmetry:${data.get("symmetry_grade")}`) || data.get("symmetry_grade");
         document.getElementById("res-final").textContent = gradeLabels.get(`cut:${preview.system_cut_grade}`) || preview.system_cut_grade;
+        document.getElementById("res-price").textContent = preview.demo_price_usd === null
+          ? "--"
+          : `USD ${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(preview.demo_price_usd)} d`;
         document.getElementById("calculation-rule-version").textContent = `Правило: ${preview.calculation_rule_version}`;
       } catch { /* invalid values are handled by native fields */ }
     }, 300);

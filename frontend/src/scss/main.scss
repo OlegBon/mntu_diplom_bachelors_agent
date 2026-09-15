@@ -1211,6 +1211,10 @@ ul {
       color: variables.$secondary-color;
       font-size: 0.8rem;
     }
+
+    .file-input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
+    .file-picker { display: inline-flex; margin-right: 0.5rem; }
+    .file-name { color: variables.$secondary-color; font-size: 0.85rem; }
   }
 
   .form-help,

@@ -78,11 +78,11 @@ def test_report_wizard_preview_uses_server_contract_and_does_not_reserve_id(clie
 
     calculation = client.post("/reports/preview", json=report_payload()["stone"], headers=owner_headers)
     assert calculation.status_code == 200
-    assert calculation.json() == {
-        "system_proportions_grade": 0,
-        "system_cut_grade": 0,
-        "calculation_rule_version": "idc-demo-v1",
-    }
+    calculation_body = calculation.json()
+    assert calculation_body["system_proportions_grade"] == 0
+    assert calculation_body["system_cut_grade"] == 0
+    assert calculation_body["calculation_rule_version"] == "idc-demo-v1"
+    assert calculation_body["demo_price_usd"] is None
 
     created = client.post("/reports", json=report_payload(), headers=owner_headers)
     assert created.status_code == 200
