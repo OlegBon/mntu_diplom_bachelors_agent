@@ -13,7 +13,7 @@ block content
                 .search-group
                     label.sr-only(for="report-search") Пошук за номером звіту
                     input#report-search(type="search" placeholder="Пошук за номером звіту" autocomplete="off")
-                button#toggle-filters.btn.btn-outline(type="button" aria-expanded="false" aria-controls="advanced-filters") Фільтри
+                button#toggle-filters.btn.btn-primary(type="button" aria-expanded="false" aria-controls="advanced-filters") Фільтри
                 .filter-control.filter-control--quick
                     label.sr-only(for="quick-report-status") Статус звіту
                     select#quick-report-status.form-select
@@ -31,13 +31,6 @@ block content
                         option(value="reserved") Зарезервовано
                         option(value="sold") Продано
                         option(value="withdrawn") Знято з продажу
-                .filter-control.filter-control--quick
-                    label.sr-only(for="report-sort") Сортування
-                    select#report-sort.form-select
-                        option(value="report_date_desc") Спочатку нові
-                        option(value="report_date_asc") Спочатку старі
-                        option(value="price_desc") Ціна: від більшої
-                        option(value="price_asc") Ціна: від меншої
                 #expert-filter-wrap.filter-control.filter-control--quick(hidden)
                     label.sr-only(for="expert-filter") Експерт
                     select#expert-filter.form-select

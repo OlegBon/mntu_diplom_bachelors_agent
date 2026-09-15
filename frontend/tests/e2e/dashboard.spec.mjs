@@ -47,10 +47,10 @@ const dashboardResponse = {
       },
     },
   ],
-  total: 1,
+  total: 1250,
   page: 1,
   page_size: 25,
-  total_pages: 1,
+  total_pages: 50,
 };
 
 test("dashboard renders the private report page and its row action menu", async ({ page }) => {
@@ -83,4 +83,7 @@ test("dashboard renders the private report page and its row action menu", async 
   await expect(page).toHaveURL(/report_status=draft/);
   await page.getByRole("button", { name: "Сортувати за ціною" }).click();
   await expect(page).toHaveURL(/sort=price_asc/);
+  await expect(page.getByRole("columnheader", { name: "Сортувати за ціною" })).toHaveAttribute("aria-sort", "ascending");
+  await page.getByLabel("На останню сторінку").click();
+  await expect(page).toHaveURL(/page=50/);
 });

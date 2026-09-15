@@ -48,6 +48,15 @@
   border-radius: 2px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .form-control,
 .form-select,
 .passport-search input {
@@ -165,9 +174,11 @@
 
   .filter-actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.75rem;
-    margin-top: 1rem;
+    margin-top: 0;
+    align-self: end;
+    white-space: nowrap;
   }
 
   .dashboard-status { min-height: 1.5rem; margin: 1rem 0; }
@@ -225,7 +236,12 @@
   .report-price__warning { margin: 0; font-size: 0.8rem; line-height: 1.45; }
   .report-price__warning { margin-top: 0.5rem; color: variables.$secondary-color; }
   .report-price__missing { color: variables.$secondary-color; }
-  .dashboard-demo-note { margin: 1rem 0 0; color: variables.$secondary-color; font-size: 0.875rem; }
+  .dashboard-demo-note {
+    margin: 1rem 0 0.5rem;
+    color: variables.$secondary-color;
+    font-size: 0.875rem;
+    text-align: center;
+  }
 
   .table-sort {
     border: 0;
@@ -240,6 +256,9 @@
 
     &:hover, &:focus-visible { color: variables.$primary-color; }
     &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+    &[data-sort-direction]::after { margin-left: 0.35rem; color: variables.$primary-color; font-size: 0.7em; }
+    &[data-sort-direction="asc"]::after { content: "▲"; }
+    &[data-sort-direction="desc"]::after { content: "▼"; }
   }
 
   .date-primary,
@@ -278,6 +297,25 @@
     &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
   }
 
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-top: 1rem;
+  }
+
+  .pagination .page-btn--icon {
+    padding: 0;
+    font-size: 1.25rem;
+  }
+
+  .pagination__ellipsis {
+    min-width: 1.5rem;
+    color: variables.$secondary-color;
+    text-align: center;
+  }
+
   .report-actions__menu {
     position: absolute;
     z-index: 2;
@@ -308,6 +346,10 @@
     .filter-control--quick { min-width: 0; }
     .filters-bar .filter-control--quick { flex: 1 1 10rem; }
     .advanced-filters { padding: 1rem; }
+    .pagination { gap: 0.2rem; }
+    .pagination .page-btn { min-width: 2.25rem; width: 2.25rem; height: 2.25rem; padding: 0; }
+    .pagination .page-btn--context,
+    .pagination__ellipsis { display: none; }
   }
 }
 

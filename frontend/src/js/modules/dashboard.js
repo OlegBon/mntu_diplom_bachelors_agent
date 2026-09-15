@@ -178,22 +178,49 @@ function renderRows(tbody, reports, labelFor) {
 function renderPagination(container, page, totalPages, onPageChange) {
   container.replaceChildren();
   if (totalPages <= 1) return;
-  const makeButton = (label, targetPage, disabled = false, active = false) => {
-    const button = createElement("button", `page-btn${active ? " active" : ""}`, label);
+  const makeButton = (label, targetPage, { disabled = false, active = false, icon = false, context = false, ariaLabel } = {}) => {
+    const button = createElement("button", `page-btn${active ? " active" : ""}${icon ? " page-btn--icon" : ""}${context ? " page-btn--context" : ""}`, label);
     button.type = "button";
     button.disabled = disabled;
+    if (ariaLabel) button.setAttribute("aria-label", ariaLabel);
+    if (active) button.setAttribute("aria-current", "page");
     button.addEventListener("click", () => onPageChange(targetPage));
     return button;
   };
-  container.append(makeButton("Попередня", page - 1, page === 1));
-  const start = Math.max(1, page - 2);
-  const end = Math.min(totalPages, start + 4);
-  for (let item = start; item <= end; item += 1) container.append(makeButton(String(item), item, false, item === page));
-  container.append(makeButton("Наступна", page + 1, page === totalPages));
+  const appendEllipsis = () => container.append(createElement("span", "pagination__ellipsis", "…"));
+  const appendPage = (targetPage, context = false) => container.append(makeButton(String(targetPage), targetPage, { active: targetPage === page, context }));
+
+  container.append(
+    makeButton("«", 1, { disabled: page === 1, icon: true, ariaLabel: "На першу сторінку" }),
+    makeButton("‹", page - 1, { disabled: page === 1, icon: true, ariaLabel: "На попередню сторінку" }),
+  );
+  appendPage(1);
+  const start = Math.max(2, page - 1);
+  const end = Math.min(totalPages - 1, page + 1);
+  if (start > 2) appendEllipsis();
+  for (let item = start; item <= end; item += 1) appendPage(item, item !== page);
+  if (end < totalPages - 1) appendEllipsis();
+  if (totalPages > 1) appendPage(totalPages);
+  container.append(
+    makeButton("›", page + 1, { disabled: page === totalPages, icon: true, ariaLabel: "На наступну сторінку" }),
+    makeButton("»", totalPages, { disabled: page === totalPages, icon: true, ariaLabel: "На останню сторінку" }),
+  );
 }
 
 function toggleSort(currentSort, key) {
   return currentSort === `${key}_asc` ? `${key}_desc` : `${key}_asc`;
+}
+
+function updateSortIndicators(root, sort) {
+  const separator = sort.lastIndexOf("_");
+  const key = sort.slice(0, separator);
+  const direction = sort.slice(separator + 1);
+  for (const button of root.querySelectorAll(".table-sort")) {
+    const active = button.dataset.sortKey === key;
+    button.toggleAttribute("data-sort-direction", active);
+    if (active) button.dataset.sortDirection = direction;
+    button.parentElement.setAttribute("aria-sort", active ? (direction === "asc" ? "ascending" : "descending") : "none");
+  }
 }
 
 export async function initDashboard() {
@@ -205,18 +232,16 @@ export async function initDashboard() {
   const stateNode = root.querySelector("#dashboard-status");
   const form = root.querySelector("#dashboard-filters");
   const searchInput = root.querySelector("#report-search");
-  const sortSelect = root.querySelector("#report-sort");
   const reportStatusSelect = root.querySelector("#quick-report-status");
   const marketStatusSelect = root.querySelector("#quick-market-status");
   const expertSelect = root.querySelector("#expert-filter");
   const toggleFilters = root.querySelector("#toggle-filters");
   const filtersPanel = root.querySelector("#advanced-filters");
-  if (!token || !tbody || !pagination || !stateNode || !form || !searchInput || !sortSelect || !reportStatusSelect || !marketStatusSelect) return;
+  if (!token || !tbody || !pagination || !stateNode || !form || !searchInput || !reportStatusSelect || !marketStatusSelect) return;
 
   let state = getUrlState();
   let labelFor = (_category, value) => String(value ?? "—");
   searchInput.value = state.search;
-  sortSelect.value = state.sort;
   reportStatusSelect.value = state.report_status;
   marketStatusSelect.value = state.market_status;
   for (const control of [...form.elements].filter((element) => element.name)) control.value = state[control.name] || "";
@@ -249,6 +274,7 @@ export async function initDashboard() {
   const load = async (nextState = state) => {
     state = { ...nextState, page: Math.max(Number(nextState.page) || 1, 1) };
     updateUrl(state);
+    updateSortIndicators(root, state.sort);
     setStatus(stateNode, "Завантаження звітів…");
     tbody.replaceChildren();
     pagination.replaceChildren();
@@ -275,7 +301,7 @@ export async function initDashboard() {
     window.clearTimeout(searchTimer);
     searchTimer = window.setTimeout(() => load({ ...state, page: 1, search: searchInput.value.trim() }), 300);
   });
-  for (const [control, key] of [[sortSelect, "sort"], [reportStatusSelect, "report_status"], [marketStatusSelect, "market_status"], [expertSelect, "expert_id"]]) {
+  for (const [control, key] of [[reportStatusSelect, "report_status"], [marketStatusSelect, "market_status"], [expertSelect, "expert_id"]]) {
     if (control) control.addEventListener("change", () => load({ ...state, page: 1, [key]: control.value }));
   }
   form.addEventListener("submit", (event) => {
