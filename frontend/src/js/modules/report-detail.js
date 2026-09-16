@@ -45,6 +45,20 @@ function numberOrNull(value) {
   return value === "" ? null : Number(value);
 }
 
+function populateGradeSelect(select, mappings, category) {
+  const selectedValue = select.value;
+  select.replaceChildren(new Option("Не підтверджено", ""));
+  mappings
+    .filter((item) => item.category === category)
+    .forEach((item) => select.add(new Option(item.grade_label, String(item.grade_value))));
+  select.value = selectedValue;
+}
+
+function populateExpertGradeSelects(form, mappings) {
+  populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions");
+  populateGradeSelect(form.querySelector("#detail-expert-cut"), mappings, "cut");
+}
+
 function payloadFromForm(form) {
   const data = new FormData(form);
   const numericStoneFields = [
@@ -212,13 +226,17 @@ function renderTransitionControls(container, helpNode, report, currentUser, onTr
     button.className = targetStatus === "issued" ? "btn btn-primary" : "btn btn-outline";
     button.textContent = label;
     button.disabled = targetStatus === "issued" && (report.expert_proportions_grade === null || report.expert_cut_grade === null);
-    if (button.disabled) button.title = "Для видачі потрібні видимі підтверджені експертом grades.";
+    if (button.disabled) button.title = "Для видачі потрібні підтверджені експертом Proportions і Final Cut.";
     button.addEventListener("click", () => onTransition(targetStatus));
     container.append(button);
   }
-  helpNode.textContent = report.status === "draft"
-    ? "Чернетку може редагувати її автор або admin."
-    : "Після передачі на перевірку поля звіту заблоковані; переходи контролює сервер.";
+  if (report.status === "review" && (report.expert_proportions_grade === null || report.expert_cut_grade === null)) {
+    helpNode.textContent = "Для видачі поверніть звіт у чернетку та оберіть підтверджені експертом Proportions і Final Cut.";
+  } else {
+    helpNode.textContent = report.status === "draft"
+      ? "Чернетку може редагувати її автор або admin."
+      : "Після передачі на перевірку поля звіту заблоковані; переходи контролює сервер.";
+  }
 }
 
 export async function initReportDetail() {
@@ -280,6 +298,7 @@ export async function initReportDetail() {
     const [user, mappings] = await Promise.all([getCurrentUser(token), getGradeMappings()]);
     currentUser = user;
     gradeLabels = new Map(mappings.map((item) => [`${item.category}:${item.grade_value}`, item.grade_label]));
+    populateExpertGradeSelects(form, mappings);
   } catch { logout("/login.html"); return; }
   form.querySelector("#detail-edit").addEventListener("click", () => setEditable(form, true));
   form.querySelector("#detail-cancel").addEventListener("click", () => { populateForm(form, report); setEditable(form, false); });

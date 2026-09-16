@@ -121,11 +121,13 @@ block content
                             input#detail-symmetry.form-control(type="number" name="symmetry_grade" min="0" max="99" required)
                     .form-row
                         .form-group.half
-                            label(for="detail-expert-proportions") Підтверджений Proportions (код)
-                            input#detail-expert-proportions.form-control(type="number" name="expert_proportions_grade" min="0" max="99")
+                            label(for="detail-expert-proportions") Підтверджений Proportions
+                            select#detail-expert-proportions.form-select(name="expert_proportions_grade")
+                                option(value="") Не підтверджено
                         .form-group.half
-                            label(for="detail-expert-cut") Підтверджений Final Cut (код)
-                            input#detail-expert-cut.form-control(type="number" name="expert_cut_grade" min="0" max="99")
+                            label(for="detail-expert-cut") Підтверджений Final Cut
+                            select#detail-expert-cut.form-select(name="expert_cut_grade")
+                                option(value="") Не підтверджено
                     p.report-detail__help Підтверджені експертом grades є окремими від системного IDC-розрахунку та потрібні для видачі звіту.
                 .report-detail__actions
                     button#detail-edit.btn.btn-outline(type="button") Редагувати чернетку
