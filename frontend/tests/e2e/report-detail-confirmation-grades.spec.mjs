@@ -40,6 +40,10 @@ test("expert selects confirmation grades from server mappings", async ({ page })
     { category: "proportions", grade_value: 1, grade_label: "Very Good" },
     { category: "cut", grade_value: 0, grade_label: "Excellent" },
     { category: "cut", grade_value: 2, grade_label: "Good" },
+    { category: "polish", grade_value: 0, grade_label: "Excellent" },
+    { category: "polish", grade_value: 1, grade_label: "Very Good" },
+    { category: "symmetry", grade_value: 0, grade_label: "Excellent" },
+    { category: "symmetry", grade_value: 2, grade_label: "Good" },
   ] }));
   await page.route("**/reports/DR-01001/events", (route) => route.fulfill({ json: [] }));
   await page.route("**/reports/DR-01001/media", (route) => route.fulfill({ json: [] }));
@@ -50,8 +54,12 @@ test("expert selects confirmation grades from server mappings", async ({ page })
 
   await page.goto("/report-detail.html?id=DR-01001&edit=1");
 
+  await expect(page.locator("#detail-polish option")).toHaveText(["Оберіть оцінку", "Excellent", "Very Good"]);
+  await expect(page.locator("#detail-symmetry option")).toHaveText(["Оберіть оцінку", "Excellent", "Good"]);
   await expect(page.locator("#detail-expert-proportions option")).toHaveText(["Не підтверджено", "Excellent", "Very Good"]);
   await expect(page.locator("#detail-expert-cut option")).toHaveText(["Не підтверджено", "Excellent", "Good"]);
+  await page.locator("#detail-polish").selectOption("1");
+  await page.locator("#detail-symmetry").selectOption("2");
   await page.locator("#detail-expert-proportions").selectOption("1");
   await page.locator("#detail-expert-cut").selectOption("2");
   await Promise.all([
@@ -60,4 +68,6 @@ test("expert selects confirmation grades from server mappings", async ({ page })
   ]);
   expect(updatedPayload.expert_proportions_grade).toBe(1);
   expect(updatedPayload.expert_cut_grade).toBe(2);
+  expect(updatedPayload.stone.polish_grade).toBe(1);
+  expect(updatedPayload.stone.symmetry_grade).toBe(2);
 });

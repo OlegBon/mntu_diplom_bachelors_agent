@@ -45,9 +45,9 @@ function numberOrNull(value) {
   return value === "" ? null : Number(value);
 }
 
-function populateGradeSelect(select, mappings, category) {
+function populateGradeSelect(select, mappings, category, emptyLabel = "Не підтверджено") {
   const selectedValue = select.value;
-  select.replaceChildren(new Option("Не підтверджено", ""));
+  select.replaceChildren(new Option(emptyLabel, ""));
   mappings
     .filter((item) => item.category === category)
     .forEach((item) => select.add(new Option(item.grade_label, String(item.grade_value))));
@@ -55,6 +55,8 @@ function populateGradeSelect(select, mappings, category) {
 }
 
 function populateExpertGradeSelects(form, mappings) {
+  populateGradeSelect(form.querySelector("#detail-polish"), mappings, "polish", "Оберіть оцінку");
+  populateGradeSelect(form.querySelector("#detail-symmetry"), mappings, "symmetry", "Оберіть оцінку");
   populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions");
   populateGradeSelect(form.querySelector("#detail-expert-cut"), mappings, "cut");
 }

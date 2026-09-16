@@ -114,11 +114,13 @@ block content
                         textarea#detail-comment.form-control(name="expert_comment" rows="3")
                     .form-row
                         .form-group.half
-                            label(for="detail-polish") Polish (код)
-                            input#detail-polish.form-control(type="number" name="polish_grade" min="0" max="99" required)
+                            label(for="detail-polish") Polish
+                            select#detail-polish.form-select(name="polish_grade" required)
+                                option(value="") Оберіть оцінку
                         .form-group.half
-                            label(for="detail-symmetry") Symmetry (код)
-                            input#detail-symmetry.form-control(type="number" name="symmetry_grade" min="0" max="99" required)
+                            label(for="detail-symmetry") Symmetry
+                            select#detail-symmetry.form-select(name="symmetry_grade" required)
+                                option(value="") Оберіть оцінку
                     .form-row
                         .form-group.half
                             label(for="detail-expert-proportions") Підтверджений Proportions
