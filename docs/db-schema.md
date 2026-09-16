@@ -87,9 +87,9 @@ legacy-звіту: історичних даних недостатньо, що�
 
 ### `diamond_reports`
 
-Конкретна версія експертного звіту. Таблиця тимчасово містить також legacy
-колонки для compatibility `/diamonds/*`; чинні dashboard і wizard уже
-використовують приватний `/reports` і `stone_id`.
+Конкретна версія експертного звіту. Таблиця також зберігає historical legacy
+колонки; чинні dashboard, wizard і detail/edit використовують приватний
+`/reports` і `stone_id`.
 
 | Група | Поля | Призначення |
 | --- | --- | --- |
@@ -97,7 +97,7 @@ legacy-звіту: історичних даних недостатньо, що�
 | Авторство | `expert_id`, `issued_by_id` | Автор-експерт та admin-видавець. |
 | Результати | `system_proportions_grade`, `system_cut_grade`, `calculation_rule_version` | Розрахунок системи й версія правила. |
 | Підтвердження | `expert_proportions_grade`, `expert_cut_grade`, `expert_confirmed_at`, `expert_comment` | Окремий експертний висновок; системний результат його не замінює. |
-| Compatibility | `shape`, 4C/геометрія, `stone_origin`, `price`, `is_sold`, image-path поля тощо | Старий projection для `/diamonds/*`; доля API та projection буде погоджена у 085 після private detail/edit. |
+| Legacy projection | `shape`, 4C/геометрія, `stone_origin`, `price`, `is_sold`, image-path поля тощо | Історичні дані без активного HTTP API; їхній cleanup або контрольований backfill потребують окремого погодженого рішення. |
 
 `price` — `legacy_unclassified_value`: він не є ринковою, експертною чи
 фактичною ціною та не переноситься автоматично у `stone_valuations`.

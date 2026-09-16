@@ -4,7 +4,7 @@
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), детальна карта таблиць і зв’язків — у [db-schema.md](./db-schema.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 16 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`, `0003_media_assets` і `0004_report_wizard` формують ядро, приватні файли та authoring-вимоги звіту. Dashboard, wizard і private detail/edit використовують `/reports`; compatibility API `/diamonds/*` лишається до погодженого cleanup у 085. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
+> **Статус на 16 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`, `0003_media_assets` і `0004_report_wizard` формують ядро, приватні файли та authoring-вимоги звіту. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
 
 ---
 
@@ -14,7 +14,7 @@
 
 1. **Клієнтський шар (Frontend).** Статичний інтерфейс на Pug, SCSS і vanilla JavaScript. Він показує сторінки, зберігає JWT у `localStorage` та викликає HTTP API.
 2. **Серверний шар (Backend/API).** FastAPI маршрути виконують автентифікацію, перевіряють ролі, валідують запити Pydantic-схемами й координують доступ до даних та доменні розрахунки.
-3. **Шар даних і доменних сервісів.** SQLAlchemy-моделі зберігають експертів, звіти й ринкові довідники в MariaDB. IDC-калькулятор визначає оцінки пропорцій та огранювання; `MLService` поки використовує евристичну формулу з випадковим коефіцієнтом, а не навчену модель.
+3. **Шар даних і доменних сервісів.** SQLAlchemy-моделі зберігають експертів, звіти й ринкові довідники в MariaDB. IDC-калькулятор визначає оцінки пропорцій та огранювання; майбутній ML-контур ще не реалізований.
 
 ### Схема взаємодії компонентів
 
@@ -29,8 +29,6 @@ graph TD
     F --> H[diamond_market<br/>довідники й індекс цін]
     F --> I[diamond_analytics<br/>зарезервовано]
     C --> J[DiamondCalculator<br/>IDC proportions/cut]
-    C --> K[MLService<br/>демо-прогноз ціни]
-    K --> E
 ```
 
 ---
@@ -62,7 +60,6 @@ Backend запускають із кореня репозиторію через
 │   ├── schemas.py                   # Pydantic-контракти API
 │   ├── crud.py                      # Операції читання й запису
 │   ├── calculator.py                # Правила IDC для proportions і cut
-│   ├── ml_service.py                # Демонстраційний прогноз ціни
 │   └── security.py                  # JWT і хешування паролів
 ├── frontend/
 │   ├── src/
@@ -107,7 +104,6 @@ Backend запускають із кореня репозиторію через
 
 | Група | Призначення |
 | --- | --- |
-| `/diamonds/` | Legacy compatibility API, який не використовує чинний frontend; cleanup і остаточне рішення — задача 085. |
 | `/reports` | Приватний API ядра: draft, stone, lifecycle, події, RBAC, server-paginated dashboard list і full detail/update. `PUT /reports/{id}` допускається тільки для draft owner/admin та створює append-only `report_updated`; transitions лишаються окремим endpoint-ом. Dashboard передає `sold=true|false`; це зручна двостанова проєкція фактичного `market_status` (`sold` / усі інші стани), а не втрата його деталізації. Для локального demo-набору список також повертає legacy `price`, який UI маркує `USD … d`; це не ринкова чи експертна ціна. |
 | `/reports/{report_id}/media` | Приватні upload, список, читання й видалення вкладень owner/admin; без public serving. |
 | `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
@@ -130,14 +126,6 @@ Backend запускають із кореня репозиторію через
 | `diamond_market` | `grade_mappings`, legacy demo-індекс і `reference_values` | `0004_report_wizard` доповнює geometry-довідники |
 | `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 
-Legacy compatibility `crud.create_diamond_report()`:
-
-1. генерує ID формату `DR-00001`;
-2. обчислює `proportions_grade` через `DiamondCalculator.evaluate_proportions()`, якщо його не передано;
-3. обчислює `cut_grade` як найгіршу з оцінок proportions, polish і symmetry;
-4. за відсутності ціни викликає `MLService.predict_price()`;
-5. зберігає звіт у `diamond_oltp`.
-
 Новий wizard створює звіт через `POST /reports`: сервер призначає остаточний
 `report_id`, зберігає окрему `examination_date` і встановлює
 `market_status=not_for_sale`. `GET /reports/next-id` лише показує наступний
@@ -145,8 +133,7 @@ Legacy compatibility `crud.create_diamond_report()`:
 grades і необов'язковий детермінований demo-прогноз. Такий прогноз не є
 `price` і не зберігається як фінансова величина звіту.
 
-`MLService` лишається legacy-евристикою для `/diamonds/*`; він не є навченою
-ML-моделлю. Wizard не викликає його: його preview детермінований і не записує
+Wizard не викликає ML-модель: його preview детермінований і не записує
 ціну. Новий `StoneValuation` не отримує автоматично старий `price`: суми
 матимуть тип, валюту, джерело і дату за
 [ADR-002](./decisions/002-financial-calculation-contract.md).

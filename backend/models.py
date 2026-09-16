@@ -24,8 +24,8 @@ class DiamondReport(Base):
     report_date = Column(DateTime, nullable=False)
     # Factual date supplied by the expert; never infer it from creation time.
     examination_date = Column(Date, nullable=True)
-    # Compatibility fields below remain while the legacy /diamonds API is used.
-    # New report-domain code reads the normalized Stone and lifecycle columns.
+    # Legacy projection fields remain for historical data; current code reads
+    # the normalized Stone and lifecycle columns. Their data cleanup is separate.
     stone_id = Column(Integer, ForeignKey("diamond_oltp.stones.stone_id"), nullable=True, index=True)
     stone = relationship("Stone", foreign_keys=[stone_id])
     status = Column(String(16), nullable=False, default="draft", server_default="draft")
