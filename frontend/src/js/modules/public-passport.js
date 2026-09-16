@@ -1,4 +1,5 @@
 import { ApiRequestError, getGradeMappings, getPublicPassport } from "./api.js";
+import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const ORIGIN_LABELS = {
   natural: "Природний",
@@ -70,17 +71,22 @@ export async function initPublicPassport() {
     setStatus(status, "Відкрийте паспорт за прямим посиланням або посиланням із QR-коду. Код зі сторінки звіту вводиться на головній.", true);
     return;
   }
-  try {
+  const load = async () => {
+    try {
     const [passport, mappings] = await Promise.all([getPublicPassport(publicId), getGradeMappings()]);
     const labels = new Map(mappings.map((item) => [`${item.category}:${item.grade_value}`, item.grade_label]));
     renderPassport(passport, labels);
     document.getElementById("public-passport-title").textContent = `Паспорт ${passport.report_id}`;
     document.getElementById("public-passport-subtitle").textContent = "Публічна проєкція виданого звіту.";
     card.hidden = false;
-  } catch (error) {
+    } catch (error) {
     const message = error instanceof ApiRequestError && error.status === 404
       ? "Паспорт не знайдено або його публікацію відкликано."
       : "Не вдалося завантажити публічний паспорт. Спробуйте пізніше.";
-    setStatus(status, message, true);
-  }
+      setStatus(status, message, true);
+      card.hidden = true;
+    }
+  };
+  await load();
+  registerVisibleDataRefresh(load);
 }

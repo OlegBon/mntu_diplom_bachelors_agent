@@ -34,7 +34,7 @@
 - [x] Усунути розходження актуального `seed_db.py`, legacy `seed_db-start.py` і моделей: seed відтворює всі три схеми, а `ml_results` формалізовано моделлю.
 - [x] Виконати clean seed MariaDB та API smoke-flow: bcrypt-login admin і першого експерта, `npm run audit:api` — 10/10.
 - [x] Виправити `/experts/`, `POST/PUT/DELETE /diamonds/*`, 404-відповіді та owner/admin RBAC; синхронізувати API response models із dashboard.
-- [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit і public passport/PDF реалізовано; лишаються profile/admin UI та реальний E2E з MariaDB.
+- [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit, profile/admin UI та public passport/PDF реалізовано; лишається реальний E2E з MariaDB.
 - [x] Визначити долю `diamond_analytics.ml_results`: зберігаємо таблицю як зарезервований аналітичний шар, описуємо моделлю та відтворюємо порожньою через локальний seed; API/ML — окрема задача.
 
 ### Пріоритет 2 — якість і тестування
@@ -92,7 +92,7 @@
 
 - Нотатки описують локальний backend у Docker, але поточний репозиторій запускає FastAPI напряму з `.venv`; Docker ще не реалізований.
 - Фактична MariaDB уже містить `diamond_analytics.ml_results`, але SQLAlchemy-моделі, актуальний seed і робочий ML-потік для неї відсутні.
-- Публічний passport/QR і allow-listed PDF реалізовано окремим safe flow; profile/admin UI, full private print, public media й ML-аналітика ще не присутні як завершений код у репозиторії.
+- Публічний passport/QR і allow-listed PDF реалізовано окремим safe flow; profile/admin UI також реалізовано. Full private print, public media й ML-аналітика ще не присутні як завершений код у репозиторії.
 
 ### Рішення щодо гілок
 

@@ -1,5 +1,6 @@
 import { ApiRequestError, getCurrentUser, getExperts, getGradeMappings, getReportDashboard } from "./api.js";
 import { logout } from "./auth.js";
+import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const PAGE_SIZE = 25;
 const DEFAULT_SORT = "report_date_desc";
@@ -277,13 +278,15 @@ export async function initDashboard() {
     }
   }
 
-  const load = async (nextState = state) => {
+  const load = async (nextState = state, { silent = false } = {}) => {
     state = { ...nextState, page: Math.max(Number(nextState.page) || 1, 1) };
     updateUrl(state);
     updateSortIndicators(root, state.sort);
-    setStatus(stateNode, "Завантаження звітів…");
-    tbody.replaceChildren();
-    pagination.replaceChildren();
+    if (!silent) {
+      setStatus(stateNode, "Завантаження звітів…");
+      tbody.replaceChildren();
+      pagination.replaceChildren();
+    }
     try {
       const result = await getReportDashboard({ ...state, page_size: PAGE_SIZE }, token);
       if (result.items.length === 0) {
@@ -331,4 +334,5 @@ export async function initDashboard() {
   document.addEventListener("click", closeOverlays);
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeOverlays(); });
   await load(state);
+  registerVisibleDataRefresh(() => load(state, { silent: true }));
 }

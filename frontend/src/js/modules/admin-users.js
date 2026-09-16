@@ -1,5 +1,6 @@
 import { createUser, getCurrentUser, getUsers, setUserActivation, updateUser } from "./api.js";
 import { renderPagination } from "./pagination.js";
+import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 function setStatus(element, message, isError = false) {
   element.textContent = message;
@@ -61,6 +62,7 @@ export async function initAdminUsers() {
     catch (error) { setStatus(status, error.message, true); } finally { button.disabled = false; }
   });
   searchInput.addEventListener("input", async () => { state = { page: 1, search: searchInput.value.trim() }; await load(); });
+  registerVisibleDataRefresh(load, { canRefresh: () => !dialog.open });
   document.getElementById("admin-user-dialog-close").addEventListener("click", () => dialog.close());
   editForm.addEventListener("submit", async (event) => {
     event.preventDefault();

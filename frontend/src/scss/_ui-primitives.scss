@@ -65,6 +65,34 @@
   &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 1px; }
 }
 
+.password-control {
+  position: relative;
+  display: block;
+
+  .form-control,
+  input { padding-right: 3rem; }
+}
+
+.password-control__toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: variables.$secondary-color;
+  cursor: pointer;
+
+  svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+  &:hover { color: variables.$primary-color; }
+  &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 1px; }
+}
+
 .main-nav li a,
 .main-footer .footer-links a,
 .main-footer .footer-brand,
