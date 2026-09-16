@@ -13,6 +13,7 @@
 - **Нові змінні середовища:** немає.
 - **MariaDB:** migration `0005_public_passports` застосовано до локальної MariaDB; `alembic current` — `0005_public_passports (head)`. Створено лише таблицю токенів `public_passports`, без дублювання або перерахунку даних звітів.
 - **Відкладено окремо:** public media не підтримується навіть для `MediaAsset.is_public`; consent, asset allow-list і окремий content endpoint зафіксовано у [130](./backlog/130-public-passport-media.md).
+- **Заплановано окремо:** передача паспорта замовнику — видимий код, lookup за URL/кодом і server-generated allow-listed PDF — зафіксована у [095](./backlog/095-public-passport-delivery-pdf.md).
 
 ## 2026-09-16 — legacy-api-retirement (завершено)
 
