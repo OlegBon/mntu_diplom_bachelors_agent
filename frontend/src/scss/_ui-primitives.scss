@@ -2,6 +2,8 @@
 
 // Canonical visual primitives. Large work surfaces stay flat; compact controls
 // use only a 2px radius to preserve an explicit, technical interface.
+[hidden] { display: none !important; }
+
 .btn {
   display: inline-flex;
   align-items: center;
