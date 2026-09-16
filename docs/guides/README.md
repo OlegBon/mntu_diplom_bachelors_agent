@@ -18,6 +18,7 @@
 | Файл | Призначення |
 | --- | --- |
 | [current-domain-and-report-workflow.md](./current-domain-and-report-workflow.md) | Поточні ролі, звіти, IDC-розрахунок, ціна, dashboard, медіа та межі реалізації. |
+| [mariadb-local-recovery.md](./mariadb-local-recovery.md) | Безпечний перехід з аварійного XAMPP MariaDB у чисте локальне середовище через SQL-дампи. |
 
 ## Заплановані guides
 
