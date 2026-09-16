@@ -276,8 +276,7 @@
     .admin-users-table td { border: 0; padding: 0.35rem 0; text-align: center; }
     .admin-users-table td::before { display: none; }
     .admin-users-table td:last-child { text-align: center; }
-    .admin-user-actions { display: flex; width: 100%; }
-    .admin-user-actions .btn { width: 100%; }
+    .admin-users-table td:last-child > .btn { width: 100%; }
   }
 }
 
