@@ -4,6 +4,15 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — mariadb-local-recovery (завершено)
+
+- **Задача:** безпечно перевести локальні бази Diamant ID з тимчасово відновленого XAMPP MariaDB у чисту інсталяцію.
+- **Змінені файли:** `docs/{local-start,work_plan,progress}.md`, `docs/guides/{README,mariadb-local-recovery}.md`.
+- **Результат:** старий пошкоджений `mysql/data` перейменовано в окремий аварійний архів; новий чистий `data` створено зі штатного `mysql/backup` того ж XAMPP. SQL-дампами відновлено `diamond_oltp`, `diamond_market`, `diamond_analytics`, а також `freight_transport`, `freight_transport_secure`, `ship_voyages_db`. Після імпорту створено окремий контрольний дамп Diamant ID з чистого сервера.
+- **Перевірки:** чистий MariaDB 10.4.32 стартував без `innodb_force_recovery`, штатно завершився через `mysqladmin shutdown` і пережив повторний старт. `diamond_oltp.diamond_reports` містить 1 001 запис; `alembic_version` — `0004_report_wizard`; `alembic current` з репозиторію підтвердив head; FastAPI імпортується. Ручний smoke frontend: admin увійшов і відкрив новий звіт. Seed, Alembic migration/downgrade та кодова схема не запускалися й не змінювалися.
+- **Нові змінні середовища:** немає; зміна host/port після переходу, якщо буде потрібна, лишається приватною зміною `.env`.
+- **Обмеження:** `xampp-control.exe` раніше зависав під час закриття; це окрема проблема UI Control Panel і не вплинула на відновлений MariaDB. До її окремої діагностики MariaDB безпечніше запускати та зупиняти консольними командами з guide. Вкладення звітів не входять до SQL-дампів і залишаються відповідальністю окремого filesystem backup.
+
 ## 2026-09-16 — report-detail-and-editing (завершено)
 
 - **Задача:** реалізувати захищений private detail/edit звіту, lifecycle UI та повну історію суттєвих змін.

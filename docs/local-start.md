@@ -7,6 +7,10 @@
 - Запущений MySQL/MariaDB у XAMPP на параметрах із приватного `.env`. Apache для поточного FastAPI/Gulp запуску не потрібен.
 - Поточна перевірена конфігурація: Python 3.13.7, Node.js 24.18.0, npm 12.0.1, MariaDB 10.4.32.
 
+> Якщо XAMPP MariaDB аварійно завершувалася або запускалася в recovery-режимі,
+> не виконуйте seed чи Alembic upgrade. Спершу пройдіть окремий
+> [guide відновлення локальної MariaDB](./guides/mariadb-local-recovery.md).
+
 ## Конфігурація `.env`
 
 Скопіюй `.env.example` у приватний `.env` та задай усі значення безпечними локальними даними. Застосунок потребує непорожній `SECRET_KEY`; для БД можна вказати `DATABASE_URL` або окремі `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` і `DB_NAME`. Значення `.env` не комітуються й не потрапляють у документацію.
