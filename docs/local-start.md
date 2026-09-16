@@ -11,6 +11,40 @@
 > не виконуйте seed чи Alembic upgrade. Спершу пройдіть окремий
 > [guide відновлення локальної MariaDB](./guides/mariadb-local-recovery.md).
 
+### Альтернатива XAMPP Control Panel: запуск MariaDB у консолі
+
+Якщо Control Panel зависає, не показує точну помилку або MariaDB потрібно
+запустити під наглядом, відкрий окремий PowerShell і запусти сервер напряму.
+Нижче наведено перевірені команди для локального шляху `D:\DevTools\xampp`;
+якщо XAMPP встановлено в іншому каталозі, заміни лише цей префікс.
+
+```powershell
+D:\DevTools\xampp\mysql\bin\mysqld.exe --defaults-file="D:\DevTools\xampp\mysql\bin\my.ini" --console
+```
+
+Команда займає цей термінал, а рядок `ready for connections` означає успішний
+старт. Не закривай процес через Task Manager: для нормального завершення
+натисни `Ctrl+C` у цьому ж вікні або виконай `mysqladmin shutdown` в іншому.
+
+В іншому PowerShell перевір процес і підключення:
+
+```powershell
+tasklist /fi "imagename eq mysqld.exe"
+
+D:\DevTools\xampp\mysql\bin\mysql.exe --protocol=TCP -h 127.0.0.1 --port=3306 -u root -e "SELECT 1 AS connection_ok; SHOW DATABASES;"
+```
+
+Для контрольної перевірки саме даних Diamant ID:
+
+```powershell
+D:\DevTools\xampp\mysql\bin\mysql.exe --protocol=TCP -h 127.0.0.1 --port=3306 -u root -e "SHOW DATABASES; SELECT COUNT(*) AS reports FROM diamond_oltp.diamond_reports; SELECT version_num FROM diamond_oltp.alembic_version;"
+```
+
+Ці команди лише запускають, читають стан або перевіряють з’єднання. Вони не
+виконують seed, міграцію чи repair. Якщо сервер не стартує або таблиці
+недоступні, не додавай `innodb_force_recovery` навмання — використовуй
+[guide відновлення](./guides/mariadb-local-recovery.md).
+
 ## Конфігурація `.env`
 
 Скопіюй `.env.example` у приватний `.env` та задай усі значення безпечними локальними даними. Застосунок потребує непорожній `SECRET_KEY`; для БД можна вказати `DATABASE_URL` або окремі `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` і `DB_NAME`. Значення `.env` не комітуються й не потрапляють у документацію.
