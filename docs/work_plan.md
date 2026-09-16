@@ -34,7 +34,7 @@
 - [x] Усунути розходження актуального `seed_db.py`, legacy `seed_db-start.py` і моделей: seed відтворює всі три схеми, а `ml_results` формалізовано моделлю.
 - [x] Виконати clean seed MariaDB та API smoke-flow: bcrypt-login admin і першого експерта, `npm run audit:api` — 10/10.
 - [x] Виправити `/experts/`, `POST/PUT/DELETE /diamonds/*`, 404-відповіді та owner/admin RBAC; синхронізувати API response models із dashboard.
-- [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit і public passport.
+- [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit і public passport реалізовано; лишаються profile/admin UI, print та реальний E2E з MariaDB.
 - [x] Визначити долю `diamond_analytics.ml_results`: зберігаємо таблицю як зарезервований аналітичний шар, описуємо моделлю та відтворюємо порожньою через локальний seed; API/ML — окрема задача.
 
 ### Пріоритет 2 — якість і тестування
@@ -66,10 +66,12 @@
 - [x] 070 — Майстер створення звіту: три кроки, серверні довідники, `examination_date`, preview наступного ID, live IDC preview, детермінований demo-прогноз `USD … d`, валідація, приватні вкладення та підтверджене ручне збереження `draft`. Detail/edit, commercial state і transitions лишаються 080.
 - [x] 080 — Приватний перегляд і редагування: `/report-detail.html`, private owner/admin RBAC, draft-редагування повного контракту, детальний `market_status`, вкладення, history та lifecycle actions. Кожний успішний `PUT /reports/{id}` додає `report_updated`; `issued` доступний admin лише за видимих expert-confirmed grades. Друк не входив у цей зріз.
 - [x] 085 — Прибирання legacy API: `/diamonds/*`, unreachable frontend handler, старі Pydantic/CRUD контракти й demo `MLService` вилучені. Historical legacy-колонки залишені без міграції; їхній safe recalculation/cleanup винесено у 120.
-- [ ] [090 — Публічний паспорт і QR](./backlog/090-public-passport-and-qr.md): окремий безпечний public flow для `issued`.
+- [x] 090 — Публічний паспорт і QR: окрема public projection `GET /public/passports/{public_id}`, непередбачуваний revocable token, admin publish/revoke/reissue, SVG QR і `passport.html`. Не відкриває ціну, персональні/внутрішні дані чи media; контрольована публічність вкладень винесена у 130.
+- [ ] [095 — Передача публічного паспорта та PDF](./backlog/095-public-passport-delivery-pdf.md): видимий код і копіювання URL, lookup за кодом або URL із QR, server-generated allow-listed PDF-паспорт для active issued report та lifecycle-перевірки reissue/revoke/void.
 - [ ] [100 — Профіль і admin UI](./backlog/100-profile-and-admin-ui.md): експерти, ролі та довідники; UI ринкових даних залежить від 110.
 - [ ] [110 — Авторитетні ринкові дані й валютні курси](./backlog/110-authoritative-market-data-and-fx.md): обрати законне джерело, зберігати незмінні snapshot-и з provenance, реалізувати ручне admin-оновлення, а scheduler розглядати лише після цього. Не змінює demo `USD … d` або історичні значення автоматично.
 - [ ] [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md): погодити retire або безпечну versioned replacement для `recalc_grades.py`; не запускати масовий backfill чи cleanup без окремого рішення.
+- [ ] [130 — Публічні вкладення паспорта](./backlog/130-public-passport-media.md): окремо погодити consent, allow-list типів і захищену видачу явно публічних media.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
 
@@ -88,7 +90,7 @@
 
 - Нотатки описують локальний backend у Docker, але поточний репозиторій запускає FastAPI напряму з `.venv`; Docker ще не реалізований.
 - Фактична MariaDB уже містить `diamond_analytics.ml_results`, але SQLAlchemy-моделі, актуальний seed і робочий ML-потік для неї відсутні.
-- Документований публічний паспорт, QR, сторінки `view-report`, admin і ML-аналітика ще не присутні як завершений код у репозиторії.
+- Публічний passport/QR реалізовано окремим safe flow; profile/admin UI, print, public media й ML-аналітика ще не присутні як завершений код у репозиторії.
 
 ### Рішення щодо гілок
 

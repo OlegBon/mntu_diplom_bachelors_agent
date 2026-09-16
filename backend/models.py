@@ -169,6 +169,26 @@ class MediaAsset(Base):
     is_public = Column(Boolean, nullable=False, default=False, server_default="0")
 
 
+class PublicPassport(Base):
+    """Revocable public projection token for an issued report."""
+
+    __tablename__ = "public_passports"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    passport_id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(
+        String(20),
+        ForeignKey("diamond_oltp.diamond_reports.report_id"),
+        nullable=False,
+        index=True,
+    )
+    public_id = Column(String(64), nullable=False, unique=True, index=True)
+    is_active = Column(Boolean, nullable=False, default=True, server_default="1")
+    created_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    revoked_at = Column(DateTime, nullable=True)
+
+
 class StoneValuation(Base):
     """A versioned, explicitly sourced amount; legacy report.price is excluded."""
 

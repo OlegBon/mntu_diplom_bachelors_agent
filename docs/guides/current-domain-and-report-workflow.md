@@ -12,10 +12,11 @@
 | Роль | Фактичні можливості приватного `/reports` API |
 | --- | --- |
 | `gemologist` | Створює власні `draft`, бачить лише власні reports, редагує власні `draft`, передає їх у `review`, працює з вкладеннями власних `draft`. |
-| `admin` | Бачить усі reports, читає та редагує `draft`, може передати `draft` у `review`, керує `review → draft/issued/void` і `issued → void`; не створює первинні звіти. |
+| `admin` | Бачить усі reports, читає та редагує `draft`, може передати `draft` у `review`, керує `review → draft/issued/void` і `issued → void`; публікує, відкликає та перевипускає passport виданого звіту; не створює первинні звіти. |
 
 Усі приватні маршрути перевіряють JWT. Приховування UI не замінює server-side
-RBAC. Гість не має доступу до `/reports`; публічного паспорта або QR ще немає.
+RBAC. Гість не має доступу до `/reports`; він може читати лише allow-listed
+projection активного public passport виданого звіту.
 
 ## Звіт, камінь і lifecycle
 
@@ -88,7 +89,18 @@ Dashboard вже використовує приватний `GET /reports`: ser
 Після створення draft wizard за потреби завантажує plotting або фото через
 `POST /reports/{report_id}/media`. Файли зберігаються приватно поза БД і Git,
 у gitignored storage; до `draft` допускаються upload/delete лише owner/admin.
-Публічних URL для media немає.
+Публічних URL для media немає. Навіть `is_public` не відкриває файл;
+контрольована публікація вкладень — окрема задача 130.
+
+## Публічний паспорт і QR
+
+Admin може опублікувати лише `issued` report. Сервер створює непослідовний
+`public_id`; `GET /public/passports/{public_id}` не вимагає JWT, але для
+відсутнього, відкликаного, draft/review/void report завжди повертає `404`.
+Паспорт показує номер, дату видачі, 4C, виміри, системні та confirmed grades,
+походження/обробку. Він не повертає ціну, market status, expert identity,
+коментарі, history або files. QR є SVG із URL `passport.html?id=<public_id>`;
+перевипуск або відкликання одразу робить попередній token непридатним.
 
 ## Перевірки та межі
 
@@ -97,5 +109,5 @@ Dashboard вже використовує приватний `GET /reports`: ser
 flows із mock HTTP. Вони не замінюють реальний MariaDB E2E або повний
 admin-review UI.
 
-Перед public deployment ще потрібні public passport/QR, перевірений ML-контур,
-PostgreSQL-portability та security hardening.
+Перед public deployment ще потрібні перевірений ML-контур,
+PostgreSQL-portability, production URL/configuration та security hardening.

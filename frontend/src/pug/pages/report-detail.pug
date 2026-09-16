@@ -114,18 +114,22 @@ block content
                         textarea#detail-comment.form-control(name="expert_comment" rows="3")
                     .form-row
                         .form-group.half
-                            label(for="detail-polish") Polish (код)
-                            input#detail-polish.form-control(type="number" name="polish_grade" min="0" max="99" required)
+                            label(for="detail-polish") Polish
+                            select#detail-polish.form-select(name="polish_grade" required)
+                                option(value="") Оберіть оцінку
                         .form-group.half
-                            label(for="detail-symmetry") Symmetry (код)
-                            input#detail-symmetry.form-control(type="number" name="symmetry_grade" min="0" max="99" required)
+                            label(for="detail-symmetry") Symmetry
+                            select#detail-symmetry.form-select(name="symmetry_grade" required)
+                                option(value="") Оберіть оцінку
                     .form-row
                         .form-group.half
-                            label(for="detail-expert-proportions") Підтверджений Proportions (код)
-                            input#detail-expert-proportions.form-control(type="number" name="expert_proportions_grade" min="0" max="99")
+                            label(for="detail-expert-proportions") Підтверджений Proportions
+                            select#detail-expert-proportions.form-select(name="expert_proportions_grade")
+                                option(value="") Не підтверджено
                         .form-group.half
-                            label(for="detail-expert-cut") Підтверджений Final Cut (код)
-                            input#detail-expert-cut.form-control(type="number" name="expert_cut_grade" min="0" max="99")
+                            label(for="detail-expert-cut") Підтверджений Final Cut
+                            select#detail-expert-cut.form-select(name="expert_cut_grade")
+                                option(value="") Не підтверджено
                     p.report-detail__help Підтверджені експертом grades є окремими від системного IDC-розрахунку та потрібні для видачі звіту.
                 .report-detail__actions
                     button#detail-edit.btn.btn-outline(type="button") Редагувати чернетку
@@ -147,6 +151,15 @@ block content
                     h2 Вкладення
                     ul#detail-media.report-detail__list
                         li Завантаження…
+                section#detail-passport.report-detail__surface(hidden)
+                    h2 Публічний паспорт
+                    p#detail-passport-state.report-detail__help Доступний лише для виданого звіту.
+                    a#detail-passport-link(href="#" target="_blank" rel="noopener noreferrer" hidden) Відкрити публічний паспорт
+                    img#detail-passport-qr.report-detail__qr(alt="QR-код публічного паспорта" hidden)
+                    .report-detail__transition-actions
+                        button#detail-passport-publish.btn.btn-primary(type="button" hidden) Опублікувати паспорт
+                        button#detail-passport-reissue.btn.btn-outline(type="button" hidden) Перевипустити посилання
+                        button#detail-passport-revoke.btn.btn-outline(type="button" hidden) Відкликати публікацію
                 section.report-detail__surface
                     h2 Історія змін
                     ol#detail-events.report-detail__timeline

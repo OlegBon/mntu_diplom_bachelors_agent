@@ -1,7 +1,7 @@
 # Схема бази даних
 
 Документ описує фактичну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0004_report_wizard`. Це карта даних для розробки, API та
+Alembic revision `0005_public_passports`. Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -112,6 +112,16 @@ Append-only журнал lifecycle. `event_id` — первинний ключ; 
 Migration `0002` створила по одній події `legacy_import` для кожного
 перенесеного report і не виводила з цього факту ні видачу, ні підтвердження.
 
+### `public_passports`
+
+Revocable public projection для виданого звіту. `passport_id` — технічний
+ключ; `report_id` і `created_by_id` — обов’язкові FK; `public_id` — унікальний
+непослідовний token. `is_active`, `created_at` і `revoked_at` зберігають
+publication state без зміни приватного report. Public API повертає дані лише
+коли token активний, report має `status=issued` та непорожній `issued_at`.
+Відкликання або `void` робить старе посилання непридатним. Публічні media не
+підтримуються у цій revision і винесені в 130.
+
 ### `media_assets`
 
 Метадані приватних вкладень звіту. Сам файл не зберігається у MariaDB і не
@@ -184,6 +194,7 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 | `0002_report_core` | `Stone`, `ReportEvent`, `StoneValuation`, `reference_values`, lifecycle-колонки та backfill legacy reports. |
 | `0003_media_assets` | `media_assets` для приватних файлів і метаданих; без backfill legacy image-path полів. |
 | `0004_report_wizard` | `diamond_reports.examination_date` і довідники `girdle_thickness` / `culet_size` для майстра. |
+| `0005_public_passports` | Revocable public tokens для issued reports; без backfill даних, цін або media. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за

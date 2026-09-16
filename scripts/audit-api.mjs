@@ -33,6 +33,7 @@ function createChecks(baseUrl) {
     ['Приватний список звітів без токена', 'GET', '/reports', [401], (body) => typeof body?.detail === 'string', '401 для приватного маршруту списку звітів'],
     ['Довідники оцінок', 'GET', '/market/mappings', [200], Array.isArray, 'JSON-масив Grade Mapping'],
     ['Приватний detail звіту без токена', 'GET', '/reports/DR-AUDIT-NONEXISTENT', [401], (body) => typeof body?.detail === 'string', '401 для приватного маршруту detail звіту'],
+    ['Неіснуючий публічний паспорт', 'GET', '/public/passports/audit-nonexistent-public-id', [404], (body) => typeof body?.detail === 'string', '404 без розкриття даних для вгаданого public ID'],
     ['Профіль без токена', 'GET', '/users/me', [401], (body) => typeof body?.detail === 'string', '401 для захищеного маршруту'],
     ['Користувачі без токена', 'GET', '/users/', [401], (body) => typeof body?.detail === 'string', '401 для admin-маршруту'],
     ['Експерти без токена', 'GET', '/experts/', [401], (body) => typeof body?.detail === 'string', '401 для захищеного маршруту'],

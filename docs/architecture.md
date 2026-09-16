@@ -4,7 +4,7 @@
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), детальна карта таблиць і зв’язків — у [db-schema.md](./db-schema.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 16 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`, `0003_media_assets` і `0004_report_wizard` формують ядро, приватні файли та authoring-вимоги звіту. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL, завершений ML-потік і публічний паспорт ще не реалізовані.
+> **Статус на 16 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`, `0003_media_assets`, `0004_report_wizard` і `0005_public_passports` формують ядро, private files, authoring-вимоги та revocable public passport. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
 
 ---
 
@@ -106,6 +106,8 @@ Backend запускають із кореня репозиторію через
 | --- | --- |
 | `/reports` | Приватний API ядра: draft, stone, lifecycle, події, RBAC, server-paginated dashboard list і full detail/update. `PUT /reports/{id}` допускається тільки для draft owner/admin та створює append-only `report_updated`; transitions лишаються окремим endpoint-ом. Dashboard передає `sold=true|false`; це зручна двостанова проєкція фактичного `market_status` (`sold` / усі інші стани), а не втрата його деталізації. Для локального demo-набору список також повертає legacy `price`, який UI маркує `USD … d`; це не ринкова чи експертна ціна. |
 | `/reports/{report_id}/media` | Приватні upload, список, читання й видалення вкладень owner/admin; без public serving. |
+| `/reports/{report_id}/passport` | Admin-only publication state, publish/reissue/revoke та SVG QR для поточного public URL. |
+| `/public/passports/{public_id}` | Анонімна allow-listed projection лише активного `issued` report; 404 не розрізняє відсутній, відкликаний або недоступний token. |
 | `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
 | `/users/`, `/users/me`, `/experts/` | Керування користувачами, профіль поточного користувача та перелік експертів. |
 | `/market/mappings`, `/market/price` | Публічні довідники оцінок і поточний ринковий індекс; зміна індексу — лише для admin. |
@@ -122,7 +124,7 @@ Backend запускають із кореня репозиторію через
 
 | База | Призначення | Поточний стан |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, compatibility `diamond_reports`, `stones`, `report_events`, `stone_valuations`, `media_assets` і lifecycle-колонки | Revisions до `0004_report_wizard` застосовано локально |
+| `diamond_oltp` | `experts`, compatibility `diamond_reports`, `stones`, `report_events`, `public_passports`, `stone_valuations`, `media_assets` і lifecycle-колонки | Кодова head revision — `0005_public_passports`; застосування до локальної MariaDB потребує окремого дозволу |
 | `diamond_market` | `grade_mappings`, legacy demo-індекс і `reference_values` | `0004_report_wizard` доповнює geometry-довідники |
 | `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 

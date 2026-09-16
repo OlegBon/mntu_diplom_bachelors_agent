@@ -1,12 +1,15 @@
 from fastapi import FastAPI, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date, timedelta
 from decimal import Decimal
+from urllib.parse import parse_qs, urlparse
 from jose import JWTError, jwt
+import qrcode
+from qrcode.image.svg import SvgPathImage
 
 from . import crud, database, media_storage, models, schemas, security
 
@@ -120,6 +123,66 @@ def require_report_access(report: models.DiamondReport, current_user: models.Exp
         raise HTTPException(status_code=403, detail="You do not have access to this report")
 
 
+def require_admin(current_user: models.Expert) -> None:
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+
+def to_public_passport_view(
+    passport: models.PublicPassport,
+    report: models.DiamondReport,
+    stone: models.Stone,
+) -> schemas.PublicPassportView:
+    """Build the explicit anonymous allow-list without exposing private ORM data."""
+    return schemas.PublicPassportView(
+        public_id=passport.public_id,
+        report_id=report.report_id,
+        issued_at=report.issued_at,
+        examination_date=report.examination_date,
+        shape=stone.shape,
+        carat_weight=stone.carat_weight,
+        color_grade=stone.color_grade,
+        clarity_grade=stone.clarity_grade,
+        measurements_length=stone.measurements_length,
+        measurements_width=stone.measurements_width,
+        measurements_depth=stone.measurements_depth,
+        system_proportions_grade=report.system_proportions_grade,
+        system_cut_grade=report.system_cut_grade,
+        expert_proportions_grade=report.expert_proportions_grade,
+        expert_cut_grade=report.expert_cut_grade,
+        origin=stone.origin,
+        treatment_status=stone.treatment_status,
+        identification_status=stone.identification_status,
+    )
+
+
+def validate_passport_url(public_url: str, public_id: str) -> None:
+    """Permit QR content only for the current public passport URL."""
+    parsed = urlparse(public_url)
+    is_valid = (
+        parsed.scheme in {"http", "https"}
+        and bool(parsed.netloc)
+        and parsed.username is None
+        and parsed.password is None
+        and parsed.path.endswith("/passport.html")
+        and parse_qs(parsed.query).get("id") == [public_id]
+    )
+    if not is_valid:
+        raise HTTPException(status_code=422, detail="Invalid public passport URL")
+
+
+@app.get("/public/passports/{public_id}", response_model=schemas.PublicPassportView)
+def read_public_passport(
+    public_id: str,
+    db: Session = Depends(get_db),
+):
+    result = crud.get_public_passport_view(db, public_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Passport not found")
+    passport, report, stone = result
+    return to_public_passport_view(passport, report, stone)
+
+
 @app.get("/reports", response_model=schemas.ReportListResponse)
 def read_report_domain_list(
     page: int = Query(default=1, ge=1),
@@ -217,6 +280,84 @@ def read_report_domain(
         raise HTTPException(status_code=404, detail="Report not found")
     require_report_access(report, current_user)
     return report
+
+
+@app.get("/reports/{report_id}/passport", response_model=schemas.PublicPassportResponse)
+def read_report_publication(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    passport = crud.get_active_public_passport(db, report_id)
+    if passport is None:
+        raise HTTPException(status_code=404, detail="Public passport not found")
+    return passport
+
+
+@app.post("/reports/{report_id}/passport", response_model=schemas.PublicPassportResponse)
+def publish_report_passport(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    try:
+        return crud.publish_public_passport(db, report=report, actor=current_user)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.post("/reports/{report_id}/passport/reissue", response_model=schemas.PublicPassportResponse)
+def reissue_report_passport(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    try:
+        return crud.publish_public_passport(db, report=report, actor=current_user, reissue=True)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.get("/reports/{report_id}/passport/qr", response_class=Response)
+def read_report_passport_qr(
+    report_id: str,
+    public_url: str = Query(min_length=1, max_length=2_048),
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    passport = crud.get_active_public_passport(db, report_id)
+    if passport is None:
+        raise HTTPException(status_code=404, detail="Public passport not found")
+    validate_passport_url(public_url, passport.public_id)
+    image = qrcode.make(public_url, image_factory=SvgPathImage)
+    return Response(content=image.to_string(), media_type="image/svg+xml")
+
+
+@app.delete("/reports/{report_id}/passport", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_report_passport(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if not crud.revoke_public_passport(db, report=report, actor=current_user):
+        raise HTTPException(status_code=404, detail="Public passport not found")
 
 
 @app.put("/reports/{report_id}", response_model=schemas.ReportResponse)

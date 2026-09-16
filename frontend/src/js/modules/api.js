@@ -48,6 +48,28 @@ export const createDomainReport = (payload, token) => requestApi("/reports", { m
 
 export const getDomainReport = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}`, { token });
 
+export const getPublicPassport = (publicId) => requestApi(`/public/passports/${encodeURIComponent(publicId)}`);
+
+export const getReportPassport = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/passport`, { token });
+
+export const publishReportPassport = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/passport`, { method: "POST", token });
+
+export const reissueReportPassport = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/passport/reissue`, { method: "POST", token });
+
+export const revokeReportPassport = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/passport`, { method: "DELETE", token });
+
+export const getReportPassportQr = async (reportId, publicUrl, token) => {
+  const query = new URLSearchParams({ public_url: publicUrl });
+  const response = await fetch(`${BASE_URL}/reports/${encodeURIComponent(reportId)}/passport/qr?${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new ApiRequestError(payload?.detail || "Не вдалося створити QR-код", response.status);
+  }
+  return response.blob();
+};
+
 export const updateDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}`, { method: "PUT", token, body: payload });
 
 export const transitionDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/transitions`, { method: "POST", token, body: payload });

@@ -65,7 +65,7 @@ Alembic є джерелом істини для структури таблиц�
 зроби резервну копію даних, якщо вони цінні.
 
 Поточний репозиторій має revisions `0002_report_core`, `0003_media_assets` і
-`0004_report_wizard`. Для наявної локальної БД,
+`0005_public_passports`. Для наявної локальної БД,
 що вже позначена `0001_initial_schema`, ця revision створює нормалізовані
 `stones`, `report_events`, `stone_valuations`, `reference_values`, доповнює
 `diamond_reports` lifecycle-полями й переносить legacy-звіти у draft. Перед
@@ -76,7 +76,7 @@ Alembic є джерелом істини для структури таблиц�
 ```
 
 Після резервної копії та окремого підтвердження застосуй revision, а потім
-переконайся, що версія стала `0004_report_wizard`:
+переконайся, що версія стала `0005_public_passports`:
 
 ```powershell
 .\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head
@@ -87,8 +87,9 @@ Alembic є джерелом істини для структури таблиц�
 колонки. Revision `0003_media_assets` створює лише metadata приватних
 вкладень і не переносить legacy `plotting_image`/`real_image`. Для перевірки
 Revision `0004_report_wizard` додає nullable `examination_date` для report та
-довідники geometry, не змінюючи legacy-записи. Після upgrade перезапусти
-backend; create-form після створення звіту дозавантажує вибрані
+довідники geometry, не змінюючи legacy-записи. Revision `0005_public_passports`
+додає лише revocable publication tokens і не backfill-ить reports, ціни або
+media. Після upgrade перезапусти backend; create-form після створення звіту дозавантажує вибрані
 JPEG/PNG/WebP-файли через захищений `/reports/{id}/media`.
 
 Для наявної локальної БД без `alembic_version` спочатку перевір поточний стан:

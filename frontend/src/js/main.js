@@ -3,6 +3,7 @@ import { loginUser } from "./modules/api.js";
 import { initDashboard } from "./modules/dashboard.js";
 import { initReportWizard } from "./modules/report-wizard.js";
 import { initReportDetail } from "./modules/report-detail.js";
+import { initPublicPassport } from "./modules/public-passport.js";
 
 function createNavigationLink(href, label, className = "") {
   const item = document.createElement("li");
@@ -101,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (isAuthenticated) void initDashboard();
   if (isAuthenticated && isCreateReportPage) void initReportWizard();
   if (isAuthenticated && currentPath.endsWith("/report-detail.html")) void initReportDetail();
+  if (currentPath.endsWith("/passport.html")) void initPublicPassport();
 
   const burgerBtn = document.getElementById("burger-btn");
   const mainNav = document.getElementById("main-nav");
@@ -137,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
     searchForm.addEventListener("submit", (event) => {
       event.preventDefault();
       const query = document.getElementById("search-input").value.trim();
-      if (query) window.location.href = `/view-report.html?id=${encodeURIComponent(query)}`;
+      if (query) window.location.href = `/passport.html?id=${encodeURIComponent(query)}`;
     });
   }
 });

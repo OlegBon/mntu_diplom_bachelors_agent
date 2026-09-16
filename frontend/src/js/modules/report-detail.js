@@ -6,6 +6,11 @@ import {
   getReportEvents,
   getReportMedia,
   getReportMediaContentUrl,
+  getReportPassport,
+  getReportPassportQr,
+  publishReportPassport,
+  reissueReportPassport,
+  revokeReportPassport,
   transitionDomainReport,
   updateDomainReport,
 } from "./api.js";
@@ -38,6 +43,22 @@ function setEditable(form, editable) {
 
 function numberOrNull(value) {
   return value === "" ? null : Number(value);
+}
+
+function populateGradeSelect(select, mappings, category, emptyLabel = "Не підтверджено") {
+  const selectedValue = select.value;
+  select.replaceChildren(new Option(emptyLabel, ""));
+  mappings
+    .filter((item) => item.category === category)
+    .forEach((item) => select.add(new Option(item.grade_label, String(item.grade_value))));
+  select.value = selectedValue;
+}
+
+function populateExpertGradeSelects(form, mappings) {
+  populateGradeSelect(form.querySelector("#detail-polish"), mappings, "polish", "Оберіть оцінку");
+  populateGradeSelect(form.querySelector("#detail-symmetry"), mappings, "symmetry", "Оберіть оцінку");
+  populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions");
+  populateGradeSelect(form.querySelector("#detail-expert-cut"), mappings, "cut");
 }
 
 function payloadFromForm(form) {
@@ -120,6 +141,77 @@ function renderMedia(container, reportId, assets, token) {
   }
 }
 
+function passportUrl(publicId) {
+  const url = new URL("/passport.html", window.location.origin);
+  url.searchParams.set("id", publicId);
+  return url.toString();
+}
+
+async function renderPassportControls({ report, currentUser, token, onStatus }) {
+  const section = document.getElementById("detail-passport");
+  const state = document.getElementById("detail-passport-state");
+  const link = document.getElementById("detail-passport-link");
+  const qr = document.getElementById("detail-passport-qr");
+  const publish = document.getElementById("detail-passport-publish");
+  const reissue = document.getElementById("detail-passport-reissue");
+  const revoke = document.getElementById("detail-passport-revoke");
+  if (!section || currentUser.role !== "admin") return;
+  section.hidden = false;
+  [link, qr, publish, reissue, revoke].forEach((element) => { element.hidden = true; });
+  if (report.status !== "issued") {
+    state.textContent = "Публікація стане доступною після видачі звіту admin.";
+    return;
+  }
+  try {
+    const passport = await getReportPassport(report.report_id, token);
+    const url = passportUrl(passport.public_id);
+    state.textContent = "Паспорт опубліковано. Перевипуск одразу відкликає попереднє посилання.";
+    link.href = url;
+    link.hidden = false;
+    reissue.hidden = false;
+    revoke.hidden = false;
+    const qrBlob = await getReportPassportQr(report.report_id, url, token);
+    const previousUrl = qr.dataset.objectUrl;
+    if (previousUrl) URL.revokeObjectURL(previousUrl);
+    qr.dataset.objectUrl = URL.createObjectURL(qrBlob);
+    qr.src = qr.dataset.objectUrl;
+    qr.hidden = false;
+  } catch (error) {
+    if (!(error instanceof ApiRequestError) || error.status !== 404) {
+      state.textContent = "Не вдалося завантажити стан публікації.";
+      return;
+    }
+    state.textContent = "Паспорт ще не опубліковано.";
+    publish.hidden = false;
+  }
+  publish.onclick = async () => {
+    try {
+      onStatus("Публікація паспорта…");
+      await publishReportPassport(report.report_id, token);
+      await renderPassportControls({ report, currentUser, token, onStatus });
+      onStatus("Паспорт опубліковано.");
+    } catch (error) { onStatus(error.message || "Не вдалося опублікувати паспорт.", true); }
+  };
+  reissue.onclick = async () => {
+    if (!window.confirm("Перевипустити посилання? Попередній QR-код перестане працювати.")) return;
+    try {
+      onStatus("Перевипуск посилання…");
+      await reissueReportPassport(report.report_id, token);
+      await renderPassportControls({ report, currentUser, token, onStatus });
+      onStatus("Нове публічне посилання створено.");
+    } catch (error) { onStatus(error.message || "Не вдалося перевипустити посилання.", true); }
+  };
+  revoke.onclick = async () => {
+    if (!window.confirm("Відкликати публічний паспорт? Посилання й QR одразу перестануть працювати.")) return;
+    try {
+      onStatus("Відкликання публікації…");
+      await revokeReportPassport(report.report_id, token);
+      await renderPassportControls({ report, currentUser, token, onStatus });
+      onStatus("Публікацію паспорта відкликано.");
+    } catch (error) { onStatus(error.message || "Не вдалося відкликати паспорт.", true); }
+  };
+}
+
 function renderTransitionControls(container, helpNode, report, currentUser, onTransition) {
   container.replaceChildren();
   const isAdmin = currentUser.role === "admin";
@@ -136,13 +228,17 @@ function renderTransitionControls(container, helpNode, report, currentUser, onTr
     button.className = targetStatus === "issued" ? "btn btn-primary" : "btn btn-outline";
     button.textContent = label;
     button.disabled = targetStatus === "issued" && (report.expert_proportions_grade === null || report.expert_cut_grade === null);
-    if (button.disabled) button.title = "Для видачі потрібні видимі підтверджені експертом grades.";
+    if (button.disabled) button.title = "Для видачі потрібні підтверджені експертом Proportions і Final Cut.";
     button.addEventListener("click", () => onTransition(targetStatus));
     container.append(button);
   }
-  helpNode.textContent = report.status === "draft"
-    ? "Чернетку може редагувати її автор або admin."
-    : "Після передачі на перевірку поля звіту заблоковані; переходи контролює сервер.";
+  if (report.status === "review" && (report.expert_proportions_grade === null || report.expert_cut_grade === null)) {
+    helpNode.textContent = "Для видачі поверніть звіт у чернетку та оберіть підтверджені експертом Proportions і Final Cut.";
+  } else {
+    helpNode.textContent = report.status === "draft"
+      ? "Чернетку може редагувати її автор або admin."
+      : "Після передачі на перевірку поля звіту заблоковані; переходи контролює сервер.";
+  }
 }
 
 export async function initReportDetail() {
@@ -181,6 +277,7 @@ export async function initReportDetail() {
       document.getElementById("detail-expert-summary").textContent = `Експертне підтвердження: Proportions ${confirmedProportions}, Final Cut ${confirmedCut}.`;
       renderEvents(document.getElementById("detail-events"), events);
       renderMedia(document.getElementById("detail-media"), reportId, media, token);
+      await renderPassportControls({ report, currentUser, token, onStatus: (message, isError) => setStatus(status, message, isError) });
       renderTransitionControls(document.getElementById("detail-transitions"), document.getElementById("detail-transition-help"), report, currentUser, async (targetStatus) => {
         try {
           setStatus(status, "Зміна статусу…");
@@ -203,6 +300,7 @@ export async function initReportDetail() {
     const [user, mappings] = await Promise.all([getCurrentUser(token), getGradeMappings()]);
     currentUser = user;
     gradeLabels = new Map(mappings.map((item) => [`${item.category}:${item.grade_value}`, item.grade_label]));
+    populateExpertGradeSelects(form, mappings);
   } catch { logout("/login.html"); return; }
   form.querySelector("#detail-edit").addEventListener("click", () => setEditable(form, true));
   form.querySelector("#detail-cancel").addEventListener("click", () => { populateForm(form, report); setEditable(form, false); });

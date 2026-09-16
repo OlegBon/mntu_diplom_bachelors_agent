@@ -2,6 +2,7 @@ from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session, joinedload
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, getcontext
+import secrets
 
 from . import models, schemas
 from .security import get_password_hash
@@ -336,6 +337,8 @@ def transition_report_domain(
     if target_status == "issued":
         report.issued_at = now
         report.issued_by_id = actor.expert_id
+    if target_status == "void":
+        _deactivate_public_passports(db, report_id=report.report_id, revoked_at=now)
     _append_report_event(
         db,
         report_id=report.report_id,
@@ -352,6 +355,125 @@ def transition_report_domain(
 
 def get_report_events(db: Session, report_id: str) -> list[models.ReportEvent]:
     return db.query(models.ReportEvent).filter(models.ReportEvent.report_id == report_id).order_by(models.ReportEvent.event_id).all()
+
+
+def _deactivate_public_passports(
+    db: Session,
+    *,
+    report_id: str,
+    revoked_at: datetime,
+) -> int:
+    """Deactivate every active token for a report without changing its content."""
+    return (
+        db.query(models.PublicPassport)
+        .filter(
+            models.PublicPassport.report_id == report_id,
+            models.PublicPassport.is_active.is_(True),
+        )
+        .update({"is_active": False, "revoked_at": revoked_at}, synchronize_session=False)
+    )
+
+
+def get_active_public_passport(
+    db: Session,
+    report_id: str,
+) -> models.PublicPassport | None:
+    return (
+        db.query(models.PublicPassport)
+        .filter(
+            models.PublicPassport.report_id == report_id,
+            models.PublicPassport.is_active.is_(True),
+        )
+        .order_by(models.PublicPassport.passport_id.desc())
+        .first()
+    )
+
+
+def publish_public_passport(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    actor: models.Expert,
+    reissue: bool = False,
+) -> models.PublicPassport:
+    """Publish or replace an unpredictable token for an issued report."""
+    if report.status != "issued":
+        raise ReportDomainError("Only issued reports can be published")
+    existing = get_active_public_passport(db, report.report_id)
+    if existing is not None and not reissue:
+        return existing
+
+    now = datetime.now(timezone.utc)
+    if existing is not None:
+        _deactivate_public_passports(db, report_id=report.report_id, revoked_at=now)
+
+    public_id = secrets.token_urlsafe(24)
+    while db.query(models.PublicPassport).filter(models.PublicPassport.public_id == public_id).first():
+        public_id = secrets.token_urlsafe(24)
+    passport = models.PublicPassport(
+        report_id=report.report_id,
+        public_id=public_id,
+        is_active=True,
+        created_by_id=actor.expert_id,
+        created_at=now,
+    )
+    db.add(passport)
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="passport_reissued" if existing is not None else "passport_published",
+        actor_id=actor.expert_id,
+        from_status=report.status,
+        to_status=report.status,
+    )
+    db.commit()
+    db.refresh(passport)
+    return passport
+
+
+def revoke_public_passport(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    actor: models.Expert,
+) -> bool:
+    """Revoke publication without mutating the issued report itself."""
+    now = datetime.now(timezone.utc)
+    revoked_count = _deactivate_public_passports(db, report_id=report.report_id, revoked_at=now)
+    if not revoked_count:
+        return False
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="passport_revoked",
+        actor_id=actor.expert_id,
+        from_status=report.status,
+        to_status=report.status,
+    )
+    db.commit()
+    return True
+
+
+def get_public_passport_view(
+    db: Session,
+    public_id: str,
+) -> tuple[models.PublicPassport, models.DiamondReport, models.Stone] | None:
+    """Read the allow-listed public projection; unavailable resources stay opaque."""
+    return (
+        db.query(models.PublicPassport, models.DiamondReport, models.Stone)
+        .join(models.DiamondReport, models.PublicPassport.report_id == models.DiamondReport.report_id)
+        .join(models.Stone, models.DiamondReport.stone_id == models.Stone.stone_id)
+        .filter(
+            models.PublicPassport.public_id == public_id,
+            models.PublicPassport.is_active.is_(True),
+            models.DiamondReport.status == "issued",
+            models.DiamondReport.issued_at.is_not(None),
+            models.Stone.carat_weight.is_not(None),
+            models.Stone.color_grade.is_not(None),
+            models.Stone.clarity_grade.is_not(None),
+        )
+        .first()
+    )
 
 
 def get_media_assets(db: Session, report_id: str) -> list[models.MediaAsset]:
