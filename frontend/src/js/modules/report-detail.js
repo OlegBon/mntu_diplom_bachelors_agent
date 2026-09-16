@@ -198,7 +198,7 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
   try {
     const passport = await getReportPassport(report.report_id, token);
     const url = passportUrl(passport.public_id);
-    state.textContent = "Паспорт опубліковано. Перевипуск одразу відкликає попереднє посилання.";
+    state.textContent = "Паспорт опубліковано. Його можна перевірити за посиланням, QR або кодом; перевипуск одразу відкликає попередні дані доступу.";
     code.querySelector("code").textContent = passport.public_id;
     code.hidden = false;
     link.href = url;
@@ -247,16 +247,16 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
     } catch (error) { onStatus(error.message || "Не вдалося опублікувати паспорт.", true); }
   };
   reissue.onclick = async () => {
-    if (!window.confirm("Перевипустити посилання? Попередній QR-код перестане працювати.")) return;
+    if (!window.confirm("Перевипустити паспорт? Попередній код, посилання й QR перестануть працювати.")) return;
     try {
-      onStatus("Перевипуск посилання…");
+      onStatus("Перевипуск паспорта…");
       await reissueReportPassport(report.report_id, token);
       await renderPassportControls({ report, currentUser, token, onStatus });
-      onStatus("Нове публічне посилання створено.");
+      onStatus("Створено новий код, посилання та QR-код.");
     } catch (error) { onStatus(error.message || "Не вдалося перевипустити посилання.", true); }
   };
   revoke.onclick = async () => {
-    if (!window.confirm("Відкликати публічний паспорт? Посилання й QR одразу перестануть працювати.")) return;
+    if (!window.confirm("Відкликати публічний паспорт? Код, посилання й QR одразу перестануть працювати.")) return;
     try {
       onStatus("Відкликання публікації…");
       await revokeReportPassport(report.report_id, token);

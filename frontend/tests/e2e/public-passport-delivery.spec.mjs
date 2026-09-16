@@ -65,16 +65,20 @@ test("admin sees the public code and downloads a PDF passport", async ({ page })
   expect((await download).suggestedFilename()).toBe("passport-DR-01001.pdf");
 });
 
-test("public lookup accepts a QR URL but rejects an internal report number", async ({ page }) => {
+test("public lookup accepts only a public code and rejects URL or an internal report number", async ({ page }) => {
   await page.route("**/public/passports/**", (route) => route.fulfill({ status: 404, json: { detail: "Passport not found" } }));
   await page.goto("/");
 
-  await page.locator("#search-input").fill(`http://localhost:3000/passport.html?id=${publicId}`);
+  await page.locator("#search-input").fill(publicId);
   await page.locator("#public-search-form button").click();
   await expect(page).toHaveURL(new RegExp(`passport\\.html\\?id=${publicId}`));
 
   await page.goto("/");
+  await page.locator("#search-input").fill(`http://localhost:3000/passport.html?id=${publicId}`);
+  await page.locator("#public-search-form button").click();
+  await expect(page.locator("#public-search-status")).toContainText("код публічного паспорта");
+
   await page.locator("#search-input").fill("DR-01001");
   await page.locator("#public-search-form button").click();
-  await expect(page.locator("#public-search-status")).toContainText("не внутрішній номер звіту");
+  await expect(page.locator("#public-search-status")).toContainText("Внутрішній номер звіту");
 });

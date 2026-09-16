@@ -86,7 +86,7 @@ def build_public_passport_pdf(
     document.drawString(MARGIN, PAGE_HEIGHT - 58, "Публічний паспорт")
     document.setFillColor(colors.HexColor("#64748b"))
     document.setFont(FONT_REGULAR, 10)
-    document.drawString(MARGIN, PAGE_HEIGHT - 76, "Diamant ID · перевіряйте чинність за QR або посиланням")
+    document.drawString(MARGIN, PAGE_HEIGHT - 76, "Diamant ID · перевіряйте чинність за кодом, посиланням або QR")
 
     card_top = PAGE_HEIGHT - 102
     document.setStrokeColor(colors.HexColor("#e2e8f0"))
@@ -156,7 +156,7 @@ def build_public_passport_pdf(
     document.setFillColor(colors.HexColor("#64748b"))
     document.setFont(FONT_REGULAR, 7.5)
     document.drawString(MARGIN, footer_top - 7, public_url)
-    document.drawString(MARGIN, 48, "PDF містить лише публічно доступні дані. Перевіряйте актуальний стан за QR або посиланням.")
+    document.drawString(MARGIN, 48, "PDF містить лише публічно доступні дані. Перевіряйте стан за кодом, посиланням або QR.")
     document.showPage()
     document.save()
     return output.getvalue()

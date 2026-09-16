@@ -17,24 +17,10 @@ function createNavigationLink(href, label, className = "") {
 
 function publicPassportIdFromLookup(value) {
   if (/^DR-\d+/i.test(value)) {
-    throw new Error("Використайте код або повне публічне посилання з QR, а не внутрішній номер звіту.");
+    throw new Error("Внутрішній номер звіту не є кодом публічного паспорта.");
   }
-  try {
-    const url = new URL(value);
-    const publicId = url.searchParams.get("id");
-    if (
-      !["http:", "https:"].includes(url.protocol)
-      || url.username
-      || url.password
-      || !url.pathname.endsWith("/passport.html")
-      || !publicId
-      || !/^[A-Za-z0-9_-]{20,128}$/.test(publicId)
-    ) throw new Error();
-    return publicId;
-  } catch {
-    if (/^[A-Za-z0-9_-]{20,128}$/.test(value)) return value;
-    throw new Error("Вставте код публічного паспорта або повне посилання з QR.");
-  }
+  if (/^[A-Za-z0-9_-]{20,128}$/.test(value)) return value;
+  throw new Error("Введіть код публічного паспорта зі сторінки звіту.");
 }
 
 function applyApprovedNavigation(isAuthenticated) {
