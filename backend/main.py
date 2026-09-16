@@ -614,6 +614,10 @@ def update_user(
     target = crud.get_user_by_id(db, expert_id)
     if target is None:
         raise HTTPException(status_code=404, detail="User not found")
+    if user_data.username and user_data.username != target.username:
+        existing_user = crud.get_user_by_username(db, user_data.username)
+        if existing_user is not None:
+            raise HTTPException(status_code=400, detail="Username already registered")
     ensure_active_admin_remains(db, target, user_data.role or target.role, target.is_active)
     return crud.update_user(db, expert_id, user_data)
 

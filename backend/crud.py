@@ -560,7 +560,7 @@ def update_user(db: Session, expert_id: int, user_update: schemas.UserUpdate):
         return None
     
     # Якщо прийшов новий пароль - хешуємо його
-    for field in ("first_name", "last_name", "middle_name", "role"):
+    for field in ("username", "first_name", "last_name", "middle_name", "role"):
         value = getattr(user_update, field)
         if value is not None:
             setattr(db_user, field, value)

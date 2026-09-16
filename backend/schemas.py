@@ -24,6 +24,7 @@ class UserCreate(BaseModel):
 
 # Схема для оновлення юзера (пароль необов'язковий)
 class UserUpdate(BaseModel):
+    username: Optional[str] = Field(default=None, min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
     first_name: Optional[str] = Field(default=None, max_length=50)
     last_name: Optional[str] = Field(default=None, max_length=50)
     middle_name: Optional[str] = Field(default=None, max_length=50)

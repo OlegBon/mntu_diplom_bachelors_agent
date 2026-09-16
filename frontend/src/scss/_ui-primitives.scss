@@ -191,6 +191,30 @@
   .account-status.is-error { color: variables.$error-color; }
   .account-help { margin: 0 0 1rem; color: variables.$secondary-color; font-size: 0.9rem; }
   .data-table .form-select { min-width: 9.5rem; }
+  .form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-size: 16px 12px;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+  }
+  .admin-users-table { min-width: 52rem; table-layout: fixed; }
+  .admin-users-table th,
+  .admin-users-table td { padding: 0.75rem; vertical-align: middle; }
+  .admin-users-table th:nth-child(1) { width: 10rem; }
+  .admin-users-table th:nth-child(2) { width: 14rem; }
+  .admin-users-table th:nth-child(3) { width: 11rem; }
+  .admin-users-table th:nth-child(4) { width: 8rem; }
+  .admin-users-table th:nth-child(5) { width: 15rem; }
+  .admin-users-table td:nth-child(2) { overflow-wrap: anywhere; }
+  .admin-users-table td:last-child { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .reference-catalog { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+  .reference-category { border: 1px solid variables.$border-color; padding: 1rem; }
+  .reference-category h2 { margin-bottom: 0.75rem; font-size: 1rem; }
+  .reference-category__table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .reference-category__table th, .reference-category__table td { border-top: 1px solid variables.$border-color; padding: 0.5rem; text-align: left; }
+  .reference-category__table th { color: variables.$secondary-color; font-size: 0.8rem; }
 }
 
 @media (max-width: 767px) {
