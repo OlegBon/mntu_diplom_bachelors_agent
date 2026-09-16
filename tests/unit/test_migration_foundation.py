@@ -56,8 +56,8 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_public_passport_revision_is_the_only_committed_head():
+def test_alembic_expert_activation_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0005_public_passports"]
+    assert script_directory.get_heads() == ["0006_expert_activation"]
