@@ -7,6 +7,7 @@ import {
   getReportMedia,
   getReportMediaContentUrl,
   getReportPassport,
+  getReportPassportPdf,
   getReportPassportQr,
   publishReportPassport,
   reissueReportPassport,
@@ -147,17 +148,49 @@ function passportUrl(publicId) {
   return url.toString();
 }
 
+async function copyText(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const helper = document.createElement("textarea");
+  helper.value = value;
+  helper.setAttribute("readonly", "");
+  helper.style.position = "fixed";
+  helper.style.opacity = "0";
+  document.body.append(helper);
+  helper.select();
+  const copied = document.execCommand("copy");
+  helper.remove();
+  if (!copied) throw new Error("Не вдалося скопіювати дані");
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 async function renderPassportControls({ report, currentUser, token, onStatus }) {
   const section = document.getElementById("detail-passport");
   const state = document.getElementById("detail-passport-state");
+  const code = document.getElementById("detail-passport-code");
   const link = document.getElementById("detail-passport-link");
   const qr = document.getElementById("detail-passport-qr");
   const publish = document.getElementById("detail-passport-publish");
+  const copyLink = document.getElementById("detail-passport-copy-link");
+  const copyCode = document.getElementById("detail-passport-copy-code");
+  const pdf = document.getElementById("detail-passport-pdf");
   const reissue = document.getElementById("detail-passport-reissue");
   const revoke = document.getElementById("detail-passport-revoke");
   if (!section || currentUser.role !== "admin") return;
   section.hidden = false;
-  [link, qr, publish, reissue, revoke].forEach((element) => { element.hidden = true; });
+  [code, link, qr, publish, copyLink, copyCode, pdf, reissue, revoke].forEach((element) => { element.hidden = true; });
   if (report.status !== "issued") {
     state.textContent = "Публікація стане доступною після видачі звіту admin.";
     return;
@@ -166,8 +199,13 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
     const passport = await getReportPassport(report.report_id, token);
     const url = passportUrl(passport.public_id);
     state.textContent = "Паспорт опубліковано. Перевипуск одразу відкликає попереднє посилання.";
+    code.querySelector("code").textContent = passport.public_id;
+    code.hidden = false;
     link.href = url;
     link.hidden = false;
+    copyLink.hidden = false;
+    copyCode.hidden = false;
+    pdf.hidden = false;
     reissue.hidden = false;
     revoke.hidden = false;
     const qrBlob = await getReportPassportQr(report.report_id, url, token);
@@ -176,6 +214,22 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
     qr.dataset.objectUrl = URL.createObjectURL(qrBlob);
     qr.src = qr.dataset.objectUrl;
     qr.hidden = false;
+    copyLink.onclick = async () => {
+      try { await copyText(url); onStatus("Публічне посилання скопійовано."); }
+      catch (error) { onStatus(error.message || "Не вдалося скопіювати посилання.", true); }
+    };
+    copyCode.onclick = async () => {
+      try { await copyText(passport.public_id); onStatus("Код публічного паспорта скопійовано."); }
+      catch (error) { onStatus(error.message || "Не вдалося скопіювати код.", true); }
+    };
+    pdf.onclick = async () => {
+      try {
+        onStatus("Формування PDF-паспорта…");
+        const document = await getReportPassportPdf(report.report_id, url, token);
+        downloadBlob(document, `passport-${report.report_id}.pdf`);
+        onStatus("PDF-паспорт завантажено.");
+      } catch (error) { onStatus(error.message || "Не вдалося сформувати PDF-паспорт.", true); }
+    };
   } catch (error) {
     if (!(error instanceof ApiRequestError) || error.status !== 404) {
       state.textContent = "Не вдалося завантажити стан публікації.";

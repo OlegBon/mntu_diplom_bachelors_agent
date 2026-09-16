@@ -15,6 +15,28 @@ function createNavigationLink(href, label, className = "") {
   return item;
 }
 
+function publicPassportIdFromLookup(value) {
+  if (/^DR-\d+/i.test(value)) {
+    throw new Error("Використайте код або повне публічне посилання з QR, а не внутрішній номер звіту.");
+  }
+  try {
+    const url = new URL(value);
+    const publicId = url.searchParams.get("id");
+    if (
+      !["http:", "https:"].includes(url.protocol)
+      || url.username
+      || url.password
+      || !url.pathname.endsWith("/passport.html")
+      || !publicId
+      || !/^[A-Za-z0-9_-]{20,128}$/.test(publicId)
+    ) throw new Error();
+    return publicId;
+  } catch {
+    if (/^[A-Za-z0-9_-]{20,128}$/.test(value)) return value;
+    throw new Error("Вставте код публічного паспорта або повне посилання з QR.");
+  }
+}
+
 function applyApprovedNavigation(isAuthenticated) {
   const navList = document.getElementById("nav-list");
   const authBlock = document.getElementById("auth-block");
@@ -138,8 +160,15 @@ document.addEventListener("DOMContentLoaded", () => {
   if (searchForm) {
     searchForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      const query = document.getElementById("search-input").value.trim();
-      if (query) window.location.href = `/passport.html?id=${encodeURIComponent(query)}`;
+      const input = document.getElementById("search-input");
+      const status = document.getElementById("public-search-status");
+      try {
+        const publicId = publicPassportIdFromLookup(input.value.trim());
+        window.location.href = `/passport.html?id=${encodeURIComponent(publicId)}`;
+      } catch (error) {
+        status.textContent = error.message;
+        status.hidden = false;
+      }
     });
   }
 });

@@ -4,6 +4,15 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — public-passport-delivery-pdf (завершено)
+
+- **Задача:** завершити передачу виданого публічного паспорта: видимий код, URL/QR lookup і безпечний PDF для замовника.
+- **Змінені файли:** `backend/{main,passport_pdf}.py`, `backend/assets/fonts/{DejaVuSans.ttf,DejaVuSans-Bold.ttf,README.md}`, `requirements.txt`, `frontend/src/{pug/pages/{index,report-detail}.pug,scss/_ui-primitives.scss,js/{main.js,modules/{api,report-detail}.js}}`, `tests/api/test_public_passport_pdf.py`, `frontend/tests/{page-dom.test.mjs,e2e/public-passport-delivery.spec.mjs}`, `docs/{architecture,work_plan,progress}.md`, `docs/backlog/{README.md,095-public-passport-delivery-pdf.md (видалено)}`.
+- **Результат:** admin для активного опублікованого `issued` report бачить `public_id`, URL, QR та може скопіювати код/посилання і завантажити «Публічний паспорт». `GET /reports/{id}/passport/pdf` лишається admin-only, вимагає саме current valid public URL і будує односторінковий PDF on-demand з того ж allow-list, що й anonymous endpoint: без ціни, коментарів, market status, історії, експерта чи media. PDF містить номер звіту для читання, характеристики, дату дослідження/видачі, QR, URL і код; DejaVu Sans bundled як runtime-asset для українського тексту. Landing приймає raw code або повний URL із QR і пояснює, що `DR-…` не є публічним ключем. Reissue вимикає PDF зі старим URL, revoke/void закривають нове завантаження.
+- **Перевірки:** targeted API/PDF tests, `npm test`, targeted Playwright lookup/download, FastAPI import smoke, rendered PDF visual QA та `git diff --check` — успішно.
+- **Нові змінні середовища:** немає. URL для PDF бере поточний browser origin, тому після deploy QR/PDF міститимуть фактичний public origin, а не локальний `localhost`.
+- **Обмеження:** PDF не є persisted або юридично незмінним snapshot; відкликання не може забрати вже переданий файл, але одразу робить його QR/URL нечинним. Набір публічних полів лишається явним allow-list і може бути переглянутий окремо; public media як і раніше винесено у 130.
+
 ## 2026-09-16 — public-passport-and-qr (завершено)
 
 - **Задача:** реалізувати безпечний публічний паспорт і QR, не відкриваючи private `/reports`, media, ціни чи персональні дані.
@@ -13,7 +22,7 @@
 - **Нові змінні середовища:** немає.
 - **MariaDB:** migration `0005_public_passports` застосовано до локальної MariaDB; `alembic current` — `0005_public_passports (head)`. Створено лише таблицю токенів `public_passports`, без дублювання або перерахунку даних звітів.
 - **Відкладено окремо:** public media не підтримується навіть для `MediaAsset.is_public`; consent, asset allow-list і окремий content endpoint зафіксовано у [130](./backlog/130-public-passport-media.md).
-- **Заплановано окремо:** передача паспорта замовнику — видимий код, lookup за URL/кодом і server-generated allow-listed PDF — зафіксована у [095](./backlog/095-public-passport-delivery-pdf.md).
+- **Реалізовано наступним кроком:** передача паспорта замовнику — видимий код, lookup за URL/кодом і server-generated allow-listed PDF — описана в актуальному записі вище.
 
 ## 2026-09-16 — legacy-api-retirement (завершено)
 
