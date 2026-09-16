@@ -4,6 +4,13 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — profile-and-admin-ui (завершено)
+
+- **Задача:** профіль, безпечне admin-керування експертами та read-only server-side довідники.
+- **Результат:** користувач змінює лише ПІБ і пароль з перевіркою поточного пароля; `username` і роль read-only. Admin створює користувачів, змінює ролі, деактивує/активує акаунти без hard delete. Inactive акаунт не проходить login і не використовує старий JWT; self-deactivate та втрата останнього active admin заблоковані. Версіоновані довідники й статистика винесені у 105/108.
+- **Міграція:** додано `0006_expert_activation`; не застосовувалася до локальної MariaDB без окремого дозволу.
+- **Перевірки:** цільові API tests 8 passed; `npm test` 16 passed; Playwright profile/admin 2 passed; FastAPI import smoke і `git diff --check` успішні. Browser integration була недоступна, тому rendered UI перевірено штатним Playwright fallback.
+
 ## 2026-09-16 — local-mariadb-console-runbook (завершено)
 
 - **Задача:** додати безпечну альтернативу XAMPP Control Panel для запуску й діагностики локальної MariaDB.

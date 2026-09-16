@@ -1,0 +1,44 @@
+extends ../layout/main
+
+block content
+    .account-page(hidden data-protected-page="true" data-profile-page)
+        .page-header
+            div
+                h1.page-title Профіль
+                p.page-subtitle Керуйте власними даними та паролем.
+        p#profile-status.account-status(role="status" aria-live="polite" hidden)
+        .account-grid
+            section.account-surface
+                h2 Дані профілю
+                form#profile-form
+                    .form-row
+                        .form-group.half
+                            label(for="profile-username") Username
+                            input#profile-username.form-control(type="text" disabled)
+                        .form-group.half
+                            label(for="profile-role") Роль
+                            input#profile-role.form-control(type="text" disabled)
+                    .form-row
+                        .form-group.half
+                            label(for="profile-first-name") Ім’я
+                            input#profile-first-name.form-control(type="text" name="first_name" maxlength="50")
+                        .form-group.half
+                            label(for="profile-last-name") Прізвище
+                            input#profile-last-name.form-control(type="text" name="last_name" maxlength="50")
+                    .form-group
+                        label(for="profile-middle-name") По батькові
+                        input#profile-middle-name.form-control(type="text" name="middle_name" maxlength="50")
+                    button.btn.btn-primary(type="submit") Зберегти дані
+            section.account-surface
+                h2 Змінити пароль
+                form#password-form
+                    .form-group
+                        label(for="profile-current-password") Поточний пароль
+                        input#profile-current-password.form-control(type="password" name="current_password" autocomplete="current-password" required)
+                    .form-group
+                        label(for="profile-new-password") Новий пароль
+                        input#profile-new-password.form-control(type="password" name="new_password" minlength="8" autocomplete="new-password" required)
+                    .form-group
+                        label(for="profile-confirm-password") Підтвердіть новий пароль
+                        input#profile-confirm-password.form-control(type="password" name="confirm_password" minlength="8" autocomplete="new-password" required)
+                    button.btn.btn-primary(type="submit") Змінити пароль

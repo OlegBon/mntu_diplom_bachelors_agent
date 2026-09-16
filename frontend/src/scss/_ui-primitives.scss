@@ -157,6 +157,51 @@
   min-height: var(--control-height, 2.75rem);
 }
 
+.account-page {
+  padding: clamp(2rem, 5vw, 4.5rem) 0 clamp(3rem, 6vw, 5rem);
+
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 { margin: 0; }
+  .page-subtitle { margin: 0.5rem 0 0; color: variables.$secondary-color; }
+  .account-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+  .account-surface {
+    min-width: 0;
+    border: 1px solid variables.$border-color;
+    background: variables.$white;
+    padding: clamp(1rem, 3vw, 1.5rem);
+  }
+  .account-surface--wide { grid-column: 1 / -1; }
+  h2 { margin: 0 0 1rem; color: variables.$text-strong; font-size: 1.15rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-row { display: flex; flex-wrap: wrap; gap: 1rem; }
+  .form-group.half { flex: 1 1 14rem; }
+  label { display: block; margin-bottom: 0.4rem; font-size: 0.9rem; font-weight: 600; }
+  .form-control,
+  .form-select {
+    width: 100%;
+    min-height: 2.75rem;
+    border: 1px solid variables.$border-color;
+    padding: 0.65rem 0.75rem;
+    background: variables.$white;
+    color: variables.$text-strong;
+    font: 0.95rem/1.35 variables.$font-main;
+  }
+  .form-control:disabled { background: variables.$surface-muted; color: variables.$secondary-color; }
+  .account-status { margin: -1rem 0 1.25rem; color: variables.$success-text; font-weight: 600; }
+  .account-status.is-error { color: variables.$error-color; }
+  .account-help { margin: 0 0 1rem; color: variables.$secondary-color; font-size: 0.9rem; }
+  .data-table .form-select { min-width: 9.5rem; }
+}
+
+@media (max-width: 767px) {
+  .account-page {
+    padding-bottom: 3rem;
+    .account-grid { grid-template-columns: 1fr; }
+    .account-surface--wide { grid-column: auto; }
+    .btn { width: 100%; }
+  }
+}
+
 .dashboard-page {
   .filters-container { border-color: variables.$border-color; }
   .filters-bar { background: transparent; border: 0; }

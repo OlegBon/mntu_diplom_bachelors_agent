@@ -5,7 +5,7 @@ from decimal import Decimal, getcontext
 import secrets
 
 from . import models, schemas
-from .security import get_password_hash
+from .security import get_password_hash, verify_password
 
 from .calculator import DiamondCalculator
 
@@ -529,9 +529,13 @@ def get_reference_values(db: Session, category: str | None = None) -> list[model
 def get_user_by_username(db: Session, username: str):
     return db.query(models.Expert).filter(models.Expert.username == username).first()
 
+
+def get_user_by_id(db: Session, expert_id: int) -> models.Expert | None:
+    return db.query(models.Expert).filter(models.Expert.expert_id == expert_id).first()
+
 # Отримати всіх користувачів (для адміна - /users/)
 def get_all_users(db: Session):
-    return db.query(models.Expert).all()
+    return db.query(models.Expert).order_by(models.Expert.username).all()
 
 # Створення користувача
 def create_user(db: Session, user: schemas.UserCreate):
@@ -556,28 +560,49 @@ def update_user(db: Session, expert_id: int, user_update: schemas.UserUpdate):
         return None
     
     # Якщо прийшов новий пароль - хешуємо його
-    if user_update.password:
-        db_user.password_hash = get_password_hash(user_update.password)
+    for field in ("first_name", "last_name", "middle_name", "role"):
+        value = getattr(user_update, field)
+        if value is not None:
+            setattr(db_user, field, value)
     
     # Якщо прийшла нова роль - оновлюємо
-    if user_update.role:
-        db_user.role = user_update.role
         
     db.commit()
     db.refresh(db_user)
     return db_user
 
 # Видалення користувача
-def delete_user(db: Session, expert_id: int):
-    db_user = db.query(models.Expert).filter(models.Expert.expert_id == expert_id).first()
-    if db_user:
-        db.delete(db_user)
-        db.commit()
-    return db_user
+def update_own_profile(db: Session, user: models.Expert, profile: schemas.ProfileUpdate) -> models.Expert:
+    user.first_name = profile.first_name
+    user.last_name = profile.last_name
+    user.middle_name = profile.middle_name
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_own_password(db: Session, user: models.Expert, password_update: schemas.PasswordUpdate) -> bool:
+    if not verify_password(password_update.current_password, user.password_hash):
+        return False
+    user.password_hash = get_password_hash(password_update.new_password)
+    db.commit()
+    return True
+
+
+def set_user_active(db: Session, expert_id: int, is_active: bool) -> models.Expert | None:
+    user = get_user_by_id(db, expert_id)
+    if user is None:
+        return None
+    user.is_active = is_active
+    db.commit()
+    db.refresh(user)
+    return user
 
 # Отримати тільки гемологів (фільтр по ролі - /experts/)
 def get_active_experts(db: Session):
-    return db.query(models.Expert).filter(models.Expert.role != 'admin').all()
+    return db.query(models.Expert).filter(
+        models.Expert.role != 'admin', models.Expert.is_active.is_(True)
+    ).all()
 
 # Функція для отримання статистики гемологів (SQL GROUP BY)
 from sqlalchemy import func

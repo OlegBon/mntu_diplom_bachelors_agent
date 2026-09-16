@@ -10,7 +10,7 @@
     "build": "gulp build",
     "clean": "gulp clean",
     "audit:api": "node ../scripts/audit-api.mjs",
-    "test": "npm run build && node --test tests/auth-and-api.test.mjs tests/page-dom.test.mjs tests/legacy-api-retirement.test.mjs tests/local-dev-config.test.mjs",
+    "test": "npm run build && node --test tests/auth-and-api.test.mjs tests/page-dom.test.mjs tests/profile-admin-pages.test.mjs tests/legacy-api-retirement.test.mjs tests/local-dev-config.test.mjs",
     "test:e2e": "playwright test -c playwright.config.mjs"
   },
   "devDependencies": {

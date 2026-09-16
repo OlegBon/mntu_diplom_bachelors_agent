@@ -27,6 +27,21 @@ async function requestApi(path, { method = "GET", token, body } = {}) {
 
 export const getCurrentUser = (token) => requestApi("/users/me", { token });
 
+export const updateMyProfile = (profile, token) => requestApi("/users/me/profile", { method: "PUT", token, body: profile });
+
+export const updateMyPassword = (passwords, token) => requestApi("/users/me/password", { method: "PUT", token, body: passwords });
+
+export const getUsers = (token) => requestApi("/users/", { token });
+
+export const createUser = (user, token) => requestApi("/users/", { method: "POST", token, body: user });
+
+export const updateUser = (expertId, user, token) => requestApi(`/users/${expertId}`, { method: "PUT", token, body: user });
+
+export const setUserActivation = (expertId, isActive, token) => requestApi(
+  `/users/${expertId}/${isActive ? "activate" : "deactivate"}`,
+  { method: "POST", token },
+);
+
 export const getExperts = (token) => requestApi("/experts/", { token });
 
 export const getGradeMappings = () => requestApi("/market/mappings");

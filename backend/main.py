@@ -56,7 +56,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     
     # Шукаємо користувача в БД
     user = crud.get_user_by_username(db, username=username)
-    if user is None:
+    if user is None or not user.is_active:
         raise credentials_exception
     return user
 
@@ -67,7 +67,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     user = crud.get_user_by_username(db, username=form_data.username)
     
     # Перевіряємо чи юзер існує і чи правильний пароль
-    if not user or not security.verify_password(form_data.password, user.password_hash):
+    if not user or not user.is_active or not security.verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -119,6 +119,26 @@ def read_user_me(current_user: models.Expert = Depends(get_current_user)):
     return current_user
 
 
+@app.put("/users/me/profile", response_model=schemas.ExpertBase)
+def update_my_profile(
+    profile: schemas.ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    return crud.update_own_profile(db, current_user, profile)
+
+
+@app.put("/users/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def update_my_password(
+    password_update: schemas.PasswordUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    if not crud.update_own_password(db, current_user, password_update):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 def require_report_access(report: models.DiamondReport, current_user: models.Expert) -> None:
     if current_user.role != "admin" and report.expert_id != current_user.expert_id:
         raise HTTPException(status_code=403, detail="You do not have access to this report")
@@ -127,6 +147,22 @@ def require_report_access(report: models.DiamondReport, current_user: models.Exp
 def require_admin(current_user: models.Expert) -> None:
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
+
+
+def ensure_active_admin_remains(
+    db: Session, target: models.Expert, target_role: str, target_active: bool,
+) -> None:
+    """Keep at least one active administrator able to operate the system."""
+    removes_active_admin = target.is_active and target.role == "admin" and (
+        not target_active or target_role != "admin"
+    )
+    if not removes_active_admin:
+        return
+    active_admins = db.query(models.Expert).filter(
+        models.Expert.role == "admin", models.Expert.is_active.is_(True)
+    ).count()
+    if active_admins <= 1:
+        raise HTTPException(status_code=409, detail="The last active administrator cannot be deactivated or demoted")
 
 
 def to_public_passport_view(
@@ -557,8 +593,7 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user)
 ):
-    if current_user.role != 'admin':
-        raise HTTPException(status_code=403, detail="Only admins can create users")
+    require_admin(current_user)
     
     # Перевірка чи юзер вже існує
     db_user = crud.get_user_by_username(db, username=user_data.username)
@@ -575,29 +610,41 @@ def update_user(
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user)
 ):
-    if current_user.role != 'admin':
-        raise HTTPException(status_code=403, detail="Only admins can update users")
-    
-    updated_user = crud.update_user(db, expert_id, user_data)
-    if not updated_user:
+    require_admin(current_user)
+    target = crud.get_user_by_id(db, expert_id)
+    if target is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    return updated_user
+    ensure_active_admin_remains(db, target, user_data.role or target.role, target.is_active)
+    return crud.update_user(db, expert_id, user_data)
 
 # Видалення юзера (тільки для адміна)
-@app.delete("/users/{expert_id}")
-def delete_user(
+@app.post("/users/{expert_id}/deactivate", response_model=schemas.ExpertBase)
+def deactivate_user(
     expert_id: int, 
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user)
 ):
-    if current_user.role != 'admin':
-        raise HTTPException(status_code=403, detail="Only admins can delete users")
-    
-    deleted = crud.delete_user(db, expert_id=expert_id)
-    if not deleted:
+    require_admin(current_user)
+    target = crud.get_user_by_id(db, expert_id)
+    if target is None:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"message": f"User {expert_id} deleted successfully"}
+    if target.expert_id == current_user.expert_id:
+        raise HTTPException(status_code=409, detail="You cannot deactivate your own account")
+    ensure_active_admin_remains(db, target, target.role, False)
+    return crud.set_user_active(db, expert_id, False)
+
+
+@app.post("/users/{expert_id}/activate", response_model=schemas.ExpertBase)
+def activate_user(
+    expert_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    activated = crud.set_user_active(db, expert_id, True)
+    if activated is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return activated
 
 # Статистика експертів
 @app.get("/statistics/expert-performance", response_model=List[schemas.ExpertStats])

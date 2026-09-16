@@ -1,21 +1,51 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Literal, Optional
 from datetime import date, datetime
 from decimal import Decimal
 
 # Схема для створення юзера (з паролем)
+UserRole = Literal["admin", "gemologist"]
+
+
 class UserCreate(BaseModel):
-    username: str
-    password: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    middle_name: Optional[str] = None
-    role: Optional[str] = "gemologist"
+    username: str = Field(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
+    password: str = Field(min_length=8, max_length=72)
+    first_name: Optional[str] = Field(default=None, max_length=50)
+    last_name: Optional[str] = Field(default=None, max_length=50)
+    middle_name: Optional[str] = Field(default=None, max_length=50)
+    role: UserRole = "gemologist"
+
+    @field_validator("password")
+    @classmethod
+    def password_must_fit_bcrypt(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password must not exceed 72 UTF-8 bytes")
+        return value
 
 # Схема для оновлення юзера (пароль необов'язковий)
 class UserUpdate(BaseModel):
-    password: Optional[str] = None
-    role: Optional[str] = None
+    first_name: Optional[str] = Field(default=None, max_length=50)
+    last_name: Optional[str] = Field(default=None, max_length=50)
+    middle_name: Optional[str] = Field(default=None, max_length=50)
+    role: Optional[UserRole] = None
+
+
+class ProfileUpdate(BaseModel):
+    first_name: Optional[str] = Field(default=None, max_length=50)
+    last_name: Optional[str] = Field(default=None, max_length=50)
+    middle_name: Optional[str] = Field(default=None, max_length=50)
+
+
+class PasswordUpdate(BaseModel):
+    current_password: str = Field(min_length=1, max_length=72)
+    new_password: str = Field(min_length=8, max_length=72)
+
+    @field_validator("current_password", "new_password")
+    @classmethod
+    def password_must_fit_bcrypt(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password must not exceed 72 UTF-8 bytes")
+        return value
 
 # Схема для експерта (дані, що ми віддаємо на фронт)
 class ExpertBase(BaseModel):
@@ -25,6 +55,7 @@ class ExpertBase(BaseModel):
     last_name: Optional[str]
     middle_name: Optional[str]
     role: str
+    is_active: bool
 
     class Config:
         from_attributes = True
