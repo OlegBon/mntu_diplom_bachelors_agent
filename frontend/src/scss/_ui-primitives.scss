@@ -190,6 +190,7 @@
   .account-status { margin: -1rem 0 1.25rem; color: variables.$success-text; font-weight: 600; }
   .account-status.is-error { color: variables.$error-color; }
   .account-help { margin: 0 0 1rem; color: variables.$secondary-color; font-size: 0.9rem; }
+  .account-search { max-width: 24rem; margin-bottom: 1rem; }
   .data-table .form-select { min-width: 9.5rem; }
   .form-select {
     appearance: none;
@@ -231,8 +232,8 @@
     .admin-users-table tbody,
     .admin-users-table tr,
     .admin-users-table td { display: block; width: 100%; }
-    .admin-users-table tr { border-top: 1px solid variables.$border-color; padding: 1rem 0; }
-    .admin-users-table tr:first-child { border-top: 0; padding-top: 0; }
+    .admin-users-table tr { border: 1px solid variables.$border-color; margin-bottom: 1rem; padding: 1rem; background: variables.$white; }
+    .admin-users-table tr:first-child { padding-top: 1rem; }
     .admin-users-table td { border: 0; padding: 0.35rem 0; }
     .admin-users-table td::before {
       content: attr(data-label);
@@ -246,7 +247,9 @@
     .admin-users-table .form-select { width: 100%; }
     .admin-user-actions--active { width: 100%; }
     .admin-user-actions--inactive { width: 100%; }
-    .admin-user-actions .btn { width: auto; }
+    .admin-user-actions { display: grid; width: 100%; }
+    .admin-user-actions .btn { width: 100%; }
+    .account-search { max-width: none; }
   }
 }
 

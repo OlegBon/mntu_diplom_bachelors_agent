@@ -534,8 +534,17 @@ def get_user_by_id(db: Session, expert_id: int) -> models.Expert | None:
     return db.query(models.Expert).filter(models.Expert.expert_id == expert_id).first()
 
 # Отримати всіх користувачів (для адміна - /users/)
-def get_all_users(db: Session):
-    return db.query(models.Expert).order_by(models.Expert.username).all()
+def get_all_users(db: Session, search: str | None, page: int, page_size: int):
+    query = db.query(models.Expert)
+    if search:
+        like_value = f"%{search.strip()}%"
+        query = query.filter(
+            models.Expert.username.ilike(like_value)
+            | models.Expert.first_name.ilike(like_value)
+            | models.Expert.last_name.ilike(like_value)
+        )
+    total = query.count()
+    return query.order_by(models.Expert.username).offset((page - 1) * page_size).limit(page_size).all(), total
 
 # Створення користувача
 def create_user(db: Session, user: schemas.UserCreate):

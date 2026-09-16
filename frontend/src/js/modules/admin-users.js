@@ -1,4 +1,5 @@
 import { createUser, getCurrentUser, getUsers, setUserActivation, updateUser } from "./api.js";
+import { renderPagination } from "./pagination.js";
 
 function setStatus(element, message, isError = false) {
   element.textContent = message;
@@ -20,11 +21,15 @@ export async function initAdminUsers() {
   const status = document.getElementById("admin-users-status");
   const body = document.getElementById("admin-users-body");
   const createForm = document.getElementById("admin-user-create-form");
+  const searchInput = document.getElementById("admin-users-search");
+  const pagination = document.getElementById("admin-users-pagination");
+  let state = { page: 1, search: "" };
   let currentUser;
   async function load() {
     currentUser = await getCurrentUser(token);
     if (currentUser.role !== "admin") throw new Error("Ця сторінка доступна лише адміністратору.");
-    const users = await getUsers(token);
+    const response = await getUsers({ ...state, page_size: 10 }, token);
+    const users = response.items;
     body.replaceChildren();
     for (const user of users) {
       const row = document.createElement("tr");
@@ -53,7 +58,13 @@ export async function initAdminUsers() {
       save.addEventListener("click", async () => {
         if (!username.checkValidity()) { username.reportValidity(); return; }
         save.disabled = true;
-        try { await updateUser(user.expert_id, { username: username.value.trim(), role: role.value }, token); setStatus(status, "Обліковий запис оновлено."); await load(); }
+        try {
+          const saved = await updateUser(user.expert_id, { username: username.value.trim(), role: role.value }, token);
+          if (saved.expert_id === currentUser.expert_id && saved.username !== currentUser.username) {
+            localStorage.clear(); window.location.replace("/login.html"); return;
+          }
+          setStatus(status, "Обліковий запис оновлено."); await load();
+        }
         catch (error) { setStatus(status, error.message, true); save.disabled = false; }
       });
       const activation = document.createElement("button");
@@ -67,11 +78,13 @@ export async function initAdminUsers() {
       });
       actionGroup.append(save, activation); actions.append(actionGroup); row.append(actions); body.append(row);
     }
+    renderPagination(pagination, { page: response.page, totalPages: response.total_pages, onPageChange: async (page) => { state.page = page; await load(); } });
   }
   try { await load(); } catch (error) { setStatus(status, error.message, true); return; }
   createForm.addEventListener("submit", async (event) => {
     event.preventDefault(); const button = createForm.querySelector("button[type='submit']"); button.disabled = true;
-    try { await createUser(Object.fromEntries(new FormData(createForm)), token); createForm.reset(); setStatus(status, "Експерта створено."); await load(); }
+    try { await createUser(Object.fromEntries(new FormData(createForm)), token); createForm.reset(); setStatus(status, "Експерта створено."); state.page = 1; await load(); }
     catch (error) { setStatus(status, error.message, true); } finally { button.disabled = false; }
   });
+  searchInput.addEventListener("input", async () => { state = { page: 1, search: searchInput.value.trim() }; await load(); });
 }

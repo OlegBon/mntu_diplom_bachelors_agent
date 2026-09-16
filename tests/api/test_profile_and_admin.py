@@ -91,6 +91,15 @@ def test_non_admin_cannot_manage_users(client, experts) -> None:
 
 @pytest.mark.api
 @pytest.mark.integration
+def test_admin_users_are_server_paginated_and_searchable(client, experts) -> None:
+    response = client.get("/users/?search=owner&page=1&page_size=1", headers=auth_headers(client, experts["admin"].username))
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["items"][0]["username"] == experts["owner"].username
+
+
+@pytest.mark.api
+@pytest.mark.integration
 def test_admin_can_change_username_but_cannot_duplicate_it(client, experts) -> None:
     headers = auth_headers(client, experts["admin"].username)
     response = client.put(

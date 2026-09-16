@@ -4,6 +4,12 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — admin-user-directory-pagination (завершено)
+
+- **Задача:** розширити admin directory пошуком, server-side пагінацією та завершити mobile presentation.
+- **Результат:** `GET /users/` повертає scoped `items/total/page/page_size/total_pages`; admin UI має пошук за username/іменем і reusable pagination component. Власна зміна username завершує стару JWT-сесію та веде до повторного входу. Mobile-картки мають окремі межі, відступи й повноширинні дії.
+- **Перевірки:** `pytest tests/api/test_profile_and_admin.py` — 6 passed; `npm test` — 16 passed; Playwright profile/admin — 2 passed; `git diff --check` — успішно.
+
 ## 2026-09-16 — admin-users-catalog-layout (завершено)
 
 - **Задача:** уточнення admin UI після ручної перевірки.

@@ -31,7 +31,10 @@ export const updateMyProfile = (profile, token) => requestApi("/users/me/profile
 
 export const updateMyPassword = (passwords, token) => requestApi("/users/me/password", { method: "PUT", token, body: passwords });
 
-export const getUsers = (token) => requestApi("/users/", { token });
+export const getUsers = (params, token) => {
+  const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== "" && value !== undefined));
+  return requestApi(`/users/?${query}`, { token });
+};
 
 export const createUser = (user, token) => requestApi("/users/", { method: "POST", token, body: user });
 

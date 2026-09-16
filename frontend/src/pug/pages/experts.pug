@@ -37,6 +37,9 @@ block content
             section.account-surface.account-surface--wide
                 h2 Облікові записи
                 p.account-help Деактивація не видаляє звіти, паспорти або історію змін. Власний обліковий запис деактивувати не можна.
+                .search-group.account-search
+                    label.sr-only(for="admin-users-search") Пошук облікових записів
+                    input#admin-users-search.form-control(type="search" placeholder="Пошук за username або ім’ям" autocomplete="off")
                 .table-container(tabindex="0")
                     table.data-table.admin-users-table
                         thead
@@ -47,3 +50,4 @@ block content
                                 th Стан
                                 th Дії
                         tbody#admin-users-body
+                nav#admin-users-pagination.pagination(aria-label="Пагінація облікових записів" hidden)

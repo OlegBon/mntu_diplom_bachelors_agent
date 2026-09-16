@@ -61,6 +61,14 @@ class ExpertBase(BaseModel):
     class Config:
         from_attributes = True
 
+
+class ExpertListResponse(BaseModel):
+    items: list[ExpertBase]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
 # Схема для статистики (для аналізу експертів)
 class ExpertStats(BaseModel):
     expert_username: str

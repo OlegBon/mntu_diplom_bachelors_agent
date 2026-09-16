@@ -34,7 +34,7 @@ test("admin can open account management without a fake reference editor", async 
     localStorage.setItem("role", "admin");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: admin }));
-  await page.route("**/users/", (route) => route.fulfill({ json: [admin, expert] }));
+  await page.route("**/users/?**", (route) => route.fulfill({ json: { items: [admin, expert], total: 2, page: 1, page_size: 10, total_pages: 1 } }));
   await page.goto("/experts.html");
   await expect(page.getByRole("heading", { name: "Експерти" })).toBeVisible();
   await expect(page.getByRole("row", { name: /expert_1/ }).getByRole("button", { name: "Деактивувати" })).toBeVisible();
