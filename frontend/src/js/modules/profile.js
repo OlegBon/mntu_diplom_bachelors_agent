@@ -13,14 +13,15 @@ export async function initProfile() {
   const profileForm = document.getElementById("profile-form");
   const passwordForm = document.getElementById("password-form");
   const status = document.getElementById("profile-status");
+  let currentUser;
   try {
-    const user = await getCurrentUser(token);
+    currentUser = await getCurrentUser(token);
     const usernameInput = document.getElementById("profile-username");
-    usernameInput.value = user.username;
-    usernameInput.disabled = user.role !== "admin";
-    document.getElementById("profile-role").value = user.role === "admin" ? "Адміністратор" : "Експерт";
+    usernameInput.value = currentUser.username;
+    usernameInput.disabled = currentUser.role !== "admin";
+    document.getElementById("profile-role").value = currentUser.role === "admin" ? "Адміністратор" : "Експерт";
     for (const field of ["first_name", "last_name", "middle_name"]) {
-      profileForm.elements[field].value = user[field] || "";
+      profileForm.elements[field].value = currentUser[field] || "";
     }
   } catch (error) {
     setStatus(status, error.message, true);
@@ -32,7 +33,7 @@ export async function initProfile() {
     button.disabled = true;
     try {
       const saved = await updateMyProfile(Object.fromEntries(new FormData(profileForm)), token);
-      if (saved.username !== user.username) {
+      if (saved.username !== currentUser.username) {
         localStorage.clear(); window.location.replace("/login.html"); return;
       }
       localStorage.setItem("username", saved.username);
