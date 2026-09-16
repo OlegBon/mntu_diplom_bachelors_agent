@@ -14,12 +14,13 @@ block content
         section#public-passport.public-passport
             .passport-intro
                 h2 Перевірка, якій можна довіряти
-                p Введіть код із публічного посилання або QR виданого звіту. Внутрішній номер звіту для цього не використовується.
+                p Публічний паспорт відкривається за прямим посиланням, посиланням із QR-коду або кодом зі сторінки звіту. Тут введіть лише код; внутрішній номер звіту для цього не використовується.
             form#public-search-form.passport-search
                 label(for="search-input") Код публічного паспорта
                 .passport-search-controls
-                    input#search-input(type="search" placeholder="Вставте код із посилання або QR" required autocomplete="off")
+                    input#search-input(type="search" placeholder="Введіть код зі сторінки звіту" required autocomplete="off")
                     button.btn.btn-primary(type="submit") Перевірити
+                p#public-search-status.form-status(role="status" aria-live="polite" hidden)
 
         section.public-principles(aria-label="Можливості Diamant ID")
             article

@@ -70,6 +70,18 @@ export const getReportPassportQr = async (reportId, publicUrl, token) => {
   return response.blob();
 };
 
+export const getReportPassportPdf = async (reportId, publicUrl, token) => {
+  const query = new URLSearchParams({ public_url: publicUrl });
+  const response = await fetch(`${BASE_URL}/reports/${encodeURIComponent(reportId)}/passport/pdf?${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new ApiRequestError(payload?.detail || "Не вдалося сформувати PDF-паспорт", response.status);
+  }
+  return response.blob();
+};
+
 export const updateDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}`, { method: "PUT", token, body: payload });
 
 export const transitionDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/transitions`, { method: "POST", token, body: payload });

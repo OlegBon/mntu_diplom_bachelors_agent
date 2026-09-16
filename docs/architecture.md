@@ -2,7 +2,7 @@
 
 Цей документ описує фактичну високорівневу архітектуру дипломного проєкту «Diamant ID»: локальної системи для ведення звітів про діаманти, довідників оцінювання, розрахунку IDC-параметрів і демонстраційного прогнозу ціни.
 
-Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), детальна карта таблиць і зв’язків — у [db-schema.md](./db-schema.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
+Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), детальна карта таблиць і зв’язків — у [db-schema.md](./db-schema.md), повний користувацький workflow звіту й паспорта — у [guide](./guides/current-domain-and-report-workflow.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
 > **Статус на 16 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`, `0003_media_assets`, `0004_report_wizard` і `0005_public_passports` формують ядро, private files, authoring-вимоги та revocable public passport. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
 
@@ -106,7 +106,7 @@ Backend запускають із кореня репозиторію через
 | --- | --- |
 | `/reports` | Приватний API ядра: draft, stone, lifecycle, події, RBAC, server-paginated dashboard list і full detail/update. `PUT /reports/{id}` допускається тільки для draft owner/admin та створює append-only `report_updated`; transitions лишаються окремим endpoint-ом. Dashboard передає `sold=true|false`; це зручна двостанова проєкція фактичного `market_status` (`sold` / усі інші стани), а не втрата його деталізації. Для локального demo-набору список також повертає legacy `price`, який UI маркує `USD … d`; це не ринкова чи експертна ціна. |
 | `/reports/{report_id}/media` | Приватні upload, список, читання й видалення вкладень owner/admin; без public serving. |
-| `/reports/{report_id}/passport` | Admin-only publication state, publish/reissue/revoke та SVG QR для поточного public URL. |
+| `/reports/{report_id}/passport` | Admin-only publication state, publish/reissue/revoke, SVG QR та on-demand PDF-паспорт для поточного public URL. PDF будується з тієї самої allow-listed проєкції, не зберігається як snapshot і недоступний після revoke/void. |
 | `/public/passports/{public_id}` | Анонімна allow-listed projection лише активного `issued` report; 404 не розрізняє відсутній, відкликаний або недоступний token. |
 | `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
 | `/users/`, `/users/me`, `/experts/` | Керування користувачами, профіль поточного користувача та перелік експертів. |
@@ -144,7 +144,7 @@ Wizard не викликає ML-модель: його preview детермін�
 
 ## 6. Frontend
 
-Gulp перетворює Pug на HTML, SCSS на CSS, копіює JavaScript та зображення у `frontend/dist`. BrowserSync віддає `dist` як статичний сайт і стежить за файлами `frontend/src`.
+Gulp перетворює Pug на HTML, SCSS на CSS, копіює JavaScript та зображення у `frontend/dist`. BrowserSync віддає `dist` як статичний сайт і стежить за файлами `frontend/src`. `ghostMode: false` навмисно вимикає дзеркалення кліків і вводу між кількома локальними вікнами, щоб action виконувався лише там, де його натиснули.
 
 Клієнтський JavaScript містить базовий API-клієнт із фіксованою локальною адресою API, модуль входу та сторінкову логіку для landing, login, dashboard і створення звіту. Це окремий frontend без SSR, React чи TypeScript. Адреса API та зберігання токена потребують окремої конфігурації перед розгортанням на домені.
 

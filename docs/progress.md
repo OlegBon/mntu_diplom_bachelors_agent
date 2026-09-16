@@ -4,6 +4,39 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — local-mariadb-console-runbook (завершено)
+
+- **Задача:** додати безпечну альтернативу XAMPP Control Panel для запуску й діагностики локальної MariaDB.
+- **Змінені файли:** `docs/{local-start,progress}.md`.
+- **Результат:** `local-start.md` містить перевірені console-команди для `mysqld`, `tasklist`, TCP connection check і read-only контроль `diamond_oltp`/`alembic_version`; описано штатне завершення через `Ctrl+C` або `mysqladmin shutdown` та межу між діагностикою і recovery.
+- **Перевірки:** синтаксис документа, внутрішнє посилання на recovery guide та `git diff --check` перевірено. Команди не запускалися автоматично й не змінюють дані.
+- **Нові змінні середовища:** немає.
+
+## 2026-09-16 — report-workflow-guide-refresh (завершено)
+
+- **Задача:** синхронізувати документацію з реалізованим workflow від створення звіту до public passport/PDF і зафіксувати межі можливого розширення публічних полів.
+- **Змінені файли:** `docs/guides/{current-domain-and-report-workflow,README}.md`, `docs/{architecture,db-schema,local-start,tech_diamant_id,progress}.md`, `README.md`.
+- **Результат:** guide тепер описує три кроки wizard, всі поточні групи private-полів, IDC/demo-price межу, ролі, lifecycle і review/issue/void, публічні та виключені поля, code/URL/QR/PDF, reissue/revoke/void і безпечний порядок додавання нових публічних полів. Функціонал public фото/plotting прямо прив’язано до backlog 130. Документація запуску й архітектура також фіксують `ghostMode: false`, щоб кілька локальних вікон не дублювали дії.
+- **Перевірки:** внутрішні Markdown-посилання та `git diff --check` перевірено; runtime-код і схема даних не змінювалися.
+- **Нові змінні середовища:** немає.
+
+## 2026-09-16 — local-browser-sync-action-isolation (завершено)
+
+- **Задача:** прибрати дублювання дій у кількох локально відкритих вікнах Diamant ID.
+- **Змінені файли:** `frontend/gulpfile.js`, `frontend/package.json`, `frontend/tests/local-dev-config.test.mjs`, `docs/progress.md`.
+- **Результат:** BrowserSync у `npm start` запускається з `ghostMode: false`; він як і раніше оновлює сторінки після зміни файлів, але більше не дзеркалить кліки, введення чи завантаження між вікнами/вкладками. Тому завантаження PDF, збереження та інші дії виконуються лише у вікні, де їх натиснули.
+- **Перевірки:** `npm test` включає окрему regression-перевірку конфігурації `ghostMode: false`.
+- **Нові змінні середовища:** немає.
+
+## 2026-09-16 — public-passport-delivery-pdf (завершено)
+
+- **Задача:** завершити передачу виданого публічного паспорта: видимий код, URL/QR lookup і безпечний PDF для замовника.
+- **Змінені файли:** `backend/{main,passport_pdf}.py`, `backend/assets/fonts/{DejaVuSans.ttf,DejaVuSans-Bold.ttf,README.md}`, `requirements.txt`, `frontend/src/{pug/pages/{index,report-detail}.pug,scss/_ui-primitives.scss,js/{main.js,modules/{api,report-detail}.js}}`, `tests/api/test_public_passport_pdf.py`, `frontend/tests/{page-dom.test.mjs,e2e/public-passport-delivery.spec.mjs}`, `docs/{architecture,work_plan,progress}.md`, `docs/backlog/{README.md,095-public-passport-delivery-pdf.md (видалено)}`.
+- **Результат:** admin для активного опублікованого `issued` report бачить `public_id`, URL, QR та може скопіювати код/посилання і завантажити «Публічний паспорт». `GET /reports/{id}/passport/pdf` лишається admin-only, вимагає саме current valid public URL і будує односторінковий PDF on-demand з того ж allow-list, що й anonymous endpoint: без ціни, коментарів, market status, історії, експерта чи media. PDF містить номер звіту для читання, характеристики, дату дослідження/видачі, QR, URL і код; DejaVu Sans bundled як runtime-asset для українського тексту. Landing приймає лише raw code зі сторінки звіту; пряме публічне посилання та посилання з QR відкривають паспорт напряму. `DR-…` не є публічним ключем. Reissue вимикає PDF зі старим URL, revoke/void закривають нове завантаження.
+- **Перевірки:** targeted API/PDF tests, `npm test`, targeted Playwright lookup/download, FastAPI import smoke, rendered PDF visual QA та `git diff --check` — успішно.
+- **Нові змінні середовища:** немає. URL для PDF бере поточний browser origin, тому після deploy QR/PDF міститимуть фактичний public origin, а не локальний `localhost`.
+- **Обмеження:** PDF не є persisted або юридично незмінним snapshot; відкликання не може забрати вже переданий файл, але одразу робить його QR/URL нечинним. Набір публічних полів лишається явним allow-list і може бути переглянутий окремо; public media як і раніше винесено у 130.
+
 ## 2026-09-16 — public-passport-and-qr (завершено)
 
 - **Задача:** реалізувати безпечний публічний паспорт і QR, не відкриваючи private `/reports`, media, ціни чи персональні дані.
@@ -13,7 +46,7 @@
 - **Нові змінні середовища:** немає.
 - **MariaDB:** migration `0005_public_passports` застосовано до локальної MariaDB; `alembic current` — `0005_public_passports (head)`. Створено лише таблицю токенів `public_passports`, без дублювання або перерахунку даних звітів.
 - **Відкладено окремо:** public media не підтримується навіть для `MediaAsset.is_public`; consent, asset allow-list і окремий content endpoint зафіксовано у [130](./backlog/130-public-passport-media.md).
-- **Заплановано окремо:** передача паспорта замовнику — видимий код, lookup за URL/кодом і server-generated allow-listed PDF — зафіксована у [095](./backlog/095-public-passport-delivery-pdf.md).
+- **Реалізовано наступним кроком:** передача паспорта замовнику — видимий код, lookup за URL/кодом і server-generated allow-listed PDF — описана в актуальному записі вище.
 
 ## 2026-09-16 — legacy-api-retirement (завершено)
 

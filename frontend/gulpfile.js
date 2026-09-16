@@ -92,6 +92,8 @@ function server() {
     },
     port: 3000,
     notify: false,
+    // Local operator windows must not replay each other's clicks or form input.
+    ghostMode: false,
   });
 }
 

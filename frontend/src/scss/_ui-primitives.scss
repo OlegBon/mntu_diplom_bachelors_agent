@@ -545,6 +545,20 @@
     border: 1px solid variables.$border-color;
     background: variables.$white;
   }
+  .report-detail__passport-code {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0.75rem 0;
+    color: variables.$secondary-color;
+    font-size: 0.85rem;
+
+    code {
+      overflow-wrap: anywhere;
+      color: variables.$text-strong;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+  }
   .report-detail__timeline li { border-left: 2px solid variables.$border-color; padding-left: 0.75rem; }
   .report-detail__timeline strong,
   .report-detail__timeline span { display: block; }

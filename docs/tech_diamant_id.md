@@ -4,7 +4,7 @@ Diamant ID — дипломний вебзастосунок для веденн
 
 Цей документ фіксує **фактично реалізований локальний MVP**, його технічні межі та обов’язкові умови наступних етапів. Деталі структури коду й API наведено в [architecture.md](./architecture.md), інструкція запуску — у [local-start.md](./local-start.md), а послідовність робіт — у [work_plan.md](./work_plan.md).
 
-> **Статус на 16 вересня 2026.** Локальний MVP працює на FastAPI, SQLAlchemy та MariaDB/XAMPP; frontend зібрано на Gulp, Pug, SCSS і vanilla JavaScript. Є JWT-вхід, private workflow звітів, серверні довідники, IDC-розрахунок, детермінований demo-preview і revocable public passport/QR для issued reports. Це ще не production-система: Docker, PostgreSQL, реальна ML-модель і публічний deployment не реалізовані.
+> **Статус на 16 вересня 2026.** Локальний MVP працює на FastAPI, SQLAlchemy та MariaDB/XAMPP; frontend зібрано на Gulp, Pug, SCSS і vanilla JavaScript. Є JWT-вхід, private workflow звітів, серверні довідники, IDC-розрахунок, детермінований demo-preview і revocable public passport з кодом, URL, QR та on-demand PDF для issued reports. Це ще не production-система: Docker, PostgreSQL, реальна ML-модель і публічний deployment не реалізовані.
 
 ---
 
@@ -17,6 +17,7 @@ Diamant ID — дипломний вебзастосунок для веденн
 - Перегляд окремого звіту та списку звітів із пагінацією, пошуком за ID, фільтром стану й сортуванням.
 - Private detail/edit draft, lifecycle review/issued/void і детальний commercial state з RBAC owner/admin.
 - Приватне завантаження plotting і реального фото у файлове сховище.
+- Admin-публікація issued report: непередбачуваний код, пряме посилання, QR і server-generated allow-listed PDF. Гість бачить лише публічну проєкцію; ціни, коментарі, експерт і private media не розкриваються.
 
 ### Розрахунок якості та ціни
 

@@ -67,7 +67,7 @@ export async function initPublicPassport() {
   const card = document.getElementById("public-passport-card");
   const publicId = publicIdFromUrl();
   if (!publicId) {
-    setStatus(status, "Вкажіть код публічного паспорта з посилання або QR.", true);
+    setStatus(status, "Відкрийте паспорт за прямим посиланням або посиланням із QR-коду. Код зі сторінки звіту вводиться на головній.", true);
     return;
   }
   try {

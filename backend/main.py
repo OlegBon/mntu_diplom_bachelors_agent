@@ -12,6 +12,7 @@ import qrcode
 from qrcode.image.svg import SvgPathImage
 
 from . import crud, database, media_storage, models, schemas, security
+from .passport_pdf import build_public_passport_pdf
 
 app = FastAPI(title="Diamond ID System API")
 
@@ -344,6 +345,39 @@ def read_report_passport_qr(
     validate_passport_url(public_url, passport.public_id)
     image = qrcode.make(public_url, image_factory=SvgPathImage)
     return Response(content=image.to_string(), media_type="image/svg+xml")
+
+
+@app.get("/reports/{report_id}/passport/pdf", response_class=Response)
+def download_report_passport_pdf(
+    report_id: str,
+    public_url: str = Query(min_length=1, max_length=2_048),
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Download an on-demand PDF from the same allow-listed public projection."""
+    require_admin(current_user)
+    passport = crud.get_active_public_passport(db, report_id)
+    if passport is None:
+        raise HTTPException(status_code=404, detail="Public passport not found")
+    validate_passport_url(public_url, passport.public_id)
+    result = crud.get_public_passport_view(db, passport.public_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Public passport not found")
+    public_passport, report, stone = result
+    grade_labels = {
+        (mapping.category, mapping.grade_value): mapping.grade_label
+        for mapping in crud.get_mappings(db)
+    }
+    document = build_public_passport_pdf(
+        to_public_passport_view(public_passport, report, stone),
+        public_url,
+        grade_labels,
+    )
+    return Response(
+        content=document,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="passport-{report_id}.pdf"'},
+    )
 
 
 @app.delete("/reports/{report_id}/passport", status_code=status.HTTP_204_NO_CONTENT)

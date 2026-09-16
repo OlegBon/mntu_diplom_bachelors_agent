@@ -66,7 +66,7 @@ test("built private report detail exposes an edit form, audit history and lifecy
   assert.equal(document.querySelector("[data-report-detail]")?.hasAttribute("data-protected-page"), true);
   assert.equal(document.querySelector("#report-detail-form")?.tagName, "FORM");
   assert.equal(document.querySelector("[name=market_status]")?.tagName, "SELECT");
-  assert.equal(document.querySelector("#detail-expert-proportions")?.getAttribute("type"), "number");
+  assert.equal(document.querySelector("#detail-expert-proportions")?.tagName, "SELECT");
   assert.equal(document.querySelector("#detail-events")?.tagName, "OL");
   assert.equal(document.querySelector("#detail-media")?.tagName, "UL");
   assert.equal(document.querySelector("#detail-transition-reason")?.getAttribute("maxlength"), "2000");

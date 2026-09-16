@@ -154,10 +154,16 @@ block content
                 section#detail-passport.report-detail__surface(hidden)
                     h2 Публічний паспорт
                     p#detail-passport-state.report-detail__help Доступний лише для виданого звіту.
+                    p#detail-passport-code.report-detail__passport-code(hidden)
+                        span Код паспорта
+                        code
                     a#detail-passport-link(href="#" target="_blank" rel="noopener noreferrer" hidden) Відкрити публічний паспорт
                     img#detail-passport-qr.report-detail__qr(alt="QR-код публічного паспорта" hidden)
                     .report-detail__transition-actions
                         button#detail-passport-publish.btn.btn-primary(type="button" hidden) Опублікувати паспорт
+                        button#detail-passport-copy-link.btn.btn-outline(type="button" hidden) Скопіювати посилання
+                        button#detail-passport-copy-code.btn.btn-outline(type="button" hidden) Скопіювати код
+                        button#detail-passport-pdf.btn.btn-primary(type="button" hidden) Завантажити PDF
                         button#detail-passport-reissue.btn.btn-outline(type="button" hidden) Перевипустити посилання
                         button#detail-passport-revoke.btn.btn-outline(type="button" hidden) Відкликати публікацію
                 section.report-detail__surface
