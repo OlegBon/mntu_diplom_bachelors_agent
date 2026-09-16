@@ -6,8 +6,9 @@ function setStatus(element, message, isError = false) {
   element.hidden = false;
 }
 
-function makeCell(value) {
+function makeCell(value, label = "") {
   const cell = document.createElement("td");
+  cell.dataset.label = label;
   cell.textContent = value || "—";
   return cell;
 }
@@ -32,7 +33,8 @@ export async function initAdminUsers() {
       username.type = "text"; username.className = "form-control"; username.value = user.username;
       username.minLength = 3; username.maxLength = 50; username.pattern = "[A-Za-z0-9_.-]+";
       usernameCell.append(username);
-      row.append(usernameCell, makeCell([user.last_name, user.first_name, user.middle_name].filter(Boolean).join(" ")));
+      usernameCell.dataset.label = "Username";
+      row.append(usernameCell, makeCell([user.last_name, user.first_name, user.middle_name].filter(Boolean).join(" "), "Ім’я"));
       const roleCell = document.createElement("td");
       const role = document.createElement("select");
       role.className = "form-select";
@@ -40,8 +42,12 @@ export async function initAdminUsers() {
         const option = document.createElement("option"); option.value = value; option.textContent = label; option.selected = user.role === value; role.append(option);
       }
       roleCell.append(role);
-      row.append(roleCell, makeCell(user.is_active ? "Активний" : "Неактивний"));
+      roleCell.dataset.label = "Роль";
+      row.append(roleCell, makeCell(user.is_active ? "Активний" : "Неактивний", "Стан"));
       const actions = document.createElement("td");
+      actions.dataset.label = "Дії";
+      const actionGroup = document.createElement("div");
+      actionGroup.className = `admin-user-actions ${user.is_active ? "admin-user-actions--active" : "admin-user-actions--inactive"}`;
       const save = document.createElement("button");
       save.type = "button"; save.className = "btn btn-primary btn-sm"; save.textContent = "Зберегти";
       save.addEventListener("click", async () => {
@@ -59,7 +65,7 @@ export async function initAdminUsers() {
         try { await setUserActivation(user.expert_id, !user.is_active, token); setStatus(status, "Стан облікового запису оновлено."); await load(); }
         catch (error) { setStatus(status, error.message, true); activation.disabled = false; }
       });
-      actions.append(save, activation); row.append(actions); body.append(row);
+      actionGroup.append(save, activation); actions.append(actionGroup); row.append(actions); body.append(row);
     }
   }
   try { await load(); } catch (error) { setStatus(status, error.message, true); return; }
