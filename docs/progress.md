@@ -12,6 +12,7 @@
 - **Перевірки:** додано API regression на 404 для кожного retired route, перенесено чинні auth/experts перевірки й додано Node guard, що active frontend не містить retired endpoint. `python -m pytest` — 21 passed; `npm test` — 11 passed; full Playwright запуск підтвердив login/dashboard/wizard flows, а targeted detail/edit — 1 passed; `npm run audit:api` — 9/9; `git diff --check` і FastAPI import/route smoke — успішно.
 - **Нові змінні середовища:** немає.
 - **Обмеження та наступна задача:** `scripts/recalc_grades.py` навмисно не запускався і не переписувався. Нова [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md) має окремо погодити його retire або безпечну versioned replacement з dry-run, scope, audit trail та планом відновлення. Public passport, authoritative pricing/FX і ML не реалізовано.
+- **Виявлено поза scope:** read-only audit на локальній відновленій MariaDB отримав `500` від `/statistics/expert-performance`; endpoint вилучено з вузького report/auth audit, але його перевірка й виправлення зафіксовані у [100](./backlog/100-profile-and-admin-ui.md) до будь-якого analytics UI.
 
 ## 2026-09-16 — report-detail-layout-refinement (завершено)
 
