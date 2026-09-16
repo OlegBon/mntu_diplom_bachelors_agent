@@ -1,9 +1,12 @@
 import { checkAuth, logout } from "./modules/auth.js";
-import { loginUser } from "./modules/api.js";
+import { getCurrentUser, loginUser } from "./modules/api.js";
 import { initDashboard } from "./modules/dashboard.js";
 import { initReportWizard } from "./modules/report-wizard.js";
 import { initReportDetail } from "./modules/report-detail.js";
 import { initPublicPassport } from "./modules/public-passport.js";
+import { initProfile } from "./modules/profile.js";
+import { initAdminUsers } from "./modules/admin-users.js";
+import { initReferenceCatalog } from "./modules/reference-catalog.js";
 
 function createNavigationLink(href, label, className = "") {
   const item = document.createElement("li");
@@ -44,7 +47,7 @@ function applyApprovedNavigation(isAuthenticated) {
   }
 
   const username = localStorage.getItem("username") || "Користувач";
-  const isAdmin = username === "admin";
+  const isAdmin = localStorage.getItem("role") === "admin";
   const createReportAction = document.getElementById("create-report-action");
   if (createReportAction) createReportAction.hidden = isAdmin;
 
@@ -89,9 +92,9 @@ function applyApprovedNavigation(isAuthenticated) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
-  const isAdmin = localStorage.getItem("username") === "admin";
+  const isAdmin = localStorage.getItem("role") === "admin";
   const currentPath = window.location.pathname;
-  const isProtectedPage = ["/dashboard.html", "/create-report.html", "/report-detail.html"].includes(currentPath);
+  const isProtectedPage = ["/dashboard.html", "/create-report.html", "/report-detail.html", "/profile.html", "/experts.html", "/references.html", "/ml-analysis.html"].includes(currentPath);
   const isCreateReportPage = currentPath.endsWith("/create-report.html");
 
   if (!isAuthenticated && isProtectedPage) {
@@ -107,9 +110,25 @@ document.addEventListener("DOMContentLoaded", () => {
   if (protectedPage) protectedPage.hidden = false;
   applyApprovedNavigation(isAuthenticated);
 
+  if (isAuthenticated) {
+    void getCurrentUser(localStorage.getItem("token")).then((user) => {
+      localStorage.setItem("username", user.username);
+      localStorage.setItem("role", user.role);
+      applyApprovedNavigation(true);
+    }).catch(() => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("role");
+      window.location.replace("/login.html");
+    });
+  }
+
   if (isAuthenticated) void initDashboard();
   if (isAuthenticated && isCreateReportPage) void initReportWizard();
   if (isAuthenticated && currentPath.endsWith("/report-detail.html")) void initReportDetail();
+  if (isAuthenticated && currentPath.endsWith("/profile.html")) void initProfile();
+  if (isAuthenticated && currentPath.endsWith("/experts.html")) void initAdminUsers();
+  if (isAuthenticated && currentPath.endsWith("/references.html")) void initReferenceCatalog();
   if (currentPath.endsWith("/passport.html")) void initPublicPassport();
 
   const burgerBtn = document.getElementById("burger-btn");
@@ -133,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const token = await loginUser(loginForm.username.value, loginForm.password.value);
           localStorage.setItem("token", token);
           localStorage.setItem("username", loginForm.username.value);
+          localStorage.removeItem("role");
           window.location.href = "/";
         } catch (error) {
           errorMessage.textContent = `Помилка: ${error.message}`;

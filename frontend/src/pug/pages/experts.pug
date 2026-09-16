@@ -1,0 +1,49 @@
+extends ../layout/main
+
+block content
+    .account-page(hidden data-protected-page="true" data-admin-users-page)
+        .page-header
+            div
+                h1.page-title Експерти
+                p.page-subtitle Створюйте облікові записи, змінюйте ролі та безпечно деактивуйте доступ.
+        p#admin-users-status.account-status(role="status" aria-live="polite" hidden)
+        .account-grid
+            section.account-surface
+                h2 Новий експерт
+                form#admin-user-create-form
+                    .form-row
+                        .form-group.half
+                            label(for="new-expert-username") Username
+                            input#new-expert-username.form-control(type="text" name="username" minlength="3" maxlength="50" pattern="[A-Za-z0-9_.-]+" required)
+                        .form-group.half
+                            label(for="new-expert-role") Роль
+                            select#new-expert-role.form-select(name="role")
+                                option(value="gemologist") Експерт
+                                option(value="admin") Адміністратор
+                    .form-group
+                        label(for="new-expert-password") Тимчасовий пароль
+                        input#new-expert-password.form-control(type="password" name="password" minlength="8" autocomplete="new-password" required)
+                    .form-row
+                        .form-group.half
+                            label(for="new-expert-first") Ім’я
+                            input#new-expert-first.form-control(type="text" name="first_name" maxlength="50")
+                        .form-group.half
+                            label(for="new-expert-last") Прізвище
+                            input#new-expert-last.form-control(type="text" name="last_name" maxlength="50")
+                    .form-group
+                        label(for="new-expert-middle") По батькові
+                        input#new-expert-middle.form-control(type="text" name="middle_name" maxlength="50")
+                    button.btn.btn-primary(type="submit") Створити експерта
+            section.account-surface.account-surface--wide
+                h2 Облікові записи
+                p.account-help Деактивація не видаляє звіти, паспорти або історію змін. Власний обліковий запис деактивувати не можна.
+                .table-container(tabindex="0")
+                    table.data-table
+                        thead
+                            tr
+                                th Username
+                                th Ім’я
+                                th Роль
+                                th Стан
+                                th Дії
+                        tbody#admin-users-body
