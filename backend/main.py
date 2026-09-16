@@ -282,7 +282,7 @@ def get_report_for_media(
     report_id: str,
     current_user: models.Expert,
 ) -> models.DiamondReport:
-    """Authorize an existing report, including a temporary legacy-compatible one."""
+    """Authorize an existing private report for media access."""
     report = crud.get_report_domain(db, report_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
@@ -423,80 +423,6 @@ def delete_user(
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": f"User {expert_id} deleted successfully"}
-
-# Пошук звіту
-@app.get("/diamonds/{report_id}", response_model=schemas.DiamondReportSchema)
-def read_diamond(report_id: str, db: Session = Depends(get_db)):
-    diamond = crud.get_diamond_report(db, report_id=report_id)
-    if not diamond:
-        raise HTTPException(status_code=404, detail="Diamond report not found")
-    return diamond
-
-# Створення нового звіту (тільки для авторизованих експертів)
-@app.post("/diamonds/", response_model=schemas.DiamondReportSchema)
-def create_report(
-    diamond_data: schemas.DiamondCreate, # Pydantic перевірить типи даних
-    db: Session = Depends(get_db),
-    current_user: models.Expert = Depends(get_current_user) # Тільки авторизовані
-):
-    if current_user.role != "gemologist":
-        raise HTTPException(status_code=403, detail="Only gemologists can create reports")
-
-    # Тут пізніше ми додамо виклик ML:
-    # ml_results = ml_service.predict_price(diamond_data)
-    # diamond_data.price = ml_results.price
-    
-    return crud.create_diamond_report(db=db, diamond=diamond_data, expert_id=current_user.expert_id)
-
-# Список усіх діамантів (з фільтрацією, сортуванням, пошуком)
-@app.get("/diamonds/", response_model=List[schemas.DiamondReportSchema])
-def read_reports(
-    skip: int = 0, 
-    limit: int = 50,
-    status: Optional[str] = "all",
-    sort_by: Optional[str] = "newest",
-    search: Optional[str] = None,
-    db: Session = Depends(get_db)
-):
-    reports = crud.get_reports(
-        db, 
-        skip=skip, 
-        limit=limit, 
-        status=status, 
-        sort_by=sort_by, 
-        search=search
-    )
-    return reports
-
-# Оновлення звіту (доступно авторизованим)
-@app.put("/diamonds/{report_id}", response_model=schemas.DiamondReportSchema)
-def update_report(
-    report_id: str, 
-    update_data: schemas.DiamondUpdate, 
-    db: Session = Depends(get_db),
-    current_user: models.Expert = Depends(get_current_user)
-):
-    report = crud.get_diamond_report(db, report_id)
-    if not report:
-        raise HTTPException(status_code=404, detail="Diamond report not found")
-    if current_user.role != "admin" and report.expert_id != current_user.expert_id:
-        raise HTTPException(status_code=403, detail="Only the report owner or an admin can update reports")
-    return crud.update_diamond_report(db, report, update_data)
-
-# Видалення звіту (тільки для адміна)
-@app.delete("/diamonds/{report_id}")
-def delete_report(
-    report_id: str, 
-    db: Session = Depends(get_db),
-    current_user: models.Expert = Depends(get_current_user)
-):
-    if current_user.role != 'admin':
-        raise HTTPException(status_code=403, detail="Only admins can delete reports")
-    report = crud.get_diamond_report(db, report_id)
-    if not report:
-        raise HTTPException(status_code=404, detail="Diamond report not found")
-    crud.delete_diamond_report(db, report)
-    return {"message": "Report deleted"}
 
 # Статистика експертів
 @app.get("/statistics/expert-performance", response_model=List[schemas.ExpertStats])

@@ -27,7 +27,7 @@
 
 | Файл | Тема |
 | --- | --- |
-| [085-legacy-api-retirement.md](./085-legacy-api-retirement.md) | Cleanup legacy `/diamonds/*` після detail/edit. |
 | [090-public-passport-and-qr.md](./090-public-passport-and-qr.md) | Публічний паспорт і QR для виданих звітів. |
 | [100-profile-and-admin-ui.md](./100-profile-and-admin-ui.md) | Профіль, керування експертами, ролями й довідниками. |
 | [110-authoritative-market-data-and-fx.md](./110-authoritative-market-data-and-fx.md) | Авторитетні ринкові дані, валютні курси й історія snapshot-ів. |
+| [120-legacy-calculation-and-ml-boundary.md](./120-legacy-calculation-and-ml-boundary.md) | Безпечна доля legacy-перерахунку та межа майбутнього ML. |

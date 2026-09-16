@@ -4,7 +4,7 @@ Diamant ID — дипломний вебзастосунок для веденн
 
 Цей документ фіксує **фактично реалізований локальний MVP**, його технічні межі та обов’язкові умови наступних етапів. Деталі структури коду й API наведено в [architecture.md](./architecture.md), інструкція запуску — у [local-start.md](./local-start.md), а послідовність робіт — у [work_plan.md](./work_plan.md).
 
-> **Статус на 13 вересня 2026.** Локальний MVP працює на FastAPI, SQLAlchemy та MariaDB/XAMPP; frontend зібрано на Gulp, Pug, SCSS і vanilla JavaScript. Є JWT-вхід, ролі, звіти, ринкові довідники, IDC-розрахунок і евристичний прогноз ціни. Це ще не production-система: Docker, PostgreSQL, версіоновані міграції, реальна ML-модель, повний набір тестів і публічний deployment не реалізовані.
+> **Статус на 16 вересня 2026.** Локальний MVP працює на FastAPI, SQLAlchemy та MariaDB/XAMPP; frontend зібрано на Gulp, Pug, SCSS і vanilla JavaScript. Є JWT-вхід, private workflow звітів, серверні довідники, IDC-розрахунок і детермінований demo-preview, що не зберігається як ціна. Це ще не production-система: Docker, PostgreSQL, реальна ML-модель, public passport і публічний deployment не реалізовані.
 
 ---
 
@@ -15,15 +15,15 @@ Diamant ID — дипломний вебзастосунок для веденн
 - Створення звіту з параметрами форми, 4C, геометрії, пропорцій, finish та походження каменю.
 - Автоматична генерація ідентифікатора звіту у форматі `DR-00001`.
 - Перегляд окремого звіту та списку звітів із пагінацією, пошуком за ID, фільтром стану й сортуванням.
-- Оновлення ціни та статусу продажу, видалення звіту для адміністратора.
-- Підтримка полів для зображення plotting і реального фото в моделі даних; завантаження та файлове сховище ще не реалізовані.
+- Private detail/edit draft, lifecycle review/issued/void і детальний commercial state з RBAC owner/admin.
+- Приватне завантаження plotting і реального фото у файлове сховище.
 
 ### Розрахунок якості та ціни
 
 - `DiamondCalculator` оцінює `proportions_grade` для Round Brilliant за table, depth, crown і pavilion.
 - Підсумковий `cut_grade` дорівнює найгіршій з оцінок proportions, polish і symmetry.
-- Якщо ціна не задана, `MLService` бере останній ринковий індекс і застосовує евристичну формулу для carat, color, clarity та cut.
-- Результат `MLService` має випадкову варіацію і є демонстраційним прогнозом, а не результатом навченої, відтворюваної ML-моделі.
+- Wizard показує детермінований demo-preview з позначкою `d`; він не є ринковою, експертною чи продажною ціною і не записується до фінансового контракту.
+- Авторитетні ціни, валютні курси й ML-модель не реалізовані; їхні межі зафіксовані у backlog 110 і 120.
 
 ### Користувачі та доступ
 
@@ -47,10 +47,10 @@ Diamant ID — дипломний вебзастосунок для веденн
 | Backend/API | Python 3.13, FastAPI, Uvicorn, Pydantic 2 |
 | Дані | SQLAlchemy 2, MariaDB через `mysql-connector-python`; локально — XAMPP |
 | Безпека | JWT (`python-jose`), прямий `bcrypt`; seed бере локальні паролі лише з приватного `.env` і записує bcrypt-хеші |
-| Доменна логіка | Власний IDC-калькулятор і евристичний `MLService` |
+| Доменна логіка | Власний IDC-калькулятор; ML-контур запланований, але не реалізований |
 | Frontend | Gulp 5, Pug, SCSS/Sass, vanilla JavaScript, BrowserSync |
 | Дані для seed | Pandas і `data/diamonds_dataset.csv` |
-| Перевірки | Локальний Node.js API-аудитор без запису даних; повноцінні pytest/E2E ще відсутні |
+| Перевірки | Pytest API/integration, Node/jsdom, Playwright mock E2E та локальний read-only API-аудитор |
 | Документація агента | `AGENTS.md`, `.codex/rules`, `.codex/skills` |
 
 Залежності зафіксовано в `requirements.txt` і `frontend/package-lock.json`. Оновлення версій виконуються адресно після перевірки сумісності; масове автоматичне оновлення залежностей без тестового контуру не є допустимою заміною такого рев’ю.
@@ -113,7 +113,7 @@ cmd /c "cd frontend && npm run audit:api"
 | Група | Призначення | Доступ |
 | --- | --- | --- |
 | `/token` | Вхід і видача JWT | Публічний |
-| `/diamonds/` | Звіти: список, пошук, створення, оновлення, видалення | Залежить від операції |
+| `/reports` | Private список, draft, detail/edit, lifecycle та media | JWT; owner/admin RBAC залежно від дії |
 | `/users/`, `/users/me`, `/experts/` | Користувачі, поточний профіль, експерти | Захищений; керування — admin |
 | `/market/mappings` | Довідники для форм | Публічний |
 | `/market/price` | Поточний індекс та його оновлення | Читання публічне, запис — admin |

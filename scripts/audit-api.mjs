@@ -30,10 +30,9 @@ function createChecks(baseUrl) {
   return [
     ['Корінь API', 'GET', '/', [200], (body) => body?.message === 'Diamond Identification System API is running', 'JSON з повідомленням про роботу API'],
     ['OpenAPI-специфікація', 'GET', '/openapi.json', [200], (body) => body?.info?.title === 'Diamond ID System API', 'OpenAPI JSON з назвою застосунку'],
-    ['Список звітів', 'GET', '/diamonds/?limit=1', [200], Array.isArray, 'JSON-масив звітів без зміни даних'],
+    ['Приватний список звітів без токена', 'GET', '/reports', [401], (body) => typeof body?.detail === 'string', '401 для приватного маршруту списку звітів'],
     ['Довідники оцінок', 'GET', '/market/mappings', [200], Array.isArray, 'JSON-масив Grade Mapping'],
-    ['Статистика експертів', 'GET', '/statistics/expert-performance', [200], Array.isArray, 'JSON-масив статистики'],
-    ['Відсутній звіт', 'GET', '/diamonds/DR-AUDIT-NONEXISTENT', [404], (body) => typeof body?.detail === 'string', '404 JSON-відповідь'],
+    ['Приватний detail звіту без токена', 'GET', '/reports/DR-AUDIT-NONEXISTENT', [401], (body) => typeof body?.detail === 'string', '401 для приватного маршруту detail звіту'],
     ['Профіль без токена', 'GET', '/users/me', [401], (body) => typeof body?.detail === 'string', '401 для захищеного маршруту'],
     ['Користувачі без токена', 'GET', '/users/', [401], (body) => typeof body?.detail === 'string', '401 для admin-маршруту'],
     ['Експерти без токена', 'GET', '/experts/', [401], (body) => typeof body?.detail === 'string', '401 для захищеного маршруту'],

@@ -2,7 +2,7 @@
 
 Цей план створено під час відновлення проєкту після захисту диплома.
 
-## Статус на 2026-09-14
+## Зведений статус на 2026-09-16
 
 ### Результат api-and-mvp-audit
 
@@ -13,11 +13,11 @@
 | `/`, `/token` | Залишити; посилити auth/configuration. |
 | `/users/*` | Залишити; обмежити ролі й створити admin/profile UI пізніше. |
 | `/experts/` | Залишити: авторизований список не-admin експертів працює. |
-| `/diamonds/*` | Тимчасово зберегти як legacy compatibility API; чинні dashboard і wizard вже використовують `/reports`. Після 080 провести usage-аудит і погоджене прибирання в 085. |
+| `/reports` | Єдиний private API звітів; legacy `/diamonds/*` вилучено в 085 без міграції historical даних. |
 | `/market/*` | Залишити; прибрати frontend hardcode mappings/ціни та додати admin UI пізніше. |
 | `/statistics/expert-performance` | Залишити після рішення про публічність usernames; додати analytics UI пізніше. |
 
-Повних дублікатів endpoint-ів не знайдено. Невикористаний CRUD-дублікат `crud.get_diamonds()` вилучено. Dashboard і wizard перенесені на `/reports`, але `frontend/src/js/main.js` ще містить unreachable legacy handler `/diamonds/*`; його безпечне вилучення заплановано після 080. `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як зарезервовану SQLAlchemy-модель.
+Повних дублікатів endpoint-ів не лишилося. Dashboard, wizard і detail/edit працюють через `/reports`; legacy `/diamonds/*`, unreachable handler та demo `MLService` вилучено. Historical projection-колонки та `scripts/recalc_grades.py` не змінювалися: їхня доля зафіксована окремою задачею 120. `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як зарезервовану SQLAlchemy-модель.
 
 ### Уже реалізовано
 
@@ -65,10 +65,11 @@
 - [x] 060 — Dashboard звітів: приватний `/reports`, server-driven список, пошук, швидкі статуси звіту та двостанова проєкція продажу «Продано / Не продано», розширені фільтри 4C/форми/діапазонів/дат, RBAC, URL-параметри, пагінація, клікабельні server-side сортування, вітрина з 4C/бейджами й demo-ціною `USD … d`, а також меню дій `⋮`; приватний detail/edit/print залишаються 080.
 - [x] 070 — Майстер створення звіту: три кроки, серверні довідники, `examination_date`, preview наступного ID, live IDC preview, детермінований demo-прогноз `USD … d`, валідація, приватні вкладення та підтверджене ручне збереження `draft`. Detail/edit, commercial state і transitions лишаються 080.
 - [x] 080 — Приватний перегляд і редагування: `/report-detail.html`, private owner/admin RBAC, draft-редагування повного контракту, детальний `market_status`, вкладення, history та lifecycle actions. Кожний успішний `PUT /reports/{id}` додає `report_updated`; `issued` доступний admin лише за видимих expert-confirmed grades. Друк не входив у цей зріз.
-- [ ] [085 — Прибирання legacy API](./backlog/085-legacy-api-retirement.md): після 080 прибрати unreachable frontend handler `/diamonds/*` та погоджено визначити долю compatibility маршрутів.
+- [x] 085 — Прибирання legacy API: `/diamonds/*`, unreachable frontend handler, старі Pydantic/CRUD контракти й demo `MLService` вилучені. Historical legacy-колонки залишені без міграції; їхній safe recalculation/cleanup винесено у 120.
 - [ ] [090 — Публічний паспорт і QR](./backlog/090-public-passport-and-qr.md): окремий безпечний public flow для `issued`.
 - [ ] [100 — Профіль і admin UI](./backlog/100-profile-and-admin-ui.md): експерти, ролі та довідники; UI ринкових даних залежить від 110.
 - [ ] [110 — Авторитетні ринкові дані й валютні курси](./backlog/110-authoritative-market-data-and-fx.md): обрати законне джерело, зберігати незмінні snapshot-и з provenance, реалізувати ручне admin-оновлення, а scheduler розглядати лише після цього. Не змінює demo `USD … d` або історичні значення автоматично.
+- [ ] [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md): погодити retire або безпечну versioned replacement для `recalc_grades.py`; не запускати масовий backfill чи cleanup без окремого рішення.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
 

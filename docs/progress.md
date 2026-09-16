@@ -4,6 +4,15 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — legacy-api-retirement (завершено)
+
+- **Задача:** завершити retirement невикористаного `/diamonds/*` після private detail/edit, не змінюючи historical дані.
+- **Змінені файли:** `backend/{main,crud,models,schemas}.py`, `frontend/src/js/main.js`, `scripts/audit-api.mjs`, `tests/api/{test_auth_and_experts,test_legacy_api_retirement}.py`, `frontend/{package.json,tests/legacy-api-retirement.test.mjs}`, `docs/{architecture,db-schema,local-start,tech_diamant_id,work_plan,progress}.md`, `docs/{guides/current-domain-and-report-workflow.md,backlog/{README,120-legacy-calculation-and-ml-boundary}.md}`.
+- **Результат:** `/diamonds/*`, dead frontend handler, legacy Pydantic/CRUD contracts і випадковий demo `MLService` вилучено. `/reports` є єдиним API для приватних звітів; API-аудитор перевіряє його межу доступу без токена. Historical legacy-колонки та значення `price` лишилися без схеми, міграції чи backfill.
+- **Перевірки:** додано API regression на 404 для кожного retired route, перенесено чинні auth/experts перевірки й додано Node guard, що active frontend не містить retired endpoint. `python -m pytest` — 21 passed; `npm test` — 11 passed; full Playwright запуск підтвердив login/dashboard/wizard flows, а targeted detail/edit — 1 passed; `npm run audit:api` — 9/9; `git diff --check` і FastAPI import/route smoke — успішно.
+- **Нові змінні середовища:** немає.
+- **Обмеження та наступна задача:** `scripts/recalc_grades.py` навмисно не запускався і не переписувався. Нова [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md) має окремо погодити його retire або безпечну versioned replacement з dry-run, scope, audit trail та планом відновлення. Public passport, authoritative pricing/FX і ML не реалізовано.
+
 ## 2026-09-16 — report-detail-layout-refinement (завершено)
 
 - **Задача:** вирівняти private detail/edit сторінку з канонічними UI-примітивами та зробити її керованою на mobile.

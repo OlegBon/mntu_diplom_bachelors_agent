@@ -41,7 +41,6 @@ mntu_diplom/
 │ ├── __init__.py      # Щоб Python вважав цю папку модулем
 │ ├── calculator.py    # Логіка оцінки (IDC Rules)
 │ ├── config.py        # Валідація локальної конфігурації без fallback-секретів
-│ ├── ml_service.py    # Сервіс прогнозування ціни (ML Mock)
 │ ├── crud.py          # Операції з БД (Repository pattern)
 │ ├── database.py      # Налаштування SQLAlchemy (Singleton)
 │ ├── main.py          # Точка входу (FastAPI)
@@ -67,7 +66,7 @@ mntu_diplom/
 
 - [x] **Core:** Повний **CRUD** для звітів та користувачів.
 - [x] **Intelligent Core:** Модуль `Calculator` (стандарти IDC) для автоматичного визначення `Cut Grade`.
-- [x] **Dynamic Pricing:** `MLService` інтегровано з БД Market - ціна діаманта залежить від актуального ринкового індексу.
+- [ ] **Authoritative pricing / ML:** потребує окремо погоджених джерела, фінансового контракту та provenance; demo-прогноз не записується як ціна.
 - [x] **Market Control:** Реалізовано API для отримання довідників (`/market/mappings`) та **адміністрування ринкових цін** (`/market/price`).
 - [x] **Admin Panel API:** Управління персоналом (RBAC) та перегляд глобальної статистики.
 - [x] **Backfill:** Скрипт перерахунку історичних даних при зміні алгоритмів.

@@ -20,8 +20,8 @@ RBAC. Гість не має доступу до `/reports`; публічног�
 ## Звіт, камінь і lifecycle
 
 Локальна модель — `Stone → DiamondReport → ReportEvent`. Новий report має
-окремий normalized `Stone`; legacy-колонки у `diamond_reports` поки лишаються
-compatibility projection для старого `/diamonds/*` API.
+окремий normalized `Stone`; legacy-колонки у `diamond_reports` лишаються
+історичною projection даних без активного HTTP API.
 
 Життєвий цикл:
 
@@ -72,21 +72,16 @@ Preview може повернути `demo_price_usd`. У wizard це позна�
 позначкою `d`; набір охоплює 01.01.2023–31.12.2025. Його не можна трактувати
 як поточне котирування чи автоматично переоцінювати після оновлення довідника.
 
-`MLService.predict_price()` лишається старою compatibility-евристикою для
-legacy `/diamonds/*`: це не навчена ML-модель і не частина нового wizard flow.
-
-## Dashboard, legacy API та наступний UI
+## Dashboard та наступний UI
 
 Dashboard вже використовує приватний `GET /reports`: server-side pagination,
 пошук, фільтри, сортування і RBAC. ID та меню `⋮` ведуть до
 `/report-detail.html?id=<report_id>`; для draft доступний режим редагування.
 Друк залишається вимкненою окремою дією.
 
-`/diamonds/*` досі існує як compatibility API, але поточні dashboard і wizard
-на нього не спираються. У `frontend/src/js/main.js` лишився невикористаний
-legacy handler для `/diamonds/*`; його прибирання разом із рішенням про долю
-старих маршрутів винесено в окрему після-080 задачу, щоб не змішувати
-перенесення UI з cleanup.
+`/diamonds/*` вилучено: dashboard, wizard і detail/edit використовують лише
+приватний `/reports`. Legacy-колонки даних не були очищені чи переобчислені;
+для цього потрібна окрема погоджена задача.
 
 ## Вкладення
 

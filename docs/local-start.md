@@ -88,8 +88,7 @@ Alembic є джерелом істини для структури таблиц�
 вкладень і не переносить legacy `plotting_image`/`real_image`. Для перевірки
 Revision `0004_report_wizard` додає nullable `examination_date` для report та
 довідники geometry, не змінюючи legacy-записи. Після upgrade перезапусти
-backend; чинний `/diamonds/*` зберігає
-сумісність, а create-form після створення звіту дозавантажує вибрані
+backend; create-form після створення звіту дозавантажує вибрані
 JPEG/PNG/WebP-файли через захищений `/reports/{id}/media`.
 
 Для наявної локальної БД без `alembic_version` спочатку перевір поточний стан:
