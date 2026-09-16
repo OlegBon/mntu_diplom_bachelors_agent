@@ -573,6 +573,8 @@ def update_user(db: Session, expert_id: int, user_update: schemas.UserUpdate):
         value = getattr(user_update, field)
         if value is not None:
             setattr(db_user, field, value)
+    if user_update.password:
+        db_user.password_hash = get_password_hash(user_update.password)
     
     # Якщо прийшла нова роль - оновлюємо
         
@@ -582,6 +584,8 @@ def update_user(db: Session, expert_id: int, user_update: schemas.UserUpdate):
 
 # Видалення користувача
 def update_own_profile(db: Session, user: models.Expert, profile: schemas.ProfileUpdate) -> models.Expert:
+    if profile.username is not None:
+        user.username = profile.username
     user.first_name = profile.first_name
     user.last_name = profile.last_name
     user.middle_name = profile.middle_name

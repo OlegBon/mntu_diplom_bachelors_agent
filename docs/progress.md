@@ -4,6 +4,12 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — admin-user-modal-and-password-reset (завершено)
+
+- **Задача:** спростити admin directory та додати контрольований reset пароля.
+- **Результат:** список облікових записів read-only; «Змінити» відкриває модалку для ПІБ, username, ролі, status і нового тимчасового пароля. Пароль зберігається лише через bcrypt hash. Admin може змінити власний username також у Profile, після чого стара JWT-сесія завершується. Header показує фактичний username, а не статичний `Admin`.
+- **Перевірки:** `pytest tests/api/test_profile_and_admin.py` — 6 passed; `npm test` — 16 passed.
+
 ## 2026-09-16 — admin-user-directory-pagination (завершено)
 
 - **Задача:** розширити admin directory пошуком, server-side пагінацією та завершити mobile presentation.

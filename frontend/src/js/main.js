@@ -54,7 +54,7 @@ function applyApprovedNavigation(isAuthenticated) {
   sessionName.replaceChildren();
   const sessionUsername = document.createElement("span");
   sessionUsername.className = "header-session-username";
-  sessionUsername.textContent = isAdmin ? "Admin" : username;
+  sessionUsername.textContent = username;
   const sessionRole = document.createElement("span");
   sessionRole.className = "header-session-role";
   sessionRole.textContent = isAdmin ? "Адміністратор" : "Експерт";
@@ -70,7 +70,7 @@ function applyApprovedNavigation(isAuthenticated) {
   mobileAccount.className = "mobile-account";
   const accountName = document.createElement("span");
   accountName.className = "mobile-account-name";
-  accountName.textContent = isAdmin ? "Admin" : username;
+  accountName.textContent = username;
   const accountRole = document.createElement("span");
   accountRole.className = "mobile-account-role";
   accountRole.textContent = isAdmin ? "Адміністратор" : "Експерт";

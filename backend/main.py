@@ -134,6 +134,10 @@ def update_my_profile(
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
+    if profile.username and profile.username != current_user.username:
+        existing_user = crud.get_user_by_username(db, profile.username)
+        if existing_user is not None:
+            raise HTTPException(status_code=400, detail="Username already registered")
     return crud.update_own_profile(db, current_user, profile)
 
 

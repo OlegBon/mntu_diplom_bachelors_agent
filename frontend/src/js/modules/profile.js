@@ -15,7 +15,9 @@ export async function initProfile() {
   const status = document.getElementById("profile-status");
   try {
     const user = await getCurrentUser(token);
-    document.getElementById("profile-username").value = user.username;
+    const usernameInput = document.getElementById("profile-username");
+    usernameInput.value = user.username;
+    usernameInput.disabled = user.role !== "admin";
     document.getElementById("profile-role").value = user.role === "admin" ? "Адміністратор" : "Експерт";
     for (const field of ["first_name", "last_name", "middle_name"]) {
       profileForm.elements[field].value = user[field] || "";
@@ -30,6 +32,9 @@ export async function initProfile() {
     button.disabled = true;
     try {
       const saved = await updateMyProfile(Object.fromEntries(new FormData(profileForm)), token);
+      if (saved.username !== user.username) {
+        localStorage.clear(); window.location.replace("/login.html"); return;
+      }
       localStorage.setItem("username", saved.username);
       setStatus(status, "Дані профілю збережено.");
     } catch (error) {

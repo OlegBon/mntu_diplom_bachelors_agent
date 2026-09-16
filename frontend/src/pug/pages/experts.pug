@@ -51,3 +51,34 @@ block content
                                 th Дії
                         tbody#admin-users-body
                 nav#admin-users-pagination.pagination(aria-label="Пагінація облікових записів" hidden)
+        dialog#admin-user-dialog.account-dialog(aria-labelledby="admin-user-dialog-title")
+            form#admin-user-edit-form(method="dialog")
+                .account-dialog__header
+                    h2#admin-user-dialog-title Редагувати обліковий запис
+                    button#admin-user-dialog-close.btn.btn-outline.btn-sm(type="button" aria-label="Закрити") Закрити
+                input#edit-user-id(type="hidden" name="expert_id")
+                .form-group
+                    label(for="edit-user-username") Username
+                    input#edit-user-username.form-control(type="text" name="username" minlength="3" maxlength="50" pattern="[A-Za-z0-9_.-]+" required)
+                .form-row
+                    .form-group.half
+                        label(for="edit-user-first") Ім’я
+                        input#edit-user-first.form-control(type="text" name="first_name" maxlength="50")
+                    .form-group.half
+                        label(for="edit-user-last") Прізвище
+                        input#edit-user-last.form-control(type="text" name="last_name" maxlength="50")
+                .form-group
+                    label(for="edit-user-middle") По батькові
+                    input#edit-user-middle.form-control(type="text" name="middle_name" maxlength="50")
+                .form-group
+                    label(for="edit-user-role") Роль
+                    select#edit-user-role.form-select(name="role")
+                        option(value="gemologist") Експерт
+                        option(value="admin") Адміністратор
+                .form-group
+                    label(for="edit-user-password") Новий тимчасовий пароль
+                    input#edit-user-password.form-control(type="password" name="password" minlength="8" autocomplete="new-password")
+                    small.form-help Залиште порожнім, якщо пароль не потрібно змінювати.
+                .account-dialog__actions
+                    button#edit-user-save.btn.btn-primary(type="submit") Зберегти зміни
+                    button#edit-user-activation.btn.btn-outline(type="button")
