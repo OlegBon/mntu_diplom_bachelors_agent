@@ -6,6 +6,11 @@ import {
   getReportEvents,
   getReportMedia,
   getReportMediaContentUrl,
+  getReportPassport,
+  getReportPassportQr,
+  publishReportPassport,
+  reissueReportPassport,
+  revokeReportPassport,
   transitionDomainReport,
   updateDomainReport,
 } from "./api.js";
@@ -120,6 +125,77 @@ function renderMedia(container, reportId, assets, token) {
   }
 }
 
+function passportUrl(publicId) {
+  const url = new URL("/passport.html", window.location.origin);
+  url.searchParams.set("id", publicId);
+  return url.toString();
+}
+
+async function renderPassportControls({ report, currentUser, token, onStatus }) {
+  const section = document.getElementById("detail-passport");
+  const state = document.getElementById("detail-passport-state");
+  const link = document.getElementById("detail-passport-link");
+  const qr = document.getElementById("detail-passport-qr");
+  const publish = document.getElementById("detail-passport-publish");
+  const reissue = document.getElementById("detail-passport-reissue");
+  const revoke = document.getElementById("detail-passport-revoke");
+  if (!section || currentUser.role !== "admin") return;
+  section.hidden = false;
+  [link, qr, publish, reissue, revoke].forEach((element) => { element.hidden = true; });
+  if (report.status !== "issued") {
+    state.textContent = "Публікація стане доступною після видачі звіту admin.";
+    return;
+  }
+  try {
+    const passport = await getReportPassport(report.report_id, token);
+    const url = passportUrl(passport.public_id);
+    state.textContent = "Паспорт опубліковано. Перевипуск одразу відкликає попереднє посилання.";
+    link.href = url;
+    link.hidden = false;
+    reissue.hidden = false;
+    revoke.hidden = false;
+    const qrBlob = await getReportPassportQr(report.report_id, url, token);
+    const previousUrl = qr.dataset.objectUrl;
+    if (previousUrl) URL.revokeObjectURL(previousUrl);
+    qr.dataset.objectUrl = URL.createObjectURL(qrBlob);
+    qr.src = qr.dataset.objectUrl;
+    qr.hidden = false;
+  } catch (error) {
+    if (!(error instanceof ApiRequestError) || error.status !== 404) {
+      state.textContent = "Не вдалося завантажити стан публікації.";
+      return;
+    }
+    state.textContent = "Паспорт ще не опубліковано.";
+    publish.hidden = false;
+  }
+  publish.onclick = async () => {
+    try {
+      onStatus("Публікація паспорта…");
+      await publishReportPassport(report.report_id, token);
+      await renderPassportControls({ report, currentUser, token, onStatus });
+      onStatus("Паспорт опубліковано.");
+    } catch (error) { onStatus(error.message || "Не вдалося опублікувати паспорт.", true); }
+  };
+  reissue.onclick = async () => {
+    if (!window.confirm("Перевипустити посилання? Попередній QR-код перестане працювати.")) return;
+    try {
+      onStatus("Перевипуск посилання…");
+      await reissueReportPassport(report.report_id, token);
+      await renderPassportControls({ report, currentUser, token, onStatus });
+      onStatus("Нове публічне посилання створено.");
+    } catch (error) { onStatus(error.message || "Не вдалося перевипустити посилання.", true); }
+  };
+  revoke.onclick = async () => {
+    if (!window.confirm("Відкликати публічний паспорт? Посилання й QR одразу перестануть працювати.")) return;
+    try {
+      onStatus("Відкликання публікації…");
+      await revokeReportPassport(report.report_id, token);
+      await renderPassportControls({ report, currentUser, token, onStatus });
+      onStatus("Публікацію паспорта відкликано.");
+    } catch (error) { onStatus(error.message || "Не вдалося відкликати паспорт.", true); }
+  };
+}
+
 function renderTransitionControls(container, helpNode, report, currentUser, onTransition) {
   container.replaceChildren();
   const isAdmin = currentUser.role === "admin";
@@ -181,6 +257,7 @@ export async function initReportDetail() {
       document.getElementById("detail-expert-summary").textContent = `Експертне підтвердження: Proportions ${confirmedProportions}, Final Cut ${confirmedCut}.`;
       renderEvents(document.getElementById("detail-events"), events);
       renderMedia(document.getElementById("detail-media"), reportId, media, token);
+      await renderPassportControls({ report, currentUser, token, onStatus: (message, isError) => setStatus(status, message, isError) });
       renderTransitionControls(document.getElementById("detail-transitions"), document.getElementById("detail-transition-help"), report, currentUser, async (targetStatus) => {
         try {
           setStatus(status, "Зміна статусу…");

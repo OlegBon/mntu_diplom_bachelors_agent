@@ -14,11 +14,11 @@ block content
         section#public-passport.public-passport
             .passport-intro
                 h2 Перевірка, якій можна довіряти
-                p Введіть номер виданого звіту, щоб перейти до його публічного паспорта. Публічні дані будуть доступні лише після запуску відповідного функціоналу.
+                p Введіть код із публічного посилання або QR виданого звіту. Паспорт не відкривається за послідовним внутрішнім номером звіту.
             form#public-search-form.passport-search
                 label(for="search-input") Номер звіту
                 .passport-search-controls
-                    input#search-input(type="search" placeholder="Наприклад, DR-00321" required autocomplete="off")
+                    input#search-input(type="search" placeholder="Код із посилання або QR" required autocomplete="off")
                     button.btn.btn-primary(type="submit") Перевірити
 
         section.public-principles(aria-label="Можливості Diamant ID")

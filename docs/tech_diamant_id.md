@@ -4,7 +4,7 @@ Diamant ID — дипломний вебзастосунок для веденн
 
 Цей документ фіксує **фактично реалізований локальний MVP**, його технічні межі та обов’язкові умови наступних етапів. Деталі структури коду й API наведено в [architecture.md](./architecture.md), інструкція запуску — у [local-start.md](./local-start.md), а послідовність робіт — у [work_plan.md](./work_plan.md).
 
-> **Статус на 16 вересня 2026.** Локальний MVP працює на FastAPI, SQLAlchemy та MariaDB/XAMPP; frontend зібрано на Gulp, Pug, SCSS і vanilla JavaScript. Є JWT-вхід, private workflow звітів, серверні довідники, IDC-розрахунок і детермінований demo-preview, що не зберігається як ціна. Це ще не production-система: Docker, PostgreSQL, реальна ML-модель, public passport і публічний deployment не реалізовані.
+> **Статус на 16 вересня 2026.** Локальний MVP працює на FastAPI, SQLAlchemy та MariaDB/XAMPP; frontend зібрано на Gulp, Pug, SCSS і vanilla JavaScript. Є JWT-вхід, private workflow звітів, серверні довідники, IDC-розрахунок, детермінований demo-preview і revocable public passport/QR для issued reports. Це ще не production-система: Docker, PostgreSQL, реальна ML-модель і публічний deployment не реалізовані.
 
 ---
 

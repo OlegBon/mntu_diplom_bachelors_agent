@@ -1,0 +1,65 @@
+extends ../layout/main
+
+block content
+    main.public-passport-page(data-public-passport)
+        .page-header
+            div
+                p.public-passport__eyebrow Публічна перевірка
+                h1#public-passport-title Перевірка паспорта
+                p#public-passport-subtitle.page-subtitle Відомості доступні лише для опублікованого виданого звіту.
+            a.btn.btn-outline(href="/#public-passport") Перевірити інший
+
+        p#public-passport-status.form-status(role="status" aria-live="polite" hidden)
+
+        section#public-passport-card.public-passport__surface(hidden aria-labelledby="public-passport-title")
+            .public-passport__issued
+                span Номер звіту
+                strong#passport-report-id —
+                span Дата видачі
+                strong#passport-issued-at —
+            .public-passport__section
+                h2 Характеристики каменю
+                dl.public-passport__grid
+                    div
+                        dt Форма
+                        dd#passport-shape —
+                    div
+                        dt Вага
+                        dd#passport-carat —
+                    div
+                        dt Колір
+                        dd#passport-color —
+                    div
+                        dt Чистота
+                        dd#passport-clarity —
+                    div
+                        dt Розміри
+                        dd#passport-dimensions —
+            .public-passport__section
+                h2 Оцінка огранювання
+                dl.public-passport__grid
+                    div
+                        dt System Proportions
+                        dd#passport-system-proportions —
+                    div
+                        dt System Final Cut
+                        dd#passport-system-cut —
+                    div
+                        dt Підтверджений Proportions
+                        dd#passport-expert-proportions —
+                    div
+                        dt Підтверджений Final Cut
+                        dd#passport-expert-cut —
+            .public-passport__section
+                h2 Ідентифікація
+                dl.public-passport__grid
+                    div
+                        dt Походження
+                        dd#passport-origin —
+                    div
+                        dt Ознаки обробки
+                        dd#passport-treatment —
+                    div
+                        dt Рівень підтвердження
+                        dd#passport-identification —
+            p.public-passport__note Паспорт не містить ціни, внутрішніх коментарів, персональних даних експерта чи приватних вкладень.

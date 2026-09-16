@@ -231,3 +231,38 @@ class MediaAssetResponse(BaseModel):
     uploaded_by_id: int
     created_at: datetime
     is_public: bool
+
+
+class PublicPassportResponse(BaseModel):
+    """Private publication state returned only to an administrator."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    public_id: str
+    report_id: str
+    is_active: bool
+    created_at: datetime
+    revoked_at: Optional[datetime]
+
+
+class PublicPassportView(BaseModel):
+    """Minimal anonymous projection; intentionally excludes private report data."""
+
+    public_id: str
+    report_id: str
+    issued_at: datetime
+    examination_date: Optional[date]
+    shape: str
+    carat_weight: Decimal
+    color_grade: int
+    clarity_grade: int
+    measurements_length: Optional[Decimal]
+    measurements_width: Optional[Decimal]
+    measurements_depth: Optional[Decimal]
+    system_proportions_grade: Optional[int]
+    system_cut_grade: Optional[int]
+    expert_proportions_grade: Optional[int]
+    expert_cut_grade: Optional[int]
+    origin: Origin
+    treatment_status: TreatmentStatus
+    identification_status: IdentificationStatus

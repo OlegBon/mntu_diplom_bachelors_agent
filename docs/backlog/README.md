@@ -31,3 +31,4 @@
 | [100-profile-and-admin-ui.md](./100-profile-and-admin-ui.md) | Профіль, керування експертами, ролями й довідниками. |
 | [110-authoritative-market-data-and-fx.md](./110-authoritative-market-data-and-fx.md) | Авторитетні ринкові дані, валютні курси й історія snapshot-ів. |
 | [120-legacy-calculation-and-ml-boundary.md](./120-legacy-calculation-and-ml-boundary.md) | Безпечна доля legacy-перерахунку та межа майбутнього ML. |
+| [130-public-passport-media.md](./130-public-passport-media.md) | Контрольована видимість вкладень у public passport. |

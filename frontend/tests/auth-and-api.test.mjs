@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getNextReportId, getReportDashboard, getReferenceValues, loginUser } from "../src/js/modules/api.js";
+import { getNextReportId, getPublicPassport, getReportDashboard, getReferenceValues, loginUser } from "../src/js/modules/api.js";
 import { checkAuth, logout } from "../src/js/modules/auth.js";
 
 function installBrowserStubs() {
@@ -86,4 +86,16 @@ test("wizard API reads protected references and the non-reserving next report ID
     ["http://127.0.0.1:8000/reference-values", "Bearer test-token"],
     ["http://127.0.0.1:8000/reports/next-id", "Bearer test-token"],
   ]);
+});
+
+test("public passport API does not attach a private bearer token", async () => {
+  let requestedHeaders;
+  globalThis.fetch = async (_url, options) => {
+    requestedHeaders = options.headers;
+    return { ok: true, json: async () => ({ public_id: "public-id" }) };
+  };
+
+  await getPublicPassport("public-id");
+
+  assert.equal(requestedHeaders.Authorization, undefined);
 });

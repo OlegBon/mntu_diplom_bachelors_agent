@@ -147,6 +147,15 @@ block content
                     h2 Вкладення
                     ul#detail-media.report-detail__list
                         li Завантаження…
+                section#detail-passport.report-detail__surface(hidden)
+                    h2 Публічний паспорт
+                    p#detail-passport-state.report-detail__help Доступний лише для виданого звіту.
+                    a#detail-passport-link(href="#" target="_blank" rel="noopener noreferrer" hidden) Відкрити публічний паспорт
+                    img#detail-passport-qr.report-detail__qr(alt="QR-код публічного паспорта" hidden)
+                    .report-detail__transition-actions
+                        button#detail-passport-publish.btn.btn-primary(type="button" hidden) Опублікувати паспорт
+                        button#detail-passport-reissue.btn.btn-outline(type="button" hidden) Перевипустити посилання
+                        button#detail-passport-revoke.btn.btn-outline(type="button" hidden) Відкликати публікацію
                 section.report-detail__surface
                     h2 Історія змін
                     ol#detail-events.report-detail__timeline

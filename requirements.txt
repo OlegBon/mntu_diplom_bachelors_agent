@@ -26,6 +26,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 python-jose==3.5.0
 python-multipart==0.0.21
+qrcode==8.2
 pytest==9.1.1
 pytest-cov==7.1.0
 pytz==2025.2

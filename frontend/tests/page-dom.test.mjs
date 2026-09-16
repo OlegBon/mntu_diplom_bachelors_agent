@@ -10,6 +10,7 @@ const loginPath = path.resolve(testDir, "../dist/login.html");
 const createReportPath = path.resolve(testDir, "../dist/create-report.html");
 const dashboardPath = path.resolve(testDir, "../dist/dashboard.html");
 const reportDetailPath = path.resolve(testDir, "../dist/report-detail.html");
+const passportPath = path.resolve(testDir, "../dist/passport.html");
 
 test("built login page exposes accessible authentication fields", async () => {
   const html = await readFile(loginPath, "utf8");
@@ -69,4 +70,16 @@ test("built private report detail exposes an edit form, audit history and lifecy
   assert.equal(document.querySelector("#detail-events")?.tagName, "OL");
   assert.equal(document.querySelector("#detail-media")?.tagName, "UL");
   assert.equal(document.querySelector("#detail-transition-reason")?.getAttribute("maxlength"), "2000");
+  assert.equal(document.querySelector("#detail-passport")?.hasAttribute("hidden"), true);
+  assert.equal(document.querySelector("#detail-passport-qr")?.tagName, "IMG");
+});
+
+test("built public passport excludes private report controls", async () => {
+  const html = await readFile(passportPath, "utf8");
+  const document = new JSDOM(html).window.document;
+
+  assert.equal(document.querySelector("[data-public-passport]")?.hasAttribute("data-protected-page"), false);
+  assert.equal(document.querySelector("#passport-report-id")?.tagName, "STRONG");
+  assert.equal(document.querySelector("#passport-origin")?.tagName, "DD");
+  assert.equal(document.querySelector("#detail-comment"), null);
 });
