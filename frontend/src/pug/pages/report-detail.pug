@@ -1,0 +1,153 @@
+extends ../layout/main
+
+block content
+    main.report-detail-page(hidden data-protected-page="true" data-report-detail)
+        .page-header
+            div
+                p.report-detail__eyebrow Приватний звіт
+                h1#report-detail-title Завантаження звіту…
+                p#report-detail-subtitle.page-subtitle Дані, висновок експерта, вкладення та історія змін.
+            a.btn.btn-outline(href="/dashboard.html") До всіх звітів
+
+        p#report-detail-status.form-status(role="status" aria-live="polite" hidden)
+
+        .report-detail__grid
+            form#report-detail-form.report-detail__surface(novalidate)
+                .report-detail__section
+                    h2 Ідентифікація та 4C
+                    .form-row
+                        .form-group.half
+                            label(for="detail-examination-date") Дата дослідження / оцінки
+                            input#detail-examination-date.form-control(type="date" name="examination_date" required)
+                        .form-group.half
+                            label(for="detail-shape") Форма (Shape)
+                            input#detail-shape.form-control(type="text" name="shape" maxlength="50" required)
+                    .form-row
+                        .form-group.half
+                            label(for="detail-carat") Вага (ct)
+                            input#detail-carat.form-control(type="number" name="carat_weight" min="0.01" max="100" step="0.01" required)
+                        .form-group.half
+                            label(for="detail-market-status") Комерційний стан
+                            select#detail-market-status.form-select(name="market_status" required)
+                                option(value="not_for_sale") Не виставлено на продаж
+                                option(value="available") Доступний
+                                option(value="reserved") Зарезервований
+                                option(value="sold") Продано
+                                option(value="withdrawn") Знято з продажу
+                    .form-row.three-cols
+                        .form-group
+                            label(for="detail-color") Колір (код)
+                            input#detail-color.form-control(type="number" name="color_grade" min="0" max="99" required)
+                        .form-group
+                            label(for="detail-clarity") Чистота (код)
+                            input#detail-clarity.form-control(type="number" name="clarity_grade" min="0" max="99" required)
+                        .form-group
+                            label(for="detail-fluorescence") Fluorescence (код)
+                            input#detail-fluorescence.form-control(type="number" name="fluorescence_grade" min="0" max="99" required)
+
+                .report-detail__section
+                    h2 Геометрія та IDC
+                    .form-row.three-cols
+                        .form-group
+                            label(for="detail-length") Довжина (mm)
+                            input#detail-length.form-control(type="number" name="measurements_length" min="0.01" max="999" step="0.01" required)
+                        .form-group
+                            label(for="detail-width") Ширина (mm)
+                            input#detail-width.form-control(type="number" name="measurements_width" min="0.01" max="999" step="0.01" required)
+                        .form-group
+                            label(for="detail-depth-mm") Висота (mm)
+                            input#detail-depth-mm.form-control(type="number" name="measurements_depth" min="0.01" max="999" step="0.01" required)
+                    .form-row
+                        .form-group.half
+                            label(for="detail-table") Table (%)
+                            input#detail-table.form-control(type="number" name="table_percent" min="0.1" max="100" step="0.1" required)
+                        .form-group.half
+                            label(for="detail-depth-percent") Total Depth (%)
+                            input#detail-depth-percent.form-control(type="number" name="depth_percent" min="0.1" max="100" step="0.1" required)
+                    .form-row
+                        .form-group.half
+                            label(for="detail-crown") Crown Angle (°)
+                            input#detail-crown.form-control(type="number" name="crown_angle" min="0.1" max="90" step="0.1" required)
+                        .form-group.half
+                            label(for="detail-pavilion") Pavilion Angle (°)
+                            input#detail-pavilion.form-control(type="number" name="pavilion_angle" min="0.1" max="90" step="0.1" required)
+                    .form-row
+                        .form-group.half
+                            label(for="detail-girdle") Girdle Thickness
+                            input#detail-girdle.form-control(type="text" name="girdle_thickness" maxlength="50")
+                        .form-group.half
+                            label(for="detail-culet") Culet Size
+                            input#detail-culet.form-control(type="text" name="culet_size" maxlength="50")
+
+                .report-detail__section
+                    h2 Висновок та підтвердження
+                    .form-row
+                        .form-group.half
+                            label(for="detail-origin") Походження
+                            select#detail-origin.form-select(name="origin" required)
+                                option(value="unknown") Не визначено
+                                option(value="natural") Природний
+                                option(value="lab_grown") Лабораторно вирощений
+                                option(value="other") Інше
+                        .form-group.half
+                            label(for="detail-treatment") Ознаки обробки
+                            select#detail-treatment.form-select(name="treatment_status" required)
+                                option(value="not_assessed") Не оцінено
+                                option(value="none_detected") Не виявлено
+                                option(value="disclosed") Заявлено
+                                option(value="confirmed") Підтверджено
+                    .form-row
+                        .form-group.half
+                            label(for="detail-identification-status") Рівень підтвердження
+                            select#detail-identification-status.form-select(name="identification_status" required)
+                                option(value="preliminary") Попередній
+                                option(value="confirmed") Підтверджено
+                                option(value="inconclusive") Невизначено
+                        .form-group.half
+                            label(for="detail-method") Метод ідентифікації
+                            input#detail-method.form-control(type="text" name="identification_method" maxlength="255")
+                    .form-group
+                        label(for="detail-conclusion") Висновок щодо ідентифікації
+                        textarea#detail-conclusion.form-control(name="identification_conclusion" rows="3")
+                    .form-group
+                        label(for="detail-comment") Коментар експерта
+                        textarea#detail-comment.form-control(name="expert_comment" rows="3")
+                    .form-row
+                        .form-group.half
+                            label(for="detail-polish") Polish (код)
+                            input#detail-polish.form-control(type="number" name="polish_grade" min="0" max="99" required)
+                        .form-group.half
+                            label(for="detail-symmetry") Symmetry (код)
+                            input#detail-symmetry.form-control(type="number" name="symmetry_grade" min="0" max="99" required)
+                    .form-row
+                        .form-group.half
+                            label(for="detail-expert-proportions") Підтверджений Proportions (код)
+                            input#detail-expert-proportions.form-control(type="number" name="expert_proportions_grade" min="0" max="99")
+                        .form-group.half
+                            label(for="detail-expert-cut") Підтверджений Final Cut (код)
+                            input#detail-expert-cut.form-control(type="number" name="expert_cut_grade" min="0" max="99")
+                    p.report-detail__help Підтверджені експертом grades є окремими від системного IDC-розрахунку та потрібні для видачі звіту.
+                .report-detail__actions
+                    button#detail-edit.btn.btn-outline(type="button") Редагувати чернетку
+                    button#detail-save.btn.btn-primary(type="submit" hidden) Зберегти зміни
+                    button#detail-cancel.btn.btn-outline(type="button" hidden) Скасувати
+
+            aside.report-detail__side
+                section.report-detail__surface
+                    h2 Стан звіту
+                    p#detail-status-badge.report-detail__status-badge —
+                    p#detail-system-summary.report-detail__help Системний IDC: —
+                    p#detail-expert-summary.report-detail__help Експертне підтвердження: —
+                    .form-group.report-detail__transition-reason
+                        label(for="detail-transition-reason") Коментар до зміни статусу
+                        textarea#detail-transition-reason.form-control(rows="2" maxlength="2000" placeholder="Необов’язково, але бажано для повернення чи анулювання")
+                    .report-detail__transition-actions#detail-transitions
+                    p#detail-transition-help.report-detail__help
+                section.report-detail__surface
+                    h2 Вкладення
+                    ul#detail-media.report-detail__list
+                        li Завантаження…
+                section.report-detail__surface
+                    h2 Історія змін
+                    ol#detail-events.report-detail__timeline
+                        li Завантаження…

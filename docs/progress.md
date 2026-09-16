@@ -4,6 +4,15 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — report-detail-and-editing (завершено)
+
+- **Задача:** реалізувати захищений private detail/edit звіту, lifecycle UI та повну історію суттєвих змін.
+- **Змінені файли:** `backend/{crud,main}.py`, `frontend/src/{pug/pages/report-detail.pug,scss/_ui-primitives.scss,js/{main.js,modules/{api,dashboard,report-detail}.js}}`, `tests/api/test_report_domain.py`, `frontend/tests/{page-dom.test.mjs,e2e/{dashboard,report-detail}.spec.mjs}`, `docs/{architecture,work_plan,progress}.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/backlog/{README.md,080-report-detail-and-editing.md}`.
+- **Результат:** dashboard відкриває приватну `/report-detail.html`; owner/admin можуть редагувати лише `draft`, включно з повним normalized stone, examination date, expert confirmation і детальним `market_status`. Сторінка показує системний IDC окремо від expert-confirmed grades, приватні вкладення та append-only history. `PUT /reports/{id}` тепер записує `report_updated`, а lifecycle transition лишається server-side контролюваним; admin не може видати report без підтверджених grades.
+- **Перевірки:** `python -m pytest` — 24 passed; `npm test` — 10 passed; цільовий Playwright flow owner edit — 1 passed. Повний `npm run test:e2e` показав успіх login/dashboard/wizard worker-ів до ліміту execution window; новий detail flow підтверджено окремо. `npm run build` і `git diff --check` — успішно.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** MariaDB/XAMPP не перевірялася і не змінювалася: у користувача є окрема нестабільність MySQL. E2E використовує mock HTTP, а не реальні локальні дані. Друк, public passport, cleanup `/diamonds/*`, admin/profile UI та авторитетні ціни залишаються окремими задачами.
+
 ## 2026-09-15 — authoritative-market-data-plan (заплановано)
 
 - **Задача:** зафіксувати окремий шлях від demo-індексу до перевірюваних ринкових довідкових даних і, за потреби, валютних курсів.

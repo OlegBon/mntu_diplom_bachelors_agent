@@ -125,6 +125,33 @@ def test_report_domain_transition_requires_confirmation_and_admin_issuance(clien
 
 @pytest.mark.api
 @pytest.mark.integration
+def test_draft_update_records_an_auditable_event_and_preserves_owner_rbac(client, experts) -> None:
+    owner_headers = auth_headers(client, experts["owner"].username)
+    other_headers = auth_headers(client, experts["other"].username)
+    created = client.post("/reports", json=report_payload(), headers=owner_headers)
+    assert created.status_code == 200
+    report_id = created.json()["report_id"]
+
+    changed_payload = report_payload(confirmed=True)
+    changed_payload["expert_comment"] = "Updated expert observation"
+    changed_payload["stone"]["market_status"] = "available"
+
+    assert client.put(f"/reports/{report_id}", json=changed_payload, headers=other_headers).status_code == 403
+    updated = client.put(f"/reports/{report_id}", json=changed_payload, headers=owner_headers)
+    assert updated.status_code == 200
+    assert updated.json()["stone"]["market_status"] == "available"
+    assert updated.json()["expert_cut_grade"] == 0
+
+    events = client.get(f"/reports/{report_id}/events", headers=owner_headers)
+    assert events.status_code == 200
+    assert [(event["action"], event["from_status"], event["to_status"]) for event in events.json()] == [
+        ("created", None, "draft"),
+        ("report_updated", "draft", "draft"),
+    ]
+
+
+@pytest.mark.api
+@pytest.mark.integration
 def test_report_dashboard_list_paginates_searches_filters_and_scopes_visibility(client, experts) -> None:
     owner_headers = auth_headers(client, experts["owner"].username)
     other_headers = auth_headers(client, experts["other"].username)

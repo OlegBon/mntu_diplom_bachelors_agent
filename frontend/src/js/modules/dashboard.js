@@ -75,13 +75,15 @@ function renderActions(reportId) {
   toggle.setAttribute("aria-expanded", "false");
   const menu = createElement("div", "report-actions__menu");
   menu.hidden = true;
-  for (const label of ["Переглянути", "Редагувати", "Друк"]) {
-    const item = createElement("button", "report-actions__item", label);
-    item.type = "button";
-    item.disabled = true;
-    item.title = "Буде доступно після реалізації приватного перегляду звіту";
-    menu.append(item);
-  }
+  const detail = createElement("a", "report-actions__item", "Переглянути");
+  detail.href = `/report-detail.html?id=${encodeURIComponent(reportId)}`;
+  const edit = createElement("a", "report-actions__item", "Редагувати");
+  edit.href = `/report-detail.html?id=${encodeURIComponent(reportId)}&edit=1`;
+  const print = createElement("button", "report-actions__item", "Друк");
+  print.type = "button";
+  print.disabled = true;
+  print.title = "Друк буде додано окремим сценарієм";
+  menu.append(detail, edit, print);
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
     const isOpen = menu.hidden;
@@ -146,7 +148,7 @@ function renderRows(tbody, reports, labelFor) {
     const idCell = document.createElement("td");
     const idLink = createElement("a", "id-link", report.report_id);
     idLink.href = `/report-detail.html?id=${encodeURIComponent(report.report_id)}`;
-    idLink.title = "Приватний перегляд звіту буде додано в задачі 080";
+    idLink.title = "Відкрити приватний перегляд звіту";
     idCell.append(idLink);
     row.append(idCell);
     const dateCell = document.createElement("td");

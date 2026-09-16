@@ -272,6 +272,7 @@ def update_report_domain(
     *,
     report: models.DiamondReport,
     payload: schemas.ReportUpdate,
+    actor: models.Expert,
 ) -> models.DiamondReport:
     if report.status != "draft":
         raise ReportDomainError("Only draft reports can be edited")
@@ -294,6 +295,15 @@ def update_report_domain(
     report.proportions_grade = system_proportions
     report.report_notes_length = len(payload.expert_comment or "")
     _sync_legacy_report_fields(report, report.stone)
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="report_updated",
+        actor_id=actor.expert_id,
+        from_status=report.status,
+        to_status=report.status,
+        reason=None,
+    )
     db.commit()
     db.refresh(report)
     return report

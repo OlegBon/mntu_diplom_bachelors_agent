@@ -15,8 +15,8 @@
 - Вихідний контракт: [ADR-002 — фінансовий контракт](../decisions/002-financial-calculation-contract.md).
 - `StoneValuation` уже відокремлює майбутні `market_reference`,
   `system_prediction`, `expert_appraisal`, `asking_price` та `sale_price`.
-- Для приватного редагування і комерційного стану спершу потрібна
-  [080 — приватний перегляд і редагування](./080-report-detail-and-editing.md).
+- Приватне редагування та комерційний стан реалізовано в 080; ринковий
+  snapshot інтегрується з цим flow окремо, без зміни historical report data.
 - Admin UI з [100](./100-profile-and-admin-ui.md) має бути споживачем цього
   контуру, а не місцем, де з'являються неверсіоновані суми.
 

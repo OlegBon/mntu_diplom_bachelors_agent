@@ -231,7 +231,12 @@ def update_report_domain(
         raise HTTPException(status_code=404, detail="Report not found")
     require_report_access(report, current_user)
     try:
-        return crud.update_report_domain(db, report=report, payload=payload)
+        return crud.update_report_domain(
+            db,
+            report=report,
+            payload=payload,
+            actor=current_user,
+        )
     except crud.ReportDomainError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
