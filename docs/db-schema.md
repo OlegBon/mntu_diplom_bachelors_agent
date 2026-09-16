@@ -13,7 +13,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 
 | База | Таблиці | Призначення |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, фізичні камені, lifecycle, приватні вкладення та майбутні фінансові записи. |
+| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `public_passports`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, фізичні камені, lifecycle, revocable public passport, приватні вкладення та майбутні фінансові записи. |
 | `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference` | Числові та текстові довідники; legacy demo-індекс ціни. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
@@ -41,6 +41,8 @@ erDiagram
     STONES ||--o{ DIAMOND_REPORTS : "has reports"
     DIAMOND_REPORTS ||--o{ REPORT_EVENTS : "records lifecycle"
     EXPERTS ||--o{ REPORT_EVENTS : "acts"
+    DIAMOND_REPORTS ||--o{ PUBLIC_PASSPORTS : "publishes"
+    EXPERTS ||--o{ PUBLIC_PASSPORTS : "creates"
     DIAMOND_REPORTS ||--o{ MEDIA_ASSETS : "contains"
     EXPERTS ||--o{ MEDIA_ASSETS : "uploads"
     STONES ||--o{ STONE_VALUATIONS : "has values"

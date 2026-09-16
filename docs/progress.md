@@ -4,6 +4,14 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — report-workflow-guide-refresh (завершено)
+
+- **Задача:** синхронізувати документацію з реалізованим workflow від створення звіту до public passport/PDF і зафіксувати межі можливого розширення публічних полів.
+- **Змінені файли:** `docs/guides/{current-domain-and-report-workflow,README}.md`, `docs/{architecture,db-schema,local-start,tech_diamant_id,progress}.md`, `README.md`.
+- **Результат:** guide тепер описує три кроки wizard, всі поточні групи private-полів, IDC/demo-price межу, ролі, lifecycle і review/issue/void, публічні та виключені поля, code/URL/QR/PDF, reissue/revoke/void і безпечний порядок додавання нових публічних полів. Функціонал public фото/plotting прямо прив’язано до backlog 130. Документація запуску й архітектура також фіксують `ghostMode: false`, щоб кілька локальних вікон не дублювали дії.
+- **Перевірки:** внутрішні Markdown-посилання та `git diff --check` перевірено; runtime-код і схема даних не змінювалися.
+- **Нові змінні середовища:** немає.
+
 ## 2026-09-16 — local-browser-sync-action-isolation (завершено)
 
 - **Задача:** прибрати дублювання дій у кількох локально відкритих вікнах Diamant ID.
