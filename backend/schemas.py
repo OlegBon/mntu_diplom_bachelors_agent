@@ -24,13 +24,23 @@ class UserCreate(BaseModel):
 
 # Схема для оновлення юзера (пароль необов'язковий)
 class UserUpdate(BaseModel):
+    username: Optional[str] = Field(default=None, min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
+    password: Optional[str] = Field(default=None, min_length=8, max_length=72)
     first_name: Optional[str] = Field(default=None, max_length=50)
     last_name: Optional[str] = Field(default=None, max_length=50)
     middle_name: Optional[str] = Field(default=None, max_length=50)
     role: Optional[UserRole] = None
 
+    @field_validator("password")
+    @classmethod
+    def admin_password_must_fit_bcrypt(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and len(value.encode("utf-8")) > 72:
+            raise ValueError("Password must not exceed 72 UTF-8 bytes")
+        return value
+
 
 class ProfileUpdate(BaseModel):
+    username: Optional[str] = Field(default=None, min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
     first_name: Optional[str] = Field(default=None, max_length=50)
     last_name: Optional[str] = Field(default=None, max_length=50)
     middle_name: Optional[str] = Field(default=None, max_length=50)
@@ -59,6 +69,14 @@ class ExpertBase(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ExpertListResponse(BaseModel):
+    items: list[ExpertBase]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
 
 # Схема для статистики (для аналізу експертів)
 class ExpertStats(BaseModel):

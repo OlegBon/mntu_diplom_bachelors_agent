@@ -9,11 +9,4 @@ block content
         p#reference-catalog-status.account-status(role="status" aria-live="polite" hidden)
         section.account-surface.account-surface--wide
             p.account-help Редагування з причиною, документом-джерелом і версіями для нових звітів заплановане окремою задачею 105. Поточні дані лише для перегляду.
-            .table-container(tabindex="0")
-                table.data-table
-                    thead
-                        tr
-                            th Категорія
-                            th Код
-                            th Назва
-                    tbody#reference-catalog-body
+            #reference-catalog.reference-catalog(aria-live="polite")

@@ -23,6 +23,6 @@ test("built admin pages have real account and read-only reference controls", asy
   assert.equal(experts.querySelector("#admin-user-create-form")?.tagName, "FORM");
   assert.equal(experts.querySelector("#admin-users-body")?.tagName, "TBODY");
   assert.equal(references.querySelector("[data-reference-catalog-page]")?.hasAttribute("data-protected-page"), true);
-  assert.equal(references.querySelector("#reference-catalog-body")?.tagName, "TBODY");
+  assert.equal(references.querySelector("#reference-catalog")?.tagName, "DIV");
   assert.equal(references.querySelector("form"), null);
 });

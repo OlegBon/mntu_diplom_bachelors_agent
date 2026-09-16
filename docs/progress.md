@@ -4,6 +4,30 @@
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 
+## 2026-09-16 — admin-user-tablet-layout (завершено)
+
+- **Задача:** зробити directory облікових записів читабельним на ширинах 768–1024 px.
+- **Результат:** у tablet-діапазоні таблиця переходить у сітку з двох карток у ряд із підписами полів, тому колонки не стискаються й не виходять за межі блока; desktop і mobile presentation не змінені.
+- **Перевірки:** `npm test` — 16 passed.
+
+## 2026-09-16 — admin-user-modal-and-password-reset (завершено)
+
+- **Задача:** спростити admin directory та додати контрольований reset пароля.
+- **Результат:** список облікових записів read-only; «Змінити» відкриває модалку для ПІБ, username, ролі, status і нового тимчасового пароля. Пароль зберігається лише через bcrypt hash. Admin може змінити власний username також у Profile, після чого стара JWT-сесія завершується. Header показує фактичний username, а не статичний `Admin`.
+- **Перевірки:** `pytest tests/api/test_profile_and_admin.py` — 6 passed; `npm test` — 16 passed.
+
+## 2026-09-16 — admin-user-directory-pagination (завершено)
+
+- **Задача:** розширити admin directory пошуком, server-side пагінацією та завершити mobile presentation.
+- **Результат:** `GET /users/` повертає scoped `items/total/page/page_size/total_pages`; admin UI має пошук за username/іменем і reusable pagination component. Власна зміна username завершує стару JWT-сесію та веде до повторного входу. Mobile-картки мають окремі межі, відступи й повноширинні дії.
+- **Перевірки:** `pytest tests/api/test_profile_and_admin.py` — 6 passed; `npm test` — 16 passed; Playwright profile/admin — 2 passed; `git diff --check` — успішно.
+
+## 2026-09-16 — admin-users-catalog-layout (завершено)
+
+- **Задача:** уточнення admin UI після ручної перевірки.
+- **Результат:** admin може змінювати унікальний username через явну дію збереження; після зміни власного username потрібен повторний login. Таблиця облікових записів має контрольовані колонки й scroll на вузьких екранах, select мають видимий індикатор. Довідники згруповано за читабельними бізнес-категоріями.
+- **Перевірки:** `pytest tests/api/test_profile_and_admin.py` — 5 passed; `npm test` — 16 passed; `git diff --check` — успішно.
+
 ## 2026-09-16 — profile-and-admin-ui (завершено)
 
 - **Задача:** профіль, безпечне admin-керування експертами та read-only server-side довідники.

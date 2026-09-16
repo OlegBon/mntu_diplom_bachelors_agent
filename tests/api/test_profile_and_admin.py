@@ -87,3 +87,42 @@ def test_non_admin_cannot_manage_users(client, experts) -> None:
     assert client.post("/users/", headers=headers, json={
         "username": "blocked-user", "password": "new-password", "role": "gemologist",
     }).status_code == 403
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_admin_users_are_server_paginated_and_searchable(client, experts) -> None:
+    response = client.get("/users/?search=owner&page=1&page_size=1", headers=auth_headers(client, experts["admin"].username))
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["items"][0]["username"] == experts["owner"].username
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_admin_can_change_username_but_cannot_duplicate_it(client, experts) -> None:
+    headers = auth_headers(client, experts["admin"].username)
+    response = client.put(
+        f"/users/{experts['owner'].expert_id}",
+        headers=headers,
+        json={"username": "renamed-expert"},
+    )
+    assert response.status_code == 200
+    assert response.json()["username"] == "renamed-expert"
+    assert client.post("/token", data={"username": "renamed-expert", "password": "test-password"}).status_code == 200
+    duplicate = client.put(
+        f"/users/{experts['other'].expert_id}", headers=headers, json={"username": "renamed-expert"},
+    )
+    assert duplicate.status_code == 400
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_admin_can_set_a_new_temporary_password(client, experts) -> None:
+    response = client.put(
+        f"/users/{experts['owner'].expert_id}",
+        headers=auth_headers(client, experts["admin"].username),
+        json={"password": "temporary-password"},
+    )
+    assert response.status_code == 200
+    assert client.post("/token", data={"username": experts["owner"].username, "password": "temporary-password"}).status_code == 200

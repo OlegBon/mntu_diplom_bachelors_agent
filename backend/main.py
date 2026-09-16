@@ -90,17 +90,26 @@ def read_root():
 # Технічний ендпоінт (адмінський)
 # Повертає список всіх користувачів
 # Без токена доступ заборонено, current_user перевіряє токен
-@app.get("/users/", response_model=List[schemas.ExpertBase])
+@app.get("/users/", response_model=schemas.ExpertListResponse)
 def read_users(
-    db: Session = Depends(get_db), 
-    current_user: models.Expert = Depends(get_current_user)
+    search: Optional[str] = Query(default=None, min_length=1, max_length=50),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
 ):
     # Додаткова перевірка: чи це точно адмін?
     if current_user.role != 'admin':
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
-    users = crud.get_all_users(db)
-    return users
+    users, total = crud.get_all_users(db, search, page, page_size)
+    return schemas.ExpertListResponse(
+        items=users,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=max(1, (total + page_size - 1) // page_size),
+    )
 
 # Бізнес-ендпоінт - тільки для гемологів (експертів)
 # Повертає список всіх активних гемологів
@@ -125,6 +134,10 @@ def update_my_profile(
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
+    if profile.username and profile.username != current_user.username:
+        existing_user = crud.get_user_by_username(db, profile.username)
+        if existing_user is not None:
+            raise HTTPException(status_code=400, detail="Username already registered")
     return crud.update_own_profile(db, current_user, profile)
 
 
@@ -614,6 +627,10 @@ def update_user(
     target = crud.get_user_by_id(db, expert_id)
     if target is None:
         raise HTTPException(status_code=404, detail="User not found")
+    if user_data.username and user_data.username != target.username:
+        existing_user = crud.get_user_by_username(db, user_data.username)
+        if existing_user is not None:
+            raise HTTPException(status_code=400, detail="Username already registered")
     ensure_active_admin_remains(db, target, user_data.role or target.role, target.is_active)
     return crud.update_user(db, expert_id, user_data)
 

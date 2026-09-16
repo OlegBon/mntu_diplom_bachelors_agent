@@ -534,8 +534,17 @@ def get_user_by_id(db: Session, expert_id: int) -> models.Expert | None:
     return db.query(models.Expert).filter(models.Expert.expert_id == expert_id).first()
 
 # Отримати всіх користувачів (для адміна - /users/)
-def get_all_users(db: Session):
-    return db.query(models.Expert).order_by(models.Expert.username).all()
+def get_all_users(db: Session, search: str | None, page: int, page_size: int):
+    query = db.query(models.Expert)
+    if search:
+        like_value = f"%{search.strip()}%"
+        query = query.filter(
+            models.Expert.username.ilike(like_value)
+            | models.Expert.first_name.ilike(like_value)
+            | models.Expert.last_name.ilike(like_value)
+        )
+    total = query.count()
+    return query.order_by(models.Expert.username).offset((page - 1) * page_size).limit(page_size).all(), total
 
 # Створення користувача
 def create_user(db: Session, user: schemas.UserCreate):
@@ -560,10 +569,12 @@ def update_user(db: Session, expert_id: int, user_update: schemas.UserUpdate):
         return None
     
     # Якщо прийшов новий пароль - хешуємо його
-    for field in ("first_name", "last_name", "middle_name", "role"):
+    for field in ("username", "first_name", "last_name", "middle_name", "role"):
         value = getattr(user_update, field)
         if value is not None:
             setattr(db_user, field, value)
+    if user_update.password:
+        db_user.password_hash = get_password_hash(user_update.password)
     
     # Якщо прийшла нова роль - оновлюємо
         
@@ -573,6 +584,8 @@ def update_user(db: Session, expert_id: int, user_update: schemas.UserUpdate):
 
 # Видалення користувача
 def update_own_profile(db: Session, user: models.Expert, profile: schemas.ProfileUpdate) -> models.Expert:
+    if profile.username is not None:
+        user.username = profile.username
     user.first_name = profile.first_name
     user.last_name = profile.last_name
     user.middle_name = profile.middle_name
