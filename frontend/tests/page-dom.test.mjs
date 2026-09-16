@@ -9,6 +9,7 @@ const testDir = path.dirname(fileURLToPath(import.meta.url));
 const loginPath = path.resolve(testDir, "../dist/login.html");
 const createReportPath = path.resolve(testDir, "../dist/create-report.html");
 const dashboardPath = path.resolve(testDir, "../dist/dashboard.html");
+const reportDetailPath = path.resolve(testDir, "../dist/report-detail.html");
 
 test("built login page exposes accessible authentication fields", async () => {
   const html = await readFile(loginPath, "utf8");
@@ -55,4 +56,17 @@ test("built dashboard exposes real list controls without mock rows", async () =>
   assert.equal(document.querySelector(".data-table tbody")?.children.length, 0);
   assert.equal(document.querySelector(".report-actions"), null);
   assert.equal(document.querySelectorAll(".table-sort").length, 10);
+});
+
+test("built private report detail exposes an edit form, audit history and lifecycle controls", async () => {
+  const html = await readFile(reportDetailPath, "utf8");
+  const document = new JSDOM(html).window.document;
+
+  assert.equal(document.querySelector("[data-report-detail]")?.hasAttribute("data-protected-page"), true);
+  assert.equal(document.querySelector("#report-detail-form")?.tagName, "FORM");
+  assert.equal(document.querySelector("[name=market_status]")?.tagName, "SELECT");
+  assert.equal(document.querySelector("#detail-expert-proportions")?.getAttribute("type"), "number");
+  assert.equal(document.querySelector("#detail-events")?.tagName, "OL");
+  assert.equal(document.querySelector("#detail-media")?.tagName, "UL");
+  assert.equal(document.querySelector("#detail-transition-reason")?.getAttribute("maxlength"), "2000");
 });

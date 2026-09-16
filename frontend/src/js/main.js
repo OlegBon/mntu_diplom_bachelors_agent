@@ -2,6 +2,7 @@ import { checkAuth, logout } from "./modules/auth.js";
 import { loginUser, uploadReportMedia } from "./modules/api.js";
 import { initDashboard } from "./modules/dashboard.js";
 import { initReportWizard } from "./modules/report-wizard.js";
+import { initReportDetail } from "./modules/report-detail.js";
 
 // === КОНФІГУРАЦІЯ API ===
 const API_URL = "http://127.0.0.1:8000"; // Адреса твого Python сервера
@@ -411,7 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
   const isAdmin = localStorage.getItem("username") === "admin";
   const currentPath = window.location.pathname;
-  const isProtectedPage = ["/dashboard.html", "/create-report.html"].includes(currentPath);
+  const isProtectedPage = ["/dashboard.html", "/create-report.html", "/report-detail.html"].includes(currentPath);
   const isCreateReportPage = currentPath.endsWith("/create-report.html");
 
   if (!isAuthenticated && isProtectedPage) {
@@ -432,6 +433,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // === DASHBOARD INITIALIZATION ===
   if (isAuthenticated) void initDashboard();
   if (isAuthenticated && isCreateReportPage) void initReportWizard();
+  if (isAuthenticated && currentPath.endsWith("/report-detail.html")) void initReportDetail();
 
   // --- Mobile Menu ---
   const burgerBtn = document.getElementById("burger-btn");

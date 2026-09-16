@@ -33,9 +33,9 @@ draft --(owner або admin)--> review --(admin)--> issued
 ```
 
 `issued` можливий лише за наявності явно підтверджених експертом proportions і
-cut grades. Створення та status transition записуються в `ReportEvent`.
-Поточний `PUT /reports/{id}` обмежено `draft`, але ще не пише окрему подію
-редагування; це обов'язкова частина задачі 080.
+cut grades. Створення, кожне успішне draft-редагування та status transition
+записуються в append-only `ReportEvent` як `created`, `report_updated` або
+`status_changed`.
 
 ## Створення чернетки
 
@@ -54,8 +54,9 @@ Wizard `/create-report.html` має рівно три кроки: ідентиф
 експерт може вказати фактичну дату дослідження/оцінки. Вона не замінює
 технічні `created_at` або `updated_at`.
 
-Новий draft отримує `market_status=not_for_sale`. Продаж, інші комерційні стани
-та їхнє відображення належать private detail/edit у задачі 080.
+Новий draft отримує `market_status=not_for_sale`. У private detail/edit owner
+або admin може змінити цей стан лише поки звіт `draft`; dashboard показує
+спрощену двостанову проєкцію, а detail — повне значення.
 
 ## IDC і ціна
 
@@ -77,8 +78,9 @@ legacy `/diamonds/*`: це не навчена ML-модель і не част�
 ## Dashboard, legacy API та наступний UI
 
 Dashboard вже використовує приватний `GET /reports`: server-side pagination,
-пошук, фільтри, сортування і RBAC. Меню `⋮` містить лише неактивні точки входу
-до detail/edit/print до завершення 080.
+пошук, фільтри, сортування і RBAC. ID та меню `⋮` ведуть до
+`/report-detail.html?id=<report_id>`; для draft доступний режим редагування.
+Друк залишається вимкненою окремою дією.
 
 `/diamonds/*` досі існує як compatibility API, але поточні dashboard і wizard
 на нього не спираються. У `frontend/src/js/main.js` лишився невикористаний
@@ -100,5 +102,5 @@ legacy handler для `/diamonds/*`; його прибирання разом і
 flows із mock HTTP. Вони не замінюють реальний MariaDB E2E або повний
 admin-review UI.
 
-Перед public deployment ще потрібні detail/edit, public passport/QR,
-перевірений ML-контур, PostgreSQL-portability та security hardening.
+Перед public deployment ще потрібні public passport/QR, перевірений ML-контур,
+PostgreSQL-portability та security hardening.

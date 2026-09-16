@@ -46,6 +46,18 @@ export const previewReportCalculation = (stone, token) => requestApi("/reports/p
 
 export const createDomainReport = (payload, token) => requestApi("/reports", { method: "POST", token, body: payload });
 
+export const getDomainReport = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}`, { token });
+
+export const updateDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}`, { method: "PUT", token, body: payload });
+
+export const transitionDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/transitions`, { method: "POST", token, body: payload });
+
+export const getReportEvents = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/events`, { token });
+
+export const getReportMedia = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/media`, { token });
+
+export const getReportMediaContentUrl = (reportId, mediaId) => `${BASE_URL}/reports/${encodeURIComponent(reportId)}/media/${encodeURIComponent(mediaId)}/content`;
+
 /**
  * Функція логіну (отримання токена)
  */
