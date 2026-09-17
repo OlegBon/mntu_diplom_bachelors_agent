@@ -269,6 +269,36 @@ Dashboard використовує private `GET /reports`: server-side paginatio
 детального commercial status, а не його заміною. Звіт відкривається через
 `/report-detail.html?id=<report_id>`.
 
+### Ринковий орієнтир і курс НБУ
+
+На dashboard колонка «Ціна (USD)» може мати лише один із таких сенсів:
+
+| Вигляд | Значення |
+| --- | --- |
+| `USD … d` | Legacy demo-значення з навчального набору; не ринкова, експертна чи продажна ціна. |
+| `USD … of` | Явно прикріплений admin-ом довідковий OpenFacet market reference. Він має пріоритет відображення над legacy demo. |
+| `—` | Немає жодного з наведених значень. |
+
+Натискання відкриває popover з provenance. Для `of` це також frozen UAH
+еквівалент, snapshot OpenFacet, snapshot НБУ, курс та official rate date.
+OpenFacet reference не є appraisal, offer, transaction чи sale price.
+
+Як admin прикріплює `of`:
+
+1. На «Ринкові дані» отримує OpenFacet candidate та окремо approve його.
+2. Вказує report і пояснює застосовність для конкретного natural stone.
+3. Server **саме в цей момент** отримує офіційний USD/UAH НБУ. Успіх створює
+   незмінні market та FX snapshots і один `StoneValuation` з USD і UAH.
+4. Якщо НБУ недоступний, attach завершується помилкою: старий курс не
+   підставляється. Пізніші курси НБУ не змінюють уже прикріплений орієнтир.
+
+Admin може натиснути «Оновити зараз» у картці НБУ для окремого контрольного
+snapshot-а. Це не approval, не scheduler і не змінює наявні reports. Для
+вихідного/святкового дня НБУ може повернути official rate date попереднього
+банківського дня — інтерфейс показує саме цю дату.
+
+Ринкові суми залишаються private: їх немає в public passport, QR і PDF.
+
 Legacy `/diamonds/*` вилучено. Historical legacy-колонки не очищалися та не
 перераховувалися; їхня безпечна доля окремо описана у
 [120](../backlog/120-legacy-calculation-and-ml-boundary.md).

@@ -56,11 +56,20 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_market_data_revision_is_the_only_committed_head():
+def test_alembic_nbu_fx_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0008_market_data_providers"]
+    assert script_directory.get_heads() == ["0009_nbu_fx_snapshots"]
+
+
+def test_nbu_fx_migration_does_not_backfill_or_reprice_historical_values():
+    source = (PROJECT_ROOT / "alembic" / "versions" / "0009_nbu_fx_snapshots.py").read_text(encoding="utf-8")
+
+    assert "fx_data_snapshots" in source
+    assert "converted_amount" in source
+    assert "UPDATE" not in source
+    assert "INSERT INTO diamond_oltp.stone_valuations" not in source
 
 
 def test_grading_ruleset_migration_preserves_legacy_reports_without_recalculation():

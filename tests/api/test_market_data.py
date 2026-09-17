@@ -122,6 +122,12 @@ def test_market_data_candidate_approval_and_explicit_report_attachment(client, e
     assert values.status_code == 200
     assert values.json()[0]["source_name"] == "OpenFacet"
     assert client.get(f"/reports/{report_id}", headers=owner_headers).json()["price"] is None
+    dashboard = client.get("/reports", headers=owner_headers)
+    assert dashboard.status_code == 200
+    listed_reference = dashboard.json()["items"][0]["market_reference"]
+    assert listed_reference["amount"] == "5000.00"
+    assert listed_reference["converted_amount"] == "202500.00"
+    assert listed_reference["fx_rate_date"] == "2026-09-16"
 
 
 @pytest.mark.api

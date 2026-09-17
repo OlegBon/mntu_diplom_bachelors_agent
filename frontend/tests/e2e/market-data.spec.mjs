@@ -6,6 +6,12 @@ const provider = {
   scope_note: "Comparable natural GIA reference only.", is_active: true,
 };
 
+const nbuProvider = {
+  provider_code: "nbu", display_name: "НБУ", provider_type: "fx_reference",
+  documentation_url: "https://bank.gov.ua/ua/markets/exchangerates", terms_url: "https://bank.gov.ua/ua/about/terms-of-use",
+  scope_note: "Official USD/UAH rate.", is_active: true,
+};
+
 const candidate = {
   snapshot_id: 17, provider_code: "openfacet", snapshot_kind: "market_reference", status: "candidate",
   currency_code: "USD", unit: "USD_PER_CARAT", source_url: "https://data.openfacet.net/list_round.csv",
@@ -22,8 +28,9 @@ test("administrator creates and approves a market-data candidate before using it
     localStorage.setItem("role", "admin");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
-  await page.route("**/market-data/providers", (route) => route.fulfill({ json: [provider] }));
+  await page.route("**/market-data/providers", (route) => route.fulfill({ json: [nbuProvider, provider] }));
   await page.route("**/market-data/snapshots", (route) => route.fulfill({ json: snapshots }));
+  await page.route("**/market-data/fx-snapshots", (route) => route.fulfill({ json: [] }));
   await page.route("**/market-data/providers/openfacet/fetch", (route) => {
     snapshots = [candidate];
     return route.fulfill({ json: candidate });

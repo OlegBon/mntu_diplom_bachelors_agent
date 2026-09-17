@@ -1,8 +1,8 @@
 # Схема бази даних
 
 Документ описує цільову локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0008_market_data_providers`, яку застосовано до локальної
-MariaDB 17 вересня 2026. Це карта даних для розробки, API та
+Alembic revision `0009_nbu_fx_snapshots`. Локальна MariaDB застосована до
+`0008`; `0009` потребує окремого upgrade з резервною копією. Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -15,7 +15,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 | База | Таблиці | Призначення |
 | --- | --- | --- |
 | `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, фізичні камені, lifecycle, ruleset-и, revocable public passport, приватні вкладення та майбутні фінансові записи. |
-| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes` | Числові й текстові довідники, legacy demo-індекс та versioned дані зовнішніх провайдерів. |
+| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes`, `fx_data_snapshots` | Числові й текстові довідники, legacy demo-індекс та versioned дані зовнішніх провайдерів. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
 ## Контрольовані значення
@@ -165,7 +165,8 @@ API не монтує storage як static directory: читання проход
 | --- | --- |
 | `valuation_kind`, `amount`, `currency_code`, `unit` | Семантика й точна сума. |
 | `source_name`, `source_reference`, `observed_at` | Перевірюване зовнішнє або експертне джерело та момент спостереження. |
-| `market_snapshot_id`, `applicability_note` | Nullable ідентифікатор immutable snapshot-а та обов’язкове для OpenFacet пояснення, чому admin вважає його застосовним. Значення snapshot не копіюються й не перераховуються. |
+| `market_snapshot_id`, `applicability_note` | Nullable ідентифікатор immutable OpenFacet snapshot-а та обов’язкове пояснення, чому admin вважає його застосовним. Значення snapshot не копіюються й не перераховуються. |
+| `fx_snapshot_id`, `fx_rate`, `fx_rate_date`, `converted_amount`, `converted_currency_code` | Nullable frozen NBU USD/UAH projection: snapshot, Decimal rate, official rate date і обчислений UAH total. Записуються разом із новим market reference і надалі не змінюються. |
 | `created_by_id`, `created_at` | Автор запису й технічний час. |
 
 `0008` дозволяє admin створити `market_reference` лише з approved OpenFacet
@@ -201,9 +202,9 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 Каталог підтримуваних зовнішніх джерел. `provider_code` — стабільний PK,
 `display_name`, `provider_type`, `base_currency`, `quote_unit`, `source_url`,
 `methodology_url`, `scope_note`, `is_active`, `created_at` пояснюють, що саме
-провайдер публікує. Revision `0008` додає один запис `openfacet`; додавання
-іншого провайдера потребує adapter-а, policy та окремого рішення про умови
-використання.
+провайдер публікує. Revision `0008` додає `openfacet`, а `0009` — `nbu` як
+джерело official USD/UAH. Додавання іншого провайдера потребує adapter-а,
+policy та окремого рішення про умови використання.
 
 ### `market_data_snapshots`
 
@@ -222,6 +223,14 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 в межах snapshot-а. Для OpenFacet цілісна сума каменю обчислюється сервером з
 обраного snapshot-а й ваги через явну interpolation між carat anchors;
 збережена `StoneValuation.amount` не змінюється з новим snapshot-ом.
+
+### `fx_data_snapshots`
+
+Незмінна відповідь офіційного курсу: `fx_snapshot_id`, `provider_code=nbu`,
+base `USD`, quote `UAH`, `rate DECIMAL(18,8)`, `rate_date`, URL,
+`retrieved_at`, actor і `created_at`. Manual refresh лише додає запис. Під час
+OpenFacet attach backend завжди бере нову відповідь НБУ; він не підставляє
+старий snapshot, якщо мережа недоступна.
 
 ## Модель `diamond_analytics`
 
@@ -244,6 +253,7 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 | `0006_expert_activation` | Оборотний active-стан експертних акаунтів без hard delete. |
 | `0007_grading_rulesets` | Immutable metadata `idc-demo-v1` і legacy marker без перерахунку report grades. |
 | `0008_market_data_providers` | Provider-neutral catalog, immutable OpenFacet candidate/approved/rejected snapshots і quotes; nullable snapshot provenance у `stone_valuations`. Не fetch-ить дані, не створює valuation, не переписує legacy/demo values. |
+| `0009_nbu_fx_snapshots` | Додає `nbu`, immutable `fx_data_snapshots` і nullable frozen FX/UAH поля для нових `stone_valuations`. Не backfill-ить і не переоцінює historical values. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за

@@ -4,7 +4,7 @@
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), детальна карта таблиць і зв’язків — у [db-schema.md](./db-schema.md), повний користувацький workflow звіту й паспорта — у [guide](./guides/current-domain-and-report-workflow.md), перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 17 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`–`0008_market_data_providers` формують ядро, private files, authoring-вимоги, revocable public passport, immutable metadata ruleset-ів і versioned ринкові snapshot-и. `0008` застосовано до локальної MariaDB 17 вересня 2026. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
+> **Статус на 17 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`–`0009_nbu_fx_snapshots` формують ядро, private files, authoring-вимоги, revocable public passport, immutable metadata ruleset-ів, versioned market snapshots і frozen NBU FX snapshots. Локальна MariaDB ще потребує окремого застосування `0009`. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
 
 ---
 
@@ -104,14 +104,14 @@ Backend запускають із кореня репозиторію через
 
 | Група | Призначення |
 | --- | --- |
-| `/reports` | Приватний API ядра: draft, stone, lifecycle, події, RBAC, server-paginated dashboard list і full detail/update. `PUT /reports/{id}` допускається тільки для draft owner/admin та створює append-only `report_updated`; transitions лишаються окремим endpoint-ом. Dashboard передає `sold=true|false`; це зручна двостанова проєкція фактичного `market_status` (`sold` / усі інші стани), а не втрата його деталізації. Для локального demo-набору список також повертає legacy `price`, який UI маркує `USD … d`; це не ринкова чи експертна ціна. |
+| `/reports` | Приватний API ядра: draft, stone, lifecycle, події, RBAC, server-paginated dashboard list і full detail/update. `PUT /reports/{id}` допускається тільки для draft owner/admin та створює append-only `report_updated`; transitions лишаються окремим endpoint-ом. Dashboard передає `sold=true|false`; це зручна двостанова проєкція фактичного `market_status` (`sold` / усі інші стани), а не втрата його деталізації. Для локального demo-набору список також повертає legacy `price`, який UI маркує `USD … d`; це не ринкова чи експертна ціна. Явно прикріплений OpenFacet орієнтир має пріоритет відображення та маркер `USD … of`. |
 | `/reports/{report_id}/media` | Приватні upload, список, читання й видалення вкладень owner/admin; без public serving. |
 | `/reports/{report_id}/passport` | Admin-only publication state, publish/reissue/revoke, SVG QR та on-demand PDF-паспорт для поточного public URL. PDF будується з тієї самої allow-listed проєкції, не зберігається як snapshot і недоступний після revoke/void. |
 | `/public/passports/{public_id}` | Анонімна allow-listed projection лише активного `issued` report; 404 не розрізняє відсутній, відкликаний або недоступний token. |
 | `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
 | `/users/`, `/users/me`, `/users/me/profile`, `/users/me/password`, `/users/{id}/activate`, `/users/{id}/deactivate`, `/experts/` | Admin керує ролями й оборотним active-станом; користувач змінює лише власні ПІБ/пароль. Inactive account не проходить login/JWT; останній active admin захищений. |
 | `/market/mappings`, `/market/price` | Compatibility-маршрути для legacy mappings і технічного demo-індексу. Вони не є авторитетним ринковим джерелом і не створюють фінансової оцінки. |
-| `/market-data/*`, `/reports/{report_id}/valuations*` | Admin-only provider-neutral контур: перелік провайдерів, отримання immutable candidate snapshot, approve/reject та явне прикріплення `market_reference` до конкретного звіту. Перший adapter — OpenFacet; public passport і demo-ціна сюди не підключені. |
+| `/market-data/*`, `/reports/{report_id}/valuations*` | Admin-only provider-neutral контур: OpenFacet candidate → approve/reject, NBU USD/UAH refresh і явне прикріплення `market_reference` до конкретного звіту. У момент прикріплення backend повторно одержує NBU rate, створює immutable FX snapshot і зберігає USD, UAH, rate та його official date разом з valuation. Public passport і PDF сюди не підключені. |
 | `/statistics/expert-performance` | Admin-only all-time operational snapshot gemologist-ів: статусні лічильники звітів; без ціни, ML, середньої ваги чи рейтингу. |
 | `/docs`, `/openapi.json` | Swagger UI та машинозчитуваний API-контракт FastAPI. |
 
@@ -125,8 +125,8 @@ Backend запускають із кореня репозиторію через
 
 | База | Призначення | Поточний стан |
 | --- | --- | --- |
-| `diamond_oltp` | `experts` (з `is_active`), compatibility `diamond_reports`, `stones`, `report_events`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` і lifecycle-колонки | Кодова та локальна MariaDB head revision — `0008_market_data_providers` |
-| `diamond_market` | `grade_mappings`, legacy demo-індекс, `reference_values`, provider catalog і versioned market snapshots/quotes | `0008` додає OpenFacet foundation без fetch або backfill |
+| `diamond_oltp` | `experts` (з `is_active`), compatibility `diamond_reports`, `stones`, `report_events`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` і lifecycle-колонки | Кодова head revision — `0009_nbu_fx_snapshots`; локальна MariaDB потребує окремого upgrade |
+| `diamond_market` | `grade_mappings`, legacy demo-індекс, `reference_values`, provider catalog, versioned market snapshots/quotes і immutable FX snapshots | `0009` додає NBU USD/UAH без backfill |
 | `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 
 Новий wizard створює звіт через `POST /reports`: сервер призначає остаточний
@@ -142,8 +142,12 @@ Wizard не викликає ML-модель: його preview детермін�
 методологію, checksum, USD/ct quotes і момент отримання. Для OpenFacet
 потрібне явне підтвердження застосовності до конкретного natural-звіту,
 оскільки поточний контракт не зберігає дані лабораторного сертифіката. Це
-довідковий benchmark, не експертна, продажна чи транзакційна ціна. Деталі —
-у [ADR-002](./decisions/002-financial-calculation-contract.md).
+довідковий benchmark, не експертна, продажна чи транзакційна ціна. Під час
+його прикріплення backend не використовує старий курс: він запитує офіційний
+USD/UAH НБУ, а потім зберігає Decimal rate, official rate date, UAH total і
+FX snapshot. Якщо НБУ недоступний, valuation не створюється; пізніші курси не
+змінюють уже збережені суми. Деталі — у
+[ADR-002](./decisions/002-financial-calculation-contract.md).
 
 ---
 

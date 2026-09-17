@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — nbu-fx-for-market-references (завершено в коді; очікує локальної міграції)
+
+- **Задача:** завершити 121: додати НБУ USD/UAH до контрольованого OpenFacet market-reference без переоцінки історії або відкриття ціни у passport/PDF.
+- **Змінені файли:** `alembic/versions/0009_nbu_fx_snapshots.py`, `backend/{fx,crud,main,models,schemas}.py`, `tests/{unit/test_nbu_fx,api/test_market_data}.py`, `frontend/src/{js/modules/{api,dashboard,market-data,report-detail}.js,pug/pages/{dashboard,market-data}.pug}`, `frontend/tests/{auth-and-api,page-dom}.test.mjs`, `docs/{architecture,db-schema,local-start,work_plan,progress}.md`, `docs/{decisions/002-financial-calculation-contract.md,guides/current-domain-and-report-workflow.md,backlog/121-market-data-provider-expansion-and-fx.md}`.
+- **Рішення / Результат:** `0009` реєструє `nbu`, створює immutable `fx_data_snapshots` та nullable frozen FX/UAH поля для лише нових `stone_valuations`. Attach approved OpenFacet snapshot-а повторно отримує official USD/UAH НБУ, у тій самій транзакції зберігає rate, official rate date, FX snapshot і UAH total. Помилка НБУ повертає 502 та не дозволяє непомітно використати старий курс. Admin може вручну створити контрольний NBU snapshot. Dashboard показує `USD … d` для legacy demo або `USD … of` для OpenFacet; popover і private detail пояснюють USD, UAH та provenance. Passport і PDF не містять цін.
+- **Перевірки:** backend pytest — 42 passed (запуск групами через обмеження локального runner-а); `npm test` — 20 passed; `npm run test:e2e` — 14 passed; `alembic upgrade head --sql` — успішно; `git diff --check` — без помилок. `alembic check` очікувано повідомляє, що локальна MariaDB ще на `0008`, тоді як кодова head — `0009`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** міграцію ще не застосовано до локальної MariaDB; до цього UI/API з новими полями не треба запускати проти цієї БД. Немає scheduler, retries/backoff, historical backfill, нового комерційного провайдера чи public/PDF price policy. OpenFacet лишається довідковим benchmark, не appraisal/offer/transaction/sale price.
+
 ## 2026-09-17 — authoritative-market-data-providers (завершено)
 
 - **Задача:** завершити 110: створити безпечний розширюваний контур ринкових даних з першим OpenFacet adapter-ом без підміни legacy/demo ціни.

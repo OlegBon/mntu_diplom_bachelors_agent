@@ -53,6 +53,21 @@
 5. Legacy `DiamondReport.price`, dashboard `USD … d`, demo preview wizard,
    public passport і PDF не отримують цю суму автоматично.
 
+### Реалізований USD/UAH FX-контур
+
+`0009_nbu_fx_snapshots` додає офіційний курс НБУ, але не робить його ціною
+діаманта. Коли admin прикріплює approved OpenFacet reference, backend заново
+запитує USD/UAH, обчислює UAH через `Decimal` із `ROUND_HALF_UP` до двох
+знаків і в одній транзакції зберігає FX snapshot, rate, official rate date та
+UAH total. Якщо НБУ недоступний або повертає некоректну відповідь, reference
+не створюється і старий курс не підставляється.
+
+Новий NBU snapshot ніколи не змінює valuation, яка вже збережена. Admin може
+створити ручний snapshot для контролю, але це не є approval flow і не змінює
+звіти. Dashboard позначає legacy-demo `d`, а явний OpenFacet reference `of`;
+popover та private detail показують source, OpenFacet snapshot, USD, frozen
+UAH і NBU provenance. Public passport та PDF, як і раніше, не містять цін.
+
 OpenFacet може змінити умови, доступність або формат. Перед будь-яким
 зовнішнім показом, розповсюдженням чи комерційним використанням потрібна
 окрема перевірка ліцензій і policy: [API](https://openfacet.net/en/api-docs/),
@@ -82,8 +97,7 @@ OpenFacet може змінити умови, доступність або фо
 
 ## Наслідки та наступні кроки
 
-037 не змінила historical записи. `0008` додає нові структури без backfill;
-її застосування до MariaDB потребує окремого підтвердження й backup. NBU FX,
-інші провайдери, USD/UAH, scheduler, freshness policy та рішення про
-клієнтське/PDF-відображення не входять до цього зрізу й мають бути погоджені
-перед реалізацією.
+037 не змінила historical записи. `0008` і `0009` додають нові структури без
+backfill; їх застосування до MariaDB потребує окремого підтвердження й backup.
+Scheduler, інші провайдери та рішення про клієнтське/PDF-відображення не
+входять до цього зрізу й мають бути погоджені перед реалізацією.
