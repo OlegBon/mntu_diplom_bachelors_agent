@@ -203,20 +203,35 @@ function renderValuations(container, helpNode, valuations) {
   helpNode.textContent = "OpenFacet — model-based retail reference, не експертна, продажна чи транзакційна ціна.";
   for (const valuation of marketReferences) {
     const item = document.createElement("li");
+    item.className = "market-reference-card";
+    const summary = document.createElement("div");
+    summary.className = "market-reference-card__summary";
     const amount = document.createElement("strong");
     amount.textContent = formatAmount(valuation.amount, valuation.currency_code);
-    const source = document.createElement("span");
-    source.textContent = ` · ${valuation.source_name} · snapshot #${valuation.market_snapshot_id ?? "—"} · ${formatDate(valuation.observed_at)}`;
-    item.append(amount, source);
+    const label = document.createElement("span");
+    label.textContent = "Довідковий орієнтир";
+    summary.append(amount, label);
+    const details = document.createElement("dl");
+    details.className = "market-reference-card__details";
+    const addDetail = (term, value) => {
+      const row = document.createElement("div");
+      const dt = document.createElement("dt"); dt.textContent = term;
+      const dd = document.createElement("dd"); dd.textContent = value;
+      row.append(dt, dd); details.append(row);
+    };
+    addDetail("Провайдер", valuation.source_name);
+    addDetail("Знімок OpenFacet", `#${valuation.market_snapshot_id ?? "—"}`);
+    addDetail("Отримано", formatDate(valuation.observed_at));
     if (valuation.converted_amount && valuation.converted_currency_code) {
-      const converted = document.createElement("span");
-      const rateDate = valuation.fx_rate_date ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${valuation.fx_rate_date}T00:00:00`)) : "—";
-      converted.textContent = ` · ≈ ${formatAmount(valuation.converted_amount, valuation.converted_currency_code)} · НБУ ${valuation.fx_rate} UAH/USD, ${rateDate} (знімок #${valuation.fx_snapshot_id ?? "—"})`;
-      item.append(converted);
+      const rateDate = valuation.fx_rate_date ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${valuation.fx_rate_date}T12:00:00`)) : "—";
+      addDetail("Еквівалент", formatAmount(valuation.converted_amount, valuation.converted_currency_code));
+      addDetail("Курс НБУ", `${valuation.fx_rate} UAH/USD · ${rateDate} · знімок #${valuation.fx_snapshot_id ?? "—"}`);
     }
+    item.append(summary, details);
     if (valuation.applicability_note) {
-      const note = document.createElement("span");
-      note.textContent = ` · Підтвердження: ${valuation.applicability_note}`;
+      const note = document.createElement("p");
+      note.className = "market-reference-card__note";
+      note.append(document.createTextNode("Підтвердження: "), document.createTextNode(valuation.applicability_note));
       item.append(note);
     }
     container.append(item);
