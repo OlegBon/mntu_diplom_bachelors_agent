@@ -79,9 +79,11 @@ Private API потребує JWT. Видимість або приховуван
 
 `POST /reports/preview` не зберігає звіт. Серверний `DiamondCalculator`
 визначає Proportions за геометрією, а Final Cut — як найгіршу з оцінок
-Proportions, Polish і Symmetry. Це системний розрахунок ruleset `idc-demo-v1`,
-а не повна експертна методика IDC 2013. Межі та процес майбутнього оновлення
-описані в [guide ruleset](./idc-demo-v1-ruleset.md).
+Proportions, Polish і Symmetry. Це спрощений системний розрахунок Diamant ID,
+методична основа якого — *IDC Rules for Grading Polished Diamonds, 6th edition
+(2013)*, а не повна експертна методика або сертифікація IDC. Внутрішній код
+ruleset `idc-demo-v1` не показується користувачу; межі та процес майбутнього
+оновлення описані в [guide ruleset](./idc-demo-v1-ruleset.md).
 
 Якщо в admin policy є обраний провайдер та його застосовний `approved` snapshot,
 цей самий preview показує `USD … of`: системний довідковий орієнтир із поточних

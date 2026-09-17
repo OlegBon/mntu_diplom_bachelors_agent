@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — clarify-idc-methodology-in-wizard (завершено)
+
+- **Задача:** прибрати внутрішній code `idc-demo-v1` з user-facing preview майстра та чітко назвати його методичну основу.
+- **Змінені файли:** `backend/crud.py`, `frontend/src/{pug/pages/create-report.pug,js/modules/report-wizard.js}`, `docs/{progress,guides/current-domain-and-report-workflow,guides/idc-demo-v1-ruleset}.md`.
+- **Рішення / Результат:** майстер показує `IDC Rules for Grading Polished Diamonds, 6th edition (2013)` і межу «спрощений системний розрахунок Diamant ID; не є сертифікацією IDC». `idc-demo-v1` збережено лише як immutable внутрішній ідентифікатор API/БД для відтворюваності історичних grades; у коді та guide прямо зафіксовано, що це не назва й не версія документа. Назву джерела звірено за титульною сторінкою локального PDF; `July` не входить до неї.
+- **Перевірки:** `frontend npm test` — 20 passed; `python -m pytest tests/api/test_report_domain.py tests/unit/test_migration_foundation.py -q` — 11 passed.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** документ 2013 року не названо «останньою редакцією IDC», бо для такого твердження потрібна окрема перевірка актуальних публікацій IDC.
+
 ## 2026-09-17 — wizard-policy-market-reference-preview (завершено)
 
 - **Задача:** замінити legacy demo-прогноз `USD … d` у майстрі створення звіту на системний довідковий USD-орієнтир із поточної admin policy.

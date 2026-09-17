@@ -16,6 +16,9 @@ from .calculator import DiamondCalculator
 
 
 CURRENT_RULESET_ID = "idc-demo-v1"
+# Immutable internal identifier, not an IDC document title or edition. Existing
+# reports retain it for reproducibility; user-facing text must name the source
+# document and state the limited Diamant ID implementation separately.
 # Kept as a compatibility alias for callers and serialized API contracts.
 REPORT_RULE_VERSION = CURRENT_RULESET_ID
 

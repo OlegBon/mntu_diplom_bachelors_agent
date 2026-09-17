@@ -2,10 +2,12 @@
 
 ## Призначення
 
-`idc-demo-v1` — незмінний ruleset локального MVP Diamant ID. Він дає
+`idc-demo-v1` — незмінний **внутрішній технічний ідентифікатор** ruleset локального
+MVP Diamant ID, а не назва або версія документа IDC. Він дає
 детермінований server-side preview для Round Brilliant, але не є повною
 реалізацією чи юридичним підтвердженням відповідності *IDC Rules for Grading
-Polished Diamonds, 6th edition, July 2013*.
+Polished Diamonds, 6th edition (2013)*. Слово `July` з локальної назви PDF не
+входить до назви документа на його титульній сторінці.
 
 Усі нові report отримують `calculation_rule_version=idc-demo-v1`. Історичні
 рядки, у яких версії не було, після migration `0007_grading_rulesets` чесно
@@ -22,8 +24,9 @@ Polished Diamonds, 6th edition, July 2013*.
 | Final Cut | Системний preview: worst component із system Proportions, Polish, Symmetry. Експертний підсумок: worst component із expert Proportions, Polish, Symmetry | Це MVP-алгоритм, не повна IDC interdependency table. |
 | Nature, treatment, disclosure | Є контрольовані поля origin, treatment та identification | Набір і текст звіту не претендують на повний склад сертифіката IDC. |
 
-Через ці межі UI повинен називати результат «системний розрахунок за
-`idc-demo-v1`», а не «IDC-сертифікація».
+Через ці межі UI повинен називати результат «спрощений системний розрахунок
+Diamant ID» і наводити його методичну основу, а не показувати технічний код
+`idc-demo-v1` чи називати результат «IDC-сертифікацією».
 
 ## Джерела оцінок у report
 

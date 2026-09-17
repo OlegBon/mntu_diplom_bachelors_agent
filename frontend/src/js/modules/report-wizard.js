@@ -157,7 +157,6 @@ export async function initReportWizard() {
         priceSource.textContent = preview.system_market_reference_usd === null
           ? "Немає доступного системного орієнтиру для введених характеристик."
           : `${providerNames[preview.market_reference_provider_code] || preview.market_reference_provider_code} · знімок #${preview.market_reference_snapshot_id}. Значення буде зафіксовано під час збереження чернетки.`;
-        document.getElementById("calculation-rule-version").textContent = `Правило IDC: ${preview.calculation_rule_version}`;
       } catch { /* invalid values are handled by native fields */ }
     }, 300);
   };
