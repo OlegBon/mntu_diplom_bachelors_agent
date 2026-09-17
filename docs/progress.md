@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — market-policy-control-and-fx-format-polish (завершено)
+
+- **Задача:** виправити розтягнутий radio-control policy провайдера на «Ринкові дані» та прибрати штучні нулі з відображення зафіксованого курсу НБУ.
+- **Змінені файли:** `frontend/src/{pug/pages/market-data.pug,scss/_ui-primitives.scss,js/modules/{market-data,dashboard,report-detail}.js}`, `docs/progress.md`.
+- **Рішення / Результат:** policy radio отримав окремий компактний flex/card-стиль без успадкування checkbox-layout; він однаково працює в desktop і mobile flow. БД зберігає FX rate із точністю `DECIMAL(18,8)`, але private detail і dashboard popover показують локалізоване число максимум із вісьмома значущими десятковими знаками без trailing zeros: `44.6648 UAH/USD` замість `44.66480000`.
+- **Перевірки:** `frontend npm run build` — успішно; Node/jsdom tests — 20 passed; Playwright market-data — 1 passed; `git diff --check` — без помилок. Browser-вікно цієї сесії недоступне, тому візуальний screenshot QA не виконано.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** currency formatting застосовано до dashboard/private detail; сутність rate і API зберігають повну Decimal-точність. Потрібна коротка ручна перевірка відрендереного desktop і mobile control після оновлення BrowserSync.
+
 ## 2026-09-17 — configurable-market-reference-policy (завершено)
 
 - **Задача:** завершити 121 керованою admin policy для провайдерів, прибрати `*` з самого значення ціни та відокремити legacy `market_price_reference` від нового ринкового контуру.

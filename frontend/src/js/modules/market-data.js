@@ -74,7 +74,7 @@ function renderPolicyMarketProviders(container, providers, selectedProviderCode)
   }
   for (const provider of marketProviders) {
     const label = document.createElement("label");
-    label.className = "market-data-confirmation";
+    label.className = "market-policy-option";
     const input = document.createElement("input");
     input.type = "radio";
     input.name = "market-policy-provider";

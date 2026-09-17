@@ -46,6 +46,11 @@ function formatAmount(amount, currencyCode) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: currencyCode, minimumFractionDigits: 2 }).format(Number(amount));
 }
 
+function formatFxRate(value) {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 8 }).format(Number(value));
+}
+
 function reportIdFromUrl() {
   return new URLSearchParams(window.location.search).get("id")?.trim() || "";
 }
@@ -226,7 +231,7 @@ function renderValuations(container, helpNode, valuations) {
     if (valuation.converted_amount && valuation.converted_currency_code) {
       const rateDate = valuation.fx_rate_date ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${valuation.fx_rate_date}T12:00:00`)) : "—";
       addDetail("Еквівалент", formatAmount(valuation.converted_amount, valuation.converted_currency_code));
-      addDetail("Курс НБУ", `${valuation.fx_rate} UAH/USD · ${rateDate} · знімок #${valuation.fx_snapshot_id ?? "—"}`);
+      addDetail("Курс НБУ", `${formatFxRate(valuation.fx_rate)} UAH/USD · ${rateDate} · знімок #${valuation.fx_snapshot_id ?? "—"}`);
     }
     item.append(summary, details);
     if (valuation.applicability_note) {

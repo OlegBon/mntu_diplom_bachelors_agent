@@ -134,6 +134,11 @@ function renderPrice(report) {
   return wrapper;
 }
 
+function formatFxRate(value) {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 8 }).format(Number(value));
+}
+
 function formatDateOnly(value) {
   if (!value) return "—";
   return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${value}T12:00:00`));
@@ -163,7 +168,7 @@ function renderMarketReferencePrice(report) {
   ];
   if (reference.converted_amount && reference.converted_currency_code) {
     details.push(["Еквівалент", `${reference.converted_currency_code} ${formatDemoPrice(reference.converted_amount)}`]);
-    details.push(["Курс НБУ", `${reference.fx_rate} UAH/USD · ${formatDateOnly(reference.fx_rate_date)} · знімок #${reference.fx_snapshot_id ?? "—"}`]);
+    details.push(["Курс НБУ", `${formatFxRate(reference.fx_rate)} UAH/USD · ${formatDateOnly(reference.fx_rate_date)} · знімок #${reference.fx_snapshot_id ?? "—"}`]);
   }
   for (const [label, value] of details) {
     const row = createElement("p", "report-price__detail");
