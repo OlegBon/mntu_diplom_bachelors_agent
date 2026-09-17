@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — versioned-idc-rulesets-and-report-actions (завершено)
+
+- **Задача:** завершити 105: зафіксувати межі `idc-demo-v1`, версіонувати методику без зміни історичних звітів, прибрати ручний Final Cut та узгодити workflow і дії списку звітів.
+- **Змінені файли:** `alembic/versions/0007_grading_rulesets.py`, `backend/{calculator,crud,models,schemas}.py`, `frontend/src/{pug/pages/report-detail.pug,js/modules/{dashboard,report-detail}.js,scss/_ui-primitives.scss}`, `frontend/tests/e2e/{dashboard,report-detail,report-detail-confirmation-grades}.spec.mjs`, `tests/{api/test_report_domain.py,unit/test_migrations.py}`, `docs/{architecture,db-schema,work_plan,progress}.md`, `docs/guides/{README,current-domain-and-report-workflow,idc-demo-v1-ruleset}.md`; `docs/backlog/105-versioned-reference-catalogs.md` видалено.
+- **Рішення / Результат:** `grading_rulesets` містить immutable metadata активного `idc-demo-v1` та legacy marker; нові звіти отримують активну версію, historical не перераховуються. Polish, Symmetry і експертний Proportions вводить експерт, а підсумковий Cut сервер обчислює детерміновано. У dashboard редагування доступне лише для `draft`; «Друк» відкриває private detail і системний діалог друку. Guide спочатку подає коди статусів і UI-підписи, а потім повний workflow.
+- **Перевірки:** міграцію `0007_grading_rulesets` застосовано до локальної MariaDB і перевірено read-only SQL; цільові backend-тести — 34 passed; `npm test` — 16 passed; Playwright dashboard і report detail — 2 passed; `git diff --check`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** `idc-demo-v1` — спрощена методика, не повна сертифікація IDC 2013. Admin UI не редагує формули чи межі: нова IDC-методика потребує окремого аналізу, ruleset, міграції та тестових векторів. «Друк» — внутрішній private report; документ для покупця залишається public passport PDF.
+
 ## 2026-09-17 — backlog-hygiene-after-task-100 (завершено)
 
 - **Задача:** прибрати виконану 100 з активного backlog і окремо зафіксувати наступний UI-polish.
