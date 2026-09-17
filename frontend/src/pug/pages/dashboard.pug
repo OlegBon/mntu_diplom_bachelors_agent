@@ -67,7 +67,7 @@ block content
                         select#cut-filter.form-select(name="cut_grade")
                             option(value="") Будь-яка
                     .filter-item
-                        label Ціна (USD, demo)
+                        label Demo-ціна (USD)
                         .range-inputs
                             input#price-min.form-control(type="number" name="price_min" min="0" step="0.01" placeholder="Від")
                             input#price-max.form-control(type="number" name="price_max" min="0" step="0.01" placeholder="До")
@@ -83,7 +83,7 @@ block content
 
         #dashboard-status.dashboard-status(role="status" aria-live="polite")
         p#dashboard-demo-note.dashboard-demo-note
-            | Демо-дані: 1 000 звітів за 01.01.2023–31.12.2025. Значення ціни не є актуальним ринковим котируванням.
+            | Позначки ціни: d — demo-значення з навчального набору; of — довідковий ринковий орієнтир OpenFacet. Ринковий орієнтир не є експертною, продажною чи транзакційною ціною; його еквівалент у UAH зафіксовано за курсом НБУ під час прикріплення.
 
         .table-container(tabindex="0")
             table.data-table

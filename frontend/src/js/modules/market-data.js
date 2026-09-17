@@ -6,6 +6,8 @@ import {
   getCurrentUser,
   getMarketDataProviders,
   getMarketDataSnapshots,
+  getFxDataSnapshots,
+  refreshNbuRate,
 } from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 
@@ -32,7 +34,7 @@ function marketReferenceMessage(error) {
   return messages[error?.message] || error?.message || "Не вдалося прикріпити ринковий орієнтир.";
 }
 
-function renderProviders(container, providers, onFetch) {
+function renderProviders(container, providers, fxSnapshots, onAction) {
   container.replaceChildren();
   for (const provider of providers) {
     const card = document.createElement("article");
@@ -45,8 +47,18 @@ function renderProviders(container, providers, onFetch) {
       links.append(link, document.createTextNode(" · "));
     }
     links.lastChild.remove();
-    const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-primary"; button.textContent = "Отримати кандидат";
-    button.addEventListener("click", () => onFetch(provider.provider_code, button));
+    const isNbu = provider.provider_code === "nbu";
+    if (isNbu) {
+      const latest = fxSnapshots[0];
+      const rate = document.createElement("p");
+      rate.textContent = latest
+        ? `Останній знімок: 1 USD = ${Number(latest.rate).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} UAH · офіційна дата ${new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${latest.rate_date}T00:00:00`))}.`
+        : "Знімків курсу ще немає. Під час прикріплення орієнтира курс також отримується автоматично.";
+      card.append(rate);
+    }
+    const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-primary";
+    button.textContent = isNbu ? "Оновити зараз" : "Отримати кандидат";
+    button.addEventListener("click", () => onAction(provider.provider_code, button));
     card.append(title, note, links, button); container.append(card);
   }
 }
@@ -121,11 +133,22 @@ export async function initMarketData() {
     decisionReason.focus();
   };
   const refresh = async () => {
-    const [providerRows, snapshotRows] = await Promise.all([getMarketDataProviders(token), getMarketDataSnapshots(token)]);
+    const [providerRows, snapshotRows, fxSnapshotRows] = await Promise.all([getMarketDataProviders(token), getMarketDataSnapshots(token), getFxDataSnapshots(token)]);
     currentSnapshots = snapshotRows;
-    renderProviders(providers, providerRows, async (providerCode, button) => {
+    renderProviders(providers, providerRows, fxSnapshotRows, async (providerCode, button) => {
       button.disabled = true;
-      try { setStatus(status, "Отримання даних OpenFacet…"); await fetchMarketDataCandidate(providerCode, token); setStatus(status, "Створено кандидат. Перевірте покриття та затвердьте його окремо."); await refresh(); }
+      try {
+        if (providerCode === "nbu") {
+          setStatus(status, "Отримання офіційного курсу НБУ…");
+          await refreshNbuRate(token);
+          setStatus(status, "Новий незмінний знімок офіційного курсу НБУ збережено.");
+        } else {
+          setStatus(status, "Отримання даних OpenFacet…");
+          await fetchMarketDataCandidate(providerCode, token);
+          setStatus(status, "Створено кандидат. Перевірте покриття та затвердьте його окремо.");
+        }
+        await refresh();
+      }
       catch (error) { setStatus(status, error.message || "Не вдалося отримати дані провайдера.", true); }
       finally { button.disabled = false; }
     });
@@ -148,7 +171,10 @@ export async function initMarketData() {
         document.getElementById("market-reference-report-id").value.trim(),
         { snapshot_id: Number(snapshotSelect.value), applicability_confirmed: true, applicability_note: document.getElementById("market-reference-note").value.trim() }, token,
       );
-      setStatus(status, `Додано ринковий орієнтир: ${valuation.currency_code} ${Number(valuation.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`);
+      const converted = valuation.converted_amount
+        ? ` ≈ ${valuation.converted_currency_code} ${Number(valuation.converted_amount).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
+        : "";
+      setStatus(status, `Додано ринковий орієнтир: ${valuation.currency_code} ${Number(valuation.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.${converted}`);
       setStatus(referenceStatus, "Ринковий орієнтир успішно прикріплено.");
       form.reset(); updateApprovedSnapshotOptions(snapshotSelect, currentSnapshots);
     } catch (error) {

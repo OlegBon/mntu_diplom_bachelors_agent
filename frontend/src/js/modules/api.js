@@ -66,6 +66,10 @@ export const getMarketDataProviders = (token) => requestApi("/market-data/provid
 
 export const getMarketDataSnapshots = (token) => requestApi("/market-data/snapshots", { token });
 
+export const getFxDataSnapshots = (token) => requestApi("/market-data/fx-snapshots", { token });
+
+export const refreshNbuRate = (token) => requestApi("/market-data/providers/nbu/refresh", { method: "POST", token });
+
 export const fetchMarketDataCandidate = (providerCode, token) => requestApi(
   `/market-data/providers/${encodeURIComponent(providerCode)}/fetch`, { method: "POST", token },
 );

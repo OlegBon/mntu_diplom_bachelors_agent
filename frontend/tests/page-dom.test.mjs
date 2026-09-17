@@ -54,7 +54,8 @@ test("built dashboard exposes real list controls without mock rows", async () =>
   assert.equal(document.querySelector("#quick-report-status")?.tagName, "SELECT");
   assert.equal(document.querySelector("#quick-market-status")?.tagName, "SELECT");
   assert.equal(document.querySelector("#expert-filter-wrap")?.hasAttribute("hidden"), true);
-  assert.match(document.querySelector("#dashboard-demo-note")?.textContent || "", /2023/);
+  assert.match(document.querySelector("#dashboard-demo-note")?.textContent || "", /OpenFacet/);
+  assert.match(document.querySelector("#dashboard-demo-note")?.textContent || "", /НБУ/);
   assert.equal(document.querySelector(".data-table tbody")?.children.length, 0);
   assert.equal(document.querySelector(".report-actions"), null);
   assert.equal(document.querySelectorAll(".table-sort").length, 10);

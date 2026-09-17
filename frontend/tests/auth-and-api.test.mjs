@@ -6,11 +6,13 @@ import {
   getExpertStatistics,
   getMarketDataProviders,
   getMarketDataSnapshots,
+  getFxDataSnapshots,
   getNextReportId,
   getPublicPassport,
   getReportDashboard,
   getReferenceValues,
   loginUser,
+  refreshNbuRate,
 } from "../src/js/modules/api.js";
 import { checkAuth, logout } from "../src/js/modules/auth.js";
 
@@ -135,9 +137,13 @@ test("market-data APIs use protected administrator endpoints", async () => {
 
   await getMarketDataProviders("test-token");
   await getMarketDataSnapshots("test-token");
+  await getFxDataSnapshots("test-token");
+  await refreshNbuRate("test-token");
 
   assert.deepEqual(paths, [
     ["http://127.0.0.1:8000/market-data/providers", "Bearer test-token"],
     ["http://127.0.0.1:8000/market-data/snapshots", "Bearer test-token"],
+    ["http://127.0.0.1:8000/market-data/fx-snapshots", "Bearer test-token"],
+    ["http://127.0.0.1:8000/market-data/providers/nbu/refresh", "Bearer test-token"],
   ]);
 });

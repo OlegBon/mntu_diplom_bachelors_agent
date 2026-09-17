@@ -208,6 +208,12 @@ function renderValuations(container, helpNode, valuations) {
     const source = document.createElement("span");
     source.textContent = ` · ${valuation.source_name} · snapshot #${valuation.market_snapshot_id ?? "—"} · ${formatDate(valuation.observed_at)}`;
     item.append(amount, source);
+    if (valuation.converted_amount && valuation.converted_currency_code) {
+      const converted = document.createElement("span");
+      const rateDate = valuation.fx_rate_date ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${valuation.fx_rate_date}T00:00:00`)) : "—";
+      converted.textContent = ` · ≈ ${formatAmount(valuation.converted_amount, valuation.converted_currency_code)} · НБУ ${valuation.fx_rate} UAH/USD, ${rateDate} (знімок #${valuation.fx_snapshot_id ?? "—"})`;
+      item.append(converted);
+    }
     if (valuation.applicability_note) {
       const note = document.createElement("span");
       note.textContent = ` · Підтвердження: ${valuation.applicability_note}`;
