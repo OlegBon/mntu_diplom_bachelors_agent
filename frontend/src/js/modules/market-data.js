@@ -21,6 +21,17 @@ function setStatus(node, message, isError = false) {
   node.hidden = false;
 }
 
+function marketReferenceMessage(error) {
+  const messages = {
+    "OpenFacet reference is available only for natural stones": "OpenFacet у цьому контурі доступний лише для каменів із походженням «Природний». Для лабораторно вирощеного каменю орієнтир не створено.",
+    "The report lacks characteristics required by the selected market snapshot": "У звіті бракує характеристик, потрібних для зіставлення з обраним знімком OpenFacet.",
+    "The approved snapshot does not cover this shape, color or clarity": "Обраний знімок OpenFacet не має покриття для цієї форми, кольору або чистоти.",
+    "The approved snapshot does not cover this carat weight": "Обраний знімок OpenFacet не має покриття для цієї ваги в каратах.",
+    "This approved snapshot is already attached to the report": "Цей затверджений знімок уже прикріплено до звіту.",
+  };
+  return messages[error?.message] || error?.message || "Не вдалося прикріпити ринковий орієнтир.";
+}
+
 function renderProviders(container, providers, onFetch) {
   container.replaceChildren();
   for (const provider of providers) {
@@ -86,6 +97,7 @@ export async function initMarketData() {
   const providers = document.getElementById("market-data-providers");
   const snapshots = document.getElementById("market-data-snapshots");
   const form = document.getElementById("market-reference-attach-form");
+  const referenceStatus = document.getElementById("market-reference-status");
   const snapshotSelect = document.getElementById("market-reference-snapshot");
   const decisionDialog = document.getElementById("market-decision-dialog");
   const decisionForm = document.getElementById("market-decision-form");
@@ -137,8 +149,13 @@ export async function initMarketData() {
         { snapshot_id: Number(snapshotSelect.value), applicability_confirmed: true, applicability_note: document.getElementById("market-reference-note").value.trim() }, token,
       );
       setStatus(status, `Додано ринковий орієнтир: ${valuation.currency_code} ${Number(valuation.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`);
+      setStatus(referenceStatus, "Ринковий орієнтир успішно прикріплено.");
       form.reset(); updateApprovedSnapshotOptions(snapshotSelect, currentSnapshots);
-    } catch (error) { setStatus(status, error.message || "Не вдалося прикріпити ринковий орієнтир.", true); }
+    } catch (error) {
+      const message = marketReferenceMessage(error);
+      setStatus(status, message, true);
+      setStatus(referenceStatus, message, true);
+    }
   });
   document.getElementById("market-decision-dialog-close").addEventListener("click", closeDecisionDialog);
   document.getElementById("market-decision-cancel").addEventListener("click", closeDecisionDialog);
