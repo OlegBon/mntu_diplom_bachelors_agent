@@ -15,7 +15,7 @@
 | `/experts/` | Залишити: авторизований список не-admin експертів працює. |
 | `/reports` | Єдиний private API звітів; legacy `/diamonds/*` вилучено в 085 без міграції historical даних. |
 | `/market/*` | Залишити; прибрати frontend hardcode mappings/ціни та додати admin UI пізніше. |
-| `/statistics/expert-performance` | Залишити після рішення про публічність usernames; додати analytics UI пізніше. |
+| `/statistics/expert-performance` | Admin-only operational status snapshot експертів; окремо доступний admin review-cycle analytics, без цін, ML чи active-time. |
 
 Повних дублікатів endpoint-ів не лишилося. Dashboard, wizard і detail/edit працюють через `/reports`; legacy `/diamonds/*`, unreachable handler та demo `MLService` вилучено. Historical projection-колонки та `scripts/recalc_grades.py` не змінювалися: їхня доля зафіксована окремою задачею 120. `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як зарезервовану SQLAlchemy-модель.
 
@@ -70,7 +70,8 @@
 - [x] 095 — Передача публічного паспорта та PDF: admin бачить і копіює код/URL, landing приймає лише код, а пряме посилання й посилання з QR відкривають паспорт напряму. Server генерує on-demand allow-listed PDF для поточного active issued report. Старі код/QR/URL не підходять після reissue; revoke і void закривають нове завантаження.
 - [x] 100 — Профіль і admin UI: profile ПІБ/password, admin roles і reversible deactivate; versioned довідники — 105, статистика — 108.
 - [x] 105 — Версії правил IDC і довідників оцінювання: зафіксовані межі `idc-demo-v1`, одне джерело expert grades, immutable ruleset і стабільність historical reports, паспортів та PDF. Редагований admin-каталог формул/меж не реалізований: нова методика оформлюється окремою версією правил.
-- [ ] [108 — Контракт статистики експертів](./backlog/108-expert-statistics-and-analytics-contract.md): усунути 500, визначити aggregates і admin RBAC перед будь-яким analytics UI.
+- [ ] [108 — Контракт статистики експертів](./backlog/108-expert-statistics-and-analytics-contract.md): усунуто 500, зафіксовано admin-only status-агрегати, review-cycle metrics і три вкладки analytics; очікує ручної перевірки.
+- [ ] [112 — Активний час експертів і періоди](./backlog/112-expert-active-time-and-analytics-periods.md): спроєктувати достовірний active-time без обліку просто відкритої вкладки та додати period filters до operational analytics.
 - [ ] [110 — Авторитетні ринкові дані й валютні курси](./backlog/110-authoritative-market-data-and-fx.md): обрати законне джерело, зберігати незмінні snapshot-и з provenance, реалізувати ручне admin-оновлення, а scheduler розглядати лише після цього. Не змінює demo `USD … d` або історичні значення автоматично.
 - [ ] [115 — UI-polish профілю та admin UI](./backlog/115-profile-admin-ui-polish.md): узгодити й внести окремим зрізом ручні візуальні та responsive-покращення без зміни бізнес-логіки.
 - [ ] [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md): погодити retire або безпечну versioned replacement для `recalc_grades.py`; не запускати масовий backfill чи cleanup без окремого рішення.

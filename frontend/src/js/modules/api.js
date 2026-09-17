@@ -47,6 +47,10 @@ export const setUserActivation = (expertId, isActive, token) => requestApi(
 
 export const getExperts = (token) => requestApi("/experts/", { token });
 
+export const getExpertStatistics = (token) => requestApi("/statistics/expert-performance", { token });
+
+export const getAdminReviewStatistics = (token) => requestApi("/statistics/admin-review-performance", { token });
+
 export const getGradeMappings = () => requestApi("/market/mappings");
 
 export const getReportDashboard = (params, token) => {

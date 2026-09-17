@@ -11,6 +11,7 @@ const createReportPath = path.resolve(testDir, "../dist/create-report.html");
 const dashboardPath = path.resolve(testDir, "../dist/dashboard.html");
 const reportDetailPath = path.resolve(testDir, "../dist/report-detail.html");
 const passportPath = path.resolve(testDir, "../dist/passport.html");
+const analyticsPath = path.resolve(testDir, "../dist/ml-analysis.html");
 
 test("built login page exposes accessible authentication fields", async () => {
   const html = await readFile(loginPath, "utf8");
@@ -89,4 +90,15 @@ test("built public passport excludes private report controls", async () => {
   assert.equal(document.querySelector("#passport-report-id")?.tagName, "STRONG");
   assert.equal(document.querySelector("#passport-origin")?.tagName, "DD");
   assert.equal(document.querySelector("#detail-comment"), null);
+});
+
+test("built analytics page exposes three clearly scoped administrator tabs", async () => {
+  const html = await readFile(analyticsPath, "utf8");
+  const document = new JSDOM(html).window.document;
+
+  assert.equal(document.querySelector("[data-analytics-page]")?.hasAttribute("data-protected-page"), true);
+  assert.equal(document.querySelectorAll("[data-analytics-tab]").length, 3);
+  assert.equal(document.querySelector("#analytics-experts")?.getAttribute("role"), "tabpanel");
+  assert.equal(document.querySelector("#analytics-admins")?.hasAttribute("hidden"), true);
+  assert.match(document.querySelector("#analytics-stones")?.textContent || "", /ML/);
 });

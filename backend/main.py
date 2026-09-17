@@ -665,8 +665,23 @@ def activate_user(
 
 # Статистика експертів
 @app.get("/statistics/expert-performance", response_model=List[schemas.ExpertStats])
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Admin-only operational snapshot; no pricing, ML, or personnel scoring."""
+    require_admin(current_user)
     return crud.get_expert_stats(db)
+
+
+@app.get("/statistics/admin-review-performance", response_model=schemas.AdminReviewStatisticsResponse)
+def get_admin_review_stats(
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Admin-only review-cycle timing, distinct from active operator work time."""
+    require_admin(current_user)
+    return crud.get_admin_review_stats(db)
 
 @app.get("/market/mappings", response_model=List[schemas.GradeMappingSchema])
 def read_mappings(category: Optional[str] = None, db: Session = Depends(get_db)):

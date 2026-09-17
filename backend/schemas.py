@@ -78,11 +78,49 @@ class ExpertListResponse(BaseModel):
     page_size: int
     total_pages: int
 
-# Схема для статистики (для аналізу експертів)
+# Read-only operational workload snapshot. It is not a staff-performance score.
 class ExpertStats(BaseModel):
+    expert_id: int
     expert_username: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    middle_name: Optional[str]
+    is_active: bool
     total_reports: int
-    avg_carat: float
+    draft_reports: int
+    review_reports: int
+    issued_reports: int
+    void_reports: int
+
+
+class ReviewDurationRecord(BaseModel):
+    report_id: str
+    decision: Literal["draft", "issued", "void"]
+    duration_seconds: int
+    decided_at: datetime
+
+
+class AdminReviewStats(BaseModel):
+    admin_id: int
+    admin_username: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    middle_name: Optional[str]
+    is_active: bool
+    completed_reviews: int
+    returned_to_draft: int
+    issued_reports: int
+    voided_reports: int
+    avg_review_duration_seconds: Optional[int]
+    median_review_duration_seconds: Optional[int]
+    shortest_reviews: list[ReviewDurationRecord]
+    longest_reviews: list[ReviewDurationRecord]
+
+
+class AdminReviewStatisticsResponse(BaseModel):
+    admins: list[AdminReviewStats]
+    pending_review_count: int
+    oldest_review_started_at: Optional[datetime]
 
 # Схема для токена (JWT)
 class Token(BaseModel):
