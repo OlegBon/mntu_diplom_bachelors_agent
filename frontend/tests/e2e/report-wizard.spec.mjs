@@ -23,7 +23,8 @@ test("gemologist creates a draft through the three-step wizard", async ({ page }
   await page.route("**/market/mappings", (route) => route.fulfill({ json: mappings }));
   await page.route("**/reports/next-id", (route) => route.fulfill({ json: { report_id: "DR-01001" } }));
   await page.route("**/reports/preview", (route) => route.fulfill({ json: {
-    system_proportions_grade: 0, system_cut_grade: 0, calculation_rule_version: "idc-demo-v1", demo_price_usd: "5400.00",
+    system_proportions_grade: 0, system_cut_grade: 0, calculation_rule_version: "idc-demo-v1",
+    system_market_reference_usd: "10029.23", market_reference_provider_code: "openfacet", market_reference_snapshot_id: 17,
   } }));
   await page.route("**/reports", async (route) => {
     createdPayload = route.request().postDataJSON();
@@ -49,7 +50,9 @@ test("gemologist creates a draft through the three-step wizard", async ({ page }
   await page.locator("#pavilion-angle").fill("40.8");
   await page.locator("#girdle-thickness").selectOption("medium");
   await page.locator("#culet-size").selectOption("none");
-  await expect(page.locator("#res-price")).toContainText("USD 5,400.00");
+  await expect(page.locator("#res-price")).toContainText("USD 10,029.23");
+  await expect(page.locator("#price-provider-marker")).toHaveText("of");
+  await expect(page.locator("#market-reference-preview-source")).toContainText("OpenFacet · знімок #17");
   await page.locator("#next-btn").click();
 
   await page.locator("#polish-grade").selectOption("0");

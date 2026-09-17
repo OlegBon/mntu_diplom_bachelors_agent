@@ -166,6 +166,12 @@ def test_report_gets_idempotent_system_reference_from_latest_approved_snapshot(c
     snapshot_id = client.post("/market-data/providers/openfacet/fetch", headers=admin_headers).json()["snapshot_id"]
     assert client.post(f"/market-data/snapshots/{snapshot_id}/approve", headers=admin_headers, json={}).status_code == 200
 
+    preview = client.post("/reports/preview", json=_report_payload()["stone"], headers=owner_headers)
+    assert preview.status_code == 200
+    assert preview.json()["system_market_reference_usd"] == "5000.00"
+    assert preview.json()["market_reference_provider_code"] == "openfacet"
+    assert preview.json()["market_reference_snapshot_id"] == snapshot_id
+
     report = client.post("/reports", json=_report_payload(), headers=owner_headers)
     assert report.status_code == 200
     report_id = report.json()["report_id"]

@@ -2,7 +2,7 @@ from sqlalchemy import asc, case, desc, func
 from sqlalchemy.orm import Session, joinedload
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
-from decimal import Decimal, getcontext
+from decimal import Decimal
 import hashlib
 import secrets
 from statistics import median
@@ -74,21 +74,26 @@ def preview_report_calculation(db: Session, stone: schemas.ReportCalculationInpu
         stone.pavilion_angle,
     )
     cut = DiamondCalculator.calculate_final_cut(proportions, stone.polish_grade, stone.symmetry_grade)
-    demo_price = None
-    market = db.query(models.MarketPriceRef).order_by(models.MarketPriceRef.id.desc()).first()
-    if market and stone.carat_weight is not None and stone.color_grade is not None and stone.clarity_grade is not None:
-        demo_price = (
-            Decimal(market.price_index_value)
-            * getcontext().power(stone.carat_weight, Decimal("1.3"))
-            * (Decimal("1") - Decimal(stone.color_grade) * Decimal("0.05"))
-            * (Decimal("1") - Decimal(stone.clarity_grade) * Decimal("0.07"))
-            * (Decimal("1") - Decimal(cut) * Decimal("0.10"))
-        ).quantize(Decimal("0.01"))
+    candidate = None
+    policy = get_market_reference_policy(db)
+    if policy and policy.market_provider_code and stone.shape and stone.origin:
+        preview_stone = models.Stone(
+            shape=stone.shape,
+            origin=stone.origin,
+            carat_weight=stone.carat_weight,
+            color_grade=stone.color_grade,
+            clarity_grade=stone.clarity_grade,
+        )
+        candidate = prepare_system_market_reference_for_stone(
+            db, stone=preview_stone, provider_code=policy.market_provider_code,
+        )
     return schemas.ReportCalculationPreview(
         system_proportions_grade=proportions,
         system_cut_grade=cut,
         calculation_rule_version=REPORT_RULE_VERSION,
-        demo_price_usd=demo_price,
+        system_market_reference_usd=candidate.amount if candidate else None,
+        market_reference_provider_code=candidate.snapshot.provider_code if candidate else None,
+        market_reference_snapshot_id=candidate.snapshot.snapshot_id if candidate else None,
     )
 
 
@@ -1044,6 +1049,13 @@ def prepare_system_market_reference(
     """Return an applicable automatic reference, without treating a gap as an error."""
     if report.stone is None or report.stone_id is None:
         return None
+    return prepare_system_market_reference_for_stone(db, stone=report.stone, provider_code=provider_code)
+
+
+def prepare_system_market_reference_for_stone(
+    db: Session, *, stone: models.Stone, provider_code: str,
+) -> SystemMarketReferenceCandidate | None:
+    """Build a policy-provider preview or valuation candidate for one stone."""
     snapshot = (
         db.query(models.MarketDataSnapshot)
         .filter(
@@ -1062,10 +1074,10 @@ def prepare_system_market_reference(
     try:
         if provider_code != "openfacet":
             return None
-        price_per_carat, shape_code = _openfacet_price_per_carat(db, snapshot_id=snapshot.snapshot_id, stone=report.stone)
+        price_per_carat, shape_code = _openfacet_price_per_carat(db, snapshot_id=snapshot.snapshot_id, stone=stone)
     except ReportDomainError:
         return None
-    amount = (price_per_carat * Decimal(report.stone.carat_weight)).quantize(Decimal("0.01"))
+    amount = (price_per_carat * Decimal(stone.carat_weight)).quantize(Decimal("0.01"))
     return SystemMarketReferenceCandidate(
         snapshot=snapshot,
         amount=amount,

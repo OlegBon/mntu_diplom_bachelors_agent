@@ -133,11 +133,13 @@ Backend запускають із кореня репозиторію через
 `report_id`, зберігає окрему `examination_date` і встановлює
 `market_status=not_for_sale`. `GET /reports/next-id` лише показує наступний
 номер без резервування, а `POST /reports/preview` повертає розрахункові IDC
-grades і необов'язковий детермінований demo-прогноз. Такий прогноз не є
-`price` і не зберігається як фінансова величина звіту.
+grades і, коли є застосовний approved snapshot обраного policy провайдера,
+нефіксований системний USD-орієнтир. Preview не є `price`, не створює
+`StoneValuation` та не отримує НБУ.
 
-Wizard не викликає ML-модель: його preview детермінований і не записує
-ціну. `StoneValuation` не отримує автоматично старий `price`. Admin може
+Wizard не викликає ML-модель: його preview не записує ціну. Під час збереження
+draft `StoneValuation` може отримати автоматичний policy-орієнтир, але не старий
+`price`. Admin може
 прикріпити лише approved market snapshot, який зберігає провайдера, джерело,
 методологію, checksum, USD/ct quotes і момент отримання. Для OpenFacet
 потрібне явне підтвердження застосовності до конкретного natural-звіту,

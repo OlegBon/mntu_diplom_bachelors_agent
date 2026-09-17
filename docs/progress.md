@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — wizard-policy-market-reference-preview (завершено)
+
+- **Задача:** замінити legacy demo-прогноз `USD … d` у майстрі створення звіту на системний довідковий USD-орієнтир із поточної admin policy.
+- **Змінені файли:** `backend/{crud,schemas}.py`, `tests/api/{test_report_domain,test_market_data}.py`, `frontend/src/{pug/pages/create-report.pug,js/modules/report-wizard.js}`, `frontend/tests/e2e/report-wizard.spec.mjs`, `docs/{architecture,db-schema,work_plan,progress}.md`, `docs/guides/{current-domain-and-report-workflow,market-data-providers}.md`.
+- **Рішення / Результат:** `POST /reports/preview` приймає shape/origin і читає обраного policy-провайдера та останній застосовний approved snapshot. Для OpenFacet повертає total USD, код `openfacet` і snapshot ID; майстер показує `USD … of`, назву джерела й попередження, що значення ще не зафіксовано. За відсутності покриття показує зрозуміле повідомлення без блокування заповнення. Preview не створює `StoneValuation` і не отримує НБУ; під час збереження draft сервер повторно застосовує policy, створює immutable reference та, якщо policy увімкнула FX, фіксує курс і UAH.
+- **Перевірки:** `python -m compileall -q backend` — успішно; `python -m pytest tests/api/test_report_domain.py tests/api/test_market_data.py tests/unit/test_migration_foundation.py -q` — 16 passed; `frontend npm test` — 20 passed; Playwright `report-wizard.spec.mjs` — 1 passed.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** preview підтримує лише провайдери, для яких існує server adapter; зараз це OpenFacet. Зміна policy або approval новішого snapshot-а між preview і save може змінити остаточно зафіксований орієнтир; це свідомо, бо майстер не резервує snapshot.
+
 ## 2026-09-17 — market-policy-control-and-fx-format-polish (завершено)
 
 - **Задача:** виправити розтягнутий radio-control policy провайдера на «Ринкові дані» та прибрати штучні нулі з відображення зафіксованого курсу НБУ.

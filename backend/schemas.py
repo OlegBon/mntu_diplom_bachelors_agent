@@ -399,7 +399,9 @@ class ReportCalculationPreview(BaseModel):
     system_proportions_grade: int
     system_cut_grade: int
     calculation_rule_version: str
-    demo_price_usd: Optional[Decimal] = None
+    system_market_reference_usd: Optional[Decimal] = None
+    market_reference_provider_code: Optional[str] = None
+    market_reference_snapshot_id: Optional[int] = None
 
 
 class ReportCalculationInput(BaseModel):
@@ -414,6 +416,8 @@ class ReportCalculationInput(BaseModel):
     carat_weight: Optional[Decimal] = Field(default=None, gt=0, le=100)
     color_grade: Optional[int] = Field(default=None, ge=0, le=99)
     clarity_grade: Optional[int] = Field(default=None, ge=0, le=99)
+    shape: Optional[str] = Field(default=None, max_length=50)
+    origin: Optional[Origin] = None
 
 
 class ReferenceValueResponse(BaseModel):

@@ -176,8 +176,8 @@ snapshot-а для natural stone та після явного підтвердж
 відсутність покриття або зовнішнього FX не скасовує save. Обидва записи
 immutable, а ручний має display-пріоритет.
 Це model-based retail benchmark, не appraisal, offer, transaction чи sale
-price. Legacy `DiamondReport.price`, wizard demo і public passport не
-змінюються.
+price. Legacy `DiamondReport.price` і public passport не змінюються. Wizard
+до save лише читає active policy та approved snapshot для нефіксованого preview.
 
 ## Моделі `diamond_market`
 
