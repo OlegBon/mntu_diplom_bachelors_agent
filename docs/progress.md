@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — e2e-regression-and-api-audit-refresh (завершено)
+
+- **Задача:** актуалізувати застарілі E2E-очікування після admin modal, public passport і detail validation, а також синхронізувати historical API audit із чинним safe smoke-контрактом.
+- **Змінені файли:** `frontend/tests/{auth-and-api.test.mjs,e2e/{profile-admin,public-passport-controls,public-passport-delivery,report-detail-confirmation-grades}.spec.mjs}`, `scripts/audit-api.mjs`, `docs/{api-mvp-audit,work_plan,progress}.md`.
+- **Рішення / Результат:** E2E перевіряє модальний flow «Змінити» → «Деактивувати», повний admin test-session для private passport і всі server-required reference mappings у detail flow. API-клієнт має test для обох protected analytics endpoints. Safe audit додатково перевіряє без токена `/reference-values`, `/statistics/expert-performance` і `/statistics/admin-review-performance`; актуальна кількість перевірок — 13. `api-mvp-audit.md` відокремлює історичний стан 14.09 від чинного реалізованого контракту.
+- **Перевірки:** `pytest` — 36 passed; `npm test` — 18 passed; `npm run test:e2e` — 13 passed; `npm run audit:api` — 13/13 проти локального backend; `node --check scripts/audit-api.mjs`; `git diff --check`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** safe audit навмисно не виконує login, POST, PUT, DELETE, seed або міграції. Він не замінює auth/RBAC integration tests чи ручне приймання UI.
+
 ## 2026-09-17 — expert-operational-analytics (завершено)
 
 - **Задача:** завершити 108: виправити admin-only контракт operational analytics, показати перевірені status/review metrics у UI та зафіксувати межі майбутнього active-time і stone analytics.

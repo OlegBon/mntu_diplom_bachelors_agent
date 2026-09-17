@@ -34,8 +34,10 @@ test("admin sees the public code and downloads a PDF passport", async ({ page })
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "admin");
+    localStorage.setItem("role", "admin");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
+  await page.route("**/reference-values", (route) => route.fulfill({ json: [] }));
   await page.route("**/market/mappings", (route) => route.fulfill({ json: [
     { category: "color", grade_value: 0, grade_label: "D" },
     { category: "clarity", grade_value: 0, grade_label: "FL" },

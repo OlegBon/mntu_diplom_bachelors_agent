@@ -1,15 +1,48 @@
 # Аудит API та локального MVP Diamant ID
 
-> **Дата:** 14 вересня 2026. **Межі:** статичний аналіз backend/frontend/seed, read-only інспекція MariaDB і безпечний локальний API-аудит. Цей документ не змінює дані, не виконує login, POST, PUT, DELETE або seed.
+> **Актуалізовано:** 17 вересня 2026. Перший аудит від 14 вересня нижче
+> збережено як історичний доказ стану до послідовних задач 020–108. Поточним
+> джерелом контракту є `docs/architecture.md`, а безпечний runtime smoke —
+> `scripts/audit-api.mjs`.
+
+## Поточний стан
+
+- Private workflow працює через `/reports`; legacy `/diamonds/*` вилучено.
+  Звіт має owner/admin RBAC, lifecycle `draft → review → issued/void`, private
+  detail/edit, media та append-only history.
+- Public passport, QR і PDF працюють через окрему allow-listed projection;
+  послідовний report ID не є public key.
+- Profile/admin UI, server-side довідники та versioned `idc-demo-v1` реалізовані.
+- Operational analytics обмежена admin: status-зріз експертів і review-cycle
+  адміністраторів. Немає ML, ринкової ціни, рейтингу або fake active-time.
+- Автоматизовані regression-набори існують: pytest, Node/DOM та Playwright.
+  Їхні команди описано в `AGENTS.md` і `docs/local-start.md`.
+
+## Безпечний локальний API smoke
+
+`npm run audit:api` приймає лише `localhost`/`127.0.0.1`, не використовує
+токенів і не змінює дані. Він перевіряє 13 контрактів: root/OpenAPI/CORS,
+публічні mappings і паспорт-404, а також 401-межі для private reports,
+detail, profile, users, experts, reference values та обох admin-only
+analytics endpoint-ів. Звіти створюються лише локально в ігнорованому
+`docs/audits/`.
+
+Перед запуском має працювати локальний FastAPI на `:8000`:
+
+```powershell
+cmd /c "cd frontend && npm run audit:api"
+```
+
+## Історичний знімок аудиту 14.09.2026
 
 ## Підсумок
 
-- Поточний код FastAPI та MariaDB-схема працездатні в новому процесі: тимчасовий Uvicorn на `127.0.0.1:8002` пройшов `npm run audit:api` на **10/10**.
+- На момент аудиту тимчасовий Uvicorn на `127.0.0.1:8002` пройшов ранню версію smoke на **10/10**.
 - Уже відкритий процес на `127.0.0.1:8000` під час аудиту відповідав на OpenAPI, CORS і неавторизовані межі, але чотири маршрути з доступом до БД зависали; аудит дав **6/10**. Це runtime-інцидент процесу, а не підтверджений дефект коду: перезапуск backend і повторний аудит мають бути першим кроком наступної робочої сесії.
 - У коді підтверджено критичний дефект створення звіту, прогалини RBAC, розбіжності API ↔ frontend і розходження фактичної БД із моделями/seed.
-- Автоматизованих unit, API integration і browser E2E тестів немає. Локальний `audit-api.mjs` — лише safe smoke/contract перевірка.
+- На той момент автоматизованих unit, API integration і browser E2E тестів не було. Зараз це твердження неактуальне: див. «Поточний стан» вище.
 
-## API: рішення за маршрутами
+## API: рішення за маршрутами на 14.09.2026
 
 | Маршрут | Стан | Рішення | Доказ / наступна дія |
 | --- | --- | --- | --- |

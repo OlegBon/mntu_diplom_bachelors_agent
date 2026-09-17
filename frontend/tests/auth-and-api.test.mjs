@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getNextReportId, getPublicPassport, getReportDashboard, getReferenceValues, loginUser } from "../src/js/modules/api.js";
+import {
+  getAdminReviewStatistics,
+  getExpertStatistics,
+  getNextReportId,
+  getPublicPassport,
+  getReportDashboard,
+  getReferenceValues,
+  loginUser,
+} from "../src/js/modules/api.js";
 import { checkAuth, logout } from "../src/js/modules/auth.js";
 
 function installBrowserStubs() {
@@ -98,4 +106,20 @@ test("public passport API does not attach a private bearer token", async () => {
   await getPublicPassport("public-id");
 
   assert.equal(requestedHeaders.Authorization, undefined);
+});
+
+test("analytics APIs use protected administrator endpoints", async () => {
+  const paths = [];
+  globalThis.fetch = async (url, options) => {
+    paths.push([url, options.headers.Authorization]);
+    return { ok: true, json: async () => [] };
+  };
+
+  await getExpertStatistics("test-token");
+  await getAdminReviewStatistics("test-token");
+
+  assert.deepEqual(paths, [
+    ["http://127.0.0.1:8000/statistics/expert-performance", "Bearer test-token"],
+    ["http://127.0.0.1:8000/statistics/admin-review-performance", "Bearer test-token"],
+  ]);
 });
