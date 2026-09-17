@@ -203,7 +203,7 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 
 ### `market_reference_policies`
 
-Singleton-налаштування `policy_id=1` лише для **майбутніх** системних
+Singleton-налаштування, яке application читає за фіксованим `policy_id=1`, лише для **майбутніх** системних
 орієнтирів: nullable `market_provider_code`, `use_fx_conversion`, nullable
 `fx_provider_code`, `updated_by_id`, `updated_at`. Обидва provider code — FK до
 `market_data_providers`; policy не посилається на конкретний snapshot, бо

@@ -32,7 +32,6 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
         sa.ForeignKeyConstraint(["market_provider_code"], ["diamond_market.market_data_providers.provider_code"]),
         sa.ForeignKeyConstraint(["fx_provider_code"], ["diamond_market.market_data_providers.provider_code"]),
-        sa.CheckConstraint("policy_id = 1", name="ck_market_reference_policy_singleton"),
         schema="diamond_market",
     )
     policy = sa.table(
