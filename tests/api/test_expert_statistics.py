@@ -58,3 +58,32 @@ def test_expert_statistics_is_admin_only_and_reports_operational_aggregates(clie
     assert owner["is_active"] is True
     assert rows[empty_expert.username]["total_reports"] == 0
     assert rows[empty_expert.username]["avg_carat_weight"] is None
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_admin_review_statistics_tracks_review_cycles_not_active_work_time(client, experts) -> None:
+    owner_headers = auth_headers(client, experts["owner"].username)
+    admin_headers = auth_headers(client, experts["admin"].username)
+    payload = report_payload(confirmed=True)
+    report_id = client.post("/reports", json=payload, headers=owner_headers).json()["report_id"]
+    assert client.post(
+        f"/reports/{report_id}/transitions",
+        json={"target_status": "review", "reason": None}, headers=owner_headers,
+    ).status_code == 200
+    assert client.post(
+        f"/reports/{report_id}/transitions",
+        json={"target_status": "issued", "reason": None}, headers=admin_headers,
+    ).status_code == 200
+
+    assert client.get("/statistics/admin-review-performance").status_code == 401
+    assert client.get("/statistics/admin-review-performance", headers=owner_headers).status_code == 403
+    response = client.get("/statistics/admin-review-performance", headers=admin_headers)
+    assert response.status_code == 200
+    admin = response.json()["admins"][0]
+    assert admin["admin_id"] == experts["admin"].expert_id
+    assert admin["completed_reviews"] == 1
+    assert admin["issued_reports"] == 1
+    assert admin["shortest_reviews"][0]["report_id"] == report_id
+    assert admin["longest_reviews"][0]["decision"] == "issued"
+    assert response.json()["pending_review_count"] == 0

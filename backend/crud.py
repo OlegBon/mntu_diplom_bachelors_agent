@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, getcontext
 import secrets
+from statistics import median
 
 from . import models, schemas
 from .security import get_password_hash, verify_password
@@ -659,6 +660,70 @@ def get_expert_stats(db: Session):
         models.Expert.middle_name,
         models.Expert.is_active,
     ).order_by(models.Expert.username.asc()).all()
+
+
+def _duration_seconds(started_at: datetime, completed_at: datetime) -> int:
+    """Calculate a non-negative duration across legacy naive and UTC datetimes."""
+    if started_at.tzinfo is None:
+        started_at = started_at.replace(tzinfo=timezone.utc)
+    if completed_at.tzinfo is None:
+        completed_at = completed_at.replace(tzinfo=timezone.utc)
+    return max(0, round((completed_at - started_at).total_seconds()))
+
+
+def get_admin_review_stats(db: Session) -> schemas.AdminReviewStatisticsResponse:
+    """Summarize completed review cycles by administrator, not active work time."""
+    admins = db.query(models.Expert).filter(models.Expert.role == "admin").order_by(models.Expert.username).all()
+    admin_ids = {admin.expert_id for admin in admins}
+    review_starts: dict[str, datetime] = {}
+    decisions: dict[int, list[schemas.ReviewDurationRecord]] = {admin.expert_id: [] for admin in admins}
+    events = db.query(models.ReportEvent).order_by(models.ReportEvent.report_id, models.ReportEvent.event_id).all()
+    for event in events:
+        if event.to_status == "review" and event.created_at is not None:
+            review_starts[event.report_id] = event.created_at
+            continue
+        if event.from_status != "review" or event.actor_id not in admin_ids or event.created_at is None:
+            continue
+        started_at = review_starts.pop(event.report_id, None)
+        if started_at is None or event.to_status not in {"draft", "issued", "void"}:
+            continue
+        decisions[event.actor_id].append(schemas.ReviewDurationRecord(
+            report_id=event.report_id,
+            decision=event.to_status,
+            duration_seconds=_duration_seconds(started_at, event.created_at),
+            decided_at=event.created_at,
+        ))
+
+    pending_starts = [
+        review_starts[report.report_id]
+        for report in db.query(models.DiamondReport).filter(models.DiamondReport.status == "review").all()
+        if report.report_id in review_starts
+    ]
+    rows: list[schemas.AdminReviewStats] = []
+    for admin in admins:
+        admin_decisions = decisions[admin.expert_id]
+        durations = [item.duration_seconds for item in admin_decisions]
+        rows.append(schemas.AdminReviewStats(
+            admin_id=admin.expert_id,
+            admin_username=admin.username,
+            first_name=admin.first_name,
+            last_name=admin.last_name,
+            middle_name=admin.middle_name,
+            is_active=admin.is_active,
+            completed_reviews=len(admin_decisions),
+            returned_to_draft=sum(item.decision == "draft" for item in admin_decisions),
+            issued_reports=sum(item.decision == "issued" for item in admin_decisions),
+            voided_reports=sum(item.decision == "void" for item in admin_decisions),
+            avg_review_duration_seconds=round(sum(durations) / len(durations)) if durations else None,
+            median_review_duration_seconds=round(median(durations)) if durations else None,
+            shortest_reviews=sorted(admin_decisions, key=lambda item: (item.duration_seconds, item.report_id))[:3],
+            longest_reviews=sorted(admin_decisions, key=lambda item: (-item.duration_seconds, item.report_id))[:3],
+        ))
+    return schemas.AdminReviewStatisticsResponse(
+        admins=rows,
+        pending_review_count=len(pending_starts),
+        oldest_review_started_at=min(pending_starts) if pending_starts else None,
+    )
 
 def get_mappings(db: Session, category: str = None):
     """

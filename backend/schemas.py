@@ -93,6 +93,36 @@ class ExpertStats(BaseModel):
     void_reports: int
     avg_carat_weight: Optional[float]
 
+
+class ReviewDurationRecord(BaseModel):
+    report_id: str
+    decision: Literal["draft", "issued", "void"]
+    duration_seconds: int
+    decided_at: datetime
+
+
+class AdminReviewStats(BaseModel):
+    admin_id: int
+    admin_username: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    middle_name: Optional[str]
+    is_active: bool
+    completed_reviews: int
+    returned_to_draft: int
+    issued_reports: int
+    voided_reports: int
+    avg_review_duration_seconds: Optional[int]
+    median_review_duration_seconds: Optional[int]
+    shortest_reviews: list[ReviewDurationRecord]
+    longest_reviews: list[ReviewDurationRecord]
+
+
+class AdminReviewStatisticsResponse(BaseModel):
+    admins: list[AdminReviewStats]
+    pending_review_count: int
+    oldest_review_started_at: Optional[datetime]
+
 # Схема для токена (JWT)
 class Token(BaseModel):
     access_token: str
