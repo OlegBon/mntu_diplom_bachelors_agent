@@ -1,5 +1,6 @@
 from sqlalchemy import asc, case, desc, func
 from sqlalchemy.orm import Session, joinedload
+from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, getcontext
 import hashlib
@@ -244,9 +245,13 @@ def _attach_latest_market_reference_summaries(
         db.query(models.StoneValuation)
         .filter(
             models.StoneValuation.stone_id.in_(stone_ids),
-            models.StoneValuation.valuation_kind == "market_reference",
+            models.StoneValuation.valuation_kind.in_(("market_reference", "system_market_reference")),
         )
-        .order_by(models.StoneValuation.created_at.desc(), models.StoneValuation.valuation_id.desc())
+        .order_by(
+            case((models.StoneValuation.valuation_kind == "market_reference", 0), else_=1),
+            models.StoneValuation.created_at.desc(),
+            models.StoneValuation.valuation_id.desc(),
+        )
         .all()
     )
     by_stone: dict[int, models.StoneValuation] = {}
@@ -259,6 +264,7 @@ def _attach_latest_market_reference_summaries(
         report.market_reference = schemas.MarketReferenceSummary(
             amount=valuation.amount,
             currency_code=valuation.currency_code,
+            valuation_kind=valuation.valuation_kind,
             source_name=valuation.source_name,
             market_snapshot_id=valuation.market_snapshot_id,
             observed_at=valuation.observed_at,
@@ -980,6 +986,122 @@ def _openfacet_price_per_carat(
     )
     price = ((Decimal("1") - share) * lower_price.ln() + share * upper_price.ln()).exp()
     return price.quantize(Decimal("0.01")), shape_code
+
+
+@dataclass(frozen=True)
+class SystemMarketReferenceCandidate:
+    """A reproducible automatic OpenFacet reference ready for FX conversion."""
+
+    snapshot: models.MarketDataSnapshot
+    amount: Decimal
+    source_reference: str
+
+
+def prepare_system_market_reference(
+    db: Session, *, report: models.DiamondReport,
+) -> SystemMarketReferenceCandidate | None:
+    """Return an applicable automatic reference, without treating a gap as an error."""
+    if report.stone is None or report.stone_id is None:
+        return None
+    snapshot = (
+        db.query(models.MarketDataSnapshot)
+        .filter(
+            models.MarketDataSnapshot.provider_code == "openfacet",
+            models.MarketDataSnapshot.snapshot_kind == "market_reference",
+            models.MarketDataSnapshot.status == "approved",
+        )
+        .order_by(
+            models.MarketDataSnapshot.approved_at.desc(),
+            models.MarketDataSnapshot.snapshot_id.desc(),
+        )
+        .first()
+    )
+    if snapshot is None:
+        return None
+    try:
+        price_per_carat, shape_code = _openfacet_price_per_carat(
+            db, snapshot_id=snapshot.snapshot_id, stone=report.stone,
+        )
+    except ReportDomainError:
+        return None
+    amount = (price_per_carat * Decimal(report.stone.carat_weight)).quantize(Decimal("0.01"))
+    return SystemMarketReferenceCandidate(
+        snapshot=snapshot,
+        amount=amount,
+        source_reference=(
+            f"snapshot:{snapshot.snapshot_id}; shape:{shape_code}; "
+            f"USD/ct:{price_per_carat}; automatic:latest-approved"
+        ),
+    )
+
+
+def attach_system_market_reference(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    candidate: SystemMarketReferenceCandidate,
+    actor: models.Expert,
+    fx_rate: NbuUsdUahRate,
+) -> models.StoneValuation | None:
+    """Persist one immutable system reference unless the same inputs were saved already."""
+    if report.stone_id is None:
+        return None
+    existing = (
+        db.query(models.StoneValuation)
+        .filter(
+            models.StoneValuation.stone_id == report.stone_id,
+            models.StoneValuation.valuation_kind == "system_market_reference",
+            models.StoneValuation.market_snapshot_id == candidate.snapshot.snapshot_id,
+            models.StoneValuation.amount == candidate.amount,
+            models.StoneValuation.source_reference == candidate.source_reference,
+        )
+        .one_or_none()
+    )
+    if existing is not None:
+        return existing
+    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False)
+    valuation = models.StoneValuation(
+        stone_id=report.stone_id,
+        valuation_kind="system_market_reference",
+        amount=candidate.amount,
+        currency_code=candidate.snapshot.currency_code,
+        unit="TOTAL_STONE",
+        source_name="OpenFacet",
+        source_reference=candidate.source_reference,
+        market_snapshot_id=candidate.snapshot.snapshot_id,
+        applicability_note=None,
+        fx_snapshot_id=fx_snapshot.fx_snapshot_id,
+        fx_rate=fx_rate.rate,
+        fx_rate_date=fx_rate.rate_date,
+        converted_amount=convert_usd_to_uah(candidate.amount, fx_rate.rate),
+        converted_currency_code="UAH",
+        observed_at=candidate.snapshot.retrieved_at,
+        created_by_id=actor.expert_id,
+    )
+    db.add(valuation)
+    db.commit()
+    db.refresh(valuation)
+    return valuation
+
+
+def system_market_reference_exists(
+    db: Session, *, report: models.DiamondReport, candidate: SystemMarketReferenceCandidate,
+) -> bool:
+    """Check idempotency before requesting an external FX rate."""
+    if report.stone_id is None:
+        return False
+    return (
+        db.query(models.StoneValuation.valuation_id)
+        .filter(
+            models.StoneValuation.stone_id == report.stone_id,
+            models.StoneValuation.valuation_kind == "system_market_reference",
+            models.StoneValuation.market_snapshot_id == candidate.snapshot.snapshot_id,
+            models.StoneValuation.amount == candidate.amount,
+            models.StoneValuation.source_reference == candidate.source_reference,
+        )
+        .first()
+        is not None
+    )
 
 
 def attach_market_reference(

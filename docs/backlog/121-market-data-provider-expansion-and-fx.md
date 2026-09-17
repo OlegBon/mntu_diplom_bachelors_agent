@@ -23,8 +23,15 @@
 - Admin може вручну створити NBU snapshot на сторінці «Ринкові дані».
 - Кожне прикріплення OpenFacet reference заново отримує NBU USD/UAH і в одній
   транзакції фіксує FX snapshot, Decimal rate, official rate date та UAH total.
-- Dashboard показує `d` для legacy demo і `of` для OpenFacet; popover/detail
-  пояснюють source, snapshot і frozen UAH. Passport та PDF цін не відкривають.
+- Підтримуваний новий або оновлений draft автоматично отримує immutable
+  `system_market_reference` за останнім `approved` OpenFacet snapshot-ом і
+  свіжим НБУ USD/UAH. Відсутність покриття або НБУ не блокує save; ідентичні
+  market-входи не створюють дублікати.
+- Admin може додати окремий `market_reference` з підтвердженням застосовності;
+  він має пріоритет відображення над системним орієнтиром.
+- Dashboard показує `d` для legacy demo, `*` для системного та `of` для
+  підтвердженого OpenFacet; popover/detail пояснюють source, snapshot і frozen
+  UAH. Passport та PDF цін не відкривають.
 
 ## Межі наступного рішення
 

@@ -35,7 +35,7 @@
 ### Реалізований контрольований ринковий reference
 
 `0008_market_data_providers` реалізує перший, вузький варіант
-`market_reference`:
+ринкових орієнтирів:
 
 1. OpenFacet отримується лише вручну admin-ом і зберігається як immutable
    candidate snapshot; snapshot містить першоджерело, методологію, scope,
@@ -50,8 +50,14 @@
 4. Розрахунок total USD виконує backend з quote USD/ct та ваги каменю;
    застосовуються лише підтримані форма, color/clarity і carat anchors.
    Новий snapshot не змінює вже збережену valuation.
-5. Legacy `DiamondReport.price`, dashboard `USD … d`, demo preview wizard,
-   public passport і PDF не отримують цю суму автоматично.
+5. Після появи approved snapshot-а підтримуваний новий або оновлений draft
+   може best-effort отримати `system_market_reference`: server автоматично
+   обирає останній approved snapshot, але не створює запис без покриття або
+   якщо НБУ недоступний. Ідентичні inputs не дублюють valuation. Це не
+   підтвердження застосовності admin-ом.
+6. `market_reference` з ручним підтвердженням admin лишається окремим,
+   пріоритетним відображенням. Legacy `DiamondReport.price`, public passport
+   і PDF не отримують жодної з цих сум автоматично.
 
 ### Реалізований USD/UAH FX-контур
 
@@ -64,9 +70,10 @@ UAH total. Якщо НБУ недоступний або повертає нек
 
 Новий NBU snapshot ніколи не змінює valuation, яка вже збережена. Admin може
 створити ручний snapshot для контролю, але це не є approval flow і не змінює
-звіти. Dashboard позначає legacy-demo `d`, а явний OpenFacet reference `of`;
-popover та private detail показують source, OpenFacet snapshot, USD, frozen
-UAH і NBU provenance. Public passport та PDF, як і раніше, не містять цін.
+звіти. Dashboard позначає legacy-demo `d`, системний OpenFacet reference `*`,
+а явний admin reference `of`; popover та private detail показують source,
+OpenFacet snapshot, USD, frozen UAH і NBU provenance. Public passport та PDF,
+як і раніше, не містять цін.
 
 OpenFacet може змінити умови, доступність або формат. Перед будь-яким
 зовнішнім показом, розповсюдженням чи комерційним використанням потрібна

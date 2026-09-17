@@ -141,17 +141,22 @@ function formatDateOnly(value) {
 
 function renderMarketReferencePrice(report) {
   const reference = report.market_reference;
+  const isSystemReference = reference.valuation_kind === "system_market_reference";
+  const marker = isSystemReference ? "*" : "of";
+  const referenceType = isSystemReference
+    ? "Системний довідковий орієнтир"
+    : "Підтверджений довідковий орієнтир";
   const wrapper = createElement("div", "report-price");
   const toggle = createElement("button", "report-price__toggle");
   toggle.type = "button";
   toggle.setAttribute("aria-label", `Пояснення ринкового орієнтира звіту ${report.report_id}`);
   toggle.setAttribute("aria-expanded", "false");
-  toggle.append(document.createTextNode(`USD ${formatDemoPrice(reference.amount)} `), createElement("sup", "report-price__indicator", "of"));
+  toggle.append(document.createTextNode(`USD ${formatDemoPrice(reference.amount)} `), createElement("sup", "report-price__indicator", marker));
   const popover = createElement("div", "report-price__popover");
   popover.hidden = true;
   const observed = formatDateTime(reference.observed_at);
   const details = [
-    ["Тип", "Довідковий ринковий орієнтир"],
+    ["Тип", referenceType],
     ["Провайдер", reference.source_name],
     ["Знімок OpenFacet", `#${reference.market_snapshot_id ?? "—"}`],
     ["Отримано", observed.date],
@@ -165,7 +170,13 @@ function renderMarketReferencePrice(report) {
     row.append(createElement("strong", "", `${label}: `), document.createTextNode(value));
     popover.append(row);
   }
-  popover.append(createElement("p", "report-price__warning", "Не є експертною, продажною чи транзакційною ціною."));
+  popover.append(createElement(
+    "p",
+    "report-price__warning",
+    isSystemReference
+      ? "Розраховано системою за останнім затвердженим знімком; не є експертною, продажною чи транзакційною ціною."
+      : "Застосовність підтверджена адміністратором; не є експертною, продажною чи транзакційною ціною.",
+  ));
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
     const isOpen = popover.hidden;

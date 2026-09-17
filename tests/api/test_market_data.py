@@ -5,7 +5,7 @@ import pytest
 
 from backend import models
 from backend.market_providers import FetchedMarketSnapshot, MarketQuote
-from backend.fx import NbuUsdUahRate
+from backend.fx import FxProviderError, NbuUsdUahRate
 from tests.conftest import auth_headers
 
 
@@ -126,8 +126,85 @@ def test_market_data_candidate_approval_and_explicit_report_attachment(client, e
     assert dashboard.status_code == 200
     listed_reference = dashboard.json()["items"][0]["market_reference"]
     assert listed_reference["amount"] == "5000.00"
+    assert listed_reference["valuation_kind"] == "market_reference"
     assert listed_reference["converted_amount"] == "202500.00"
     assert listed_reference["fx_rate_date"] == "2026-09-16"
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_report_gets_idempotent_system_reference_from_latest_approved_snapshot(client, experts, db_session, monkeypatch) -> None:
+    _register_providers(db_session)
+    db_session.add_all([
+        models.GradeMapping(category="color", grade_value=0, grade_label="D"),
+        models.GradeMapping(category="clarity", grade_value=0, grade_label="FL"),
+    ])
+    db_session.commit()
+
+    class FakeProvider:
+        def fetch_snapshot(self):
+            return _fetched_snapshot()
+
+    monkeypatch.setattr("backend.main.get_market_provider", lambda _code: FakeProvider())
+    monkeypatch.setattr(
+        "backend.main.fetch_nbu_usd_uah",
+        lambda: NbuUsdUahRate(
+            rate=Decimal("40.50000000"), rate_date=datetime(2026, 9, 16).date(),
+            retrieved_at=datetime(2026, 9, 17, tzinfo=timezone.utc),
+        ),
+    )
+    admin_headers = auth_headers(client, experts["admin"].username)
+    owner_headers = auth_headers(client, experts["owner"].username)
+    snapshot_id = client.post("/market-data/providers/openfacet/fetch", headers=admin_headers).json()["snapshot_id"]
+    assert client.post(f"/market-data/snapshots/{snapshot_id}/approve", headers=admin_headers, json={}).status_code == 200
+
+    report = client.post("/reports", json=_report_payload(), headers=owner_headers)
+    assert report.status_code == 200
+    report_id = report.json()["report_id"]
+    values = client.get(f"/reports/{report_id}/valuations", headers=owner_headers).json()
+    assert len(values) == 1
+    assert values[0]["valuation_kind"] == "system_market_reference"
+    assert values[0]["amount"] == "5000.00"
+    assert values[0]["converted_amount"] == "202500.00"
+    assert values[0]["applicability_note"] is None
+
+    updated = client.put(f"/reports/{report_id}", json=_report_payload(), headers=owner_headers)
+    assert updated.status_code == 200
+    assert len(client.get(f"/reports/{report_id}/valuations", headers=owner_headers).json()) == 1
+
+    listed_reference = client.get("/reports", headers=owner_headers).json()["items"][0]["market_reference"]
+    assert listed_reference["valuation_kind"] == "system_market_reference"
+    assert listed_reference["fx_rate"] == "40.50000000"
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_report_save_is_not_blocked_when_system_fx_is_unavailable(client, experts, db_session, monkeypatch) -> None:
+    _register_providers(db_session)
+    db_session.add_all([
+        models.GradeMapping(category="color", grade_value=0, grade_label="D"),
+        models.GradeMapping(category="clarity", grade_value=0, grade_label="FL"),
+        models.MarketDataSnapshot(
+            provider_code="openfacet", snapshot_kind="market_reference", status="approved",
+            currency_code="USD", unit="USD_PER_CARAT", source_url="https://example.test/list.csv",
+            methodology_url="https://example.test/methodology", coverage_note="Test coverage.",
+            quote_count=1, content_sha256="b" * 64, retrieved_at=datetime(2026, 9, 17, tzinfo=timezone.utc),
+            approved_at=datetime(2026, 9, 17, tzinfo=timezone.utc), created_by_id=experts["admin"].expert_id,
+        ),
+    ])
+    db_session.commit()
+    snapshot = db_session.query(models.MarketDataSnapshot).filter_by(content_sha256="b" * 64).one()
+    db_session.add(models.MarketDataQuote(
+        snapshot_id=snapshot.snapshot_id, shape_code="round", carat_anchor=Decimal("1.000"),
+        color_code="D", clarity_code="FL", price_per_carat=Decimal("5000.00"),
+    ))
+    db_session.commit()
+    monkeypatch.setattr("backend.main.fetch_nbu_usd_uah", lambda: (_ for _ in ()).throw(FxProviderError("NBU unavailable")))
+
+    owner_headers = auth_headers(client, experts["owner"].username)
+    report = client.post("/reports", json=_report_payload(), headers=owner_headers)
+    assert report.status_code == 200
+    assert client.get(f"/reports/{report.json()['report_id']}/valuations", headers=owner_headers).json() == []
 
 
 @pytest.mark.api

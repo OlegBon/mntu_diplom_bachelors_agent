@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — automatic-system-market-reference (завершено)
+
+- **Задача:** завершити 121 автоматичним системним довідковим орієнтиром для підтримуваних нових та оновлених draft-звітів, не змішуючи його з ручним admin-підтвердженням.
+- **Змінені файли:** `backend/{crud,main,schemas}.py`, `tests/api/test_market_data.py`, `frontend/src/{js/modules/{dashboard,report-detail}.js,pug/pages/dashboard.pug}`, `frontend/tests/page-dom.test.mjs`, `docs/{architecture,db-schema,work_plan,progress}.md`, `docs/{decisions/002-financial-calculation-contract.md,guides/current-domain-and-report-workflow.md,backlog/121-market-data-provider-expansion-and-fx.md}`.
+- **Рішення / Результат:** після створення або зміни підтримуваного draft сервер best-effort бере останній approved OpenFacet snapshot, розраховує immutable `system_market_reference` і фіксує USD/UAH разом з новим NBU snapshot-ом. Відсутні snapshot/coverage або НБУ не блокують save; ідентичні market-входи не створюють дублі. Ручний `market_reference` з поясненням застосовності лишається окремим і пріоритетним. У «Всі звіти» заголовок збережено як «Ціна (USD)»: `*` означає «Системний довідковий орієнтир (USD)», `of` — ручне admin-підтвердження, `d` — legacy demo. Private detail і popover пояснюють provenance; public passport/PDF цін не отримують.
+- **Перевірки:** `python -m pytest tests/api/test_market_data.py tests/unit/test_nbu_fx.py -q` — 5 passed; `python -m compileall -q backend` — успішно; `frontend npm test` — 20 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** немає scheduler/freshness SLA, retry/backoff або historical backfill. Автоматичний орієнтир застосовується лише до майбутнього create/draft update, не є експертною, продажною чи транзакційною ціною, а OpenFacet coverage обмежена natural stone та наявними shape/color/clarity/carat anchors.
+
 ## 2026-09-17 — report-workflow-market-reference-guide (завершено)
 
 - **Задача:** доповнити наскрізний guide фактичною механікою market reference, OpenFacet та frozen NBU USD/UAH.

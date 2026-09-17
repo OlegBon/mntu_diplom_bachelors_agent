@@ -309,10 +309,11 @@ class ReportEventResponse(BaseModel):
 
 
 class MarketReferenceSummary(BaseModel):
-    """Latest explicitly attached market reference for one report list row."""
+    """The preferred market-reference projection for one report list row."""
 
     amount: Decimal
     currency_code: str
+    valuation_kind: str
     source_name: str
     market_snapshot_id: Optional[int]
     observed_at: datetime

@@ -164,6 +164,26 @@ def require_admin(current_user: models.Expert) -> None:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
 
+def _attach_system_market_reference_when_available(
+    db: Session, *, report: models.DiamondReport, actor: models.Expert,
+) -> None:
+    """Best-effort enrichment that never prevents a report save.
+
+    A missing approved snapshot, unsupported stone or temporarily unavailable NBU
+    endpoint leaves the report valid but without a new automatic reference.
+    """
+    candidate = crud.prepare_system_market_reference(db, report=report)
+    if candidate is None or crud.system_market_reference_exists(db, report=report, candidate=candidate):
+        return
+    try:
+        fx_rate = fetch_nbu_usd_uah()
+    except FxProviderError:
+        return
+    crud.attach_system_market_reference(
+        db, report=report, candidate=candidate, actor=actor, fx_rate=fx_rate,
+    )
+
+
 def ensure_active_admin_remains(
     db: Session, target: models.Expert, target_role: str, target_active: bool,
 ) -> None:
@@ -297,7 +317,9 @@ def create_report_domain(
 ):
     if current_user.role != "gemologist":
         raise HTTPException(status_code=403, detail="Only gemologists can create primary reports")
-    return crud.create_report_domain(db, payload=payload, author=current_user)
+    report = crud.create_report_domain(db, payload=payload, author=current_user)
+    _attach_system_market_reference_when_available(db, report=report, actor=current_user)
+    return report
 
 
 @app.get("/reports/next-id", response_model=schemas.ReportIdPreview)
@@ -497,12 +519,14 @@ def update_report_domain(
         raise HTTPException(status_code=404, detail="Report not found")
     require_report_access(report, current_user)
     try:
-        return crud.update_report_domain(
+        updated_report = crud.update_report_domain(
             db,
             report=report,
             payload=payload,
             actor=current_user,
         )
+        _attach_system_market_reference_when_available(db, report=updated_report, actor=current_user)
+        return updated_report
     except crud.ReportDomainError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 

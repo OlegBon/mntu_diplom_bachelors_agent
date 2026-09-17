@@ -193,15 +193,16 @@ function renderMedia(container, reportId, assets, token) {
 
 function renderValuations(container, helpNode, valuations) {
   container.replaceChildren();
-  const marketReferences = valuations.filter((valuation) => valuation.valuation_kind === "market_reference");
+  const marketReferences = valuations.filter((valuation) => ["market_reference", "system_market_reference"].includes(valuation.valuation_kind));
   if (!marketReferences.length) {
     const item = document.createElement("li");
-    item.textContent = "Затвердженого ринкового орієнтира ще немає.";
+    item.textContent = "Системного або підтвердженого ринкового орієнтира ще немає.";
     container.append(item);
     return;
   }
-  helpNode.textContent = "OpenFacet — model-based retail reference, не експертна, продажна чи транзакційна ціна.";
+  helpNode.textContent = "OpenFacet — model-based retail reference. Системний орієнтир формується автоматично з останнього затвердженого знімка; підтверджений орієнтир окремо перевіряє адміністратор. Обидва не є експертною, продажною чи транзакційною ціною.";
   for (const valuation of marketReferences) {
+    const isSystemReference = valuation.valuation_kind === "system_market_reference";
     const item = document.createElement("li");
     item.className = "market-reference-card";
     const summary = document.createElement("div");
@@ -209,7 +210,7 @@ function renderValuations(container, helpNode, valuations) {
     const amount = document.createElement("strong");
     amount.textContent = formatAmount(valuation.amount, valuation.currency_code);
     const label = document.createElement("span");
-    label.textContent = "Довідковий орієнтир";
+    label.textContent = isSystemReference ? "Системний довідковий орієнтир" : "Підтверджений довідковий орієнтир";
     summary.append(amount, label);
     const details = document.createElement("dl");
     details.className = "market-reference-card__details";
@@ -232,6 +233,11 @@ function renderValuations(container, helpNode, valuations) {
       const note = document.createElement("p");
       note.className = "market-reference-card__note";
       note.append(document.createTextNode("Підтвердження: "), document.createTextNode(valuation.applicability_note));
+      item.append(note);
+    } else if (isSystemReference) {
+      const note = document.createElement("p");
+      note.className = "market-reference-card__note";
+      note.textContent = "Автоматично розраховано за останнім затвердженим знімком OpenFacet; застосовність не підтверджена адміністратором.";
       item.append(note);
     }
     container.append(item);

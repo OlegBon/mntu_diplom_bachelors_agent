@@ -165,12 +165,16 @@ API не монтує storage як static directory: читання проход
 | --- | --- |
 | `valuation_kind`, `amount`, `currency_code`, `unit` | Семантика й точна сума. |
 | `source_name`, `source_reference`, `observed_at` | Перевірюване зовнішнє або експертне джерело та момент спостереження. |
-| `market_snapshot_id`, `applicability_note` | Nullable ідентифікатор immutable OpenFacet snapshot-а та обов’язкове пояснення, чому admin вважає його застосовним. Значення snapshot не копіюються й не перераховуються. |
+| `market_snapshot_id`, `applicability_note` | Nullable ідентифікатор immutable OpenFacet snapshot-а. Для ручного `market_reference` note є обов’язковим підтвердженням admin; системний `system_market_reference` не має такого підтвердження. Значення snapshot не копіюються й не перераховуються. |
 | `fx_snapshot_id`, `fx_rate`, `fx_rate_date`, `converted_amount`, `converted_currency_code` | Nullable frozen NBU USD/UAH projection: snapshot, Decimal rate, official rate date і обчислений UAH total. Записуються разом із новим market reference і надалі не змінюються. |
 | `created_by_id`, `created_at` | Автор запису й технічний час. |
 
 `0008` дозволяє admin створити `market_reference` лише з approved OpenFacet
 snapshot-а для natural stone та після явного підтвердження застосовності.
+Чинний сервіс також best-effort створює `system_market_reference` для
+підтримуваного нового/оновленого draft за останнім approved snapshot-ом;
+відсутність покриття або зовнішнього FX не скасовує save. Обидва записи
+immutable, а ручний має display-пріоритет.
 Це model-based retail benchmark, не appraisal, offer, transaction чи sale
 price. Legacy `DiamondReport.price`, wizard demo і public passport не
 змінюються.
@@ -230,7 +234,8 @@ policy та окремого рішення про умови використа
 base `USD`, quote `UAH`, `rate DECIMAL(18,8)`, `rate_date`, URL,
 `retrieved_at`, actor і `created_at`. Manual refresh лише додає запис. Під час
 OpenFacet attach backend завжди бере нову відповідь НБУ; він не підставляє
-старий snapshot, якщо мережа недоступна.
+старий snapshot, якщо мережа недоступна. Для best-effort системного орієнтира
+відсутність НБУ лише пропускає enrichment, а не скасовує draft save.
 
 ## Модель `diamond_analytics`
 
