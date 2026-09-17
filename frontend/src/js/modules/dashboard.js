@@ -68,7 +68,8 @@ function closeOverlays() {
   for (const toggle of document.querySelectorAll(".report-actions__toggle[aria-expanded='true'], .report-price__toggle[aria-expanded='true']")) toggle.setAttribute("aria-expanded", "false");
 }
 
-function renderActions(reportId) {
+function renderActions(report) {
+  const { report_id: reportId, status } = report;
   const wrapper = createElement("div", "report-actions");
   const toggle = createElement("button", "report-actions__toggle", "⋮");
   toggle.type = "button";
@@ -78,12 +79,20 @@ function renderActions(reportId) {
   menu.hidden = true;
   const detail = createElement("a", "report-actions__item", "Переглянути");
   detail.href = `/report-detail.html?id=${encodeURIComponent(reportId)}`;
-  const edit = createElement("a", "report-actions__item", "Редагувати");
-  edit.href = `/report-detail.html?id=${encodeURIComponent(reportId)}&edit=1`;
-  const print = createElement("button", "report-actions__item", "Друк");
-  print.type = "button";
-  print.disabled = true;
-  print.title = "Друк буде додано окремим сценарієм";
+  const edit = status === "draft"
+    ? createElement("a", "report-actions__item", "Редагувати")
+    : createElement("button", "report-actions__item", "Редагувати");
+  if (status === "draft") {
+    edit.href = `/report-detail.html?id=${encodeURIComponent(reportId)}&edit=1`;
+  } else {
+    edit.type = "button";
+    edit.disabled = true;
+    edit.title = "Редагування доступне лише для чернетки";
+  }
+  const print = createElement("a", "report-actions__item", "Друк");
+  print.href = `/report-detail.html?id=${encodeURIComponent(reportId)}&print=1`;
+  print.target = "_blank";
+  print.rel = "noopener noreferrer";
   menu.append(detail, edit, print);
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -173,7 +182,7 @@ function renderRows(tbody, reports, labelFor) {
     saleStatusCell.append(createBadge(SALE_STATUS_LABELS[String(isSold)], `sale-${isSold ? "sold" : "not-sold"}`));
     row.append(saleStatusCell);
     const actionsCell = document.createElement("td");
-    actionsCell.append(renderActions(report.report_id));
+    actionsCell.append(renderActions(report));
     row.append(actionsCell);
     tbody.append(row);
   }

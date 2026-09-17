@@ -35,7 +35,16 @@ test("owner edits a draft and sees the recorded private history", async ({ page 
     localStorage.setItem("username", "expert_1");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 2, username: "expert_1", role: "gemologist" } }));
+  await page.route("**/reference-values", (route) => route.fulfill({ json: [
+    { category: "girdle_thickness", code: "medium", label: "Medium", sort_order: 1 },
+    { category: "culet_size", code: "none", label: "None", sort_order: 1 },
+  ] }));
   await page.route("**/market/mappings", (route) => route.fulfill({ json: [
+    { category: "color", grade_value: 0, grade_label: "D" },
+    { category: "clarity", grade_value: 0, grade_label: "FL" },
+    { category: "fluorescence", grade_value: 0, grade_label: "None" },
+    { category: "polish", grade_value: 0, grade_label: "Excellent" },
+    { category: "symmetry", grade_value: 0, grade_label: "Excellent" },
     { category: "proportions", grade_value: 0, grade_label: "Excellent" },
     { category: "cut", grade_value: 0, grade_label: "Excellent" },
   ] }));

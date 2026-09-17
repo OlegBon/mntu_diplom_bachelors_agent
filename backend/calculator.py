@@ -1,13 +1,15 @@
 class DiamondCalculator:
     """
-    Калькулятор для визначення Proportions Grade та Cut Grade
-    на основі стандартів IDC (Round Brilliant).
+    Детермінований demo-калькулятор для Proportions і Cut (Round Brilliant).
+
+    Це не повна реалізація IDC 2013: підтримуються лише чотири геометричні
+    параметри, а підсумок для MVP є найгіршим із трьох component grades.
     """
 
     @staticmethod
     def evaluate_proportions(table: float, depth: float, crown: float, pavilion: float) -> int:
         """
-        Повертає Grade (0=Ex, 1=VG, 2=G, 3=F, 4=P) на основі геометрії.
+        Повертає demo-grade (0=Ex, 1=VG, 2=G, 3=F) за чотирма параметрами.
         """
         score = 0 # Починаємо з 0 (Excellent)
 
@@ -36,6 +38,6 @@ class DiamondCalculator:
     @staticmethod
     def calculate_final_cut(proportions: int, polish: int, symmetry: int) -> int:
         """
-        Фінальна оцінка Cut - це найгірша з трьох компонент (Proportions, Polish, Symmetry).
+        Demo-підсумок Cut — найгірша з трьох компонентних оцінок.
         """
         return max(proportions, polish, symmetry)

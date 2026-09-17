@@ -125,6 +125,24 @@ def test_report_domain_transition_requires_confirmation_and_admin_issuance(clien
 
 @pytest.mark.api
 @pytest.mark.integration
+def test_expert_final_cut_is_server_derived_and_client_override_is_ignored(client, experts) -> None:
+    owner_headers = auth_headers(client, experts["owner"].username)
+    payload = report_payload(confirmed=True)
+    payload["expert_proportions_grade"] = 2
+    payload["expert_cut_grade"] = 0
+    payload["stone"]["polish_grade"] = 0
+    payload["stone"]["symmetry_grade"] = 1
+
+    created = client.post("/reports", json=payload, headers=owner_headers)
+
+    assert created.status_code == 200
+    assert created.json()["expert_proportions_grade"] == 2
+    assert created.json()["expert_cut_grade"] == 2
+    assert created.json()["expert_confirmed_at"] is not None
+
+
+@pytest.mark.api
+@pytest.mark.integration
 def test_draft_update_records_an_auditable_event_and_preserves_owner_rbac(client, experts) -> None:
     owner_headers = auth_headers(client, experts["owner"].username)
     other_headers = auth_headers(client, experts["other"].username)

@@ -46,6 +46,36 @@ const dashboardResponse = {
         legacy_origin_code: null,
       },
     },
+    {
+      report_id: "DR-00043", status: "issued", report_date: "2026-09-15T10:00:00Z",
+      created_at: "2026-09-15T10:00:00Z", updated_at: "2026-09-15T10:00:00Z", issued_at: "2026-09-15T11:00:00Z",
+      expert_id: 2, issued_by_id: 1, expert_comment: null, system_proportions_grade: 0, system_cut_grade: 0,
+      calculation_rule_version: "idc-demo-v1", expert_proportions_grade: 0, expert_cut_grade: 0,
+      expert_confirmed_at: "2026-09-15T10:30:00Z", price: "6931.00",
+      stone: {
+        stone_id: 43, shape: "Round", carat_weight: 1.25, color_grade: 0, clarity_grade: 0,
+        measurements_length: 6.0, measurements_width: 6.0, measurements_depth: 3.8,
+        table_percent: 58.0, depth_percent: 61.0, crown_angle: 34.5, pavilion_angle: 40.8,
+        girdle_thickness: null, culet_size: null, polish_grade: 0, symmetry_grade: 0, fluorescence_grade: 0,
+        origin: "natural", treatment_status: "not_assessed", identification_status: "preliminary",
+        identification_method: null, identification_conclusion: null, market_status: "available", legacy_origin_code: null,
+      },
+    },
+    {
+      report_id: "DR-00044", status: "void", report_date: "2026-09-15T10:00:00Z",
+      created_at: "2026-09-15T10:00:00Z", updated_at: "2026-09-15T10:00:00Z", issued_at: "2026-09-15T11:00:00Z",
+      expert_id: 2, issued_by_id: 1, expert_comment: null, system_proportions_grade: 0, system_cut_grade: 0,
+      calculation_rule_version: "idc-demo-v1", expert_proportions_grade: 0, expert_cut_grade: 0,
+      expert_confirmed_at: "2026-09-15T10:30:00Z", price: "6931.00",
+      stone: {
+        stone_id: 44, shape: "Round", carat_weight: 1.25, color_grade: 0, clarity_grade: 0,
+        measurements_length: 6.0, measurements_width: 6.0, measurements_depth: 3.8,
+        table_percent: 58.0, depth_percent: 61.0, crown_angle: 34.5, pavilion_angle: 40.8,
+        girdle_thickness: null, culet_size: null, polish_grade: 0, symmetry_grade: 0, fluorescence_grade: 0,
+        origin: "natural", treatment_status: "not_assessed", identification_status: "preliminary",
+        identification_method: null, identification_conclusion: null, market_status: "available", legacy_origin_code: null,
+      },
+    },
   ],
   total: 1250,
   page: 1,
@@ -70,14 +100,22 @@ test("dashboard renders the private report page and its row action menu", async 
 
   await expect(page.getByRole("heading", { name: "Всі звіти" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "DR-00042", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Пояснення demo-ціни звіту DR-00042" }).click();
-  await expect(page.getByText("diamonds_dataset.csv")).toBeVisible();
+  const draftRow = page.locator("tr", { hasText: "DR-00042" });
+  await draftRow.getByRole("button", { name: "Пояснення demo-ціни звіту DR-00042" }).click();
+  await expect(draftRow.getByText("diamonds_dataset.csv")).toBeVisible();
   await page.getByRole("heading", { name: "Всі звіти" }).click();
-  await expect(page.getByText("diamonds_dataset.csv")).toBeHidden();
+  await expect(draftRow.getByText("diamonds_dataset.csv")).toBeHidden();
   await page.getByRole("button", { name: "Відкрити дії для звіту DR-00042" }).click();
   await expect(page.getByRole("link", { name: "Переглянути" })).toHaveAttribute("href", "/report-detail.html?id=DR-00042");
+  await expect(page.getByRole("link", { name: "Друк" })).toHaveAttribute("href", "/report-detail.html?id=DR-00042&print=1");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: "Переглянути" })).toBeHidden();
+
+  for (const reportId of ["DR-00043", "DR-00044"]) {
+    await page.getByRole("button", { name: `Відкрити дії для звіту ${reportId}` }).click();
+    await expect(page.getByRole("button", { name: "Редагувати" })).toBeDisabled();
+    await page.keyboard.press("Escape");
+  }
 
   await page.getByLabel("Статус звіту").selectOption("draft");
   await expect(page).toHaveURL(/report_status=draft/);

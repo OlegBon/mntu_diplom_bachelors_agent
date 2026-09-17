@@ -167,7 +167,6 @@ class ReportCreate(BaseModel):
     examination_date: date
     expert_comment: Optional[str] = None
     expert_proportions_grade: Optional[int] = Field(default=None, ge=0, le=99)
-    expert_cut_grade: Optional[int] = Field(default=None, ge=0, le=99)
 
 
 class ReportUpdate(BaseModel):
@@ -175,7 +174,6 @@ class ReportUpdate(BaseModel):
     examination_date: date
     expert_comment: Optional[str] = None
     expert_proportions_grade: Optional[int] = Field(default=None, ge=0, le=99)
-    expert_cut_grade: Optional[int] = Field(default=None, ge=0, le=99)
 
 
 class ReportTransition(BaseModel):
