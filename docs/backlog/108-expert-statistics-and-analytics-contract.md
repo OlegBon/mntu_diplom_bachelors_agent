@@ -2,8 +2,8 @@
 
 ## Мета
 
-Виправити та формалізувати `/statistics/expert-performance` перед будь-яким
-відображенням статистики в admin UI.
+Виправити та формалізувати admin-only `/statistics/expert-performance` перед
+будь-яким відображенням статистики в UI.
 
 ## Передумови
 
@@ -18,6 +18,16 @@ API/integration regression-покриття.
   агрегатів; не змішувати з ML або demo-ціною.
 - Додати admin-only RBAC, API/integration тести і безопасний UI тільки після
   підтвердженого контракту.
+
+### Узгоджений контракт
+
+- All-time operational snapshot для кожного gemologist, включно з inactive та
+  експертами без звітів: ID, username, ПІБ, active-стан, `total_reports`,
+  лічильники `draft/review/issued/void` і середня вага в ct.
+- Для legacy report без нормалізованого `Stone` вага читається з compatibility
+  поля report; якщо ваги немає, повертається `null`.
+- Це огляд навантаження й стану workflow, а не рейтинг. UI лишається окремим
+  рішенням після ручної перевірки контракту.
 
 ## Не входить
 

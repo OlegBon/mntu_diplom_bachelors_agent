@@ -78,11 +78,20 @@ class ExpertListResponse(BaseModel):
     page_size: int
     total_pages: int
 
-# Схема для статистики (для аналізу експертів)
+# Read-only operational workload snapshot. It is not a staff-performance score.
 class ExpertStats(BaseModel):
+    expert_id: int
     expert_username: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    middle_name: Optional[str]
+    is_active: bool
     total_reports: int
-    avg_carat: float
+    draft_reports: int
+    review_reports: int
+    issued_reports: int
+    void_reports: int
+    avg_carat_weight: Optional[float]
 
 # Схема для токена (JWT)
 class Token(BaseModel):

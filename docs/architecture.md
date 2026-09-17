@@ -111,7 +111,7 @@ Backend запускають із кореня репозиторію через
 | `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
 | `/users/`, `/users/me`, `/users/me/profile`, `/users/me/password`, `/users/{id}/activate`, `/users/{id}/deactivate`, `/experts/` | Admin керує ролями й оборотним active-станом; користувач змінює лише власні ПІБ/пароль. Inactive account не проходить login/JWT; останній active admin захищений. |
 | `/market/mappings`, `/market/price` | Публічні довідники оцінок і поточний ринковий індекс; зміна індексу — лише для admin. |
-| `/statistics/expert-performance` | Агрегована статистика експертів. |
+| `/statistics/expert-performance` | Admin-only all-time operational snapshot gemologist-ів: статусні лічильники звітів і середня вага; без ціни, ML чи рейтингу. |
 | `/docs`, `/openapi.json` | Swagger UI та машинозчитуваний API-контракт FastAPI. |
 
 Поточний контракт без зміни даних перевіряє `scripts/audit-api.mjs`. Скрипт приймає лише локальний HTTP API, виконує GET-запити й CORS preflight та зберігає ігноровані Git звіти у `docs/audits/`.

@@ -1,4 +1,4 @@
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, case, desc, func
 from sqlalchemy.orm import Session, joinedload
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, getcontext
@@ -629,14 +629,36 @@ def get_active_experts(db: Session):
         models.Expert.role != 'admin', models.Expert.is_active.is_(True)
     ).all()
 
-# Функція для отримання статистики гемологів (SQL GROUP BY)
-from sqlalchemy import func
 def get_expert_stats(db: Session):
+    """Return an all-time, admin-facing workflow snapshot for every gemologist."""
+    report_weight = func.coalesce(models.Stone.carat_weight, models.DiamondReport.carat_weight)
     return db.query(
+        models.Expert.expert_id.label("expert_id"),
         models.Expert.username.label("expert_username"),
+        models.Expert.first_name.label("first_name"),
+        models.Expert.last_name.label("last_name"),
+        models.Expert.middle_name.label("middle_name"),
+        models.Expert.is_active.label("is_active"),
         func.count(models.DiamondReport.report_id).label("total_reports"),
-        func.avg(models.DiamondReport.carat_weight).label("avg_carat")
-    ).join(models.DiamondReport).group_by(models.Expert.username).all()
+        func.sum(case((models.DiamondReport.status == "draft", 1), else_=0)).label("draft_reports"),
+        func.sum(case((models.DiamondReport.status == "review", 1), else_=0)).label("review_reports"),
+        func.sum(case((models.DiamondReport.status == "issued", 1), else_=0)).label("issued_reports"),
+        func.sum(case((models.DiamondReport.status == "void", 1), else_=0)).label("void_reports"),
+        func.avg(report_weight).label("avg_carat_weight"),
+    ).outerjoin(
+        models.DiamondReport, models.DiamondReport.expert_id == models.Expert.expert_id,
+    ).outerjoin(
+        models.Stone, models.DiamondReport.stone_id == models.Stone.stone_id,
+    ).filter(
+        models.Expert.role == "gemologist",
+    ).group_by(
+        models.Expert.expert_id,
+        models.Expert.username,
+        models.Expert.first_name,
+        models.Expert.last_name,
+        models.Expert.middle_name,
+        models.Expert.is_active,
+    ).order_by(models.Expert.username.asc()).all()
 
 def get_mappings(db: Session, category: str = None):
     """
