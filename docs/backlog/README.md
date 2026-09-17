@@ -27,7 +27,6 @@
 
 | Файл | Тема |
 | --- | --- |
-| [110-authoritative-market-data-and-fx.md](./110-authoritative-market-data-and-fx.md) | Авторитетні ринкові дані, валютні курси й історія snapshot-ів. |
 | [121-market-data-provider-expansion-and-fx.md](./121-market-data-provider-expansion-and-fx.md) | Нові провайдери, NBU FX, freshness policy та scheduler. |
 | [112-expert-active-time-and-analytics-periods.md](./112-expert-active-time-and-analytics-periods.md) | Достовірний active-time експертів і періоди operational analytics. |
 | [115-profile-admin-ui-polish.md](./115-profile-admin-ui-polish.md) | Узгоджені візуальні та responsive-покращення Profile й admin UI. |
