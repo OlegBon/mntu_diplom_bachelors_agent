@@ -3,6 +3,7 @@ import {
   getCurrentUser,
   getDomainReport,
   getGradeMappings,
+  getReferenceValues,
   getReportEvents,
   getReportMedia,
   getReportMediaContentUrl,
@@ -19,7 +20,15 @@ import { logout } from "./auth.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
-const EVENT_LABELS = { created: "Створено", report_updated: "Дані чернетки оновлено", status_changed: "Статус змінено" };
+const EVENT_LABELS = {
+  created: "Створено",
+  report_updated: "Дані чернетки оновлено",
+  status_changed: "Статус змінено",
+  passport_published: "Публічний паспорт опубліковано",
+  passport_reissued: "Публічний паспорт перевипущено",
+  passport_revoked: "Публічний паспорт відкликано",
+  legacy_import: "Імпортовано з попередньої бази",
+};
 const DRAFT_FIELDS = ["input", "select", "textarea"];
 
 function setStatus(node, message, isError = false) {
@@ -37,7 +46,9 @@ function reportIdFromUrl() {
 }
 
 function setEditable(form, editable) {
-  form.querySelectorAll(DRAFT_FIELDS.join(", ")).forEach((element) => { element.disabled = !editable; });
+  form.querySelectorAll(DRAFT_FIELDS.join(", ")).forEach((element) => {
+    if (element.id !== "detail-expert-cut-result") element.disabled = !editable;
+  });
   form.querySelector("#detail-save").hidden = !editable;
   form.querySelector("#detail-cancel").hidden = !editable;
   form.querySelector("#detail-edit").hidden = editable;
@@ -57,9 +68,38 @@ function populateGradeSelect(select, mappings, category, emptyLabel = "Не пі
 }
 
 function populateExpertGradeSelects(form, mappings) {
+  populateGradeSelect(form.querySelector("#detail-color"), mappings, "color", "Оберіть колір");
+  populateGradeSelect(form.querySelector("#detail-clarity"), mappings, "clarity", "Оберіть чистоту");
+  populateGradeSelect(form.querySelector("#detail-fluorescence"), mappings, "fluorescence", "Оберіть значення");
   populateGradeSelect(form.querySelector("#detail-polish"), mappings, "polish", "Оберіть оцінку");
   populateGradeSelect(form.querySelector("#detail-symmetry"), mappings, "symmetry", "Оберіть оцінку");
   populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions", "Не задано");
+}
+
+function populateReferenceSelect(select, references, category) {
+  const selectedValue = select.value;
+  select.replaceChildren(new Option("Не задано", ""));
+  references
+    .filter((entry) => entry.category === category)
+    .forEach((entry) => select.add(new Option(entry.label, entry.code)));
+  select.value = selectedValue;
+}
+
+function updateDerivedExpertCut(form, gradeLabels) {
+  const target = form.querySelector("#detail-expert-cut-result");
+  const values = ["expert_proportions_grade", "polish_grade", "symmetry_grade"]
+    .map((name) => form.elements.namedItem(name)?.value ?? "");
+  if (!target || values.some((value) => value === "")) {
+    if (target) target.value = "—";
+    return;
+  }
+  const grades = values.map(Number);
+  if (grades.some((grade) => !Number.isInteger(grade) || grade < 0)) {
+    target.value = "—";
+    return;
+  }
+  const cut = Math.max(...grades);
+  target.value = gradeLabels.get(`cut:${cut}`) || String(cut);
 }
 
 function payloadFromForm(form) {
@@ -355,13 +395,18 @@ export async function initReportDetail() {
     }
   };
   try {
-    const [user, mappings] = await Promise.all([getCurrentUser(token), getGradeMappings()]);
+    const [user, mappings, references] = await Promise.all([getCurrentUser(token), getGradeMappings(), getReferenceValues(token)]);
     currentUser = user;
     gradeLabels = new Map(mappings.map((item) => [`${item.category}:${item.grade_value}`, item.grade_label]));
     populateExpertGradeSelects(form, mappings);
+    populateReferenceSelect(form.querySelector("#detail-girdle"), references, "girdle_thickness");
+    populateReferenceSelect(form.querySelector("#detail-culet"), references, "culet_size");
   } catch { logout("/login.html"); return; }
   form.querySelector("#detail-edit").addEventListener("click", () => setEditable(form, true));
-  form.querySelector("#detail-cancel").addEventListener("click", () => { populateForm(form, report); setEditable(form, false); });
+  form.querySelector("#detail-cancel").addEventListener("click", () => { populateForm(form, report, gradeLabels); setEditable(form, false); });
+  ["expert_proportions_grade", "polish_grade", "symmetry_grade"].forEach((name) => {
+    form.elements.namedItem(name)?.addEventListener("change", () => updateDerivedExpertCut(form, gradeLabels));
+  });
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!form.reportValidity()) return;

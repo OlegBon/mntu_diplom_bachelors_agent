@@ -35,6 +35,10 @@ test("expert selects proportions while final cut remains server-derived", async 
     localStorage.setItem("username", "expert_1");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 2, username: "expert_1", role: "gemologist" } }));
+  await page.route("**/reference-values", (route) => route.fulfill({ json: [
+    { category: "girdle_thickness", code: "medium", label: "Medium", sort_order: 1 },
+    { category: "culet_size", code: "none", label: "None", sort_order: 1 },
+  ] }));
   await page.route("**/market/mappings", (route) => route.fulfill({ json: [
     { category: "proportions", grade_value: 0, grade_label: "Excellent" },
     { category: "proportions", grade_value: 1, grade_label: "Very Good" },
@@ -62,6 +66,7 @@ test("expert selects proportions while final cut remains server-derived", async 
   await page.locator("#detail-polish").selectOption("1");
   await page.locator("#detail-symmetry").selectOption("2");
   await page.locator("#detail-expert-proportions").selectOption("1");
+  await expect(page.locator("#detail-expert-cut-result")).toHaveValue("Good");
   await Promise.all([
     page.waitForRequest((request) => request.url().endsWith("/reports/DR-01001") && request.method() === "PUT"),
     page.locator("#detail-save").click(),

@@ -36,14 +36,17 @@ block content
                                 option(value="withdrawn") Знято з продажу
                     .form-row.three-cols
                         .form-group
-                            label(for="detail-color") Колір (код)
-                            input#detail-color.form-control(type="number" name="color_grade" min="0" max="99" required)
+                            label(for="detail-color") Колір
+                            select#detail-color.form-select(name="color_grade" required)
+                                option(value="") Оберіть колір
                         .form-group
-                            label(for="detail-clarity") Чистота (код)
-                            input#detail-clarity.form-control(type="number" name="clarity_grade" min="0" max="99" required)
+                            label(for="detail-clarity") Чистота
+                            select#detail-clarity.form-select(name="clarity_grade" required)
+                                option(value="") Оберіть чистоту
                         .form-group
-                            label(for="detail-fluorescence") Fluorescence (код)
-                            input#detail-fluorescence.form-control(type="number" name="fluorescence_grade" min="0" max="99" required)
+                            label(for="detail-fluorescence") Fluоресценція
+                            select#detail-fluorescence.form-select(name="fluorescence_grade" required)
+                                option(value="") Оберіть значення
 
                 .report-detail__section
                     h2 Геометрія та IDC
@@ -74,10 +77,12 @@ block content
                     .form-row
                         .form-group.half
                             label(for="detail-girdle") Girdle Thickness
-                            input#detail-girdle.form-control(type="text" name="girdle_thickness" maxlength="50")
+                            select#detail-girdle.form-select(name="girdle_thickness")
+                                option(value="") Не задано
                         .form-group.half
                             label(for="detail-culet") Culet Size
-                            input#detail-culet.form-control(type="text" name="culet_size" maxlength="50")
+                            select#detail-culet.form-select(name="culet_size")
+                                option(value="") Не задано
 
                 .report-detail__section
                     h2 Висновок та підтвердження
