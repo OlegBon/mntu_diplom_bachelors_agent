@@ -10,7 +10,7 @@
 - **Задача:** уніфікувати дату НБУ у dashboard popover і зробити private presentation довідкового ринкового орієнтира читабельним.
 - **Змінені файли:** `frontend/src/js/modules/{dashboard,report-detail}.js`, `frontend/src/scss/_ui-primitives.scss`, `docs/progress.md`.
 - **Рішення / Результат:** popover показує official rate date у форматі `uk-UA`, як і private detail. Один перевантажений рядок detail замінено на flat-card із основною USD-сумою, визначеними полями provenance, frozen UAH/NBU і відокремленим поясненням застосовності; mobile складає пари у одну колонку.
-- **Перевірки:** `npm run build` — успішно; frontend Node/jsdom tests — 20 passed; `git diff --check` — без помилок.
+- **Перевірки:** `npm run build` — успішно; frontend Node/jsdom tests — 20 passed; Playwright E2E — 14 passed; `git diff --check` — без помилок.
 - **Нові змінні середовища:** немає.
 - **Обмеження:** це лише presentation private market reference; розрахунок, FX snapshot, passport і PDF не змінені.
 
