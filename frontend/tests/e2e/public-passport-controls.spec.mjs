@@ -32,9 +32,11 @@ test("admin does not see QR or passport actions before a report is issued", asyn
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "admin");
+    localStorage.setItem("role", "admin");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
   await page.route("**/market/mappings", (route) => route.fulfill({ json: [] }));
+  await page.route("**/reference-values", (route) => route.fulfill({ json: [] }));
   await page.route("**/reports/DR-01001/events", (route) => route.fulfill({ json: [] }));
   await page.route("**/reports/DR-01001/media", (route) => route.fulfill({ json: [] }));
   await page.route("**/reports/DR-01001", (route) => route.fulfill({ json: reviewReport }));
