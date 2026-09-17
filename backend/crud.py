@@ -8,6 +8,7 @@ from statistics import median
 
 from . import models, schemas
 from .market_providers import FetchedMarketSnapshot
+from .fx import NbuUsdUahRate, convert_usd_to_uah
 from .security import get_password_hash, verify_password
 
 from .calculator import DiamondCalculator
@@ -228,7 +229,45 @@ def get_report_domain_list(
         .limit(page_size)
         .all()
     )
+    _attach_latest_market_reference_summaries(db, reports)
     return reports, total
+
+
+def _attach_latest_market_reference_summaries(
+    db: Session, reports: list[models.DiamondReport],
+) -> None:
+    """Attach a transient API projection without changing stored reports."""
+    stone_ids = [report.stone_id for report in reports if report.stone_id is not None]
+    if not stone_ids:
+        return
+    valuations = (
+        db.query(models.StoneValuation)
+        .filter(
+            models.StoneValuation.stone_id.in_(stone_ids),
+            models.StoneValuation.valuation_kind == "market_reference",
+        )
+        .order_by(models.StoneValuation.created_at.desc(), models.StoneValuation.valuation_id.desc())
+        .all()
+    )
+    by_stone: dict[int, models.StoneValuation] = {}
+    for valuation in valuations:
+        by_stone.setdefault(valuation.stone_id, valuation)
+    for report in reports:
+        valuation = by_stone.get(report.stone_id)
+        if valuation is None:
+            continue
+        report.market_reference = schemas.MarketReferenceSummary(
+            amount=valuation.amount,
+            currency_code=valuation.currency_code,
+            source_name=valuation.source_name,
+            market_snapshot_id=valuation.market_snapshot_id,
+            observed_at=valuation.observed_at,
+            converted_amount=valuation.converted_amount,
+            converted_currency_code=valuation.converted_currency_code,
+            fx_snapshot_id=valuation.fx_snapshot_id,
+            fx_rate=valuation.fx_rate,
+            fx_rate_date=valuation.fx_rate_date,
+        )
 
 
 def create_report_domain(
@@ -770,6 +809,39 @@ def get_market_data_snapshots(db: Session) -> list[models.MarketDataSnapshot]:
     )
 
 
+def get_fx_data_snapshots(db: Session) -> list[models.FxDataSnapshot]:
+    return (
+        db.query(models.FxDataSnapshot)
+        .filter(models.FxDataSnapshot.provider_code == "nbu")
+        .order_by(models.FxDataSnapshot.retrieved_at.desc(), models.FxDataSnapshot.fx_snapshot_id.desc())
+        .all()
+    )
+
+
+def create_nbu_fx_snapshot(
+    db: Session, *, fetched: NbuUsdUahRate, actor: models.Expert, commit: bool,
+) -> models.FxDataSnapshot:
+    provider = db.get(models.MarketDataProvider, "nbu")
+    if provider is None or not provider.is_active:
+        raise ReportDomainError("NBU FX provider is not registered or active")
+    snapshot = models.FxDataSnapshot(
+        provider_code="nbu",
+        base_currency_code="USD",
+        quote_currency_code="UAH",
+        rate=fetched.rate,
+        rate_date=fetched.rate_date,
+        source_url=fetched.source_url,
+        retrieved_at=fetched.retrieved_at,
+        created_by_id=actor.expert_id,
+    )
+    db.add(snapshot)
+    db.flush()
+    if commit:
+        db.commit()
+        db.refresh(snapshot)
+    return snapshot
+
+
 def get_market_data_snapshot(db: Session, snapshot_id: int) -> models.MarketDataSnapshot | None:
     return db.get(models.MarketDataSnapshot, snapshot_id)
 
@@ -916,6 +988,7 @@ def attach_market_reference(
     report: models.DiamondReport,
     request: schemas.MarketReferenceAttachRequest,
     actor: models.Expert,
+    fx_rate: NbuUsdUahRate,
 ) -> models.StoneValuation:
     if report.stone is None or report.stone_id is None:
         raise ReportDomainError("Report has no normalized stone")
@@ -939,6 +1012,7 @@ def attach_market_reference(
         db, snapshot_id=snapshot.snapshot_id, stone=report.stone,
     )
     amount = (price_per_carat * Decimal(report.stone.carat_weight)).quantize(Decimal("0.01"))
+    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False)
     valuation = models.StoneValuation(
         stone_id=report.stone_id,
         valuation_kind="market_reference",
@@ -949,6 +1023,11 @@ def attach_market_reference(
         source_reference=f"snapshot:{snapshot.snapshot_id}; shape:{shape_code}; USD/ct:{price_per_carat}",
         market_snapshot_id=snapshot.snapshot_id,
         applicability_note=request.applicability_note,
+        fx_snapshot_id=fx_snapshot.fx_snapshot_id,
+        fx_rate=fx_rate.rate,
+        fx_rate_date=fx_rate.rate_date,
+        converted_amount=convert_usd_to_uah(amount, fx_rate.rate),
+        converted_currency_code="UAH",
         observed_at=snapshot.retrieved_at,
         created_by_id=actor.expert_id,
     )

@@ -5,11 +5,12 @@ import pytest
 
 from backend import models
 from backend.market_providers import FetchedMarketSnapshot, MarketQuote
+from backend.fx import NbuUsdUahRate
 from tests.conftest import auth_headers
 
 
-def _register_openfacet(db_session) -> None:
-    db_session.add(models.MarketDataProvider(
+def _register_providers(db_session) -> None:
+    db_session.add_all([models.MarketDataProvider(
         provider_code="openfacet",
         display_name="OpenFacet",
         provider_type="market_reference",
@@ -17,7 +18,15 @@ def _register_openfacet(db_session) -> None:
         terms_url="https://openfacet.net/en/terms/",
         scope_note="Comparable natural GIA reference only.",
         is_active=True,
-    ))
+    ), models.MarketDataProvider(
+        provider_code="nbu",
+        display_name="NBU",
+        provider_type="fx_reference",
+        documentation_url="https://bank.gov.ua/ua/markets/exchangerates",
+        terms_url="https://bank.gov.ua/ua/about/terms-of-use",
+        scope_note="Official USD/UAH rate.",
+        is_active=True,
+    )])
     db_session.commit()
 
 
@@ -50,7 +59,7 @@ def _report_payload() -> dict:
 @pytest.mark.api
 @pytest.mark.integration
 def test_market_data_candidate_approval_and_explicit_report_attachment(client, experts, db_session, monkeypatch) -> None:
-    _register_openfacet(db_session)
+    _register_providers(db_session)
     db_session.add_all([
         models.GradeMapping(category="color", grade_value=0, grade_label="D"),
         models.GradeMapping(category="clarity", grade_value=0, grade_label="FL"),
@@ -62,12 +71,19 @@ def test_market_data_candidate_approval_and_explicit_report_attachment(client, e
             return _fetched_snapshot()
 
     monkeypatch.setattr("backend.main.get_market_provider", lambda _code: FakeProvider())
+    monkeypatch.setattr(
+        "backend.main.fetch_nbu_usd_uah",
+        lambda: NbuUsdUahRate(
+            rate=Decimal("40.50000000"), rate_date=datetime(2026, 9, 16).date(),
+            retrieved_at=datetime(2026, 9, 17, tzinfo=timezone.utc),
+        ),
+    )
     admin_headers = auth_headers(client, experts["admin"].username)
     owner_headers = auth_headers(client, experts["owner"].username)
 
     assert client.get("/market-data/providers").status_code == 401
     assert client.get("/market-data/providers", headers=owner_headers).status_code == 403
-    assert client.get("/market-data/providers", headers=admin_headers).json()[0]["provider_code"] == "openfacet"
+    assert {item["provider_code"] for item in client.get("/market-data/providers", headers=admin_headers).json()} == {"nbu", "openfacet"}
 
     candidate = client.post("/market-data/providers/openfacet/fetch", headers=admin_headers)
     assert candidate.status_code == 200
@@ -98,6 +114,9 @@ def test_market_data_candidate_approval_and_explicit_report_attachment(client, e
     assert attached.status_code == 200
     assert attached.json()["amount"] == "5000.00"
     assert attached.json()["market_snapshot_id"] == snapshot_id
+    assert attached.json()["converted_amount"] == "202500.00"
+    assert attached.json()["converted_currency_code"] == "UAH"
+    assert attached.json()["fx_rate"] == "40.50000000"
 
     values = client.get(f"/reports/{report_id}/valuations", headers=owner_headers)
     assert values.status_code == 200
@@ -108,7 +127,7 @@ def test_market_data_candidate_approval_and_explicit_report_attachment(client, e
 @pytest.mark.api
 @pytest.mark.integration
 def test_market_data_snapshot_cannot_be_decided_twice(client, experts, db_session) -> None:
-    _register_openfacet(db_session)
+    _register_providers(db_session)
     snapshot = models.MarketDataSnapshot(
         provider_code="openfacet", snapshot_kind="market_reference", status="candidate",
         currency_code="USD", unit="USD_PER_CARAT", source_url="https://example.test/list.csv",

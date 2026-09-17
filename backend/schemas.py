@@ -215,9 +215,16 @@ class StoneValuationResponse(BaseModel):
     source_reference: Optional[str]
     market_snapshot_id: Optional[int]
     applicability_note: Optional[str]
+    fx_snapshot_id: Optional[int]
+    fx_rate: Optional[Decimal]
+    fx_rate_date: Optional[date]
+    converted_amount: Optional[Decimal]
+    converted_currency_code: Optional[str]
     observed_at: datetime
     created_by_id: Optional[int]
     created_at: datetime
+
+
 
 
 # Report-domain contract used by the current private API.
@@ -301,6 +308,21 @@ class ReportEventResponse(BaseModel):
     created_at: datetime
 
 
+class MarketReferenceSummary(BaseModel):
+    """Latest explicitly attached market reference for one report list row."""
+
+    amount: Decimal
+    currency_code: str
+    source_name: str
+    market_snapshot_id: Optional[int]
+    observed_at: datetime
+    converted_amount: Optional[Decimal]
+    converted_currency_code: Optional[str]
+    fx_snapshot_id: Optional[int]
+    fx_rate: Optional[Decimal]
+    fx_rate_date: Optional[date]
+
+
 class ReportResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     report_id: str
@@ -320,7 +342,23 @@ class ReportResponse(BaseModel):
     expert_cut_grade: Optional[int]
     expert_confirmed_at: Optional[datetime]
     price: Optional[Decimal]
+    market_reference: Optional[MarketReferenceSummary] = None
     stone: StoneResponse
+
+
+class FxDataSnapshotResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    fx_snapshot_id: int
+    provider_code: str
+    base_currency_code: str
+    quote_currency_code: str
+    rate: Decimal
+    rate_date: date
+    source_url: str
+    retrieved_at: datetime
+    created_by_id: Optional[int]
+    created_at: datetime
 
 
 class ReportListResponse(BaseModel):

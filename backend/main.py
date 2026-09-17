@@ -13,6 +13,7 @@ from qrcode.image.svg import SvgPathImage
 
 from . import crud, database, media_storage, models, schemas, security
 from .market_providers import MarketProviderError, get_market_provider
+from .fx import FxProviderError, fetch_nbu_usd_uah
 from .passport_pdf import build_public_passport_pdf
 
 app = FastAPI(title="Diamond ID System API")
@@ -357,8 +358,18 @@ def attach_report_market_reference(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    snapshot = crud.get_market_data_snapshot(db, payload.snapshot_id)
+    if snapshot is None or snapshot.status != "approved":
+        raise HTTPException(status_code=422, detail="Select an approved market-data snapshot")
+    if snapshot.snapshot_kind != "market_reference" or snapshot.provider_code != "openfacet":
+        raise HTTPException(status_code=422, detail="This snapshot cannot create an OpenFacet market reference")
     try:
-        return crud.attach_market_reference(db, report=report, request=payload, actor=current_user)
+        fx_rate = fetch_nbu_usd_uah()
+        return crud.attach_market_reference(
+            db, report=report, request=payload, actor=current_user, fx_rate=fx_rate,
+        )
+    except FxProviderError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
     except crud.ReportDomainError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
@@ -762,6 +773,30 @@ def read_market_data_snapshots(
 ):
     require_admin(current_user)
     return crud.get_market_data_snapshots(db)
+
+
+@app.get("/market-data/fx-snapshots", response_model=List[schemas.FxDataSnapshotResponse])
+def read_fx_data_snapshots(
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    return crud.get_fx_data_snapshots(db)
+
+
+@app.post("/market-data/providers/nbu/refresh", response_model=schemas.FxDataSnapshotResponse)
+def refresh_nbu_fx_rate(
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    """Store a new immutable official USD/UAH response; reports are unchanged."""
+    require_admin(current_user)
+    try:
+        fetched = fetch_nbu_usd_uah()
+    except FxProviderError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    try:
+        return crud.create_nbu_fx_snapshot(db, fetched=fetched, actor=current_user, commit=True)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @app.post("/market-data/providers/{provider_code}/fetch", response_model=schemas.MarketDataSnapshotResponse)

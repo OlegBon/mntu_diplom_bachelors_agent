@@ -227,6 +227,13 @@ class StoneValuation(Base):
     # portability; the domain service validates this market snapshot ID.
     market_snapshot_id = Column(Integer, nullable=True, index=True)
     applicability_note = Column(Text, nullable=True)
+    # The FX rate is frozen with the valuation.  It is never recalculated from
+    # a subsequently published NBU rate.
+    fx_snapshot_id = Column(Integer, nullable=True, index=True)
+    fx_rate = Column(DECIMAL(18, 8), nullable=True)
+    fx_rate_date = Column(Date, nullable=True)
+    converted_amount = Column(DECIMAL(14, 2), nullable=True)
+    converted_currency_code = Column(String(3), nullable=True)
     observed_at = Column(DateTime, nullable=False)
     created_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
@@ -335,6 +342,27 @@ class MarketDataQuote(Base):
     color_code = Column(String(16), nullable=False)
     clarity_code = Column(String(16), nullable=False)
     price_per_carat = Column(DECIMAL(14, 2), nullable=False)
+
+
+class FxDataSnapshot(Base):
+    """Immutable official FX response used when a valuation is attached."""
+
+    __tablename__ = "fx_data_snapshots"
+    __table_args__ = {"schema": "diamond_market"}
+
+    fx_snapshot_id = Column(Integer, primary_key=True, index=True)
+    provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=False, index=True,
+    )
+    base_currency_code = Column(String(3), nullable=False)
+    quote_currency_code = Column(String(3), nullable=False)
+    rate = Column(DECIMAL(18, 8), nullable=False)
+    rate_date = Column(Date, nullable=False)
+    source_url = Column(Text, nullable=False)
+    retrieved_at = Column(DateTime, nullable=False)
+    created_by_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
 
 
 class MlResult(Base):
