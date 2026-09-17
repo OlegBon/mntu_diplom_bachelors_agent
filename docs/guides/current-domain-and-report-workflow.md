@@ -68,7 +68,7 @@ Private API потребує JWT. Видимість або приховуван
 | Ідентифікація | `report_id`, статус, автор, дата створення/оновлення, `examination_date`, дата й автор видачі. |
 | Фізичні дані каменю | Форма, вага, колір, чистота, довжина/ширина/глибина, table %, depth %, crown angle, pavilion angle, girdle thickness, culet size, fluorescence. |
 | Висновок експерта | Походження, treatment status, identification status, метод ідентифікації, текстовий висновок, коментар експерта. |
-| IDC і підтвердження | System Proportions, System Final Cut, версія правила; підтверджені експертом Proportions і Final Cut. Значення відображаються текстом із серверного `grade_mappings`, хоча в БД зберігаються числові коди. |
+| IDC і експертні grades | System Proportions, System Final Cut, immutable версія правила; експертна оцінка Proportions і server-derived підсумковий Final Cut. Значення відображаються текстом із серверного `grade_mappings`, хоча в БД зберігаються числові коди. |
 | Комерційний стан | `not_for_sale`, `available`, `reserved`, `sold`, `withdrawn`. Він не є оцінкою, ціною чи статусом lifecycle. |
 | Приватні вкладення | Plotting і фото каменю з MIME, розміром, hash і metadata; тіла файлів лежать поза БД та Git. |
 | Аудит | Append-only події `created`, `report_updated`, `status_changed`, включно з причиною переходу, якщо її вказали. |
@@ -79,8 +79,9 @@ Private API потребує JWT. Видимість або приховуван
 
 `POST /reports/preview` не зберігає звіт. Серверний `DiamondCalculator`
 визначає Proportions за геометрією, а Final Cut — як найгіршу з оцінок
-Proportions, Polish і Symmetry. Це обмежений локальний IDC-розрахунок, не
-повна експертна методика IDC 2013.
+Proportions, Polish і Symmetry. Це системний розрахунок ruleset `idc-demo-v1`,
+а не повна експертна методика IDC 2013. Межі та процес майбутнього оновлення
+описані в [guide ruleset](./idc-demo-v1-ruleset.md).
 
 Preview може показувати `USD … d`. Позначка `d` означає детермінований
 демонстраційний прогноз: це **не** ринкова, експертна або продажна ціна та він
@@ -104,10 +105,11 @@ review -- admin --> draft | issued | void
 issued -- admin --> void
 ```
 
-Перед `review → issued` сервер перевіряє, що експерт явно підтвердив
-Proportions і Final Cut. Без обох значень видача повертає помилку. Кожна зміна
-стану створює audit event; коментар до рішення не обов’язковий технічно, але
-корисний для повернення або анулювання.
+Перед `review → issued` сервер перевіряє, що експерт задав Proportions. Polish
+і Symmetry є прямими оцінками експерта, а Final Cut сервер детерміновано
+отримує з цих трьох складових — тому його не можна вручну зробити
+суперечливим. Кожна зміна стану створює audit event; коментар до рішення не
+обов’язковий технічно, але корисний для повернення або анулювання.
 
 ## 5. Публічний паспорт
 
@@ -152,7 +154,7 @@ Browser endpoint і PDF використовують **одну allow-list пр�
 | --- | --- | --- |
 | Ідентифікація | Номер звіту для читання, дата видачі. | Номер звіту, дата видачі, дата дослідження, public code. |
 | Камінь | Форма, вага, колір, чистота, довжина/ширина/глибина. | Ті самі дані. |
-| Оцінки | System Proportions, System Final Cut, підтверджені Proportions і Final Cut. | Ті самі дані. |
+| Оцінки | System Proportions, System Final Cut, експертний Proportions і server-derived Final Cut. | Ті самі дані. |
 | Висновок | Походження, treatment status, identification status. | Ті самі дані. |
 | Передача | Відкривається за URL із QR або за кодом через головну сторінку. | Пряме посилання, QR і надрукований код. |
 

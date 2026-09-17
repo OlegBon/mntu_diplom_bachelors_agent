@@ -28,7 +28,7 @@ const draftReport = {
   },
 };
 
-test("expert selects confirmation grades from server mappings", async ({ page }) => {
+test("expert selects proportions while final cut remains server-derived", async ({ page }) => {
   let updatedPayload;
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
@@ -56,18 +56,18 @@ test("expert selects confirmation grades from server mappings", async ({ page })
 
   await expect(page.locator("#detail-polish option")).toHaveText(["Оберіть оцінку", "Excellent", "Very Good"]);
   await expect(page.locator("#detail-symmetry option")).toHaveText(["Оберіть оцінку", "Excellent", "Good"]);
-  await expect(page.locator("#detail-expert-proportions option")).toHaveText(["Не підтверджено", "Excellent", "Very Good"]);
-  await expect(page.locator("#detail-expert-cut option")).toHaveText(["Не підтверджено", "Excellent", "Good"]);
+  await expect(page.locator("#detail-expert-proportions option")).toHaveText(["Не задано", "Excellent", "Very Good"]);
+  await expect(page.locator("#detail-expert-cut")).toHaveCount(0);
+  await expect(page.locator("#detail-expert-cut-result")).toHaveValue("—");
   await page.locator("#detail-polish").selectOption("1");
   await page.locator("#detail-symmetry").selectOption("2");
   await page.locator("#detail-expert-proportions").selectOption("1");
-  await page.locator("#detail-expert-cut").selectOption("2");
   await Promise.all([
     page.waitForRequest((request) => request.url().endsWith("/reports/DR-01001") && request.method() === "PUT"),
     page.locator("#detail-save").click(),
   ]);
   expect(updatedPayload.expert_proportions_grade).toBe(1);
-  expect(updatedPayload.expert_cut_grade).toBe(2);
+  expect(updatedPayload).not.toHaveProperty("expert_cut_grade");
   expect(updatedPayload.stone.polish_grade).toBe(1);
   expect(updatedPayload.stone.symmetry_grade).toBe(2);
 });

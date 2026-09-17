@@ -36,7 +36,9 @@ class DiamondReport(Base):
     issued_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=True)
     system_proportions_grade = Column(Integer, nullable=True)
     system_cut_grade = Column(Integer, nullable=True)
-    calculation_rule_version = Column(String(32), nullable=True)
+    # Immutable identifier of the ruleset used for this report. Historical
+    # reports retain their original code rather than being recalculated.
+    calculation_rule_version = Column(String(32), nullable=True, index=True)
     expert_proportions_grade = Column(Integer, nullable=True)
     expert_cut_grade = Column(Integer, nullable=True)
     expert_confirmed_at = Column(DateTime, nullable=True)
@@ -188,6 +190,23 @@ class PublicPassport(Base):
     created_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     revoked_at = Column(DateTime, nullable=True)
+
+
+class GradingRuleset(Base):
+    """Immutable metadata for a supported grading ruleset release."""
+
+    __tablename__ = "grading_rulesets"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    ruleset_id = Column(String(32), primary_key=True)
+    display_name = Column(String(100), nullable=False)
+    source_title = Column(String(255), nullable=False)
+    source_edition = Column(String(100), nullable=True)
+    effective_from = Column(Date, nullable=True)
+    algorithm_version = Column(String(32), nullable=False)
+    scope_note = Column(Text, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=False, server_default="0")
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
 class StoneValuation(Base):

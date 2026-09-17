@@ -59,8 +59,7 @@ function populateGradeSelect(select, mappings, category, emptyLabel = "Не пі
 function populateExpertGradeSelects(form, mappings) {
   populateGradeSelect(form.querySelector("#detail-polish"), mappings, "polish", "Оберіть оцінку");
   populateGradeSelect(form.querySelector("#detail-symmetry"), mappings, "symmetry", "Оберіть оцінку");
-  populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions");
-  populateGradeSelect(form.querySelector("#detail-expert-cut"), mappings, "cut");
+  populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions", "Не задано");
 }
 
 function payloadFromForm(form) {
@@ -70,29 +69,33 @@ function payloadFromForm(form) {
     "measurements_depth", "table_percent", "depth_percent", "crown_angle", "pavilion_angle",
     "polish_grade", "symmetry_grade", "fluorescence_grade",
   ];
-  const stone = Object.fromEntries([...data.entries()].filter(([key]) => !["examination_date", "expert_comment", "expert_proportions_grade", "expert_cut_grade"].includes(key)));
+  const stone = Object.fromEntries([...data.entries()].filter(([key]) => !["examination_date", "expert_comment", "expert_proportions_grade"].includes(key)));
   numericStoneFields.forEach((key) => { stone[key] = Number(stone[key]); });
   ["girdle_thickness", "culet_size", "identification_method", "identification_conclusion"].forEach((key) => { stone[key] = stone[key] || null; });
   return {
     examination_date: data.get("examination_date"),
     expert_comment: data.get("expert_comment") || null,
     expert_proportions_grade: numberOrNull(data.get("expert_proportions_grade")),
-    expert_cut_grade: numberOrNull(data.get("expert_cut_grade")),
     stone,
   };
 }
 
-function populateForm(form, report) {
+function populateForm(form, report, gradeLabels) {
   const values = {
     ...report.stone,
     examination_date: report.examination_date || "",
     expert_comment: report.expert_comment || "",
     expert_proportions_grade: report.expert_proportions_grade ?? "",
-    expert_cut_grade: report.expert_cut_grade ?? "",
   };
   for (const [name, value] of Object.entries(values)) {
     const field = form.elements.namedItem(name);
     if (field) field.value = value ?? "";
+  }
+  const derivedCut = document.getElementById("detail-expert-cut-result");
+  if (derivedCut) {
+    derivedCut.value = report.expert_cut_grade === null
+      ? "—"
+      : gradeLabels.get(`cut:${report.expert_cut_grade}`) || String(report.expert_cut_grade);
   }
 }
 
@@ -282,13 +285,13 @@ function renderTransitionControls(container, helpNode, report, currentUser, onTr
     button.type = "button";
     button.className = targetStatus === "issued" ? "btn btn-primary" : "btn btn-outline";
     button.textContent = label;
-    button.disabled = targetStatus === "issued" && (report.expert_proportions_grade === null || report.expert_cut_grade === null);
-    if (button.disabled) button.title = "Для видачі потрібні підтверджені експертом Proportions і Final Cut.";
+    button.disabled = targetStatus === "issued" && report.expert_proportions_grade === null;
+    if (button.disabled) button.title = "Для видачі потрібна експертна оцінка Proportions.";
     button.addEventListener("click", () => onTransition(targetStatus));
     container.append(button);
   }
-  if (report.status === "review" && (report.expert_proportions_grade === null || report.expert_cut_grade === null)) {
-    helpNode.textContent = "Для видачі поверніть звіт у чернетку та оберіть підтверджені експертом Proportions і Final Cut.";
+  if (report.status === "review" && report.expert_proportions_grade === null) {
+    helpNode.textContent = "Для видачі поверніть звіт у чернетку та оберіть експертну оцінку Proportions.";
   } else {
     helpNode.textContent = report.status === "draft"
       ? "Чернетку може редагувати її автор або admin."
@@ -316,7 +319,7 @@ export async function initReportDetail() {
         getDomainReport(reportId, token), getReportEvents(reportId, token), getReportMedia(reportId, token),
       ]);
       report = freshReport;
-      populateForm(form, report);
+      populateForm(form, report, gradeLabels);
       document.getElementById("report-detail-title").textContent = report.report_id;
       document.getElementById("report-detail-subtitle").textContent = `Створено: ${formatDate(report.created_at || report.report_date)}`;
       const badge = document.getElementById("detail-status-badge");
@@ -329,7 +332,7 @@ export async function initReportDetail() {
       const confirmedCut = report.expert_cut_grade === null
         ? "не задано"
         : gradeLabels.get(`cut:${report.expert_cut_grade}`) || String(report.expert_cut_grade);
-      document.getElementById("detail-expert-summary").textContent = `Експертне підтвердження: Proportions ${confirmedProportions}, Final Cut ${confirmedCut}.`;
+      document.getElementById("detail-expert-summary").textContent = `Експертні grades: Proportions ${confirmedProportions}, підсумковий Cut ${confirmedCut}.`;
       renderEvents(document.getElementById("detail-events"), events);
       renderMedia(document.getElementById("detail-media"), reportId, media, token);
       await renderPassportControls({ report, currentUser, token, onStatus: (message, isError) => setStatus(status, message, isError) });

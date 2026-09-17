@@ -10,7 +10,9 @@ from .security import get_password_hash, verify_password
 from .calculator import DiamondCalculator
 
 
-REPORT_RULE_VERSION = "idc-demo-v1"
+CURRENT_RULESET_ID = "idc-demo-v1"
+# Kept as a compatibility alias for callers and serialized API contracts.
+REPORT_RULE_VERSION = CURRENT_RULESET_ID
 
 
 class ReportDomainError(ValueError):
@@ -42,6 +44,20 @@ def _system_grades(stone: schemas.StoneDraft) -> tuple[int, int]:
     )
     cut = DiamondCalculator.calculate_final_cut(proportions, stone.polish_grade, stone.symmetry_grade)
     return proportions, cut
+
+
+def _expert_final_cut(
+    expert_proportions_grade: int | None,
+    stone: schemas.StoneDraft,
+) -> int | None:
+    """Derive the expert final cut from the three expert component grades."""
+    if expert_proportions_grade is None:
+        return None
+    return DiamondCalculator.calculate_final_cut(
+        expert_proportions_grade,
+        stone.polish_grade,
+        stone.symmetry_grade,
+    )
 
 
 def preview_report_calculation(db: Session, stone: schemas.ReportCalculationInput) -> schemas.ReportCalculationPreview:
@@ -223,7 +239,7 @@ def create_report_domain(
     db.add(stone)
     db.flush()
     system_proportions, system_cut = _system_grades(payload.stone)
-    is_confirmed = payload.expert_proportions_grade is not None and payload.expert_cut_grade is not None
+    expert_cut = _expert_final_cut(payload.expert_proportions_grade, payload.stone)
     report = models.DiamondReport(
         report_id=_next_report_id(db),
         report_date=now,
@@ -236,10 +252,10 @@ def create_report_domain(
         expert_comment=payload.expert_comment,
         system_proportions_grade=system_proportions,
         system_cut_grade=system_cut,
-        calculation_rule_version=REPORT_RULE_VERSION,
+        calculation_rule_version=CURRENT_RULESET_ID,
         expert_proportions_grade=payload.expert_proportions_grade,
-        expert_cut_grade=payload.expert_cut_grade,
-        expert_confirmed_at=now if is_confirmed else None,
+        expert_cut_grade=expert_cut,
+        expert_confirmed_at=now if expert_cut is not None else None,
         cut_grade=system_cut,
         proportions_grade=system_proportions,
         evaluation_time_sec=0,
@@ -283,12 +299,10 @@ def update_report_domain(
     report.examination_date = payload.examination_date
     report.system_proportions_grade = system_proportions
     report.system_cut_grade = system_cut
-    report.calculation_rule_version = REPORT_RULE_VERSION
+    report.calculation_rule_version = CURRENT_RULESET_ID
     report.expert_proportions_grade = payload.expert_proportions_grade
-    report.expert_cut_grade = payload.expert_cut_grade
-    report.expert_confirmed_at = datetime.now(timezone.utc) if (
-        payload.expert_proportions_grade is not None and payload.expert_cut_grade is not None
-    ) else None
+    report.expert_cut_grade = _expert_final_cut(payload.expert_proportions_grade, payload.stone)
+    report.expert_confirmed_at = datetime.now(timezone.utc) if report.expert_cut_grade is not None else None
     report.updated_at = datetime.now(timezone.utc)
     report.cut_grade = system_cut
     report.proportions_grade = system_proportions
@@ -326,10 +340,8 @@ def transition_report_domain(
     )
     if not allowed:
         raise ReportDomainError("This report status transition is not allowed")
-    if target_status == "issued" and (
-        report.expert_proportions_grade is None or report.expert_cut_grade is None
-    ):
-        raise ReportDomainError("Issued reports require expert-confirmed proportions and cut grades")
+    if target_status == "issued" and report.expert_proportions_grade is None:
+        raise ReportDomainError("Issued reports require an expert proportions grade")
 
     now = datetime.now(timezone.utc)
     report.status = target_status

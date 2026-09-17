@@ -140,7 +140,7 @@ def build_public_passport_pdf(
     _draw_label_value(document, right_x, y, "Системний Final Cut", _grade_label(grade_labels, "cut", passport.system_cut_grade))
     y -= 38
     _draw_label_value(document, left_x, y, "Підтверджений Proportions", _grade_label(grade_labels, "proportions", passport.expert_proportions_grade))
-    _draw_label_value(document, right_x, y, "Підтверджений Final Cut", _grade_label(grade_labels, "cut", passport.expert_cut_grade))
+    _draw_label_value(document, right_x, y, "Підсумковий Final Cut", _grade_label(grade_labels, "cut", passport.expert_cut_grade))
     y -= 38
     _draw_label_value(document, left_x, y, "Ознаки обробки", TREATMENT_LABELS.get(str(passport.treatment_status), "—"))
     _draw_label_value(document, right_x, y, "Рівень підтвердження", IDENTIFICATION_LABELS.get(str(passport.identification_status), "—"))

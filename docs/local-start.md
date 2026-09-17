@@ -98,19 +98,21 @@ Alembic є джерелом істини для структури таблиц�
 таблиці й дані він не видаляє. `upgrade head` змінює схему, тому перед ним
 зроби резервну копію даних, якщо вони цінні.
 
-Поточний репозиторій має revisions `0002_report_core`, `0003_media_assets` і
-`0005_public_passports`. Для наявної локальної БД,
-що вже позначена `0001_initial_schema`, ця revision створює нормалізовані
-`stones`, `report_events`, `stone_valuations`, `reference_values`, доповнює
-`diamond_reports` lifecycle-полями й переносить legacy-звіти у draft. Перед
-застосуванням звір generated SQL без зміни БД:
+Поточний репозиторій має revisions від `0001_initial_schema` до
+`0007_grading_rulesets`. Для наявної локальної БД, що вже позначена
+`0001_initial_schema`, наступні revisions створюють нормалізовані `stones`,
+`report_events`, `stone_valuations`, `reference_values`, lifecycle-поля,
+private media, public tokens, active-стан користувачів і registry ruleset-ів.
+Лише `0002_report_core` переносить legacy-звіти у draft; `0007` не
+переобчислює grades, а позначає report без відомої версії
+`legacy-unversioned-v1`. Перед застосуванням звір generated SQL без зміни БД:
 
 ```powershell
 .\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head --sql
 ```
 
 Після резервної копії та окремого підтвердження застосуй revision, а потім
-переконайся, що версія стала `0005_public_passports`:
+переконайся, що версія стала `0007_grading_rulesets`:
 
 ```powershell
 .\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head
@@ -125,6 +127,11 @@ Revision `0004_report_wizard` додає nullable `examination_date` для repo
 додає лише revocable publication tokens і не backfill-ить reports, ціни або
 media. Після upgrade перезапусти backend; create-form після створення звіту дозавантажує вибрані
 JPEG/PNG/WebP-файли через захищений `/reports/{id}/media`.
+
+Revision `0006_expert_activation` додає оборотний `is_active` для акаунтів.
+Revision `0007_grading_rulesets` створює immutable metadata ruleset-ів,
+реєструє `idc-demo-v1` і маркує лише невідомі legacy rule codes; вона не
+змінює фізичні параметри, system/expert grades, status, паспорти чи PDF.
 
 Для наявної локальної БД без `alembic_version` спочатку перевір поточний стан:
 

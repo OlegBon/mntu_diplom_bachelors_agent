@@ -1,7 +1,8 @@
 # Схема бази даних
 
-Документ описує фактичну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0005_public_passports`. Це карта даних для розробки, API та
+Документ описує цільову локальну схему Diamant ID у MariaDB/XAMPP після
+Alembic revision `0007_grading_rulesets`. Цю revision ще потрібно окремо
+застосувати до локальної MariaDB. Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -13,7 +14,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 
 | База | Таблиці | Призначення |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `public_passports`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, фізичні камені, lifecycle, revocable public passport, приватні вкладення та майбутні фінансові записи. |
+| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, фізичні камені, lifecycle, ruleset-и, revocable public passport, приватні вкладення та майбутні фінансові записи. |
 | `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference` | Числові та текстові довідники; legacy demo-індекс ціни. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
@@ -38,6 +39,7 @@ MariaDB не використовує native ENUM для нового домен
 erDiagram
     EXPERTS ||--o{ DIAMOND_REPORTS : "author (expert_id)"
     EXPERTS ||--o{ DIAMOND_REPORTS : "issuer (issued_by_id)"
+    GRADING_RULESETS ||--o{ DIAMOND_REPORTS : "identifies ruleset"
     STONES ||--o{ DIAMOND_REPORTS : "has reports"
     DIAMOND_REPORTS ||--o{ REPORT_EVENTS : "records lifecycle"
     EXPERTS ||--o{ REPORT_EVENTS : "acts"
@@ -97,12 +99,20 @@ legacy-звіту: історичних даних недостатньо, що�
 | --- | --- | --- |
 | Ключі й lifecycle | `report_id`, `stone_id`, `status`, `examination_date`, `created_at`, `updated_at`, `issued_at` | Ідентифікатор, зв’язок із каменем, фактична дата дослідження та життєвий цикл `draft → review → issued → void`. |
 | Авторство | `expert_id`, `issued_by_id` | Автор-експерт та admin-видавець. |
-| Результати | `system_proportions_grade`, `system_cut_grade`, `calculation_rule_version` | Розрахунок системи й версія правила. |
-| Підтвердження | `expert_proportions_grade`, `expert_cut_grade`, `expert_confirmed_at`, `expert_comment` | Окремий експертний висновок; системний результат його не замінює. |
+| Результати | `system_proportions_grade`, `system_cut_grade`, `calculation_rule_version` | Системний preview і immutable код ruleset. |
+| Експертні grades | `expert_proportions_grade`, `expert_cut_grade`, `expert_confirmed_at`, `expert_comment` | Proportions задає експерт; `expert_cut_grade` сервер похідно обчислює з Proportions, Polish і Symmetry. |
 | Legacy projection | `shape`, 4C/геометрія, `stone_origin`, `price`, `is_sold`, image-path поля тощо | Історичні дані без активного HTTP API; їхній cleanup або контрольований backfill потребують окремого погодженого рішення. |
 
 `price` — `legacy_unclassified_value`: він не є ринковою, експертною чи
 фактичною ціною та не переноситься автоматично у `stone_valuations`.
+
+### `grading_rulesets`
+
+Незмінні метадані підтримуваних методик: `ruleset_id` (PK), назва, первинне
+джерело й редакція, effective date, версія алгоритму, scope note, active flag
+і час створення. `calculation_rule_version` у report зберігає цей ідентифікатор
+без перерахунку історичних grades. `legacy-unversioned-v1` лише маркує старі
+невідомі правила; `idc-demo-v1` — активний обмежений ruleset MVP.
 
 ### `report_events`
 
@@ -197,6 +207,8 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 | `0003_media_assets` | `media_assets` для приватних файлів і метаданих; без backfill legacy image-path полів. |
 | `0004_report_wizard` | `diamond_reports.examination_date` і довідники `girdle_thickness` / `culet_size` для майстра. |
 | `0005_public_passports` | Revocable public tokens для issued reports; без backfill даних, цін або media. |
+| `0006_expert_activation` | Оборотний active-стан експертних акаунтів без hard delete. |
+| `0007_grading_rulesets` | Immutable metadata `idc-demo-v1` і legacy marker без перерахунку report grades. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за
