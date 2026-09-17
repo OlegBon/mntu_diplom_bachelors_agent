@@ -14,6 +14,7 @@ const mappings = ["color", "clarity", "cut", "polish", "symmetry", "fluorescence
 
 test("gemologist creates a draft through the three-step wizard", async ({ page }) => {
   let createdPayload;
+  let createRequestCount = 0;
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
@@ -27,6 +28,7 @@ test("gemologist creates a draft through the three-step wizard", async ({ page }
     system_market_reference_usd: "10029.23", market_reference_provider_code: "openfacet", market_reference_snapshot_id: 17,
   } }));
   await page.route("**/reports", async (route) => {
+    createRequestCount += 1;
     createdPayload = route.request().postDataJSON();
     await route.fulfill({ json: { report_id: "DR-01001" } });
   });
@@ -60,9 +62,13 @@ test("gemologist creates a draft through the three-step wizard", async ({ page }
   await page.locator("#fluorescence-grade").selectOption("0");
   await page.locator("#treatment-status").selectOption("not_assessed");
   await page.locator("#identification-status").selectOption("preliminary");
+  await page.locator("#identification-method").fill("Test method");
+  await page.locator("#identification-method").press("Enter");
+  await expect.poll(() => createRequestCount).toBe(0);
   await page.locator("#save-btn").click();
 
   await expect(page).toHaveURL(/dashboard\.html\?created=DR-01001/);
+  expect(createRequestCount).toBe(1);
   expect(createdPayload.examination_date).toBeTruthy();
   expect(createdPayload.stone.market_status).toBe("not_for_sale");
   expect(createdPayload.stone.carat_weight).toBe(1.25);

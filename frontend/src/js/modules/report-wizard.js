@@ -8,6 +8,7 @@ import {
 } from "./api.js";
 
 const requiredPreviewNames = ["table_percent", "depth_percent", "crown_angle", "pavilion_angle", "polish_grade", "symmetry_grade"];
+const implicitSubmitInputTypes = new Set(["date", "email", "number", "password", "search", "tel", "text", "url"]);
 
 function setStatus(element, message, isError = false) {
   element.hidden = !message;
@@ -107,6 +108,15 @@ export async function initReportWizard() {
       event.target.removeAttribute("aria-invalid");
       if (status.classList.contains("is-error")) setStatus(status, "");
     }
+  });
+  form.addEventListener("keydown", (event) => {
+    const target = event.target;
+    if (
+      event.key === "Enter"
+      && !event.isComposing
+      && target instanceof HTMLInputElement
+      && implicitSubmitInputTypes.has(target.type)
+    ) event.preventDefault();
   });
 
   try {
