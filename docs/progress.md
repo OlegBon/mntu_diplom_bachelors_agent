@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — expert-operational-analytics (завершено)
+
+- **Задача:** завершити 108: виправити admin-only контракт operational analytics, показати перевірені status/review metrics у UI та зафіксувати межі майбутнього active-time і stone analytics.
+- **Змінені файли:** `backend/{crud,main,schemas}.py`, `tests/api/test_expert_statistics.py`, `frontend/src/{pug/pages/ml-analysis.pug,js/{main,modules/{api,analytics}.js},scss/{main,_ui-primitives}.scss}`, `frontend/tests/{page-dom.test.mjs,e2e/analytics.spec.mjs}`, `docs/{architecture,work_plan,progress}.md`, `docs/backlog/{README,112-expert-active-time-and-analytics-periods,120-legacy-calculation-and-ml-boundary}.md`; `docs/backlog/108-expert-statistics-and-analytics-contract.md` видалено.
+- **Рішення / Результат:** `/statistics/expert-performance` доступний лише admin і повертає all-time статусні лічильники gemologist-ів без штучного рейтингу чи середньої ваги. `/statistics/admin-review-performance` показує тривалість review-cycle від передачі до рішення admin, а не активний час людини, включно з середньою, медіаною та трьома найкоротшими/найдовшими завершеними циклами. «Аналітика» має вкладки «Експерти», «Адміністратори», «Камені»; остання не імітує ML-графіки. Картка експерта відкриває деталі наявних даних. Глобальний `scrollbar-gutter` прибирає стрибок ширини при появі вертикального scrollbar.
+- **Перевірки:** `pytest tests/api/test_expert_statistics.py -q` — 2 passed; `npm test` — 17 passed; Playwright `analytics.spec.mjs` — 1 passed; FastAPI import smoke; `git diff --check`. Ручно підтверджено UI до merge.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** active-time, дата початку роботи експерта, періодні фільтри й списки найшвидших/найдовших фактичних сесій не відновлюються з приблизних дат; це окрема 112. Карти Кохонена та інша аналітика каменів потребують перевіреного джерела/ML-контракту в 120.
+
 ## 2026-09-17 — versioned-idc-rulesets-and-report-actions (завершено)
 
 - **Задача:** завершити 105: зафіксувати межі `idc-demo-v1`, версіонувати методику без зміни історичних звітів, прибрати ручний Final Cut та узгодити workflow і дії списку звітів.
