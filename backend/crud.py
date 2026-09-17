@@ -632,7 +632,6 @@ def get_active_experts(db: Session):
 
 def get_expert_stats(db: Session):
     """Return an all-time, admin-facing workflow snapshot for every gemologist."""
-    report_weight = func.coalesce(models.Stone.carat_weight, models.DiamondReport.carat_weight)
     return db.query(
         models.Expert.expert_id.label("expert_id"),
         models.Expert.username.label("expert_username"),
@@ -645,11 +644,8 @@ def get_expert_stats(db: Session):
         func.sum(case((models.DiamondReport.status == "review", 1), else_=0)).label("review_reports"),
         func.sum(case((models.DiamondReport.status == "issued", 1), else_=0)).label("issued_reports"),
         func.sum(case((models.DiamondReport.status == "void", 1), else_=0)).label("void_reports"),
-        func.avg(report_weight).label("avg_carat_weight"),
     ).outerjoin(
         models.DiamondReport, models.DiamondReport.expert_id == models.Expert.expert_id,
-    ).outerjoin(
-        models.Stone, models.DiamondReport.stone_id == models.Stone.stone_id,
     ).filter(
         models.Expert.role == "gemologist",
     ).group_by(

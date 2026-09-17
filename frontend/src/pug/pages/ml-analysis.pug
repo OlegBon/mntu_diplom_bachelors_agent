@@ -1,11 +1,24 @@
 extends ../layout/main
 
 block content
-    .account-page(hidden data-protected-page="true" data-analytics-placeholder)
+    .account-page(hidden data-protected-page="true" data-analytics-page)
         .page-header
             div
                 h1.page-title Аналітика
-                p.page-subtitle Розділ зарезервовано для перевіреної статистики експертів.
-        section.account-surface
-            h2 Дані ще не підключено
-            p.account-help Перед відображенням статистики потрібно стабілізувати API-контракт, правила агрегації та доступ admin. Це окрема задача 108, тому тут навмисно немає демо-ML або умовних показників.
+                p.page-subtitle Операційний огляд workflow. Дані доступні лише адміністраторам.
+        p#analytics-status.account-status(role="status" aria-live="polite" hidden)
+        .analytics-tabs(role="tablist" aria-label="Розділи аналітики")
+            button.analytics-tabs__tab.is-active(type="button" role="tab" aria-selected="true" aria-controls="analytics-experts" id="analytics-tab-experts" data-analytics-tab="experts") Експерти
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-admins" id="analytics-tab-admins" data-analytics-tab="admins") Адміністратори
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-stones" id="analytics-tab-stones" data-analytics-tab="stones") Камені
+        section#analytics-experts.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-experts")
+            h2 Експерти та звіти
+            p.account-help Статуси показують поточний стан звітів за весь доступний період. Активний час заповнення ще не фіксується системою.
+            #analytics-expert-results(aria-live="polite")
+        section#analytics-admins.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-admins" hidden)
+            h2 Перевірки адміністраторів
+            p.account-help Тривалість етапу перевірки: від передачі звіту на перевірку до рішення admin. Це не вимір фактичного активного часу людини.
+            #analytics-admin-results(aria-live="polite")
+        section#analytics-stones.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-stones" hidden)
+            h2 Аналітика каменів
+            p.account-help Розподіли параметрів, карти Кохонена та інші ML-візуалізації потребують окремого перевіреного джерела даних і моделі. У цьому зрізі не показуються умовні графіки або demo-метрики.

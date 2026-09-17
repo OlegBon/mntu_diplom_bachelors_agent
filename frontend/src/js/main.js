@@ -7,6 +7,7 @@ import { initPublicPassport } from "./modules/public-passport.js";
 import { initProfile } from "./modules/profile.js";
 import { initAdminUsers } from "./modules/admin-users.js";
 import { initReferenceCatalog } from "./modules/reference-catalog.js";
+import { initAnalytics } from "./modules/analytics.js";
 import { initPasswordVisibility } from "./modules/password-visibility.js";
 
 function createNavigationLink(href, label, className = "") {
@@ -131,6 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (isAuthenticated && currentPath.endsWith("/profile.html")) void initProfile();
   if (isAuthenticated && currentPath.endsWith("/experts.html")) void initAdminUsers();
   if (isAuthenticated && currentPath.endsWith("/references.html")) void initReferenceCatalog();
+  if (isAuthenticated && currentPath.endsWith("/ml-analysis.html")) void initAnalytics();
   if (currentPath.endsWith("/passport.html")) void initPublicPassport();
 
   const burgerBtn = document.getElementById("burger-btn");

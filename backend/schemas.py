@@ -91,7 +91,6 @@ class ExpertStats(BaseModel):
     review_reports: int
     issued_reports: int
     void_reports: int
-    avg_carat_weight: Optional[float]
 
 
 class ReviewDurationRecord(BaseModel):

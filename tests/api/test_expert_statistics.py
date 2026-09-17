@@ -15,9 +15,7 @@ def test_expert_statistics_is_admin_only_and_reports_operational_aggregates(clie
     assert client.get("/statistics/expert-performance", headers=owner_headers).status_code == 403
 
     first = report_payload()
-    first["stone"]["carat_weight"] = 1.0
     second = report_payload()
-    second["stone"]["carat_weight"] = 2.0
     first_report_id = client.post("/reports", json=first, headers=owner_headers).json()["report_id"]
     second_report_id = client.post("/reports", json=second, headers=owner_headers).json()["report_id"]
     assert client.post(
@@ -30,7 +28,6 @@ def test_expert_statistics_is_admin_only_and_reports_operational_aggregates(clie
     ).status_code == 422
 
     confirmed = report_payload(confirmed=True)
-    confirmed["stone"]["carat_weight"] = 3.0
     issued_report_id = client.post("/reports", json=confirmed, headers=owner_headers).json()["report_id"]
     assert client.post(
         f"/reports/{issued_report_id}/transitions",
@@ -54,10 +51,9 @@ def test_expert_statistics_is_admin_only_and_reports_operational_aggregates(clie
     assert owner["review_reports"] == 1
     assert owner["issued_reports"] == 0
     assert owner["void_reports"] == 1
-    assert owner["avg_carat_weight"] == 2.0
+    assert "avg_carat_weight" not in owner
     assert owner["is_active"] is True
     assert rows[empty_expert.username]["total_reports"] == 0
-    assert rows[empty_expert.username]["avg_carat_weight"] is None
 
 
 @pytest.mark.api
