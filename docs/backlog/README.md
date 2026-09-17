@@ -27,7 +27,7 @@
 
 | Файл | Тема |
 | --- | --- |
-| [105-versioned-reference-catalogs.md](./105-versioned-reference-catalogs.md) | Версіоновані довідники, причина/джерело зміни та історична стабільність звітів. |
+| [105-versioned-reference-catalogs.md](./105-versioned-reference-catalogs.md) | Версії правил IDC, експертні grades, ruleset-scoped довідники й історична стабільність звітів. |
 | [108-expert-statistics-and-analytics-contract.md](./108-expert-statistics-and-analytics-contract.md) | Безпечний контракт статистики експертів і межа майбутнього analytics UI. |
 | [110-authoritative-market-data-and-fx.md](./110-authoritative-market-data-and-fx.md) | Авторитетні ринкові дані, валютні курси й історія snapshot-ів. |
 | [115-profile-admin-ui-polish.md](./115-profile-admin-ui-polish.md) | Узгоджені візуальні та responsive-покращення Profile й admin UI. |
