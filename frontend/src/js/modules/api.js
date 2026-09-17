@@ -79,6 +79,10 @@ export const attachMarketReference = (reportId, payload, token) => requestApi(
   `/reports/${encodeURIComponent(reportId)}/valuations/market-reference`, { method: "POST", token, body: payload },
 );
 
+export const getReportValuations = (reportId, token) => requestApi(
+  `/reports/${encodeURIComponent(reportId)}/valuations`, { token },
+);
+
 export const getNextReportId = (token) => requestApi("/reports/next-id", { token });
 
 export const previewReportCalculation = (stone, token) => requestApi("/reports/preview", { method: "POST", token, body: stone });

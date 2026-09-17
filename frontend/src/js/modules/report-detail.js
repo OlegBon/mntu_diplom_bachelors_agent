@@ -7,6 +7,7 @@ import {
   getReportEvents,
   getReportMedia,
   getReportMediaContentUrl,
+  getReportValuations,
   getReportPassport,
   getReportPassportPdf,
   getReportPassportQr,
@@ -39,6 +40,10 @@ function setStatus(node, message, isError = false) {
 
 function formatDate(value) {
   return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+}
+
+function formatAmount(amount, currencyCode) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: currencyCode, minimumFractionDigits: 2 }).format(Number(amount));
 }
 
 function reportIdFromUrl() {
@@ -182,6 +187,32 @@ function renderMedia(container, reportId, assets, token) {
         .then((blob) => window.open(URL.createObjectURL(blob), "_blank", "noopener"));
     });
     item.append(link, document.createTextNode(` · ${asset.asset_type}`));
+    container.append(item);
+  }
+}
+
+function renderValuations(container, helpNode, valuations) {
+  container.replaceChildren();
+  const marketReferences = valuations.filter((valuation) => valuation.valuation_kind === "market_reference");
+  if (!marketReferences.length) {
+    const item = document.createElement("li");
+    item.textContent = "Затвердженого ринкового орієнтира ще немає.";
+    container.append(item);
+    return;
+  }
+  helpNode.textContent = "OpenFacet — model-based retail reference, не експертна, продажна чи транзакційна ціна.";
+  for (const valuation of marketReferences) {
+    const item = document.createElement("li");
+    const amount = document.createElement("strong");
+    amount.textContent = formatAmount(valuation.amount, valuation.currency_code);
+    const source = document.createElement("span");
+    source.textContent = ` · ${valuation.source_name} · snapshot #${valuation.market_snapshot_id ?? "—"} · ${formatDate(valuation.observed_at)}`;
+    item.append(amount, source);
+    if (valuation.applicability_note) {
+      const note = document.createElement("span");
+      note.textContent = ` · Підтвердження: ${valuation.applicability_note}`;
+      item.append(note);
+    }
     container.append(item);
   }
 }
@@ -376,6 +407,12 @@ export async function initReportDetail() {
       document.getElementById("detail-expert-summary").textContent = `Експертні grades: Proportions ${confirmedProportions}, підсумковий Cut ${confirmedCut}.`;
       renderEvents(document.getElementById("detail-events"), events);
       renderMedia(document.getElementById("detail-media"), reportId, media, token);
+      try {
+        const valuations = await getReportValuations(reportId, token);
+        renderValuations(document.getElementById("detail-valuations"), document.getElementById("detail-valuations-help"), valuations);
+      } catch {
+        document.getElementById("detail-valuations").textContent = "Не вдалося завантажити ринковий орієнтир.";
+      }
       await renderPassportControls({ report, currentUser, token, onStatus: (message, isError) => setStatus(status, message, isError) });
       renderTransitionControls(document.getElementById("detail-transitions"), document.getElementById("detail-transition-help"), report, currentUser, async (targetStatus) => {
         try {
