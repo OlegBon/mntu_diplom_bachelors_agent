@@ -2,10 +2,12 @@ from sqlalchemy import asc, case, desc, func
 from sqlalchemy.orm import Session, joinedload
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, getcontext
+import hashlib
 import secrets
 from statistics import median
 
 from . import models, schemas
+from .market_providers import FetchedMarketSnapshot
 from .security import get_password_hash, verify_password
 
 from .calculator import DiamondCalculator
@@ -749,3 +751,208 @@ def create_market_price(db: Session, price_data: schemas.MarketPriceCreate, admi
     db.commit()
     db.refresh(db_price)
     return db_price
+
+
+def get_market_data_providers(db: Session) -> list[models.MarketDataProvider]:
+    return (
+        db.query(models.MarketDataProvider)
+        .filter(models.MarketDataProvider.is_active.is_(True))
+        .order_by(models.MarketDataProvider.display_name)
+        .all()
+    )
+
+
+def get_market_data_snapshots(db: Session) -> list[models.MarketDataSnapshot]:
+    return (
+        db.query(models.MarketDataSnapshot)
+        .order_by(models.MarketDataSnapshot.created_at.desc(), models.MarketDataSnapshot.snapshot_id.desc())
+        .all()
+    )
+
+
+def get_market_data_snapshot(db: Session, snapshot_id: int) -> models.MarketDataSnapshot | None:
+    return db.get(models.MarketDataSnapshot, snapshot_id)
+
+
+def _snapshot_checksum(fetched: FetchedMarketSnapshot) -> str:
+    canonical_lines = [
+        f"{quote.shape_code}|{quote.carat_anchor}|{quote.color_code}|{quote.clarity_code}|{quote.price_per_carat}"
+        for quote in sorted(
+            fetched.quotes,
+            key=lambda item: (item.shape_code, item.carat_anchor, item.color_code, item.clarity_code),
+        )
+    ]
+    return hashlib.sha256("\n".join(canonical_lines).encode("utf-8")).hexdigest()
+
+
+def create_market_data_candidate(
+    db: Session,
+    *,
+    fetched: FetchedMarketSnapshot,
+    actor: models.Expert,
+) -> models.MarketDataSnapshot:
+    provider = db.get(models.MarketDataProvider, fetched.provider_code)
+    if provider is None or not provider.is_active:
+        raise ReportDomainError("Market-data provider is not registered or active")
+    snapshot = models.MarketDataSnapshot(
+        provider_code=fetched.provider_code,
+        snapshot_kind="market_reference",
+        status="candidate",
+        currency_code=fetched.currency_code,
+        unit=fetched.unit,
+        source_url=fetched.source_url,
+        methodology_url=fetched.methodology_url,
+        coverage_note=fetched.coverage_note,
+        quote_count=len(fetched.quotes),
+        content_sha256=_snapshot_checksum(fetched),
+        retrieved_at=fetched.retrieved_at,
+        created_by_id=actor.expert_id,
+    )
+    db.add(snapshot)
+    db.flush()
+    db.add_all(
+        models.MarketDataQuote(
+            snapshot_id=snapshot.snapshot_id,
+            shape_code=quote.shape_code,
+            carat_anchor=quote.carat_anchor,
+            color_code=quote.color_code,
+            clarity_code=quote.clarity_code,
+            price_per_carat=quote.price_per_carat,
+        )
+        for quote in fetched.quotes
+    )
+    db.commit()
+    db.refresh(snapshot)
+    return snapshot
+
+
+def decide_market_data_snapshot(
+    db: Session,
+    *,
+    snapshot: models.MarketDataSnapshot,
+    approve: bool,
+    actor: models.Expert,
+    reason: str | None,
+) -> models.MarketDataSnapshot:
+    if snapshot.status != "candidate":
+        raise ReportDomainError("Only a candidate snapshot can be decided")
+    snapshot.status = "approved" if approve else "rejected"
+    snapshot.approved_by_id = actor.expert_id
+    snapshot.approved_at = datetime.now(timezone.utc)
+    snapshot.decision_reason = reason
+    db.commit()
+    db.refresh(snapshot)
+    return snapshot
+
+
+def get_report_valuations(db: Session, report: models.DiamondReport) -> list[models.StoneValuation]:
+    if report.stone_id is None:
+        return []
+    return (
+        db.query(models.StoneValuation)
+        .filter(models.StoneValuation.stone_id == report.stone_id)
+        .order_by(models.StoneValuation.created_at.desc(), models.StoneValuation.valuation_id.desc())
+        .all()
+    )
+
+
+def _grade_label(db: Session, category: str, grade: int | None) -> str | None:
+    if grade is None:
+        return None
+    mapping = (
+        db.query(models.GradeMapping)
+        .filter(models.GradeMapping.category == category, models.GradeMapping.grade_value == grade)
+        .one_or_none()
+    )
+    return mapping.grade_label.upper() if mapping else None
+
+
+def _openfacet_price_per_carat(
+    db: Session,
+    *,
+    snapshot_id: int,
+    stone: models.Stone,
+) -> tuple[Decimal, str]:
+    """Interpolate an approved OpenFacet snapshot only within known anchors."""
+    if stone.origin != "natural":
+        raise ReportDomainError("OpenFacet reference is available only for natural stones")
+    shape_code = stone.shape.strip().lower()
+    color_code = _grade_label(db, "color", stone.color_grade)
+    clarity_code = _grade_label(db, "clarity", stone.clarity_grade)
+    if not color_code or not clarity_code or stone.carat_weight is None:
+        raise ReportDomainError("The report lacks characteristics required by the selected market snapshot")
+    quotes = (
+        db.query(models.MarketDataQuote)
+        .filter(
+            models.MarketDataQuote.snapshot_id == snapshot_id,
+            models.MarketDataQuote.shape_code == shape_code,
+            models.MarketDataQuote.color_code == color_code,
+            models.MarketDataQuote.clarity_code == clarity_code,
+        )
+        .order_by(models.MarketDataQuote.carat_anchor)
+        .all()
+    )
+    if not quotes:
+        raise ReportDomainError("The approved snapshot does not cover this shape, color or clarity")
+    carat_weight = Decimal(stone.carat_weight)
+    lower = next((quote for quote in reversed(quotes) if Decimal(quote.carat_anchor) <= carat_weight), None)
+    upper = next((quote for quote in quotes if Decimal(quote.carat_anchor) >= carat_weight), None)
+    if lower is None or upper is None:
+        raise ReportDomainError("The approved snapshot does not cover this carat weight")
+    lower_price = Decimal(lower.price_per_carat)
+    upper_price = Decimal(upper.price_per_carat)
+    if Decimal(lower.carat_anchor) == Decimal(upper.carat_anchor):
+        return lower_price, shape_code
+    share = (carat_weight - Decimal(lower.carat_anchor)) / (
+        Decimal(upper.carat_anchor) - Decimal(lower.carat_anchor)
+    )
+    price = ((Decimal("1") - share) * lower_price.ln() + share * upper_price.ln()).exp()
+    return price.quantize(Decimal("0.01")), shape_code
+
+
+def attach_market_reference(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    request: schemas.MarketReferenceAttachRequest,
+    actor: models.Expert,
+) -> models.StoneValuation:
+    if report.stone is None or report.stone_id is None:
+        raise ReportDomainError("Report has no normalized stone")
+    snapshot = get_market_data_snapshot(db, request.snapshot_id)
+    if snapshot is None or snapshot.status != "approved":
+        raise ReportDomainError("Select an approved market-data snapshot")
+    if snapshot.snapshot_kind != "market_reference" or snapshot.provider_code != "openfacet":
+        raise ReportDomainError("This snapshot cannot create an OpenFacet market reference")
+    existing = (
+        db.query(models.StoneValuation)
+        .filter(
+            models.StoneValuation.stone_id == report.stone_id,
+            models.StoneValuation.valuation_kind == "market_reference",
+            models.StoneValuation.market_snapshot_id == snapshot.snapshot_id,
+        )
+        .one_or_none()
+    )
+    if existing is not None:
+        raise ReportDomainError("This approved snapshot is already attached to the report")
+    price_per_carat, shape_code = _openfacet_price_per_carat(
+        db, snapshot_id=snapshot.snapshot_id, stone=report.stone,
+    )
+    amount = (price_per_carat * Decimal(report.stone.carat_weight)).quantize(Decimal("0.01"))
+    valuation = models.StoneValuation(
+        stone_id=report.stone_id,
+        valuation_kind="market_reference",
+        amount=amount,
+        currency_code=snapshot.currency_code,
+        unit="TOTAL_STONE",
+        source_name="OpenFacet",
+        source_reference=f"snapshot:{snapshot.snapshot_id}; shape:{shape_code}; USD/ct:{price_per_carat}",
+        market_snapshot_id=snapshot.snapshot_id,
+        applicability_note=request.applicability_note,
+        observed_at=snapshot.retrieved_at,
+        created_by_id=actor.expert_id,
+    )
+    db.add(valuation)
+    db.commit()
+    db.refresh(valuation)
+    return valuation

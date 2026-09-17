@@ -12,6 +12,7 @@ import qrcode
 from qrcode.image.svg import SvgPathImage
 
 from . import crud, database, media_storage, models, schemas, security
+from .market_providers import MarketProviderError, get_market_provider
 from .passport_pdf import build_public_passport_pdf
 
 app = FastAPI(title="Diamond ID System API")
@@ -330,6 +331,36 @@ def read_report_domain(
         raise HTTPException(status_code=404, detail="Report not found")
     require_report_access(report, current_user)
     return report
+
+
+@app.get("/reports/{report_id}/valuations", response_model=List[schemas.StoneValuationResponse])
+def read_report_valuations(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    require_report_access(report, current_user)
+    return crud.get_report_valuations(db, report)
+
+
+@app.post("/reports/{report_id}/valuations/market-reference", response_model=schemas.StoneValuationResponse)
+def attach_report_market_reference(
+    report_id: str,
+    payload: schemas.MarketReferenceAttachRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    try:
+        return crud.attach_market_reference(db, report=report, request=payload, actor=current_user)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @app.get("/reports/{report_id}/passport", response_model=schemas.PublicPassportResponse)
@@ -713,3 +744,77 @@ def update_market_price(
         raise HTTPException(status_code=403, detail="Only admins can update market prices")
     
     return crud.create_market_price(db, price_data, admin_id=current_user.expert_id)
+
+
+@app.get("/market-data/providers", response_model=List[schemas.MarketDataProviderResponse])
+def read_market_data_providers(
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    return crud.get_market_data_providers(db)
+
+
+@app.get("/market-data/snapshots", response_model=List[schemas.MarketDataSnapshotResponse])
+def read_market_data_snapshots(
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    return crud.get_market_data_snapshots(db)
+
+
+@app.post("/market-data/providers/{provider_code}/fetch", response_model=schemas.MarketDataSnapshotResponse)
+def fetch_market_data_candidate(
+    provider_code: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Fetch external data, then persist it once as an immutable candidate."""
+    require_admin(current_user)
+    try:
+        fetched = get_market_provider(provider_code).fetch_snapshot()
+    except MarketProviderError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    try:
+        return crud.create_market_data_candidate(db, fetched=fetched, actor=current_user)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.post("/market-data/snapshots/{snapshot_id}/approve", response_model=schemas.MarketDataSnapshotResponse)
+def approve_market_data_snapshot(
+    snapshot_id: int,
+    payload: schemas.MarketSnapshotDecision,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    snapshot = crud.get_market_data_snapshot(db, snapshot_id)
+    if snapshot is None:
+        raise HTTPException(status_code=404, detail="Market-data snapshot not found")
+    try:
+        return crud.decide_market_data_snapshot(
+            db, snapshot=snapshot, approve=True, actor=current_user, reason=payload.reason,
+        )
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.post("/market-data/snapshots/{snapshot_id}/reject", response_model=schemas.MarketDataSnapshotResponse)
+def reject_market_data_snapshot(
+    snapshot_id: int,
+    payload: schemas.MarketSnapshotDecision,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    snapshot = crud.get_market_data_snapshot(db, snapshot_id)
+    if snapshot is None:
+        raise HTTPException(status_code=404, detail="Market-data snapshot not found")
+    try:
+        return crud.decide_market_data_snapshot(
+            db, snapshot=snapshot, approve=False, actor=current_user, reason=payload.reason,
+        )
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error

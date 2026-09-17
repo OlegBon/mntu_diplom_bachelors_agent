@@ -155,6 +155,71 @@ class MarketPriceResponse(BaseModel):
         from_attributes = True
 
 
+MarketSnapshotStatus = Literal["candidate", "approved", "rejected"]
+
+
+class MarketDataProviderResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    provider_code: str
+    display_name: str
+    provider_type: str
+    documentation_url: str
+    terms_url: str
+    scope_note: str
+    is_active: bool
+
+
+class MarketDataSnapshotResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    snapshot_id: int
+    provider_code: str
+    snapshot_kind: str
+    status: MarketSnapshotStatus
+    currency_code: str
+    unit: str
+    source_url: str
+    methodology_url: str
+    coverage_note: str
+    quote_count: int
+    content_sha256: str
+    retrieved_at: datetime
+    created_by_id: int
+    approved_by_id: Optional[int]
+    approved_at: Optional[datetime]
+    decision_reason: Optional[str]
+    created_at: datetime
+
+
+class MarketSnapshotDecision(BaseModel):
+    reason: Optional[str] = Field(default=None, max_length=2_000)
+
+
+class MarketReferenceAttachRequest(BaseModel):
+    snapshot_id: int = Field(gt=0)
+    applicability_confirmed: Literal[True]
+    applicability_note: str = Field(min_length=10, max_length=2_000)
+
+
+class StoneValuationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    valuation_id: int
+    stone_id: int
+    valuation_kind: str
+    amount: Decimal
+    currency_code: str
+    unit: str
+    source_name: str
+    source_reference: Optional[str]
+    market_snapshot_id: Optional[int]
+    applicability_note: Optional[str]
+    observed_at: datetime
+    created_by_id: Optional[int]
+    created_at: datetime
+
+
 # Report-domain contract used by the current private API.
 ReportStatus = Literal["draft", "review", "issued", "void"]
 Origin = Literal["unknown", "natural", "lab_grown", "other"]
