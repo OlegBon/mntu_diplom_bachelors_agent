@@ -353,6 +353,7 @@ export async function initReportDetail() {
   let report;
   let currentUser;
   let gradeLabels = new Map();
+  let printStarted = false;
   const refresh = async () => {
     try {
       const [freshReport, events, media] = await Promise.all([
@@ -389,6 +390,10 @@ export async function initReportDetail() {
       setEditable(form, false);
       form.querySelector("#detail-edit").hidden = !canEdit;
       if (new URLSearchParams(window.location.search).get("edit") === "1" && canEdit) setEditable(form, true);
+      if (new URLSearchParams(window.location.search).get("print") === "1" && !printStarted) {
+        printStarted = true;
+        window.setTimeout(() => window.print(), 0);
+      }
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
       setStatus(status, error.status === 403 ? "У вас немає доступу до цього звіту." : "Не вдалося завантажити приватний звіт.", true);

@@ -804,3 +804,22 @@
     .public-passport__grid { grid-template-columns: 1fr; }
   }
 }
+@media print {
+  .site-header,
+  .site-footer,
+  .report-detail__actions,
+  .report-detail__side,
+  .form-status {
+    display: none !important;
+  }
+
+  .report-detail-page {
+    display: block !important;
+  }
+
+  .report-detail__grid,
+  .report-detail__surface {
+    display: block;
+    border: 0;
+  }
+}
