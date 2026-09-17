@@ -8,8 +8,20 @@ block content
                 p.page-subtitle Версіоновані довідкові дані з джерелом, моментом отримання та ручним погодженням.
         p#market-data-status.account-status(role="status" aria-live="polite" hidden)
         section.account-surface.account-surface--wide
+            h2 Системний довідковий орієнтир
+            p.account-help Налаштування діють лише для майбутніх нових або змінених чернеток. Збережені орієнтири не перераховуються.
+            form#market-reference-policy-form(novalidate)
+                fieldset.form-group
+                    legend.form-label Провайдер ринкового орієнтиру
+                    #market-policy-market-providers.market-policy-options(aria-live="polite")
+                label.market-data-confirmation(for="market-policy-use-fx")
+                    input#market-policy-use-fx(type="checkbox")
+                    span Додавати еквівалент у UAH за офіційним курсом НБУ
+                p.account-help#market-policy-fx-note Курс НБУ фіксується лише разом із новим орієнтиром.
+                button#market-reference-policy-submit.btn.btn-primary(type="submit") Зберегти налаштування
+        section.account-surface.account-surface--wide
             h2 Провайдери
-            p.account-help OpenFacet — model-based retail reference для порівнюваних природних GIA-каменів; це не експертна оцінка, не пропозиція та не ціна продажу. НБУ надає офіційний USD/UAH: під час прикріплення орієнтира курс отримується заново й назавжди фіксується з цим орієнтиром.
+            p.account-help OpenFacet — model-based retail reference для порівнюваних природних GIA-каменів; це не експертна оцінка, не пропозиція та не ціна продажу. НБУ надає офіційний USD/UAH: якщо конвертацію увімкнено, курс отримується заново й назавжди фіксується з орієнтиром.
             #market-data-providers.market-data-providers(aria-live="polite")
         section.account-surface.account-surface--wide
             h2 Історія знімків
@@ -17,7 +29,7 @@ block content
             #market-data-snapshots.market-data-snapshots(aria-live="polite")
         section.account-surface.account-surface--wide
             h2 Прикріпити орієнтир до звіту
-            p.account-help Звіт не містить даних про GIA-сертифікат. Тому перед прикріпленням адміністратор підтверджує застосовність OpenFacet до конкретного каменя. Під час прикріплення сервер отримує офіційний USD/UAH від НБУ; якщо він недоступний, орієнтир не створюється. Legacy-ціна звіту не змінюється.
+            p.account-help Звіт не містить даних про GIA-сертифікат. Тому перед прикріпленням адміністратор підтверджує застосовність OpenFacet до конкретного каменя. Конвертацію UAH визначають поточні системні налаштування. Legacy-ціна звіту не змінюється.
             p#market-reference-status.account-status(role="status" aria-live="polite" hidden)
             form#market-reference-attach-form(novalidate)
                 .form-row

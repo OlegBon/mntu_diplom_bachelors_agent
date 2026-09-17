@@ -294,6 +294,24 @@ class MarketDataProvider(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
+class MarketReferencePolicy(Base):
+    """The mutable admin policy used only for future system references."""
+
+    __tablename__ = "market_reference_policies"
+    __table_args__ = {"schema": "diamond_market"}
+
+    policy_id = Column(Integer, primary_key=True)
+    market_provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=True,
+    )
+    use_fx_conversion = Column(Boolean, nullable=False, default=True, server_default="1")
+    fx_provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=True,
+    )
+    updated_by_id = Column(Integer, nullable=True)
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+
 class MarketDataSnapshot(Base):
     """Immutable candidate or approved provider import with full provenance."""
 

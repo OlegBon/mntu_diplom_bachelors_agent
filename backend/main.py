@@ -169,16 +169,25 @@ def _attach_system_market_reference_when_available(
 ) -> None:
     """Best-effort enrichment that never prevents a report save.
 
-    A missing approved snapshot, unsupported stone or temporarily unavailable NBU
+    A missing policy/snapshot, unsupported stone or temporarily unavailable FX
     endpoint leaves the report valid but without a new automatic reference.
     """
-    candidate = crud.prepare_system_market_reference(db, report=report)
+    policy = crud.get_market_reference_policy(db)
+    if policy is None or policy.market_provider_code is None:
+        return
+    candidate = crud.prepare_system_market_reference(
+        db, report=report, provider_code=policy.market_provider_code,
+    )
     if candidate is None or crud.system_market_reference_exists(db, report=report, candidate=candidate):
         return
-    try:
-        fx_rate = fetch_nbu_usd_uah()
-    except FxProviderError:
-        return
+    fx_rate = None
+    if policy.use_fx_conversion:
+        if policy.fx_provider_code != "nbu":
+            return
+        try:
+            fx_rate = fetch_nbu_usd_uah()
+        except FxProviderError:
+            return
     crud.attach_system_market_reference(
         db, report=report, candidate=candidate, actor=actor, fx_rate=fx_rate,
     )
@@ -385,8 +394,15 @@ def attach_report_market_reference(
         raise HTTPException(status_code=422, detail="Select an approved market-data snapshot")
     if snapshot.snapshot_kind != "market_reference" or snapshot.provider_code != "openfacet":
         raise HTTPException(status_code=422, detail="This snapshot cannot create an OpenFacet market reference")
+    policy = crud.get_market_reference_policy(db)
+    if policy is None or policy.market_provider_code != snapshot.provider_code:
+        raise HTTPException(status_code=422, detail="Selected snapshot is not enabled by the current market-reference policy")
     try:
-        fx_rate = fetch_nbu_usd_uah()
+        fx_rate = None
+        if policy.use_fx_conversion:
+            if policy.fx_provider_code != "nbu":
+                raise HTTPException(status_code=422, detail="Configured FX provider is not supported")
+            fx_rate = fetch_nbu_usd_uah()
         return crud.attach_market_reference(
             db, report=report, request=payload, actor=current_user, fx_rate=fx_rate,
         )
@@ -788,6 +804,29 @@ def read_market_data_providers(
 ):
     require_admin(current_user)
     return crud.get_market_data_providers(db)
+
+
+@app.get("/market-data/policy", response_model=schemas.MarketReferencePolicyResponse)
+def read_market_reference_policy(
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    policy = crud.get_market_reference_policy(db)
+    if policy is None:
+        raise HTTPException(status_code=404, detail="Market-reference policy is not initialized")
+    return policy
+
+
+@app.put("/market-data/policy", response_model=schemas.MarketReferencePolicyResponse)
+def update_market_reference_policy(
+    payload: schemas.MarketReferencePolicyUpdate,
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    try:
+        return crud.update_market_reference_policy(db, payload=payload, actor=current_user)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @app.get("/market-data/snapshots", response_model=List[schemas.MarketDataSnapshotResponse])

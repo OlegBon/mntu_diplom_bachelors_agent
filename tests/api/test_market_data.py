@@ -26,6 +26,11 @@ def _register_providers(db_session) -> None:
         terms_url="https://bank.gov.ua/ua/about/terms-of-use",
         scope_note="Official USD/UAH rate.",
         is_active=True,
+    ), models.MarketReferencePolicy(
+        policy_id=1,
+        market_provider_code="openfacet",
+        use_fx_conversion=True,
+        fx_provider_code="nbu",
     )])
     db_session.commit()
 
@@ -83,6 +88,9 @@ def test_market_data_candidate_approval_and_explicit_report_attachment(client, e
 
     assert client.get("/market-data/providers").status_code == 401
     assert client.get("/market-data/providers", headers=owner_headers).status_code == 403
+    policy = client.get("/market-data/policy", headers=admin_headers)
+    assert policy.status_code == 200
+    assert policy.json()["market_provider_code"] == "openfacet"
     assert {item["provider_code"] for item in client.get("/market-data/providers", headers=admin_headers).json()} == {"nbu", "openfacet"}
 
     candidate = client.post("/market-data/providers/openfacet/fetch", headers=admin_headers)
@@ -205,6 +213,38 @@ def test_report_save_is_not_blocked_when_system_fx_is_unavailable(client, expert
     report = client.post("/reports", json=_report_payload(), headers=owner_headers)
     assert report.status_code == 200
     assert client.get(f"/reports/{report.json()['report_id']}/valuations", headers=owner_headers).json() == []
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_admin_policy_can_disable_uah_conversion_for_future_references(client, experts, db_session, monkeypatch) -> None:
+    _register_providers(db_session)
+    db_session.add_all([
+        models.GradeMapping(category="color", grade_value=0, grade_label="D"),
+        models.GradeMapping(category="clarity", grade_value=0, grade_label="FL"),
+    ])
+    db_session.commit()
+
+    class FakeProvider:
+        def fetch_snapshot(self):
+            return _fetched_snapshot()
+
+    monkeypatch.setattr("backend.main.get_market_provider", lambda _code: FakeProvider())
+    admin_headers = auth_headers(client, experts["admin"].username)
+    owner_headers = auth_headers(client, experts["owner"].username)
+    updated_policy = client.put("/market-data/policy", headers=admin_headers, json={
+        "market_provider_code": "openfacet", "use_fx_conversion": False, "fx_provider_code": None,
+    })
+    assert updated_policy.status_code == 200
+    assert updated_policy.json()["use_fx_conversion"] is False
+    snapshot_id = client.post("/market-data/providers/openfacet/fetch", headers=admin_headers).json()["snapshot_id"]
+    assert client.post(f"/market-data/snapshots/{snapshot_id}/approve", headers=admin_headers, json={}).status_code == 200
+
+    report = client.post("/reports", json=_report_payload(), headers=owner_headers)
+    values = client.get(f"/reports/{report.json()['report_id']}/valuations", headers=owner_headers).json()
+    assert values[0]["valuation_kind"] == "system_market_reference"
+    assert values[0]["converted_amount"] is None
+    assert values[0]["fx_snapshot_id"] is None
 
 
 @pytest.mark.api

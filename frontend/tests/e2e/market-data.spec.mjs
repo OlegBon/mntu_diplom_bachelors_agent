@@ -20,6 +20,11 @@ const candidate = {
   created_by_id: 1, approved_by_id: null, approved_at: null, decision_reason: null, created_at: "2026-09-17T12:00:00Z",
 };
 
+let policy = {
+  policy_id: 1, market_provider_code: "openfacet", use_fx_conversion: true,
+  fx_provider_code: "nbu", updated_by_id: 1, updated_at: "2026-09-17T12:00:00Z",
+};
+
 test("administrator creates and approves a market-data candidate before using it", async ({ page }) => {
   let snapshots = [];
   await page.addInitScript(() => {
@@ -29,6 +34,10 @@ test("administrator creates and approves a market-data candidate before using it
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
   await page.route("**/market-data/providers", (route) => route.fulfill({ json: [nbuProvider, provider] }));
+  await page.route("**/market-data/policy", async (route) => {
+    if (route.request().method() === "PUT") policy = { ...policy, ...(route.request().postDataJSON() || {}) };
+    await route.fulfill({ json: policy });
+  });
   await page.route("**/market-data/snapshots", (route) => route.fulfill({ json: snapshots }));
   await page.route("**/market-data/fx-snapshots", (route) => route.fulfill({ json: [] }));
   await page.route("**/market-data/providers/openfacet/fetch", (route) => {
@@ -43,6 +52,7 @@ test("administrator creates and approves a market-data candidate before using it
   await page.goto("/market-data.html");
   await expect(page.locator("[data-market-data-page]")).toBeVisible();
   await expect(page.locator("#market-data-providers")).toContainText("OpenFacet");
+  await expect(page.locator("#market-reference-policy-form")).toContainText("OpenFacet");
   await page.getByRole("button", { name: "Отримати кандидат" }).click();
   await expect(page.locator("#market-data-snapshots")).toContainText("Кандидат");
   await page.getByRole("button", { name: "Затвердити" }).click();

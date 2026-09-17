@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — configurable-market-reference-policy (готово до міграції)
+
+- **Задача:** завершити 121 керованою admin policy для провайдерів, прибрати `*` з самого значення ціни та відокремити legacy `market_price_reference` від нового ринкового контуру.
+- **Змінені файли:** `alembic/versions/0010_market_reference_policy.py`, `backend/{crud,main,models,schemas}.py`, `tests/{api/test_market_data,unit/test_migration_foundation}.py`, `frontend/src/{pug/pages/{dashboard,market-data}.pug,js/modules/{api,dashboard,market-data}.js}`, `frontend/tests/{auth-and-api,profile-admin-pages,e2e/market-data}.mjs`, `scripts/audit-api.mjs`, `docs/{architecture,api-mvp-audit,db-schema,work_plan,progress}.md`, `docs/{guides/current-domain-and-report-workflow,market-data-providers}.md`, `docs/backlog/121-market-data-provider-expansion-and-fx.md`.
+- **Рішення / Результат:** `0010` додає singleton `market_reference_policies`: обраний market provider, прапорець FX та обраний FX provider для лише майбутніх системних орієнтирів. Початкове значення зберігає `openfacet` + `nbu`; historical snapshot-и, valuations і legacy demo-індекс не змінюються. Admin API/UI дозволяє обрати market provider radio-кнопкою й вимкнути UAH-конвертацію. Автоматичний та ручний reference читають policy; при вимкненому FX USD зберігається без UAH. У dashboard заголовок — `Ціна (USD)*`, `*` пояснює системний характер колонки, а значення OpenFacet має `of` незалежно від автоматичного чи ручного походження; detail/popover зберігають різницю типів.
+- **Перевірки:** `python -m pytest tests/api/test_market_data.py tests/unit/test_nbu_fx.py tests/unit/test_migration_foundation.py -q` — 11 passed; `python -m compileall -q backend` і import FastAPI — успішно; `alembic upgrade head --sql` — успішно, лише статичний SQL; `frontend npm run build`, Node/jsdom tests — 20 passed; Playwright market-data — 1 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** `0010` ще не застосовано до локальної MariaDB. Підтриманими server adapter-ами лишаються тільки OpenFacet і НБУ; radio-контроль не робить невідомий provider робочим. Немає scheduler, freshness SLA, retries/backoff чи historical backfill.
+
 ## 2026-09-17 — automatic-system-market-reference (завершено)
 
 - **Задача:** завершити 121 автоматичним системним довідковим орієнтиром для підтримуваних нових та оновлених draft-звітів, не змішуючи його з ручним admin-підтвердженням.

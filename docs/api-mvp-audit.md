@@ -15,8 +15,8 @@
 - Profile/admin UI, server-side довідники та versioned `idc-demo-v1` реалізовані.
 - Operational analytics обмежена admin: status-зріз експертів і review-cycle
   адміністраторів. Немає ML, ринкової ціни, рейтингу або fake active-time.
-- Ринкові дані мають окрему admin-only межу `/market-data/*`: provider catalog
-  і immutable snapshot-и OpenFacet. Safe audit не запускає external fetch або
+- Ринкові дані мають окрему admin-only межу `/market-data/*`: provider catalog,
+  policy майбутніх системних орієнтирів і immutable snapshot-и OpenFacet. Safe audit не запускає external fetch або
   approval, тому перевіряє лише 401-межі GET-маршрутів; `market/price`
   лишається legacy demo-індексом, а не джерелом ринкової оцінки.
 - Автоматизовані regression-набори існують: pytest, Node/DOM та Playwright.

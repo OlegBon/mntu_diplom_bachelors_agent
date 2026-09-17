@@ -142,7 +142,7 @@ function formatDateOnly(value) {
 function renderMarketReferencePrice(report) {
   const reference = report.market_reference;
   const isSystemReference = reference.valuation_kind === "system_market_reference";
-  const marker = isSystemReference ? "*" : "of";
+  const marker = "of";
   const referenceType = isSystemReference
     ? "Системний довідковий орієнтир"
     : "Підтверджений довідковий орієнтир";

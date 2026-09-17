@@ -64,6 +64,12 @@ export const getReferenceValues = (token) => requestApi("/reference-values", { t
 
 export const getMarketDataProviders = (token) => requestApi("/market-data/providers", { token });
 
+export const getMarketReferencePolicy = (token) => requestApi("/market-data/policy", { token });
+
+export const updateMarketReferencePolicy = (policy, token) => requestApi(
+  "/market-data/policy", { method: "PUT", token, body: policy },
+);
+
 export const getMarketDataSnapshots = (token) => requestApi("/market-data/snapshots", { token });
 
 export const getFxDataSnapshots = (token) => requestApi("/market-data/fx-snapshots", { token });

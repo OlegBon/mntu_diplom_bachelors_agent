@@ -5,6 +5,7 @@ import {
   getAdminReviewStatistics,
   getExpertStatistics,
   getMarketDataProviders,
+  getMarketReferencePolicy,
   getMarketDataSnapshots,
   getFxDataSnapshots,
   getNextReportId,
@@ -13,6 +14,7 @@ import {
   getReferenceValues,
   loginUser,
   refreshNbuRate,
+  updateMarketReferencePolicy,
 } from "../src/js/modules/api.js";
 import { checkAuth, logout } from "../src/js/modules/auth.js";
 
@@ -136,14 +138,18 @@ test("market-data APIs use protected administrator endpoints", async () => {
   };
 
   await getMarketDataProviders("test-token");
+  await getMarketReferencePolicy("test-token");
   await getMarketDataSnapshots("test-token");
   await getFxDataSnapshots("test-token");
   await refreshNbuRate("test-token");
+  await updateMarketReferencePolicy({ market_provider_code: "openfacet", use_fx_conversion: true, fx_provider_code: "nbu" }, "test-token");
 
   assert.deepEqual(paths, [
     ["http://127.0.0.1:8000/market-data/providers", "Bearer test-token"],
+    ["http://127.0.0.1:8000/market-data/policy", "Bearer test-token"],
     ["http://127.0.0.1:8000/market-data/snapshots", "Bearer test-token"],
     ["http://127.0.0.1:8000/market-data/fx-snapshots", "Bearer test-token"],
     ["http://127.0.0.1:8000/market-data/providers/nbu/refresh", "Bearer test-token"],
+    ["http://127.0.0.1:8000/market-data/policy", "Bearer test-token"],
   ]);
 });

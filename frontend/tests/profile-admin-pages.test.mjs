@@ -31,6 +31,8 @@ test("built market-data page keeps the provider workflow admin-only", async () =
   const marketData = new JSDOM(await readFile(page("market-data"), "utf8")).window.document;
   assert.equal(marketData.querySelector("[data-market-data-page]")?.hasAttribute("data-protected-page"), true);
   assert.equal(marketData.querySelector("#market-data-providers")?.tagName, "DIV");
+  assert.equal(marketData.querySelector("#market-reference-policy-form")?.tagName, "FORM");
+  assert.equal(marketData.querySelector("#market-policy-use-fx")?.getAttribute("type"), "checkbox");
   assert.equal(marketData.querySelector("#market-reference-attach-form")?.tagName, "FORM");
   assert.equal(marketData.querySelector("#market-reference-confirmed")?.getAttribute("type"), "checkbox");
 });

@@ -29,9 +29,14 @@
   market-входи не створюють дублікати.
 - Admin може додати окремий `market_reference` з підтвердженням застосовності;
   він має пріоритет відображення над системним орієнтиром.
-- Dashboard показує `d` для legacy demo, `*` для системного та `of` для
-  підтвердженого OpenFacet; popover/detail пояснюють source, snapshot і frozen
+- Dashboard показує `d` для legacy demo та `of` для OpenFacet; заголовок
+  колонки `Ціна (USD)*` пояснює системний характер автоматичного орієнтиру.
+  Popover/detail пояснюють source, snapshot і frozen
   UAH. Passport та PDF цін не відкривають.
+- `0010_market_reference_policy` відокремлює legacy `market_price_reference`
+  від нового контуру: admin обирає активний market provider і вмикає/вимикає
+  NBU UAH для майбутніх system valuations. Історичні snapshot-и й valuation
+  не змінюються.
 
 ## Межі наступного рішення
 

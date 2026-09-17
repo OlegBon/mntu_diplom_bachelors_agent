@@ -5,9 +5,11 @@ import {
   fetchMarketDataCandidate,
   getCurrentUser,
   getMarketDataProviders,
+  getMarketReferencePolicy,
   getMarketDataSnapshots,
   getFxDataSnapshots,
   refreshNbuRate,
+  updateMarketReferencePolicy,
 } from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 
@@ -63,6 +65,28 @@ function renderProviders(container, providers, fxSnapshots, onAction) {
   }
 }
 
+function renderPolicyMarketProviders(container, providers, selectedProviderCode) {
+  container.replaceChildren();
+  const marketProviders = providers.filter((provider) => provider.provider_type === "market_reference");
+  if (!marketProviders.length) {
+    container.textContent = "Активних провайдерів ринкового орієнтиру немає.";
+    return;
+  }
+  for (const provider of marketProviders) {
+    const label = document.createElement("label");
+    label.className = "market-data-confirmation";
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "market-policy-provider";
+    input.value = provider.provider_code;
+    input.checked = provider.provider_code === selectedProviderCode;
+    const text = document.createElement("span");
+    text.textContent = `${provider.display_name} — ${provider.scope_note}`;
+    label.append(input, text);
+    container.append(label);
+  }
+}
+
 function renderSnapshots(container, snapshots, onDecision) {
   container.replaceChildren();
   if (!snapshots.length) {
@@ -107,6 +131,11 @@ export async function initMarketData() {
   const token = localStorage.getItem("token");
   const status = document.getElementById("market-data-status");
   const providers = document.getElementById("market-data-providers");
+  const policyForm = document.getElementById("market-reference-policy-form");
+  const policyProviders = document.getElementById("market-policy-market-providers");
+  const policyUseFx = document.getElementById("market-policy-use-fx");
+  const policyFxNote = document.getElementById("market-policy-fx-note");
+  const policySubmit = document.getElementById("market-reference-policy-submit");
   const snapshots = document.getElementById("market-data-snapshots");
   const form = document.getElementById("market-reference-attach-form");
   const referenceStatus = document.getElementById("market-reference-status");
@@ -133,8 +162,14 @@ export async function initMarketData() {
     decisionReason.focus();
   };
   const refresh = async () => {
-    const [providerRows, snapshotRows, fxSnapshotRows] = await Promise.all([getMarketDataProviders(token), getMarketDataSnapshots(token), getFxDataSnapshots(token)]);
+    const [providerRows, policy, snapshotRows, fxSnapshotRows] = await Promise.all([getMarketDataProviders(token), getMarketReferencePolicy(token), getMarketDataSnapshots(token), getFxDataSnapshots(token)]);
     currentSnapshots = snapshotRows;
+    renderPolicyMarketProviders(policyProviders, providerRows, policy.market_provider_code);
+    policyUseFx.checked = policy.use_fx_conversion;
+    const fxProvider = providerRows.find((provider) => provider.provider_code === policy.fx_provider_code);
+    policyFxNote.textContent = policy.use_fx_conversion
+      ? `Курс ${fxProvider?.display_name || "валютного провайдера"} фіксується лише разом із новим орієнтиром.`
+      : "Еквівалент у UAH для нових орієнтирів не створюватиметься.";
     renderProviders(providers, providerRows, fxSnapshotRows, async (providerCode, button) => {
       button.disabled = true;
       try {
@@ -181,6 +216,28 @@ export async function initMarketData() {
       const message = marketReferenceMessage(error);
       setStatus(status, message, true);
       setStatus(referenceStatus, message, true);
+    }
+  });
+  policyForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const selectedProvider = policyForm.querySelector('input[name="market-policy-provider"]:checked');
+    if (!selectedProvider) {
+      setStatus(status, "Оберіть провайдера ринкового орієнтиру.", true);
+      return;
+    }
+    policySubmit.disabled = true;
+    try {
+      await updateMarketReferencePolicy({
+        market_provider_code: selectedProvider.value,
+        use_fx_conversion: policyUseFx.checked,
+        fx_provider_code: policyUseFx.checked ? "nbu" : null,
+      }, token);
+      setStatus(status, "Налаштування системного довідкового орієнтиру збережено для майбутніх чернеток.");
+      await refresh();
+    } catch (error) {
+      setStatus(status, error.message || "Не вдалося зберегти налаштування.", true);
+    } finally {
+      policySubmit.disabled = false;
     }
   });
   document.getElementById("market-decision-dialog-close").addEventListener("click", closeDecisionDialog);

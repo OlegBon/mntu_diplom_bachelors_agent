@@ -170,6 +170,23 @@ class MarketDataProviderResponse(BaseModel):
     is_active: bool
 
 
+class MarketReferencePolicyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    policy_id: int
+    market_provider_code: Optional[str]
+    use_fx_conversion: bool
+    fx_provider_code: Optional[str]
+    updated_by_id: Optional[int]
+    updated_at: datetime
+
+
+class MarketReferencePolicyUpdate(BaseModel):
+    market_provider_code: Optional[str] = Field(default=None, max_length=32)
+    use_fx_conversion: bool
+    fx_provider_code: Optional[str] = Field(default=None, max_length=32)
+
+
 class MarketDataSnapshotResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

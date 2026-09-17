@@ -807,6 +807,47 @@ def get_market_data_providers(db: Session) -> list[models.MarketDataProvider]:
     )
 
 
+def get_market_reference_policy(db: Session) -> models.MarketReferencePolicy | None:
+    """Return the single policy that controls only future automatic references."""
+    return db.get(models.MarketReferencePolicy, 1)
+
+
+def update_market_reference_policy(
+    db: Session,
+    *,
+    payload: schemas.MarketReferencePolicyUpdate,
+    actor: models.Expert,
+) -> models.MarketReferencePolicy:
+    """Validate selected provider capabilities before replacing the future-only policy."""
+    market_provider = None
+    if payload.market_provider_code is not None:
+        market_provider = db.get(models.MarketDataProvider, payload.market_provider_code)
+        if market_provider is None or not market_provider.is_active:
+            raise ReportDomainError("Selected market-data provider is unavailable")
+        if market_provider.provider_type != "market_reference":
+            raise ReportDomainError("Selected provider cannot supply a market reference")
+    fx_provider = None
+    if payload.use_fx_conversion:
+        if payload.fx_provider_code is None:
+            raise ReportDomainError("Select an FX provider when UAH conversion is enabled")
+        fx_provider = db.get(models.MarketDataProvider, payload.fx_provider_code)
+        if fx_provider is None or not fx_provider.is_active:
+            raise ReportDomainError("Selected FX provider is unavailable")
+        if fx_provider.provider_type != "fx_reference":
+            raise ReportDomainError("Selected provider cannot supply an FX rate")
+    policy = get_market_reference_policy(db)
+    if policy is None:
+        policy = models.MarketReferencePolicy(policy_id=1)
+        db.add(policy)
+    policy.market_provider_code = market_provider.provider_code if market_provider else None
+    policy.use_fx_conversion = payload.use_fx_conversion
+    policy.fx_provider_code = fx_provider.provider_code if fx_provider else None
+    policy.updated_by_id = actor.expert_id
+    db.commit()
+    db.refresh(policy)
+    return policy
+
+
 def get_market_data_snapshots(db: Session) -> list[models.MarketDataSnapshot]:
     return (
         db.query(models.MarketDataSnapshot)
@@ -998,7 +1039,7 @@ class SystemMarketReferenceCandidate:
 
 
 def prepare_system_market_reference(
-    db: Session, *, report: models.DiamondReport,
+    db: Session, *, report: models.DiamondReport, provider_code: str,
 ) -> SystemMarketReferenceCandidate | None:
     """Return an applicable automatic reference, without treating a gap as an error."""
     if report.stone is None or report.stone_id is None:
@@ -1006,7 +1047,7 @@ def prepare_system_market_reference(
     snapshot = (
         db.query(models.MarketDataSnapshot)
         .filter(
-            models.MarketDataSnapshot.provider_code == "openfacet",
+            models.MarketDataSnapshot.provider_code == provider_code,
             models.MarketDataSnapshot.snapshot_kind == "market_reference",
             models.MarketDataSnapshot.status == "approved",
         )
@@ -1019,9 +1060,9 @@ def prepare_system_market_reference(
     if snapshot is None:
         return None
     try:
-        price_per_carat, shape_code = _openfacet_price_per_carat(
-            db, snapshot_id=snapshot.snapshot_id, stone=report.stone,
-        )
+        if provider_code != "openfacet":
+            return None
+        price_per_carat, shape_code = _openfacet_price_per_carat(db, snapshot_id=snapshot.snapshot_id, stone=report.stone)
     except ReportDomainError:
         return None
     amount = (price_per_carat * Decimal(report.stone.carat_weight)).quantize(Decimal("0.01"))
@@ -1041,7 +1082,7 @@ def attach_system_market_reference(
     report: models.DiamondReport,
     candidate: SystemMarketReferenceCandidate,
     actor: models.Expert,
-    fx_rate: NbuUsdUahRate,
+    fx_rate: NbuUsdUahRate | None,
 ) -> models.StoneValuation | None:
     """Persist one immutable system reference unless the same inputs were saved already."""
     if report.stone_id is None:
@@ -1059,22 +1100,22 @@ def attach_system_market_reference(
     )
     if existing is not None:
         return existing
-    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False)
+    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False) if fx_rate else None
     valuation = models.StoneValuation(
         stone_id=report.stone_id,
         valuation_kind="system_market_reference",
         amount=candidate.amount,
         currency_code=candidate.snapshot.currency_code,
         unit="TOTAL_STONE",
-        source_name="OpenFacet",
+        source_name="OpenFacet" if candidate.snapshot.provider_code == "openfacet" else candidate.snapshot.provider_code,
         source_reference=candidate.source_reference,
         market_snapshot_id=candidate.snapshot.snapshot_id,
         applicability_note=None,
-        fx_snapshot_id=fx_snapshot.fx_snapshot_id,
-        fx_rate=fx_rate.rate,
-        fx_rate_date=fx_rate.rate_date,
-        converted_amount=convert_usd_to_uah(candidate.amount, fx_rate.rate),
-        converted_currency_code="UAH",
+        fx_snapshot_id=fx_snapshot.fx_snapshot_id if fx_snapshot else None,
+        fx_rate=fx_rate.rate if fx_rate else None,
+        fx_rate_date=fx_rate.rate_date if fx_rate else None,
+        converted_amount=convert_usd_to_uah(candidate.amount, fx_rate.rate) if fx_rate else None,
+        converted_currency_code="UAH" if fx_rate else None,
         observed_at=candidate.snapshot.retrieved_at,
         created_by_id=actor.expert_id,
     )
@@ -1110,7 +1151,7 @@ def attach_market_reference(
     report: models.DiamondReport,
     request: schemas.MarketReferenceAttachRequest,
     actor: models.Expert,
-    fx_rate: NbuUsdUahRate,
+    fx_rate: NbuUsdUahRate | None,
 ) -> models.StoneValuation:
     if report.stone is None or report.stone_id is None:
         raise ReportDomainError("Report has no normalized stone")
@@ -1134,7 +1175,7 @@ def attach_market_reference(
         db, snapshot_id=snapshot.snapshot_id, stone=report.stone,
     )
     amount = (price_per_carat * Decimal(report.stone.carat_weight)).quantize(Decimal("0.01"))
-    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False)
+    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False) if fx_rate else None
     valuation = models.StoneValuation(
         stone_id=report.stone_id,
         valuation_kind="market_reference",
@@ -1145,11 +1186,11 @@ def attach_market_reference(
         source_reference=f"snapshot:{snapshot.snapshot_id}; shape:{shape_code}; USD/ct:{price_per_carat}",
         market_snapshot_id=snapshot.snapshot_id,
         applicability_note=request.applicability_note,
-        fx_snapshot_id=fx_snapshot.fx_snapshot_id,
-        fx_rate=fx_rate.rate,
-        fx_rate_date=fx_rate.rate_date,
-        converted_amount=convert_usd_to_uah(amount, fx_rate.rate),
-        converted_currency_code="UAH",
+        fx_snapshot_id=fx_snapshot.fx_snapshot_id if fx_snapshot else None,
+        fx_rate=fx_rate.rate if fx_rate else None,
+        fx_rate_date=fx_rate.rate_date if fx_rate else None,
+        converted_amount=convert_usd_to_uah(amount, fx_rate.rate) if fx_rate else None,
+        converted_currency_code="UAH" if fx_rate else None,
         observed_at=snapshot.retrieved_at,
         created_by_id=actor.expert_id,
     )
