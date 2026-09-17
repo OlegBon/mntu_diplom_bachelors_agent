@@ -17,7 +17,7 @@
   `system_prediction`, `expert_appraisal`, `asking_price` та `sale_price`.
 - Приватне редагування та комерційний стан реалізовано в 080; ринковий
   snapshot інтегрується з цим flow окремо, без зміни historical report data.
-- Admin UI з [100](./100-profile-and-admin-ui.md) має бути споживачем цього
+- Реалізований admin UI має бути споживачем цього
   контуру, а не місцем, де з'являються неверсіоновані суми.
 
 ## Межі

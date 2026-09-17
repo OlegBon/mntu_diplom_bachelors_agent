@@ -68,10 +68,11 @@
 - [x] 085 — Прибирання legacy API: `/diamonds/*`, unreachable frontend handler, старі Pydantic/CRUD контракти й demo `MLService` вилучені. Historical legacy-колонки залишені без міграції; їхній safe recalculation/cleanup винесено у 120.
 - [x] 090 — Публічний паспорт і QR: окрема public projection `GET /public/passports/{public_id}`, непередбачуваний revocable token, admin publish/revoke/reissue, SVG QR і `passport.html`. Не відкриває ціну, персональні/внутрішні дані чи media; контрольована публічність вкладень винесена у 130.
 - [x] 095 — Передача публічного паспорта та PDF: admin бачить і копіює код/URL, landing приймає лише код, а пряме посилання й посилання з QR відкривають паспорт напряму. Server генерує on-demand allow-listed PDF для поточного active issued report. Старі код/QR/URL не підходять після reissue; revoke і void закривають нове завантаження.
-- [x] [100 — Профіль і admin UI](./backlog/100-profile-and-admin-ui.md): profile ПІБ/password, admin roles і reversible deactivate; versioned довідники — 105, статистика — 108.
+- [x] 100 — Профіль і admin UI: profile ПІБ/password, admin roles і reversible deactivate; versioned довідники — 105, статистика — 108.
 - [ ] [105 — Версіоновані довідники](./backlog/105-versioned-reference-catalogs.md): reason/source/effective version для нових reports без зміни historical reports, паспортів або PDF.
 - [ ] [108 — Контракт статистики експертів](./backlog/108-expert-statistics-and-analytics-contract.md): усунути 500, визначити aggregates і admin RBAC перед будь-яким analytics UI.
 - [ ] [110 — Авторитетні ринкові дані й валютні курси](./backlog/110-authoritative-market-data-and-fx.md): обрати законне джерело, зберігати незмінні snapshot-и з provenance, реалізувати ручне admin-оновлення, а scheduler розглядати лише після цього. Не змінює demo `USD … d` або історичні значення автоматично.
+- [ ] [115 — UI-polish профілю та admin UI](./backlog/115-profile-admin-ui-polish.md): узгодити й внести окремим зрізом ручні візуальні та responsive-покращення без зміни бізнес-логіки.
 - [ ] [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md): погодити retire або безпечну versioned replacement для `recalc_grades.py`; не запускати масовий backfill чи cleanup без окремого рішення.
 - [ ] [130 — Публічні вкладення паспорта](./backlog/130-public-passport-media.md): окремо погодити consent, allow-list типів і захищену видачу явно публічних media.
 
