@@ -15,16 +15,20 @@
 - Profile/admin UI, server-side довідники та versioned `idc-demo-v1` реалізовані.
 - Operational analytics обмежена admin: status-зріз експертів і review-cycle
   адміністраторів. Немає ML, ринкової ціни, рейтингу або fake active-time.
+- Ринкові дані мають окрему admin-only межу `/market-data/*`: provider catalog
+  і immutable snapshot-и OpenFacet. Safe audit не запускає external fetch або
+  approval, тому перевіряє лише 401-межі GET-маршрутів; `market/price`
+  лишається legacy demo-індексом, а не джерелом ринкової оцінки.
 - Автоматизовані regression-набори існують: pytest, Node/DOM та Playwright.
   Їхні команди описано в `AGENTS.md` і `docs/local-start.md`.
 
 ## Безпечний локальний API smoke
 
 `npm run audit:api` приймає лише `localhost`/`127.0.0.1`, не використовує
-токенів і не змінює дані. Він перевіряє 13 контрактів: root/OpenAPI/CORS,
+токенів і не змінює дані. Він перевіряє 15 контрактів: root/OpenAPI/CORS,
 публічні mappings і паспорт-404, а також 401-межі для private reports,
-detail, profile, users, experts, reference values та обох admin-only
-analytics endpoint-ів. Звіти створюються лише локально в ігнорованому
+detail, profile, users, experts, reference values, обох admin-only analytics
+endpoint-ів і read-only market-data endpoints. Звіти створюються лише локально в ігнорованому
 `docs/audits/`.
 
 Перед запуском має працювати локальний FastAPI на `:8000`:

@@ -56,11 +56,11 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_grading_rulesets_revision_is_the_only_committed_head():
+def test_alembic_market_data_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0007_grading_rulesets"]
+    assert script_directory.get_heads() == ["0008_market_data_providers"]
 
 
 def test_grading_ruleset_migration_preserves_legacy_reports_without_recalculation():

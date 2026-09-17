@@ -246,6 +246,15 @@
   .reference-category__table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .reference-category__table th, .reference-category__table td { border-top: 1px solid variables.$border-color; padding: 0.5rem; text-align: left; }
   .reference-category__table th { color: variables.$secondary-color; font-size: 0.8rem; }
+  .market-data-providers,
+  .market-data-snapshots { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
+  .market-data-card { border: 1px solid variables.$border-color; padding: 1rem; }
+  .market-data-card h3 { margin-bottom: 0.75rem; font-size: 1rem; }
+  .market-data-card p { margin: 0 0 0.75rem; color: variables.$secondary-color; font-size: 0.9rem; line-height: 1.45; }
+  .market-data-card a { color: variables.$primary-color; font-weight: 600; }
+  .market-data-card__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+  .market-data-confirmation { display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 1rem; color: variables.$secondary-color; font-weight: 400; line-height: 1.45; }
+  .market-data-confirmation input { margin-top: 0.25rem; }
   .admin-users-table td:last-child { text-align: center; }
   .account-dialog { width: min(34rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; border: 1px solid variables.$border-color; padding: 1.5rem; background: variables.$white; overflow-y: auto; }
   .account-dialog::backdrop { background: rgba(15, 23, 42, 0.45); }

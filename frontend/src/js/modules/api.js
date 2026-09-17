@@ -62,6 +62,23 @@ export const getReportDashboard = (params, token) => {
 
 export const getReferenceValues = (token) => requestApi("/reference-values", { token });
 
+export const getMarketDataProviders = (token) => requestApi("/market-data/providers", { token });
+
+export const getMarketDataSnapshots = (token) => requestApi("/market-data/snapshots", { token });
+
+export const fetchMarketDataCandidate = (providerCode, token) => requestApi(
+  `/market-data/providers/${encodeURIComponent(providerCode)}/fetch`, { method: "POST", token },
+);
+
+export const decideMarketDataSnapshot = (snapshotId, action, reason, token) => requestApi(
+  `/market-data/snapshots/${encodeURIComponent(snapshotId)}/${action}`,
+  { method: "POST", token, body: { reason: reason || null } },
+);
+
+export const attachMarketReference = (reportId, payload, token) => requestApi(
+  `/reports/${encodeURIComponent(reportId)}/valuations/market-reference`, { method: "POST", token, body: payload },
+);
+
 export const getNextReportId = (token) => requestApi("/reports/next-id", { token });
 
 export const previewReportCalculation = (stone, token) => requestApi("/reports/preview", { method: "POST", token, body: stone });

@@ -9,6 +9,7 @@ are labelled ``legacy-unversioned-v1`` instead of being inferred as IDC.
 """
 
 from typing import Sequence, Union
+from datetime import date
 
 from alembic import op
 import sqlalchemy as sa
@@ -65,7 +66,7 @@ def upgrade() -> None:
                 "display_name": "IDC demo v1",
                 "source_title": "IDC Rules for Grading Polished Diamonds",
                 "source_edition": "6th edition, July 2013",
-                "effective_from": "2026-09-15",
+                "effective_from": date(2026, 9, 15),
                 "algorithm_version": "diamond-calculator-v1",
                 "scope_note": "Спрощений server-side preview: table, depth, crown і pavilion; не є повною реалізацією IDC 2013.",
                 "is_active": True,

@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   getAdminReviewStatistics,
   getExpertStatistics,
+  getMarketDataProviders,
+  getMarketDataSnapshots,
   getNextReportId,
   getPublicPassport,
   getReportDashboard,
@@ -121,5 +123,21 @@ test("analytics APIs use protected administrator endpoints", async () => {
   assert.deepEqual(paths, [
     ["http://127.0.0.1:8000/statistics/expert-performance", "Bearer test-token"],
     ["http://127.0.0.1:8000/statistics/admin-review-performance", "Bearer test-token"],
+  ]);
+});
+
+test("market-data APIs use protected administrator endpoints", async () => {
+  const paths = [];
+  globalThis.fetch = async (url, options) => {
+    paths.push([url, options.headers.Authorization]);
+    return { ok: true, json: async () => [] };
+  };
+
+  await getMarketDataProviders("test-token");
+  await getMarketDataSnapshots("test-token");
+
+  assert.deepEqual(paths, [
+    ["http://127.0.0.1:8000/market-data/providers", "Bearer test-token"],
+    ["http://127.0.0.1:8000/market-data/snapshots", "Bearer test-token"],
   ]);
 });

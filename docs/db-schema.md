@@ -1,8 +1,9 @@
 # Схема бази даних
 
 Документ описує цільову локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0007_grading_rulesets`, яку застосовано до локальної MariaDB
-17 вересня 2026. Це карта даних для розробки, API та
+Alembic revision `0008_market_data_providers`. Локальна MariaDB поки має
+`0007_grading_rulesets`; `0008` підготовлена й застосовується лише після
+окремо погодженої міграції. Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -15,7 +16,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 | База | Таблиці | Призначення |
 | --- | --- | --- |
 | `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, фізичні камені, lifecycle, ruleset-и, revocable public passport, приватні вкладення та майбутні фінансові записи. |
-| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference` | Числові та текстові довідники; legacy demo-індекс ціни. |
+| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes` | Числові й текстові довідники, legacy demo-індекс та versioned дані зовнішніх провайдерів. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
 ## Контрольовані значення
@@ -49,6 +50,9 @@ erDiagram
     EXPERTS ||--o{ MEDIA_ASSETS : "uploads"
     STONES ||--o{ STONE_VALUATIONS : "has values"
     EXPERTS ||--o{ STONE_VALUATIONS : "records"
+    MARKET_DATA_PROVIDERS ||--o{ MARKET_DATA_SNAPSHOTS : "provides"
+    MARKET_DATA_SNAPSHOTS ||--o{ MARKET_DATA_QUOTES : "contains"
+    MARKET_DATA_SNAPSHOTS ||--o{ STONE_VALUATIONS : "is referenced by"
 ```
 
 `report_id` формату `DR-xxxxx` лишається бізнес-ідентифікатором звіту.
@@ -162,10 +166,14 @@ API не монтує storage як static directory: читання проход
 | --- | --- |
 | `valuation_kind`, `amount`, `currency_code`, `unit` | Семантика й точна сума. |
 | `source_name`, `source_reference`, `observed_at` | Перевірюване зовнішнє або експертне джерело та момент спостереження. |
+| `market_snapshot_id`, `applicability_note` | Nullable ідентифікатор immutable snapshot-а та обов’язкове для OpenFacet пояснення, чому admin вважає його застосовним. Значення snapshot не копіюються й не перераховуються. |
 | `created_by_id`, `created_at` | Автор запису й технічний час. |
 
-Таблиця порожня після `0002`: авторитетний market provider, scheduler, ML і
-ручний admin flow — майбутні окремі задачі за [ADR-002](./decisions/002-financial-calculation-contract.md).
+`0008` дозволяє admin створити `market_reference` лише з approved OpenFacet
+snapshot-а для natural stone та після явного підтвердження застосовності.
+Це model-based retail benchmark, не appraisal, offer, transaction чи sale
+price. Legacy `DiamondReport.price`, wizard demo і public passport не
+змінюються.
 
 ## Моделі `diamond_market`
 
@@ -189,6 +197,33 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 чи джерела; не є ринковим котируванням і не використовується як нова фінансова
 сутність.
 
+### `market_data_providers`
+
+Каталог підтримуваних зовнішніх джерел. `provider_code` — стабільний PK,
+`display_name`, `provider_type`, `base_currency`, `quote_unit`, `source_url`,
+`methodology_url`, `scope_note`, `is_active`, `created_at` пояснюють, що саме
+провайдер публікує. Revision `0008` додає один запис `openfacet`; додавання
+іншого провайдера потребує adapter-а, policy та окремого рішення про умови
+використання.
+
+### `market_data_snapshots`
+
+Незмінний результат одного отримання даних: `snapshot_id`, `provider_code`,
+`snapshot_kind`, `status` (`candidate`, `approved`, `rejected`), base currency
+та unit, source/methodology URL, scope note, кількість quotes, SHA-256
+контрольного набору, retrieved timestamp, actor і decision metadata. Після
+створення quotes не редагуються: admin може тільки раз затвердити або
+відхилити candidate. Помилка fetch не створює snapshot і не зачіпає старі.
+
+### `market_data_quotes`
+
+Нормалізовані записи одного snapshot-а: `quote_id`, `snapshot_id`,
+`shape_code`, `carat_anchor`, `color_code`, `clarity_code`,
+`price_per_carat DECIMAL(14,2)`. Складений unique не дозволяє дубль координат
+в межах snapshot-а. Для OpenFacet цілісна сума каменю обчислюється сервером з
+обраного snapshot-а й ваги через явну interpolation між carat anchors;
+збережена `StoneValuation.amount` не змінюється з новим snapshot-ом.
+
 ## Модель `diamond_analytics`
 
 ### `ml_results`
@@ -209,6 +244,7 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 | `0005_public_passports` | Revocable public tokens для issued reports; без backfill даних, цін або media. |
 | `0006_expert_activation` | Оборотний active-стан експертних акаунтів без hard delete. |
 | `0007_grading_rulesets` | Immutable metadata `idc-demo-v1` і legacy marker без перерахунку report grades. |
+| `0008_market_data_providers` | Provider-neutral catalog, immutable OpenFacet candidate/approved/rejected snapshots і quotes; nullable snapshot provenance у `stone_valuations`. Не fetch-ить дані, не створює valuation, не переписує legacy/demo values. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за

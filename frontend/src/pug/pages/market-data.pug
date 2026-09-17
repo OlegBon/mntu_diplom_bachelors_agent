@@ -1,0 +1,36 @@
+extends ../layout/main
+
+block content
+    .account-page(hidden data-protected-page="true" data-market-data-page)
+        .page-header
+            div
+                h1.page-title Ринкові дані
+                p.page-subtitle Версіоновані довідкові дані з джерелом, моментом отримання та ручним погодженням.
+        p#market-data-status.account-status(role="status" aria-live="polite" hidden)
+        section.account-surface.account-surface--wide
+            h2 Провайдери
+            p.account-help OpenFacet — model-based retail reference для порівнюваних природних GIA-каменів. Це не експертна оцінка, не пропозиція та не ціна продажу.
+            #market-data-providers.market-data-providers(aria-live="polite")
+        section.account-surface.account-surface--wide
+            h2 Історія знімків
+            p.account-help Кандидат не застосовується, доки адміністратор окремо не затвердить його. Дані знімка після створення не редагуються.
+            #market-data-snapshots.market-data-snapshots(aria-live="polite")
+        section.account-surface.account-surface--wide
+            h2 Прикріпити орієнтир до звіту
+            p.account-help Звіт не містить даних про GIA-сертифікат. Тому перед прикріпленням адміністратор підтверджує застосовність OpenFacet до конкретного каменя. Legacy-ціна звіту не змінюється.
+            form#market-reference-attach-form(novalidate)
+                .form-row
+                    .form-group.half
+                        label(for="market-reference-report-id") Номер звіту
+                        input#market-reference-report-id.form-control(type="text" required maxlength="20" placeholder="DR-01001")
+                    .form-group.half
+                        label(for="market-reference-snapshot") Затверджений знімок
+                        select#market-reference-snapshot.form-select(required disabled)
+                            option(value="") Немає затверджених знімків
+                .form-group
+                    label(for="market-reference-note") Підтвердження застосовності
+                    textarea#market-reference-note.form-control(rows="3" required minlength="10" maxlength="2000" placeholder="Наприклад: перевірено природне походження та зіставність характеристик із scope джерела.")
+                label.market-data-confirmation(for="market-reference-confirmed")
+                    input#market-reference-confirmed(type="checkbox" required)
+                    span Підтверджую, що цей орієнтир застосовується лише як довідкове зіставлення, а не як експертна чи продажна ціна.
+                button.btn.btn-primary(type="submit") Прикріпити ринковий орієнтир
