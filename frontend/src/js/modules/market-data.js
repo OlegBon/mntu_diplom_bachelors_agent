@@ -87,7 +87,27 @@ export async function initMarketData() {
   const snapshots = document.getElementById("market-data-snapshots");
   const form = document.getElementById("market-reference-attach-form");
   const snapshotSelect = document.getElementById("market-reference-snapshot");
+  const decisionDialog = document.getElementById("market-decision-dialog");
+  const decisionForm = document.getElementById("market-decision-form");
+  const decisionDescription = document.getElementById("market-decision-dialog-description");
+  const decisionReasonLabel = document.getElementById("market-decision-reason-label");
+  const decisionReason = document.getElementById("market-decision-reason");
+  const decisionSubmit = document.getElementById("market-decision-submit");
   let currentSnapshots = [];
+  let pendingDecision = null;
+  const closeDecisionDialog = () => { pendingDecision = null; decisionForm.reset(); decisionDialog.close(); };
+  const openDecisionDialog = (snapshotId, action) => {
+    pendingDecision = { snapshotId, action };
+    const isApproval = action === "approve";
+    decisionDescription.textContent = isApproval
+      ? "Після затвердження цей незмінний знімок можна буде явно прикріпити до сумісного звіту."
+      : "Відхилений знімок не можна використати для ринкового орієнтира; самі дані знімка лишаться в історії.";
+    decisionReasonLabel.textContent = isApproval ? "Коментар до затвердження" : "Причина відхилення";
+    decisionReason.placeholder = isApproval ? "Необов’язково" : "Необов’язково";
+    decisionSubmit.textContent = isApproval ? "Затвердити знімок" : "Відхилити знімок";
+    decisionDialog.showModal();
+    decisionReason.focus();
+  };
   const refresh = async () => {
     const [providerRows, snapshotRows] = await Promise.all([getMarketDataProviders(token), getMarketDataSnapshots(token)]);
     currentSnapshots = snapshotRows;
@@ -97,12 +117,7 @@ export async function initMarketData() {
       catch (error) { setStatus(status, error.message || "Не вдалося отримати дані провайдера.", true); }
       finally { button.disabled = false; }
     });
-    renderSnapshots(snapshots, snapshotRows, async (snapshotId, action) => {
-      const reason = window.prompt(action === "approve" ? "Коментар до затвердження (необов’язково):" : "Причина відхилення (необов’язково):", "");
-      if (reason === null) return;
-      try { await decideMarketDataSnapshot(snapshotId, action, reason, token); setStatus(status, action === "approve" ? "Знімок затверджено." : "Знімок відхилено."); await refresh(); }
-      catch (error) { setStatus(status, error.message || "Не вдалося зберегти рішення.", true); }
-    });
+    renderSnapshots(snapshots, snapshotRows, openDecisionDialog);
     updateApprovedSnapshotOptions(snapshotSelect, snapshotRows);
   };
   try {
@@ -124,6 +139,24 @@ export async function initMarketData() {
       setStatus(status, `Додано ринковий орієнтир: ${valuation.currency_code} ${Number(valuation.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`);
       form.reset(); updateApprovedSnapshotOptions(snapshotSelect, currentSnapshots);
     } catch (error) { setStatus(status, error.message || "Не вдалося прикріпити ринковий орієнтир.", true); }
+  });
+  document.getElementById("market-decision-dialog-close").addEventListener("click", closeDecisionDialog);
+  document.getElementById("market-decision-cancel").addEventListener("click", closeDecisionDialog);
+  decisionForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!pendingDecision) return;
+    const { snapshotId, action } = pendingDecision;
+    decisionSubmit.disabled = true;
+    try {
+      await decideMarketDataSnapshot(snapshotId, action, decisionReason.value.trim(), token);
+      closeDecisionDialog();
+      setStatus(status, action === "approve" ? "Знімок затверджено." : "Знімок відхилено.");
+      await refresh();
+    } catch (error) {
+      setStatus(status, error.message || "Не вдалося зберегти рішення.", true);
+    } finally {
+      decisionSubmit.disabled = false;
+    }
   });
   registerVisibleDataRefresh(refresh, { canRefresh: () => !form.matches(":focus-within") });
 }

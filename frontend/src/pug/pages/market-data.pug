@@ -34,3 +34,15 @@ block content
                     input#market-reference-confirmed(type="checkbox" required)
                     span Підтверджую, що цей орієнтир застосовується лише як довідкове зіставлення, а не як експертна чи продажна ціна.
                 button.btn.btn-primary(type="submit") Прикріпити ринковий орієнтир
+        dialog#market-decision-dialog.account-dialog(aria-labelledby="market-decision-dialog-title")
+            form#market-decision-form
+                .account-dialog__header
+                    h2#market-decision-dialog-title Підтвердити рішення
+                    button#market-decision-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
+                p#market-decision-dialog-description.account-help
+                .form-group
+                    label#market-decision-reason-label(for="market-decision-reason") Коментар
+                    textarea#market-decision-reason.form-control(rows="3" maxlength="2000" placeholder="Необов’язково")
+                .account-dialog__actions
+                    button#market-decision-cancel.btn.btn-outline(type="button") Скасувати
+                    button#market-decision-submit.btn.btn-primary(type="submit") Підтвердити

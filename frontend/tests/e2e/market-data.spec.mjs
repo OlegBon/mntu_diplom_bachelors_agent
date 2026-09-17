@@ -38,8 +38,10 @@ test("administrator creates and approves a market-data candidate before using it
   await expect(page.locator("#market-data-providers")).toContainText("OpenFacet");
   await page.getByRole("button", { name: "Отримати кандидат" }).click();
   await expect(page.locator("#market-data-snapshots")).toContainText("Кандидат");
-  page.once("dialog", (dialog) => dialog.accept("Перевірено"));
   await page.getByRole("button", { name: "Затвердити" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByLabel("Коментар до затвердження").fill("Перевірено");
+  await page.getByRole("button", { name: "Затвердити знімок" }).click();
   await expect(page.locator("#market-reference-snapshot")).toBeEnabled();
   await expect(page.locator("#market-data-snapshots")).toContainText("Затверджено");
 });
