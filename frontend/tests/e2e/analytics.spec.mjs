@@ -32,6 +32,21 @@ const adminStats = {
     median_review_duration_seconds: 3900,
     shortest_reviews: [{ report_id: "DR-00011", decision: "issued", duration_seconds: 1800, decided_at: "2026-09-16T09:00:00Z" }],
     longest_reviews: [{ report_id: "DR-00012", decision: "draft", duration_seconds: 6000, decided_at: "2026-09-16T10:00:00Z" }],
+  }, {
+    admin_id: 3,
+    admin_username: "admin_2",
+    first_name: "Друга",
+    last_name: "Адміністраторка",
+    middle_name: null,
+    is_active: true,
+    completed_reviews: 0,
+    returned_to_draft: 0,
+    issued_reports: 0,
+    voided_reports: 0,
+    avg_review_duration_seconds: null,
+    median_review_duration_seconds: null,
+    shortest_reviews: [],
+    longest_reviews: [],
   }],
 };
 
@@ -49,8 +64,12 @@ test("administrator sees operational analytics without a fake stone chart", asyn
 
   await expect(page.getByRole("heading", { name: "Експерти та звіти" })).toBeVisible();
   await expect(page.getByRole("cell", { name: /Експерт Іван/ })).toBeVisible();
+  await page.getByRole("button", { name: /Експерт Іван/ }).click();
+  await expect(page.getByRole("dialog")).toContainText("Три найшвидші та найдовші завершені звіти");
+  await page.getByRole("button", { name: "Закрити" }).click();
   await page.getByRole("tab", { name: "Адміністратори" }).click();
   await expect(page.getByText("Тривалість етапу перевірки")).toBeVisible();
+  await expect(page.getByText("Адміністраторка Друга")).toBeVisible();
   await expect(page.getByRole("link", { name: "DR-00011" })).toHaveAttribute("href", "/report-detail.html?id=DR-00011");
   await page.getByRole("tab", { name: "Камені" }).click();
   await expect(page.getByText(/не показуються умовні графіки/)).toBeVisible();

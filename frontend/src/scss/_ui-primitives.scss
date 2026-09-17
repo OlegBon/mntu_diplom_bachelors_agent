@@ -274,10 +274,12 @@
   .analytics-table td { border-bottom: 1px solid variables.$border-color; padding: 0.75rem; text-align: left; white-space: nowrap; }
   .analytics-table th { color: variables.$secondary-color; font-size: 0.8rem; }
   .analytics-table td:first-child { white-space: normal; }
+  .analytics-expert-button { border: 0; padding: 0; background: transparent; color: variables.$primary-color; font: inherit; font-weight: 600; text-align: left; text-decoration: underline; cursor: pointer; }
+  .analytics-expert-button:hover,
+  .analytics-expert-button:focus-visible { color: variables.$primary-hover; }
   .analytics-queue { margin: 0 0 1rem; color: variables.$secondary-color; }
-  .analytics-admin-card { border-top: 1px solid variables.$border-color; padding: 1.25rem 0; }
-  .analytics-admin-card:first-child { border-top: 0; padding-top: 0; }
-  .analytics-admin-card:last-child { padding-bottom: 0; }
+  .analytics-admin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+  .analytics-admin-card { border: 1px solid variables.$border-color; padding: 1.25rem; }
   .analytics-admin-card h3 { margin: 0 0 1rem; color: variables.$text-strong; font-size: 1rem; }
   .analytics-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.5rem; margin: 0 0 1.25rem; }
   .analytics-metrics dt { color: variables.$secondary-color; font-size: 0.8rem; }
@@ -286,6 +288,7 @@
   .analytics-review-list h3 { margin-bottom: 0.5rem; font-size: 0.95rem; }
   .analytics-review-list ol { margin: 0; padding-left: 1.25rem; }
   .analytics-review-list li { margin-bottom: 0.35rem; }
+  .analytics-dialog-name { margin: 0 0 1rem; color: variables.$text-strong; font-size: 1rem; }
 }
 
 @media (max-width: 767px) {
@@ -324,6 +327,7 @@
     .analytics-tabs { gap: 0; }
     .analytics-tabs__tab { flex: 1 1 0; padding: 0.75rem 0.35rem; font-size: 0.85rem; }
     .analytics-metrics { grid-template-columns: 1fr; gap: 0.65rem; }
+    .analytics-admin-list { grid-template-columns: 1fr; }
   }
 }
 

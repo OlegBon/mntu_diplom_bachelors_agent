@@ -47,7 +47,12 @@ function renderTable(container, headers, rows) {
   const tbody = document.createElement("tbody");
   rows.forEach((row) => {
     const tableRow = document.createElement("tr");
-    row.forEach((value) => tableRow.append(element("td", "", value)));
+    row.forEach((value) => {
+      const cell = document.createElement("td");
+      if (value?.nodeType) cell.append(value);
+      else cell.textContent = value;
+      tableRow.append(cell);
+    });
     tbody.append(tableRow);
   });
   table.append(thead, tbody);
@@ -55,9 +60,29 @@ function renderTable(container, headers, rows) {
   container.replaceChildren(wrapper);
 }
 
-function renderExperts(container, rows) {
+function openExpertDialog(dialog, dialogContent, row) {
+  const fragment = document.createDocumentFragment();
+  fragment.append(element("h3", "analytics-dialog-name", `${fullName(row)} (${row.expert_username})`));
+  const metrics = element("dl", "analytics-metrics");
+  [
+    ["Стан облікового запису", row.is_active ? "Активний" : "Неактивний"],
+    ["Усього звітів", row.total_reports], ["Чернетки", row.draft_reports],
+    ["На перевірці", row.review_reports], ["Видано", row.issued_reports], ["Анульовано", row.void_reports],
+  ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
+  fragment.append(metrics, element("p", "account-help", "Дані показані за весь доступний період. Дату створення облікового запису та фактичний активний час експерта поточний контракт не зберігає."));
+  fragment.append(element("p", "account-help", "Три найшвидші та найдовші завершені звіти з'являться після окремого обліку start/pause/resume у задачі 112."));
+  dialogContent.replaceChildren(fragment);
+  dialog.showModal();
+}
+
+function renderExperts(container, rows, dialog, dialogContent) {
   renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано"], rows.map((row) => [
-    `${fullName(row)} (${row.expert_username})`, row.is_active ? "Активний" : "Неактивний",
+    (() => {
+      const button = element("button", "analytics-expert-button", `${fullName(row)} (${row.expert_username})`);
+      button.type = "button";
+      button.addEventListener("click", () => openExpertDialog(dialog, dialogContent, row));
+      return button;
+    })(), row.is_active ? "Активний" : "Неактивний",
     String(row.total_reports), String(row.draft_reports), String(row.review_reports),
     String(row.issued_reports), String(row.void_reports),
   ]));
@@ -89,6 +114,7 @@ function renderAdmins(container, snapshot) {
     : "Зараз немає звітів на перевірці.";
   const oldest = dateTime(snapshot.oldest_review_started_at);
   fragment.append(element("p", "analytics-queue", oldest ? `${queueText} Найдавніший передано: ${oldest}.` : queueText));
+  const cards = element("div", "analytics-admin-list");
   snapshot.admins.forEach((admin) => {
     const card = element("article", "analytics-admin-card");
     card.append(element("h3", "", `${fullName(admin)} (${admin.admin_username})`));
@@ -100,8 +126,10 @@ function renderAdmins(container, snapshot) {
       ["Медіанна тривалість", duration(admin.median_review_duration_seconds)],
     ].forEach(([label, value]) => { metrics.append(element("dt", "", label), element("dd", "", String(value))); });
     card.append(metrics, renderReviewList("Найкоротші перевірки", admin.shortest_reviews), renderReviewList("Найдовші перевірки", admin.longest_reviews));
-    fragment.append(card);
+    cards.append(card);
   });
+  if (snapshot.admins.length) fragment.append(cards);
+  else fragment.append(element("p", "account-help", "Адміністраторів для цього зрізу поки немає."));
   container.replaceChildren(fragment);
 }
 
@@ -112,6 +140,8 @@ export async function initAnalytics() {
   const token = localStorage.getItem("token");
   const expertResults = document.getElementById("analytics-expert-results");
   const adminResults = document.getElementById("analytics-admin-results");
+  const expertDialog = document.getElementById("analytics-expert-dialog");
+  const expertDialogContent = document.getElementById("analytics-expert-dialog-content");
   const panels = Object.fromEntries([...page.querySelectorAll(".analytics-panel")].map((panel) => [panel.id.replace("analytics-", ""), panel]));
 
   page.querySelectorAll("[data-analytics-tab]").forEach((tab) => tab.addEventListener("click", () => {
@@ -123,9 +153,11 @@ export async function initAnalytics() {
     });
     Object.entries(panels).forEach(([name, panel]) => { panel.hidden = name !== selected; });
   }));
+  expertDialog?.addEventListener("cancel", () => expertDialogContent.replaceChildren());
+  expertDialog?.addEventListener("close", () => expertDialogContent.replaceChildren());
   try {
     const [experts, admins] = await Promise.all([getExpertStatistics(token), getAdminReviewStatistics(token)]);
-    renderExperts(expertResults, experts);
+    renderExperts(expertResults, experts, expertDialog, expertDialogContent);
     renderAdmins(adminResults, admins);
   } catch (error) {
     if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }

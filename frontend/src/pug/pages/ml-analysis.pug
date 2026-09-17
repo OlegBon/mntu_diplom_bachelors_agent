@@ -22,3 +22,9 @@ block content
         section#analytics-stones.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-stones" hidden)
             h2 Аналітика каменів
             p.account-help Розподіли параметрів, карти Кохонена та інші ML-візуалізації потребують окремого перевіреного джерела даних і моделі. У цьому зрізі не показуються умовні графіки або demo-метрики.
+        dialog#analytics-expert-dialog.account-dialog(aria-labelledby="analytics-expert-dialog-title")
+            form(method="dialog")
+                .account-dialog__header
+                    h2#analytics-expert-dialog-title Деталі експерта
+                    button#analytics-expert-dialog-close.account-dialog__close(type="submit" aria-label="Закрити") ×
+                #analytics-expert-dialog-content
