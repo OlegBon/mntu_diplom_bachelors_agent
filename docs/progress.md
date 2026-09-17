@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-17 — report-workflow-market-reference-guide (завершено)
+
+- **Задача:** доповнити наскрізний guide фактичною механікою market reference, OpenFacet та frozen NBU USD/UAH.
+- **Змінені файли:** `docs/guides/current-domain-and-report-workflow.md`, `docs/progress.md`.
+- **Рішення / Результат:** guide тепер розмежовує `d`, `of` і відсутнє значення, пояснює private/public межу та містить практичний приклад `DR-01004`: candidate, approve, applicability, OpenFacet interpolation, автоматичний NBU fetch, immutable USD/UAH provenance і відображення у detail/dashboard.
+- **Перевірки:** перевірено посилання, терміни та відповідність чинному контракту `0009_nbu_fx_snapshots`; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** guide не вводить scheduler, historical reprice, інший provider або price у public passport/PDF.
+
 ## 2026-09-17 — market-reference-presentation-polish (завершено)
 
 - **Задача:** уніфікувати дату НБУ у dashboard popover і зробити private presentation довідкового ринкового орієнтира читабельним.
