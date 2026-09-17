@@ -1,4 +1,5 @@
 import { getCurrentUser, getReferenceValues } from "./api.js";
+import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const CATEGORY_LABELS = {
   shape: "Форма", origin: "Походження", treatment_status: "Ознаки обробки",
@@ -11,7 +12,7 @@ export async function initReferenceCatalog() {
   if (!page) return;
   const token = localStorage.getItem("token");
   const status = document.getElementById("reference-catalog-status");
-  try {
+  const load = async () => {
     const user = await getCurrentUser(token);
     if (user.role !== "admin") throw new Error("Ця сторінка доступна лише адміністратору.");
     const values = await getReferenceValues(token);
@@ -33,6 +34,10 @@ export async function initReferenceCatalog() {
       }
       table.append(header, body); section.append(title, table); catalog.append(section);
     }
+  };
+  try {
+    await load();
+    registerVisibleDataRefresh(load);
   } catch (error) {
     status.textContent = error.message;
     status.classList.add("is-error");

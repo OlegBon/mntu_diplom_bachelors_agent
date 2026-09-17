@@ -7,6 +7,7 @@ import { initPublicPassport } from "./modules/public-passport.js";
 import { initProfile } from "./modules/profile.js";
 import { initAdminUsers } from "./modules/admin-users.js";
 import { initReferenceCatalog } from "./modules/reference-catalog.js";
+import { initPasswordVisibility } from "./modules/password-visibility.js";
 
 function createNavigationLink(href, label, className = "") {
   const item = document.createElement("li");
@@ -91,6 +92,7 @@ function applyApprovedNavigation(isAuthenticated) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initPasswordVisibility();
   const isAuthenticated = checkAuth();
   const isAdmin = localStorage.getItem("role") === "admin";
   const currentPath = window.location.pathname;

@@ -3,6 +3,25 @@
 Журнал фіксує зміни та перевірки Diamant ID.
 
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
+Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
+
+## 2026-09-17 — backlog-hygiene-after-task-100 (завершено)
+
+- **Задача:** прибрати виконану 100 з активного backlog і окремо зафіксувати наступний UI-polish.
+- **Змінені файли:** `docs/{backlog/{README,100-profile-and-admin-ui (видалено),110-authoritative-market-data-and-fx,115-profile-admin-ui-polish}.md,work_plan,progress}.md`.
+- **Рішення / Результат:** 100 позначена завершеною у roadmap без посилання на активний backlog; створено 115 для майбутніх узгоджених дизайн- та responsive-покращень без розширення scope 100.
+- **Перевірки:** внутрішні Markdown-посилання й `git diff --check`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** конкретні дизайн-зауваження будуть додані в 115 після окремого обговорення; runtime-код не змінювався.
+
+## 2026-09-16 — password-visibility-and-stale-data-refresh (завершено)
+
+- **Задача:** додати однаковий доступний показ пароля та не залишати застарілі read-only дані у відкритих вкладках.
+- **Змінені файли:** `frontend/src/js/{main.js,modules/{password-visibility,page-refresh,dashboard,report-detail,admin-users,reference-catalog,public-passport}.js}`, `frontend/src/scss/_ui-primitives.scss`, `docs/{architecture,work_plan,progress}.md`.
+- **Рішення / Результат:** усі password inputs отримують кнопку-«око» з доступними назвами «Показати пароль» / «Сховати пароль»; пароль не зберігається та не виводиться у повідомлення. Dashboard, private detail поза edit mode, admin directory, довідники й public passport повторно читають сервер при поверненні фокусу та раз на 30 секунд у видимій вкладці. Wizard, profile і detail edit не оновлюються автоматично, щоб не втратити незбережений ввід. Уточнено `docs/architecture.md` і актуалізовано застарілі пункти `docs/work_plan.md` про profile/admin UI.
+- **Перевірки:** `npm test` — 16 passed; `npm run test:e2e` — 11 passed. Один наявний admin E2E ще очікує застарілу inline-кнопку «Деактивувати» замість чинного flow «Змінити» → модалка; код функціоналу не змінювався заради цього старого очікування. `git diff --check`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це client-side polling, а не WebSocket/SSE: зміна іншого користувача з’являється після повернення у вкладку або максимум через 30 секунд. Автооновлення свідомо не торкається форм із можливим незбереженим вводом.
 
 ## 2026-09-16 — admin-user-tablet-layout (завершено)
 
@@ -87,7 +106,7 @@
 - **Перевірки:** додано API regression на 404 для кожного retired route, перенесено чинні auth/experts перевірки й додано Node guard, що active frontend не містить retired endpoint. `python -m pytest` — 21 passed; `npm test` — 11 passed; full Playwright запуск підтвердив login/dashboard/wizard flows, а targeted detail/edit — 1 passed; `npm run audit:api` — 9/9; `git diff --check` і FastAPI import/route smoke — успішно.
 - **Нові змінні середовища:** немає.
 - **Обмеження та наступна задача:** `scripts/recalc_grades.py` навмисно не запускався і не переписувався. Нова [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md) має окремо погодити його retire або безпечну versioned replacement з dry-run, scope, audit trail та планом відновлення. Public passport, authoritative pricing/FX і ML не реалізовано.
-- **Виявлено поза scope:** read-only audit на локальній відновленій MariaDB отримав `500` від `/statistics/expert-performance`; endpoint вилучено з вузького report/auth audit, але його перевірка й виправлення зафіксовані у [100](./backlog/100-profile-and-admin-ui.md) до будь-якого analytics UI.
+- **Виявлено поза scope:** read-only audit на локальній відновленій MariaDB отримав `500` від `/statistics/expert-performance`; endpoint вилучено з вузького report/auth audit, а його перевірка й виправлення винесені у [108](./backlog/108-expert-statistics-and-analytics-contract.md) до будь-якого analytics UI.
 
 ## 2026-09-16 — report-detail-layout-refinement (завершено)
 

@@ -34,7 +34,7 @@
 - [x] Усунути розходження актуального `seed_db.py`, legacy `seed_db-start.py` і моделей: seed відтворює всі три схеми, а `ml_results` формалізовано моделлю.
 - [x] Виконати clean seed MariaDB та API smoke-flow: bcrypt-login admin і першого експерта, `npm run audit:api` — 10/10.
 - [x] Виправити `/experts/`, `POST/PUT/DELETE /diamonds/*`, 404-відповіді та owner/admin RBAC; синхронізувати API response models із dashboard.
-- [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit і public passport/PDF реалізовано; лишаються profile/admin UI та реальний E2E з MariaDB.
+- [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit, profile/admin UI та public passport/PDF реалізовано; лишається реальний E2E з MariaDB.
 - [x] Визначити долю `diamond_analytics.ml_results`: зберігаємо таблицю як зарезервований аналітичний шар, описуємо моделлю та відтворюємо порожньою через локальний seed; API/ML — окрема задача.
 
 ### Пріоритет 2 — якість і тестування
@@ -68,10 +68,11 @@
 - [x] 085 — Прибирання legacy API: `/diamonds/*`, unreachable frontend handler, старі Pydantic/CRUD контракти й demo `MLService` вилучені. Historical legacy-колонки залишені без міграції; їхній safe recalculation/cleanup винесено у 120.
 - [x] 090 — Публічний паспорт і QR: окрема public projection `GET /public/passports/{public_id}`, непередбачуваний revocable token, admin publish/revoke/reissue, SVG QR і `passport.html`. Не відкриває ціну, персональні/внутрішні дані чи media; контрольована публічність вкладень винесена у 130.
 - [x] 095 — Передача публічного паспорта та PDF: admin бачить і копіює код/URL, landing приймає лише код, а пряме посилання й посилання з QR відкривають паспорт напряму. Server генерує on-demand allow-listed PDF для поточного active issued report. Старі код/QR/URL не підходять після reissue; revoke і void закривають нове завантаження.
-- [x] [100 — Профіль і admin UI](./backlog/100-profile-and-admin-ui.md): profile ПІБ/password, admin roles і reversible deactivate; versioned довідники — 105, статистика — 108.
+- [x] 100 — Профіль і admin UI: profile ПІБ/password, admin roles і reversible deactivate; versioned довідники — 105, статистика — 108.
 - [ ] [105 — Версіоновані довідники](./backlog/105-versioned-reference-catalogs.md): reason/source/effective version для нових reports без зміни historical reports, паспортів або PDF.
 - [ ] [108 — Контракт статистики експертів](./backlog/108-expert-statistics-and-analytics-contract.md): усунути 500, визначити aggregates і admin RBAC перед будь-яким analytics UI.
 - [ ] [110 — Авторитетні ринкові дані й валютні курси](./backlog/110-authoritative-market-data-and-fx.md): обрати законне джерело, зберігати незмінні snapshot-и з provenance, реалізувати ручне admin-оновлення, а scheduler розглядати лише після цього. Не змінює demo `USD … d` або історичні значення автоматично.
+- [ ] [115 — UI-polish профілю та admin UI](./backlog/115-profile-admin-ui-polish.md): узгодити й внести окремим зрізом ручні візуальні та responsive-покращення без зміни бізнес-логіки.
 - [ ] [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md): погодити retire або безпечну versioned replacement для `recalc_grades.py`; не запускати масовий backfill чи cleanup без окремого рішення.
 - [ ] [130 — Публічні вкладення паспорта](./backlog/130-public-passport-media.md): окремо погодити consent, allow-list типів і захищену видачу явно публічних media.
 
@@ -92,7 +93,7 @@
 
 - Нотатки описують локальний backend у Docker, але поточний репозиторій запускає FastAPI напряму з `.venv`; Docker ще не реалізований.
 - Фактична MariaDB уже містить `diamond_analytics.ml_results`, але SQLAlchemy-моделі, актуальний seed і робочий ML-потік для неї відсутні.
-- Публічний passport/QR і allow-listed PDF реалізовано окремим safe flow; profile/admin UI, full private print, public media й ML-аналітика ще не присутні як завершений код у репозиторії.
+- Публічний passport/QR і allow-listed PDF реалізовано окремим safe flow; profile/admin UI також реалізовано. Full private print, public media й ML-аналітика ще не присутні як завершений код у репозиторії.
 
 ### Рішення щодо гілок
 

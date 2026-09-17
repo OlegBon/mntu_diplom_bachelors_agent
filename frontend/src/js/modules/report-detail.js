@@ -16,6 +16,7 @@ import {
   updateDomainReport,
 } from "./api.js";
 import { logout } from "./auth.js";
+import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
 const EVENT_LABELS = { created: "Створено", report_updated: "Дані чернетки оновлено", status_changed: "Статус змінено" };
@@ -369,4 +370,5 @@ export async function initReportDetail() {
     } catch (error) { setStatus(status, error.message || "Не вдалося зберегти зміни.", true); }
   });
   await refresh();
+  registerVisibleDataRefresh(refresh, { canRefresh: () => form.querySelector("#detail-save").hidden });
 }
