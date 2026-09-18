@@ -1,8 +1,8 @@
 # Схема бази даних
 
 Документ описує цільову локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0009_nbu_fx_snapshots`, яку застосовано до локальної MariaDB
-17 вересня 2026. Це карта даних для розробки, API та
+Alembic revision `0010_market_reference_policy`, яку застосовано до локальної MariaDB
+18 вересня 2026. Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -123,6 +123,12 @@ Append-only журнал lifecycle. `event_id` — первинний ключ; 
 обов’язковий FK на `diamond_reports`; `actor_id` — nullable FK на `experts`.
 Подія містить `action`, попередній і новий статус, необов’язкову причину та
 `created_at`.
+
+Для нового immutable ринкового орієнтиру application додає подію в тій самій
+транзакції: `system_market_reference_added` для автоматичного policy-орієнтиру
+або `market_reference_added` для ручного admin-підтвердження. `reason` містить
+private provenance: суму, провайдера і номер market snapshot-а. Historical
+valuation не отримують вигаданих подій заднім числом.
 
 Migration `0002` створила по одній події `legacy_import` для кожного
 перенесеного report і не виводила з цього факту ні видачу, ні підтвердження.

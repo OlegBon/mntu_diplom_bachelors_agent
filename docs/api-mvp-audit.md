@@ -1,6 +1,6 @@
 # Аудит API та локального MVP Diamant ID
 
-> **Актуалізовано:** 17 вересня 2026. Перший аудит від 14 вересня нижче
+> **Актуалізовано:** 18 вересня 2026. Перший аудит від 14 вересня нижче
 > збережено як історичний доказ стану до послідовних задач 020–108. Поточним
 > джерелом контракту є `docs/architecture.md`, а безпечний runtime smoke —
 > `scripts/audit-api.mjs`.
@@ -16,8 +16,10 @@
 - Operational analytics обмежена admin: status-зріз експертів і review-cycle
   адміністраторів. Немає ML, ринкової ціни, рейтингу або fake active-time.
 - Ринкові дані мають окрему admin-only межу `/market-data/*`: provider catalog,
-  policy майбутніх системних орієнтирів і immutable snapshot-и OpenFacet. Safe audit не запускає external fetch або
-  approval, тому перевіряє лише 401-межі GET-маршрутів; `market/price`
+  future-only policy системних орієнтирів, immutable snapshot-и OpenFacet та
+  frozen NBU FX. Нові valuation мають private append-only події, але safe audit
+  не запускає external fetch, approval або запис даних, тому перевіряє лише
+  401-межі GET-маршрутів; `market/price`
   лишається legacy demo-індексом, а не джерелом ринкової оцінки.
 - Автоматизовані regression-набори існують: pytest, Node/DOM та Playwright.
   Їхні команди описано в `AGENTS.md` і `docs/local-start.md`.

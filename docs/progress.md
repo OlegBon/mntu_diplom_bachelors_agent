@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-18 — market-data-documentation-reconciliation (завершено)
+
+- **Задача:** актуалізувати документацію після завершення OpenFacet/NBU/policy контуру та додавання audit-подій ринкових орієнтирів.
+- **Змінені файли:** `docs/{architecture,db-schema,api-mvp-audit,work_plan}.md`, `docs/decisions/002-financial-calculation-contract.md`, `docs/progress.md`.
+- **Рішення / Результат:** документація синхронізована з локально застосованою `0010_market_reference_policy`: описані policy, НБУ, immutable provenance і private audit-події для фактично нових valuations. Явно зафіксовано відсутність backfill для historical valuations та подій, аби історія не містила штучно реконструйованих фактів.
+- **Перевірки:** звірено з `backend/crud.py`, API-маршрутами та `scripts/audit-api.mjs`; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** API audit навмисно залишається read-only і не тестує external fetch/approve/write сценарії; їх покривають ізольовані pytest та Playwright-набори.
+
 ## 2026-09-18 — market-reference-report-history (завершено)
 
 - **Задача:** доповнити private «Історію змін» звіту подіями про створення ринкових довідкових орієнтирів.

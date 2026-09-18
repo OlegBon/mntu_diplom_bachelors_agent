@@ -4,7 +4,7 @@
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), детальна карта таблиць і зв’язків — у [db-schema.md](./db-schema.md), повний користувацький workflow звіту й паспорта — у [guide](./guides/current-domain-and-report-workflow.md), а окрема механіка market provider-ів — у [guide провайдерів](./guides/market-data-providers.md). Перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 17 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`–`0010_market_reference_policy` формують ядро, private files, authoring-вимоги, revocable public passport, immutable metadata ruleset-ів, versioned market snapshots, frozen NBU FX snapshots і policy майбутніх системних орієнтирів. `0010` підготовлено, але потребує окремого застосування до локальної MariaDB. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
+> **Статус на 18 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`–`0010_market_reference_policy` формують ядро, private files, authoring-вимоги, revocable public passport, immutable metadata ruleset-ів, versioned market snapshots, frozen NBU FX snapshots і policy майбутніх системних орієнтирів. `0010` застосовано до локальної MariaDB. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
 
 ---
 
@@ -111,7 +111,7 @@ Backend запускають із кореня репозиторію через
 | `/reference-values` | Авторизоване читання текстових серверних довідників нового контракту. |
 | `/users/`, `/users/me`, `/users/me/profile`, `/users/me/password`, `/users/{id}/activate`, `/users/{id}/deactivate`, `/experts/` | Admin керує ролями й оборотним active-станом; користувач змінює лише власні ПІБ/пароль. Inactive account не проходить login/JWT; останній active admin захищений. |
 | `/market/mappings`, `/market/price` | Compatibility-маршрути для legacy mappings і технічного demo-індексу. Вони не є авторитетним ринковим джерелом і не створюють фінансової оцінки. |
-| `/market-data/*`, `/reports/{report_id}/valuations*` | Admin-only provider-neutral контур: каталог provider-ів, одна future-only policy, OpenFacet candidate → approve/reject, NBU USD/UAH refresh і ручне підтвердження `market_reference`. `POST/PUT /reports` читає policy та best-effort створює `system_market_reference` за останнім approved snapshot-ом обраного провайдера; FX додається лише коли policy його увімкнула. Немає fallback до старого FX і помилка enrichment не блокує draft. Усі valuation містять immutable provenance. Public passport і PDF сюди не підключені. |
+| `/market-data/*`, `/reports/{report_id}/valuations*` | Admin-only provider-neutral контур: каталог provider-ів, одна future-only policy, OpenFacet candidate → approve/reject, NBU USD/UAH refresh і ручне підтвердження `market_reference`. `POST/PUT /reports` читає policy та best-effort створює `system_market_reference` за останнім approved snapshot-ом обраного провайдера; FX додається лише коли policy його увімкнула. Немає fallback до старого FX і помилка enrichment не блокує draft. Кожен новий valuation має immutable provenance і окрему append-only подію історії звіту; ідемпотентний save дубля не створює. Public passport і PDF сюди не підключені. |
 | `/statistics/expert-performance` | Admin-only all-time operational snapshot gemologist-ів: статусні лічильники звітів; без ціни, ML, середньої ваги чи рейтингу. |
 | `/docs`, `/openapi.json` | Swagger UI та машинозчитуваний API-контракт FastAPI. |
 
@@ -125,8 +125,8 @@ Backend запускають із кореня репозиторію через
 
 | База | Призначення | Поточний стан |
 | --- | --- | --- |
-| `diamond_oltp` | `experts` (з `is_active`), compatibility `diamond_reports`, `stones`, `report_events`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` і lifecycle-колонки | Кодова та локальна MariaDB head revision — `0009_nbu_fx_snapshots` |
-| `diamond_market` | `grade_mappings`, legacy demo-індекс, `reference_values`, provider catalog, versioned market snapshots/quotes і immutable FX snapshots | `0009` додає NBU USD/UAH без backfill |
+| `diamond_oltp` | `experts` (з `is_active`), compatibility `diamond_reports`, `stones`, `report_events`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` і lifecycle-колонки | Кодова та локальна MariaDB head revision — `0010_market_reference_policy` |
+| `diamond_market` | `grade_mappings`, legacy demo-індекс, `reference_values`, provider catalog, versioned market snapshots/quotes, immutable FX snapshots і singleton market policy | `0009` додає NBU USD/UAH, `0010` — future-only policy; без backfill |
 | `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 
 Новий wizard створює звіт через `POST /reports`: сервер призначає остаточний
