@@ -206,11 +206,17 @@ function renderValuations(container, helpNode, valuations) {
     return;
   }
   helpNode.textContent = "OpenFacet — model-based retail reference. Системний орієнтир формується автоматично з останнього затвердженого знімка; підтверджений орієнтир окремо перевіряє адміністратор. Обидва не є експертною, продажною чи транзакційною ціною.";
-  for (const valuation of marketReferences) {
+  if (marketReferences.length > 1) {
+    helpNode.append(document.createTextNode(" Поточний запис відкритий; попередні збережені орієнтири згорнуті."));
+  }
+  for (const [index, valuation] of marketReferences.entries()) {
     const isSystemReference = valuation.valuation_kind === "system_market_reference";
     const item = document.createElement("li");
     item.className = "market-reference-card";
-    const summary = document.createElement("div");
+    const disclosure = document.createElement("details");
+    disclosure.className = "market-reference-card__disclosure";
+    disclosure.open = index === 0;
+    const summary = document.createElement("summary");
     summary.className = "market-reference-card__summary";
     const amount = document.createElement("strong");
     amount.textContent = formatAmount(valuation.amount, valuation.currency_code);
@@ -233,18 +239,19 @@ function renderValuations(container, helpNode, valuations) {
       addDetail("Еквівалент", formatAmount(valuation.converted_amount, valuation.converted_currency_code));
       addDetail("Курс НБУ", `${formatFxRate(valuation.fx_rate)} UAH/USD · ${rateDate} · знімок #${valuation.fx_snapshot_id ?? "—"}`);
     }
-    item.append(summary, details);
+    disclosure.append(summary, details);
     if (valuation.applicability_note) {
       const note = document.createElement("p");
       note.className = "market-reference-card__note";
       note.append(document.createTextNode("Підтвердження: "), document.createTextNode(valuation.applicability_note));
-      item.append(note);
+      disclosure.append(note);
     } else if (isSystemReference) {
       const note = document.createElement("p");
       note.className = "market-reference-card__note";
       note.textContent = "Автоматично розраховано за останнім затвердженим знімком OpenFacet; застосовність не підтверджена адміністратором.";
-      item.append(note);
+      disclosure.append(note);
     }
+    item.append(disclosure);
     container.append(item);
   }
 }
