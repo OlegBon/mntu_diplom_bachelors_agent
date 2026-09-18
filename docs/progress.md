@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-18 — market-reference-report-history (завершено)
+
+- **Задача:** доповнити private «Історію змін» звіту подіями про створення ринкових довідкових орієнтирів.
+- **Змінені файли:** `backend/crud.py`, `frontend/src/js/modules/report-detail.js`, `tests/api/test_market_data.py`, `frontend/tests/e2e/report-detail.spec.mjs`, `docs/guides/{current-domain-and-report-workflow,market-data-providers}.md`, `docs/progress.md`.
+- **Рішення / Результат:** створення нового immutable `system_market_reference` додає подію «Системний довідковий орієнтир додано», а ручне admin-підтвердження `market_reference` — «Довідковий орієнтир підтверджено адміністратором». Кожна подія зберігає private контекст: суму, провайдера і snapshot. Запис події входить до тієї самої транзакції, що й valuation; ідемпотентне повторне збереження без нового valuation не створює дубль події.
+- **Перевірки:** `python -m compileall -q backend` — успішно; `pytest tests/api/test_market_data.py -q` — 5 passed; `frontend npm test` — 20 passed; Playwright `report-detail.spec.mjs` — 1 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** історія показує факт приватного орієнтиру, а не експертну, продажну чи транзакційну ціну; дані цін, як і раніше, не передаються в public passport або PDF.
+
 ## 2026-09-18 — market-reference-disclosure-indicator (завершено)
 
 - **Задача:** зробити стан розкриття історичних ринкових орієнтирів помітним у private detail.

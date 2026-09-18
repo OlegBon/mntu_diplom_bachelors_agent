@@ -126,6 +126,12 @@ def test_market_data_candidate_approval_and_explicit_report_attachment(client, e
     assert attached.json()["converted_currency_code"] == "UAH"
     assert attached.json()["fx_rate"] == "40.50000000"
 
+    events = client.get(f"/reports/{report_id}/events", headers=owner_headers)
+    assert events.status_code == 200
+    market_events = [event for event in events.json() if event["action"] == "market_reference_added"]
+    assert len(market_events) == 1
+    assert market_events[0]["reason"] == f"USD 5000.00 · OpenFacet · знімок #{snapshot_id}"
+
     values = client.get(f"/reports/{report_id}/valuations", headers=owner_headers)
     assert values.status_code == 200
     assert values.json()[0]["source_name"] == "OpenFacet"
@@ -181,10 +187,42 @@ def test_report_gets_idempotent_system_reference_from_latest_approved_snapshot(c
     assert values[0]["amount"] == "5000.00"
     assert values[0]["converted_amount"] == "202500.00"
     assert values[0]["applicability_note"] is None
+    events = client.get(f"/reports/{report_id}/events", headers=owner_headers)
+    assert events.status_code == 200
+    system_events = [event for event in events.json() if event["action"] == "system_market_reference_added"]
+    assert len(system_events) == 1
+    assert system_events[0]["reason"] == f"USD 5000.00 · OpenFacet · знімок #{snapshot_id}"
 
     updated = client.put(f"/reports/{report_id}", json=_report_payload(), headers=owner_headers)
     assert updated.status_code == 200
     assert len(client.get(f"/reports/{report_id}/valuations", headers=owner_headers).json()) == 1
+    assert len([
+        event for event in client.get(f"/reports/{report_id}/events", headers=owner_headers).json()
+        if event["action"] == "system_market_reference_added"
+    ]) == 1
+
+    db_session.add(models.MarketDataQuote(
+        snapshot_id=snapshot_id,
+        shape_code="round",
+        carat_anchor=Decimal("2.000"),
+        color_code="D",
+        clarity_code="FL",
+        price_per_carat=Decimal("5500.00"),
+    ))
+    db_session.commit()
+    changed_payload = _report_payload()
+    changed_payload["stone"]["carat_weight"] = 2
+    changed = client.put(f"/reports/{report_id}", json=changed_payload, headers=owner_headers)
+    assert changed.status_code == 200
+    assert len(client.get(f"/reports/{report_id}/valuations", headers=owner_headers).json()) == 2
+    system_events = [
+        event for event in client.get(f"/reports/{report_id}/events", headers=owner_headers).json()
+        if event["action"] == "system_market_reference_added"
+    ]
+    assert [event["reason"] for event in system_events] == [
+        f"USD 5000.00 · OpenFacet · знімок #{snapshot_id}",
+        f"USD 11000.00 · OpenFacet · знімок #{snapshot_id}",
+    ]
 
     listed_reference = client.get("/reports", headers=owner_headers).json()["items"][0]["market_reference"]
     assert listed_reference["valuation_kind"] == "system_market_reference"

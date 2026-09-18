@@ -122,6 +122,12 @@ def _append_report_event(
     return event
 
 
+def _market_reference_event_reason(valuation: models.StoneValuation) -> str:
+    """Return concise private provenance suitable for the report change history."""
+    snapshot = f"знімок #{valuation.market_snapshot_id}" if valuation.market_snapshot_id else "без знімка"
+    return f"{valuation.currency_code} {valuation.amount:.2f} · {valuation.source_name} · {snapshot}"
+
+
 def _apply_stone_draft(stone: models.Stone, payload: schemas.StoneDraft) -> None:
     for key, value in payload.model_dump().items():
         setattr(stone, key, value)
@@ -1135,6 +1141,15 @@ def attach_system_market_reference(
         created_by_id=actor.expert_id,
     )
     db.add(valuation)
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="system_market_reference_added",
+        actor_id=actor.expert_id,
+        from_status=None,
+        to_status=None,
+        reason=_market_reference_event_reason(valuation),
+    )
     db.commit()
     db.refresh(valuation)
     return valuation
@@ -1210,6 +1225,15 @@ def attach_market_reference(
         created_by_id=actor.expert_id,
     )
     db.add(valuation)
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="market_reference_added",
+        actor_id=actor.expert_id,
+        from_status=None,
+        to_status=None,
+        reason=_market_reference_event_reason(valuation),
+    )
     db.commit()
     db.refresh(valuation)
     return valuation

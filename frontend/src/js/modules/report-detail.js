@@ -28,6 +28,8 @@ const EVENT_LABELS = {
   passport_published: "Публічний паспорт опубліковано",
   passport_reissued: "Публічний паспорт перевипущено",
   passport_revoked: "Публічний паспорт відкликано",
+  system_market_reference_added: "Системний довідковий орієнтир додано",
+  market_reference_added: "Довідковий орієнтир підтверджено адміністратором",
   legacy_import: "Імпортовано з попередньої бази",
 };
 const DRAFT_FIELDS = ["input", "select", "textarea"];

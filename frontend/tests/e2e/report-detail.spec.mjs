@@ -66,6 +66,8 @@ test("owner edits a draft and sees the recorded private history", async ({ page 
   await page.route("**/reports/DR-01001/events", (route) => route.fulfill({ json: [
     { event_id: 1, action: "created", from_status: null, to_status: "draft", actor_id: 2, reason: null, created_at: "2026-09-16T09:00:00Z" },
     { event_id: 2, action: "report_updated", from_status: "draft", to_status: "draft", actor_id: 2, reason: null, created_at: "2026-09-16T09:05:00Z" },
+    { event_id: 3, action: "system_market_reference_added", from_status: null, to_status: null, actor_id: 2, reason: "USD 11,668.00 · OpenFacet · знімок #1", created_at: "2026-09-17T15:00:00Z" },
+    { event_id: 4, action: "market_reference_added", from_status: null, to_status: null, actor_id: 1, reason: "USD 62,782.00 · OpenFacet · знімок #1", created_at: "2026-09-18T09:00:00Z" },
   ] }));
   await page.route("**/reports/DR-01001/media", (route) => route.fulfill({ json: [] }));
   await page.route("**/reports/DR-01001/valuations", (route) => route.fulfill({ json: valuations }));
@@ -78,6 +80,8 @@ test("owner edits a draft and sees the recorded private history", async ({ page 
   await expect(page.locator("#report-detail-title")).toHaveText("DR-01001");
   await expect(page.locator("#detail-status-badge")).toHaveText("Чернетка");
   await expect(page.locator("#detail-events")).toContainText("Дані чернетки оновлено");
+  await expect(page.locator("#detail-events")).toContainText("Системний довідковий орієнтир додано");
+  await expect(page.locator("#detail-events")).toContainText("Довідковий орієнтир підтверджено адміністратором");
   const valuationDisclosures = page.locator("#detail-valuations details");
   await expect(valuationDisclosures).toHaveCount(2);
   await expect(valuationDisclosures.nth(0)).toHaveAttribute("open", "");
