@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-18 — backlog-market-provider-operations (завершено)
+
+- **Задача:** прибрати завершену 121 з активного backlog, винести її нереалізований операційний залишок у самостійну задачу та виправити застаріле посилання 115.
+- **Змінені файли:** `docs/backlog/{README,121-market-data-provider-expansion-and-fx (видалено),122-market-provider-operations,115-profile-admin-ui-polish}.md`, `docs/{work_plan,progress}.md`.
+- **Рішення / Результат:** 121 лишається завершеною roadmap-задачею без active backlog-файлу. Freshness policy, scheduler, observability, нові provider-и та рішення про public/PDF-відображення чітко відокремлено у новій активній 122. 115 тепер посилається на чинну 112 замість видаленої 108.
+- **Перевірки:** звірено стан `docs/backlog/`, активні позначки `work_plan.md` і журнал `progress.md`; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** 122 є планом, а не реалізацією scheduler-а, freshness policy чи нового зовнішнього provider-а.
+
 ## 2026-09-18 — market-data-documentation-reconciliation (завершено)
 
 - **Задача:** актуалізувати документацію після завершення OpenFacet/NBU/policy контуру та додавання audit-подій ринкових орієнтирів.
@@ -259,7 +268,7 @@
 - **Перевірки:** додано API regression на 404 для кожного retired route, перенесено чинні auth/experts перевірки й додано Node guard, що active frontend не містить retired endpoint. `python -m pytest` — 21 passed; `npm test` — 11 passed; full Playwright запуск підтвердив login/dashboard/wizard flows, а targeted detail/edit — 1 passed; `npm run audit:api` — 9/9; `git diff --check` і FastAPI import/route smoke — успішно.
 - **Нові змінні середовища:** немає.
 - **Обмеження та наступна задача:** `scripts/recalc_grades.py` навмисно не запускався і не переписувався. Нова [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md) має окремо погодити його retire або безпечну versioned replacement з dry-run, scope, audit trail та планом відновлення. Public passport, authoritative pricing/FX і ML не реалізовано.
-- **Виявлено поза scope:** read-only audit на локальній відновленій MariaDB отримав `500` від `/statistics/expert-performance`; endpoint вилучено з вузького report/auth audit, а його перевірка й виправлення винесені у [108](./backlog/108-expert-statistics-and-analytics-contract.md) до будь-якого analytics UI.
+- **Виявлено поза scope:** read-only audit на локальній відновленій MariaDB отримав `500` від `/statistics/expert-performance`; endpoint вилучено з вузького report/auth audit, а його перевірка й виправлення були винесені у завершену 108 до будь-якого analytics UI.
 
 ## 2026-09-16 — report-detail-layout-refinement (завершено)
 
