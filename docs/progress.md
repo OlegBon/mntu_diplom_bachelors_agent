@@ -5,6 +5,132 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-18 — market-data-documentation-reconciliation (завершено)
+
+- **Задача:** актуалізувати документацію після завершення OpenFacet/NBU/policy контуру та додавання audit-подій ринкових орієнтирів.
+- **Змінені файли:** `docs/{architecture,db-schema,api-mvp-audit,work_plan}.md`, `docs/decisions/002-financial-calculation-contract.md`, `docs/progress.md`.
+- **Рішення / Результат:** документація синхронізована з локально застосованою `0010_market_reference_policy`: описані policy, НБУ, immutable provenance і private audit-події для фактично нових valuations. Явно зафіксовано відсутність backfill для historical valuations та подій, аби історія не містила штучно реконструйованих фактів.
+- **Перевірки:** звірено з `backend/crud.py`, API-маршрутами та `scripts/audit-api.mjs`; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** API audit навмисно залишається read-only і не тестує external fetch/approve/write сценарії; їх покривають ізольовані pytest та Playwright-набори.
+
+## 2026-09-18 — market-reference-report-history (завершено)
+
+- **Задача:** доповнити private «Історію змін» звіту подіями про створення ринкових довідкових орієнтирів.
+- **Змінені файли:** `backend/crud.py`, `frontend/src/js/modules/report-detail.js`, `tests/api/test_market_data.py`, `frontend/tests/e2e/report-detail.spec.mjs`, `docs/guides/{current-domain-and-report-workflow,market-data-providers}.md`, `docs/progress.md`.
+- **Рішення / Результат:** створення нового immutable `system_market_reference` додає подію «Системний довідковий орієнтир додано», а ручне admin-підтвердження `market_reference` — «Довідковий орієнтир підтверджено адміністратором». Кожна подія зберігає private контекст: суму, провайдера і snapshot. Запис події входить до тієї самої транзакції, що й valuation; ідемпотентне повторне збереження без нового valuation не створює дубль події.
+- **Перевірки:** `python -m compileall -q backend` — успішно; `pytest tests/api/test_market_data.py -q` — 5 passed; `frontend npm test` — 20 passed; Playwright `report-detail.spec.mjs` — 1 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** історія показує факт приватного орієнтиру, а не експертну, продажну чи транзакційну ціну; дані цін, як і раніше, не передаються в public passport або PDF.
+
+## 2026-09-18 — market-reference-disclosure-indicator (завершено)
+
+- **Задача:** зробити стан розкриття історичних ринкових орієнтирів помітним у private detail.
+- **Змінені файли:** `frontend/src/scss/_ui-primitives.scss`, `docs/progress.md`.
+- **Рішення / Результат:** у правому верхньому куті summary додано SVG-стрілку в стилі select: вниз для згорнутого `details`, вгору для відкритого. Нативний marker приховано, але semantic `summary` і keyboard behavior збережені; додано видимий focus state.
+- **Перевірки:** `frontend npm test` — 20 passed; Playwright `report-detail.spec.mjs` — 1 passed.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** індикатор відображає стан нативного `details`; не вводить окремого JavaScript-стану чи змін у даних valuations.
+
+## 2026-09-18 — collapse-historical-market-references (завершено)
+
+- **Задача:** зробити private detail звіту читабельним після кількох автоматичних системних ринкових орієнтирів.
+- **Змінені файли:** `frontend/src/{js/modules/report-detail.js,scss/_ui-primitives.scss}`, `frontend/tests/e2e/report-detail.spec.mjs`, `docs/progress.md`.
+- **Рішення / Результат:** API та immutable історія valuations не змінюються. Detail показує найновіший ринковий орієнтир відкритим, а попередні зберігає згорнутими у доступних нативних `details/summary`; у summary залишаються сума та тип, а розкриття показує повний provenance, UAH і курс. Користувач може переглянути будь-який історичний запис.
+- **Перевірки:** `frontend npm test` — 20 passed; Playwright `report-detail.spec.mjs` — 1 passed, включно зі станом двох valuations і ручним розкриттям попередньої.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** «найновіший» означає перший запис у чинному private API, тобто `created_at DESC, valuation_id DESC`; логіка пріоритету ручного reference у dashboard не змінюється.
+
+## 2026-09-17 — prevent-implicit-wizard-draft-submit (завершено)
+
+- **Задача:** прибрати випадкове створення чернетки в майстрі через клавішу Enter.
+- **Змінені файли:** `frontend/src/js/modules/report-wizard.js`, `frontend/tests/e2e/report-wizard.spec.mjs`, `docs/progress.md`.
+- **Рішення / Результат:** Enter у звичайних текстових, числових, date та споріднених `input` не виконує implicit HTML submit. `textarea`, file input, select і клавіатурна активація явно сфокусованої кнопки не змінені. Чернетка створюється тільки явною дією «Зберегти чернетку», а кнопка як і раніше блокується на час запиту.
+- **Перевірки:** `frontend npm test` — 20 passed; Playwright `report-wizard.spec.mjs` — 1 passed, зокрема Enter не створює чернетку, а click створює один запис.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це frontend-захист від випадкового submit; server-side валідація та захист від дублювання залишаються авторитетними.
+
+## 2026-09-17 — clarify-idc-methodology-in-wizard (завершено)
+
+- **Задача:** прибрати внутрішній code `idc-demo-v1` з user-facing preview майстра та чітко назвати його методичну основу.
+- **Змінені файли:** `backend/crud.py`, `frontend/src/{pug/pages/create-report.pug,js/modules/report-wizard.js}`, `docs/{progress,guides/current-domain-and-report-workflow,guides/idc-demo-v1-ruleset}.md`.
+- **Рішення / Результат:** майстер показує `IDC Rules for Grading Polished Diamonds, 6th edition (2013)` і межу «спрощений системний розрахунок Diamant ID; не є сертифікацією IDC». `idc-demo-v1` збережено лише як immutable внутрішній ідентифікатор API/БД для відтворюваності історичних grades; у коді та guide прямо зафіксовано, що це не назва й не версія документа. Назву джерела звірено за титульною сторінкою локального PDF; `July` не входить до неї.
+- **Перевірки:** `frontend npm test` — 20 passed; `python -m pytest tests/api/test_report_domain.py tests/unit/test_migration_foundation.py -q` — 11 passed.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** документ 2013 року не названо «останньою редакцією IDC», бо для такого твердження потрібна окрема перевірка актуальних публікацій IDC.
+
+## 2026-09-17 — wizard-policy-market-reference-preview (завершено)
+
+- **Задача:** замінити legacy demo-прогноз `USD … d` у майстрі створення звіту на системний довідковий USD-орієнтир із поточної admin policy.
+- **Змінені файли:** `backend/{crud,schemas}.py`, `tests/api/{test_report_domain,test_market_data}.py`, `frontend/src/{pug/pages/create-report.pug,js/modules/report-wizard.js}`, `frontend/tests/e2e/report-wizard.spec.mjs`, `docs/{architecture,db-schema,work_plan,progress}.md`, `docs/guides/{current-domain-and-report-workflow,market-data-providers}.md`.
+- **Рішення / Результат:** `POST /reports/preview` приймає shape/origin і читає обраного policy-провайдера та останній застосовний approved snapshot. Для OpenFacet повертає total USD, код `openfacet` і snapshot ID; майстер показує `USD … of`, назву джерела й попередження, що значення ще не зафіксовано. За відсутності покриття показує зрозуміле повідомлення без блокування заповнення. Preview не створює `StoneValuation` і не отримує НБУ; під час збереження draft сервер повторно застосовує policy, створює immutable reference та, якщо policy увімкнула FX, фіксує курс і UAH.
+- **Перевірки:** `python -m compileall -q backend` — успішно; `python -m pytest tests/api/test_report_domain.py tests/api/test_market_data.py tests/unit/test_migration_foundation.py -q` — 16 passed; `frontend npm test` — 20 passed; Playwright `report-wizard.spec.mjs` — 1 passed.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** preview підтримує лише провайдери, для яких існує server adapter; зараз це OpenFacet. Зміна policy або approval новішого snapshot-а між preview і save може змінити остаточно зафіксований орієнтир; це свідомо, бо майстер не резервує snapshot.
+
+## 2026-09-17 — market-policy-control-and-fx-format-polish (завершено)
+
+- **Задача:** виправити розтягнутий radio-control policy провайдера на «Ринкові дані» та прибрати штучні нулі з відображення зафіксованого курсу НБУ.
+- **Змінені файли:** `frontend/src/{pug/pages/market-data.pug,scss/_ui-primitives.scss,js/modules/{market-data,dashboard,report-detail}.js}`, `docs/progress.md`.
+- **Рішення / Результат:** policy radio отримав окремий компактний flex/card-стиль без успадкування checkbox-layout; він однаково працює в desktop і mobile flow. БД зберігає FX rate із точністю `DECIMAL(18,8)`, але private detail і dashboard popover показують локалізоване число максимум із вісьмома значущими десятковими знаками без trailing zeros: `44.6648 UAH/USD` замість `44.66480000`.
+- **Перевірки:** `frontend npm run build` — успішно; Node/jsdom tests — 20 passed; Playwright market-data — 1 passed; `git diff --check` — без помилок. Browser-вікно цієї сесії недоступне, тому візуальний screenshot QA не виконано.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** currency formatting застосовано до dashboard/private detail; сутність rate і API зберігають повну Decimal-точність. Потрібна коротка ручна перевірка відрендереного desktop і mobile control після оновлення BrowserSync.
+
+## 2026-09-17 — configurable-market-reference-policy (завершено)
+
+- **Задача:** завершити 121 керованою admin policy для провайдерів, прибрати `*` з самого значення ціни та відокремити legacy `market_price_reference` від нового ринкового контуру.
+- **Змінені файли:** `alembic/versions/0010_market_reference_policy.py`, `backend/{crud,main,models,schemas}.py`, `tests/{api/test_market_data,unit/test_migration_foundation}.py`, `frontend/src/{pug/pages/{dashboard,market-data}.pug,js/modules/{api,dashboard,market-data}.js}`, `frontend/tests/{auth-and-api,profile-admin-pages,e2e/market-data}.mjs`, `scripts/audit-api.mjs`, `docs/{architecture,api-mvp-audit,db-schema,work_plan,progress}.md`, `docs/{guides/current-domain-and-report-workflow,market-data-providers}.md`, `docs/backlog/121-market-data-provider-expansion-and-fx.md`.
+- **Рішення / Результат:** `0010` додає singleton `market_reference_policies`: обраний market provider, прапорець FX та обраний FX provider для лише майбутніх системних орієнтирів. Початкове значення зберігає `openfacet` + `nbu`; historical snapshot-и, valuations і legacy demo-індекс не змінюються. Admin API/UI дозволяє обрати market provider radio-кнопкою й вимкнути UAH-конвертацію. Автоматичний та ручний reference читають policy; при вимкненому FX USD зберігається без UAH. У dashboard заголовок — `Ціна (USD)*`, `*` пояснює системний характер колонки, а значення OpenFacet має `of` незалежно від автоматичного чи ручного походження; detail/popover зберігають різницю типів.
+- **Перевірки:** `python -m pytest tests/api/test_market_data.py tests/unit/test_nbu_fx.py tests/unit/test_migration_foundation.py -q` — 11 passed; `python -m compileall -q backend` і import FastAPI — успішно; `alembic upgrade head --sql` — успішно; фактичний `alembic upgrade head` — `0009 → 0010`; `alembic current` — `0010_market_reference_policy (head)`; read-only MariaDB check підтвердив policy `1 / openfacet / FX=1 / nbu`; `frontend npm run build`, Node/jsdom tests — 20 passed; Playwright market-data — 1 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** Singleton гарантується server-side фіксованим `policy_id=1`: MariaDB 10.4 не дозволяє `CHECK` над `AUTO_INCREMENT`, тому SQL `CHECK` не використовується. Підтриманими server adapter-ами лишаються тільки OpenFacet і НБУ; radio-контроль не робить невідомий provider робочим. Немає scheduler, freshness SLA, retries/backoff чи historical backfill.
+
+## 2026-09-17 — automatic-system-market-reference (завершено)
+
+- **Задача:** завершити 121 автоматичним системним довідковим орієнтиром для підтримуваних нових та оновлених draft-звітів, не змішуючи його з ручним admin-підтвердженням.
+- **Змінені файли:** `backend/{crud,main,schemas}.py`, `tests/api/test_market_data.py`, `frontend/src/{js/modules/{dashboard,report-detail}.js,pug/pages/dashboard.pug}`, `frontend/tests/page-dom.test.mjs`, `docs/{architecture,db-schema,work_plan,progress}.md`, `docs/{decisions/002-financial-calculation-contract.md,guides/current-domain-and-report-workflow.md,backlog/121-market-data-provider-expansion-and-fx.md}`.
+- **Рішення / Результат:** після створення або зміни підтримуваного draft сервер best-effort бере останній approved OpenFacet snapshot, розраховує immutable `system_market_reference` і фіксує USD/UAH разом з новим NBU snapshot-ом. Відсутні snapshot/coverage або НБУ не блокують save; ідентичні market-входи не створюють дублі. Ручний `market_reference` з поясненням застосовності лишається окремим і пріоритетним. У «Всі звіти» заголовок збережено як «Ціна (USD)»: `*` означає «Системний довідковий орієнтир (USD)», `of` — ручне admin-підтвердження, `d` — legacy demo. Private detail і popover пояснюють provenance; public passport/PDF цін не отримують.
+- **Перевірки:** `python -m pytest tests/api/test_market_data.py tests/unit/test_nbu_fx.py -q` — 5 passed; `python -m compileall -q backend` — успішно; `frontend npm test` — 20 passed; `frontend npm run test:e2e` — 14 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** немає scheduler/freshness SLA, retry/backoff або historical backfill. Автоматичний орієнтир застосовується лише до майбутнього create/draft update, не є експертною, продажною чи транзакційною ціною, а OpenFacet coverage обмежена natural stone та наявними shape/color/clarity/carat anchors.
+
+## 2026-09-17 — report-workflow-market-reference-guide (завершено)
+
+- **Задача:** доповнити наскрізний guide фактичною механікою market reference, OpenFacet та frozen NBU USD/UAH.
+- **Змінені файли:** `docs/guides/current-domain-and-report-workflow.md`, `docs/progress.md`.
+- **Рішення / Результат:** guide тепер розмежовує `d`, `of` і відсутнє значення, пояснює private/public межу та містить практичний приклад `DR-01004`: candidate, approve, applicability, OpenFacet interpolation, автоматичний NBU fetch, immutable USD/UAH provenance і відображення у detail/dashboard.
+- **Перевірки:** перевірено посилання, терміни та відповідність чинному контракту `0009_nbu_fx_snapshots`; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** guide не вводить scheduler, historical reprice, інший provider або price у public passport/PDF.
+
+## 2026-09-17 — market-reference-presentation-polish (завершено)
+
+- **Задача:** уніфікувати дату НБУ у dashboard popover і зробити private presentation довідкового ринкового орієнтира читабельним.
+- **Змінені файли:** `frontend/src/js/modules/{dashboard,report-detail}.js`, `frontend/src/scss/_ui-primitives.scss`, `docs/progress.md`.
+- **Рішення / Результат:** popover показує official rate date у форматі `uk-UA`, як і private detail. Один перевантажений рядок detail замінено на flat-card із основною USD-сумою, визначеними полями provenance, frozen UAH/NBU і відокремленим поясненням застосовності; mobile складає пари у одну колонку.
+- **Перевірки:** `npm run build` — успішно; frontend Node/jsdom tests — 20 passed; Playwright E2E — 14 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це лише presentation private market reference; розрахунок, FX snapshot, passport і PDF не змінені.
+
+## 2026-09-17 — nbu-fx-for-market-references (завершено)
+
+- **Задача:** завершити 121: додати НБУ USD/UAH до контрольованого OpenFacet market-reference без переоцінки історії або відкриття ціни у passport/PDF.
+- **Змінені файли:** `alembic/versions/0009_nbu_fx_snapshots.py`, `backend/{fx,crud,main,models,schemas}.py`, `tests/{unit/test_nbu_fx,api/test_market_data}.py`, `frontend/src/{js/modules/{api,dashboard,market-data,report-detail}.js,pug/pages/{dashboard,market-data}.pug}`, `frontend/tests/{auth-and-api,page-dom}.test.mjs`, `docs/{architecture,db-schema,local-start,work_plan,progress}.md`, `docs/{decisions/002-financial-calculation-contract.md,guides/current-domain-and-report-workflow.md,backlog/121-market-data-provider-expansion-and-fx.md}`.
+- **Рішення / Результат:** `0009` реєструє `nbu`, створює immutable `fx_data_snapshots` та nullable frozen FX/UAH поля для лише нових `stone_valuations`. Attach approved OpenFacet snapshot-а повторно отримує official USD/UAH НБУ, у тій самій транзакції зберігає rate, official rate date, FX snapshot і UAH total. Помилка НБУ повертає 502 та не дозволяє непомітно використати старий курс. Admin може вручну створити контрольний NBU snapshot. Dashboard показує `USD … d` для legacy demo або `USD … of` для OpenFacet; popover і private detail пояснюють USD, UAH та provenance. Passport і PDF не містять цін.
+- **Перевірки:** backend pytest — 42 passed (запуск групами через обмеження локального runner-а); `npm test` — 20 passed; `npm run test:e2e` — 14 passed; `alembic upgrade head --sql` — успішно; фактичний `alembic upgrade head` — `0008 → 0009`; `alembic current` — `0009_nbu_fx_snapshots (head)`; read-only smoke з офіційним НБУ endpoint успішний; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** немає scheduler, retries/backoff, historical backfill, нового комерційного провайдера чи public/PDF price policy. OpenFacet лишається довідковим benchmark, не appraisal/offer/transaction/sale price.
+
+## 2026-09-17 — authoritative-market-data-providers (завершено)
+
+- **Задача:** завершити 110: створити безпечний розширюваний контур ринкових даних з першим OpenFacet adapter-ом без підміни legacy/demo ціни.
+- **Змінені файли:** `alembic/versions/{0007_grading_rulesets,0008_market_data_providers}.py`, `backend/{crud,main,market_providers,models,schemas}.py`, `frontend/src/{pug/{pages/{market-data,report-detail}.pug},js/{main,modules/{api,market-data,report-detail}.js},scss/_ui-primitives.scss}`, `frontend/tests/{auth-and-api,profile-admin-pages,e2e/market-data}.mjs`, `tests/{api/test_market_data.py,unit/{test_market_providers,test_migration_foundation}.py}`, `scripts/audit-api.mjs`, `docs/{architecture,db-schema,api-mvp-audit,work_plan,progress}.md`, `docs/decisions/002-financial-calculation-contract.md`, `docs/backlog/{121-market-data-provider-expansion-and-fx.md,110-authoritative-market-data-and-fx.md (видалено)}`.
+- **Рішення / Результат:** `diamond_market` має provider catalog і immutable `candidate → approved/rejected` snapshots з normalized USD/ct quotes, provenance і SHA-256. Admin вручну отримує OpenFacet candidate, приймає рішення через штатну модалку з необов’язковим коментарем та може явно прикріпити approved `market_reference` до natural-звіту з поясненням застосовності. Відмова через непокриття OpenFacet (зокрема `lab_grown`) показується українською прямо біля форми, а не лише як HTTP 422 у console. Private detail показує збережений орієнтир окремим блоком із сумою, провайдером, snapshot-ом, датою та підтвердженням застосовності. Legacy `DiamondReport.price`, dashboard/wizard `USD … d`, public passport і PDF не змінюються. `/market-data/*` закритий admin RBAC; safe audit перевіряє його 401-межі. `0008_market_data_providers` застосовано до локальної MariaDB.
+- **Перевірки:** цільові pytest — 7 passed; `npm test` — 20 passed; Playwright market-data — 1 passed, повний `npm run test:e2e` до UI-уточнення — 14 passed; static `alembic upgrade head --sql` — успішно; фактичний `alembic upgrade head` — `0007 → 0008`; read-only SQL підтвердив OpenFacet provider, `0` snapshot-ів і `0` наявних valuations з snapshot provenance; `git diff --check`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** OpenFacet — model-based retail benchmark, не appraisal/offer/transaction/sale price; чинний report не зберігає laboratory certificate, тому applicability підтверджує admin. Немає NBU FX/UAH, scheduler, freshness policy, автоматичного прикріплення чи показу суми клієнту/PDF. Розширення винесено в 121; перед зовнішнім або комерційним відображенням потрібна окрема перевірка умов провайдера.
+
 ## 2026-09-17 — e2e-regression-and-api-audit-refresh (завершено)
 
 - **Задача:** актуалізувати застарілі E2E-очікування після admin modal, public passport і detail validation, а також синхронізувати historical API audit із чинним safe smoke-контрактом.

@@ -1,17 +1,24 @@
 from sqlalchemy import asc, case, desc, func
 from sqlalchemy.orm import Session, joinedload
+from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
-from decimal import Decimal, getcontext
+from decimal import Decimal
+import hashlib
 import secrets
 from statistics import median
 
 from . import models, schemas
+from .market_providers import FetchedMarketSnapshot
+from .fx import NbuUsdUahRate, convert_usd_to_uah
 from .security import get_password_hash, verify_password
 
 from .calculator import DiamondCalculator
 
 
 CURRENT_RULESET_ID = "idc-demo-v1"
+# Immutable internal identifier, not an IDC document title or edition. Existing
+# reports retain it for reproducibility; user-facing text must name the source
+# document and state the limited Diamant ID implementation separately.
 # Kept as a compatibility alias for callers and serialized API contracts.
 REPORT_RULE_VERSION = CURRENT_RULESET_ID
 
@@ -70,21 +77,26 @@ def preview_report_calculation(db: Session, stone: schemas.ReportCalculationInpu
         stone.pavilion_angle,
     )
     cut = DiamondCalculator.calculate_final_cut(proportions, stone.polish_grade, stone.symmetry_grade)
-    demo_price = None
-    market = db.query(models.MarketPriceRef).order_by(models.MarketPriceRef.id.desc()).first()
-    if market and stone.carat_weight is not None and stone.color_grade is not None and stone.clarity_grade is not None:
-        demo_price = (
-            Decimal(market.price_index_value)
-            * getcontext().power(stone.carat_weight, Decimal("1.3"))
-            * (Decimal("1") - Decimal(stone.color_grade) * Decimal("0.05"))
-            * (Decimal("1") - Decimal(stone.clarity_grade) * Decimal("0.07"))
-            * (Decimal("1") - Decimal(cut) * Decimal("0.10"))
-        ).quantize(Decimal("0.01"))
+    candidate = None
+    policy = get_market_reference_policy(db)
+    if policy and policy.market_provider_code and stone.shape and stone.origin:
+        preview_stone = models.Stone(
+            shape=stone.shape,
+            origin=stone.origin,
+            carat_weight=stone.carat_weight,
+            color_grade=stone.color_grade,
+            clarity_grade=stone.clarity_grade,
+        )
+        candidate = prepare_system_market_reference_for_stone(
+            db, stone=preview_stone, provider_code=policy.market_provider_code,
+        )
     return schemas.ReportCalculationPreview(
         system_proportions_grade=proportions,
         system_cut_grade=cut,
         calculation_rule_version=REPORT_RULE_VERSION,
-        demo_price_usd=demo_price,
+        system_market_reference_usd=candidate.amount if candidate else None,
+        market_reference_provider_code=candidate.snapshot.provider_code if candidate else None,
+        market_reference_snapshot_id=candidate.snapshot.snapshot_id if candidate else None,
     )
 
 
@@ -108,6 +120,12 @@ def _append_report_event(
     )
     db.add(event)
     return event
+
+
+def _market_reference_event_reason(valuation: models.StoneValuation) -> str:
+    """Return concise private provenance suitable for the report change history."""
+    snapshot = f"знімок #{valuation.market_snapshot_id}" if valuation.market_snapshot_id else "без знімка"
+    return f"{valuation.currency_code} {valuation.amount:.2f} · {valuation.source_name} · {snapshot}"
 
 
 def _apply_stone_draft(stone: models.Stone, payload: schemas.StoneDraft) -> None:
@@ -226,7 +244,50 @@ def get_report_domain_list(
         .limit(page_size)
         .all()
     )
+    _attach_latest_market_reference_summaries(db, reports)
     return reports, total
+
+
+def _attach_latest_market_reference_summaries(
+    db: Session, reports: list[models.DiamondReport],
+) -> None:
+    """Attach a transient API projection without changing stored reports."""
+    stone_ids = [report.stone_id for report in reports if report.stone_id is not None]
+    if not stone_ids:
+        return
+    valuations = (
+        db.query(models.StoneValuation)
+        .filter(
+            models.StoneValuation.stone_id.in_(stone_ids),
+            models.StoneValuation.valuation_kind.in_(("market_reference", "system_market_reference")),
+        )
+        .order_by(
+            case((models.StoneValuation.valuation_kind == "market_reference", 0), else_=1),
+            models.StoneValuation.created_at.desc(),
+            models.StoneValuation.valuation_id.desc(),
+        )
+        .all()
+    )
+    by_stone: dict[int, models.StoneValuation] = {}
+    for valuation in valuations:
+        by_stone.setdefault(valuation.stone_id, valuation)
+    for report in reports:
+        valuation = by_stone.get(report.stone_id)
+        if valuation is None:
+            continue
+        report.market_reference = schemas.MarketReferenceSummary(
+            amount=valuation.amount,
+            currency_code=valuation.currency_code,
+            valuation_kind=valuation.valuation_kind,
+            source_name=valuation.source_name,
+            market_snapshot_id=valuation.market_snapshot_id,
+            observed_at=valuation.observed_at,
+            converted_amount=valuation.converted_amount,
+            converted_currency_code=valuation.converted_currency_code,
+            fx_snapshot_id=valuation.fx_snapshot_id,
+            fx_rate=valuation.fx_rate,
+            fx_rate_date=valuation.fx_rate_date,
+        )
 
 
 def create_report_domain(
@@ -749,3 +810,430 @@ def create_market_price(db: Session, price_data: schemas.MarketPriceCreate, admi
     db.commit()
     db.refresh(db_price)
     return db_price
+
+
+def get_market_data_providers(db: Session) -> list[models.MarketDataProvider]:
+    return (
+        db.query(models.MarketDataProvider)
+        .filter(models.MarketDataProvider.is_active.is_(True))
+        .order_by(models.MarketDataProvider.display_name)
+        .all()
+    )
+
+
+def get_market_reference_policy(db: Session) -> models.MarketReferencePolicy | None:
+    """Return the single policy that controls only future automatic references."""
+    return db.get(models.MarketReferencePolicy, 1)
+
+
+def update_market_reference_policy(
+    db: Session,
+    *,
+    payload: schemas.MarketReferencePolicyUpdate,
+    actor: models.Expert,
+) -> models.MarketReferencePolicy:
+    """Validate selected provider capabilities before replacing the future-only policy."""
+    market_provider = None
+    if payload.market_provider_code is not None:
+        market_provider = db.get(models.MarketDataProvider, payload.market_provider_code)
+        if market_provider is None or not market_provider.is_active:
+            raise ReportDomainError("Selected market-data provider is unavailable")
+        if market_provider.provider_type != "market_reference":
+            raise ReportDomainError("Selected provider cannot supply a market reference")
+    fx_provider = None
+    if payload.use_fx_conversion:
+        if payload.fx_provider_code is None:
+            raise ReportDomainError("Select an FX provider when UAH conversion is enabled")
+        fx_provider = db.get(models.MarketDataProvider, payload.fx_provider_code)
+        if fx_provider is None or not fx_provider.is_active:
+            raise ReportDomainError("Selected FX provider is unavailable")
+        if fx_provider.provider_type != "fx_reference":
+            raise ReportDomainError("Selected provider cannot supply an FX rate")
+    policy = get_market_reference_policy(db)
+    if policy is None:
+        policy = models.MarketReferencePolicy(policy_id=1)
+        db.add(policy)
+    policy.market_provider_code = market_provider.provider_code if market_provider else None
+    policy.use_fx_conversion = payload.use_fx_conversion
+    policy.fx_provider_code = fx_provider.provider_code if fx_provider else None
+    policy.updated_by_id = actor.expert_id
+    db.commit()
+    db.refresh(policy)
+    return policy
+
+
+def get_market_data_snapshots(db: Session) -> list[models.MarketDataSnapshot]:
+    return (
+        db.query(models.MarketDataSnapshot)
+        .order_by(models.MarketDataSnapshot.created_at.desc(), models.MarketDataSnapshot.snapshot_id.desc())
+        .all()
+    )
+
+
+def get_fx_data_snapshots(db: Session) -> list[models.FxDataSnapshot]:
+    return (
+        db.query(models.FxDataSnapshot)
+        .filter(models.FxDataSnapshot.provider_code == "nbu")
+        .order_by(models.FxDataSnapshot.retrieved_at.desc(), models.FxDataSnapshot.fx_snapshot_id.desc())
+        .all()
+    )
+
+
+def create_nbu_fx_snapshot(
+    db: Session, *, fetched: NbuUsdUahRate, actor: models.Expert, commit: bool,
+) -> models.FxDataSnapshot:
+    provider = db.get(models.MarketDataProvider, "nbu")
+    if provider is None or not provider.is_active:
+        raise ReportDomainError("NBU FX provider is not registered or active")
+    snapshot = models.FxDataSnapshot(
+        provider_code="nbu",
+        base_currency_code="USD",
+        quote_currency_code="UAH",
+        rate=fetched.rate,
+        rate_date=fetched.rate_date,
+        source_url=fetched.source_url,
+        retrieved_at=fetched.retrieved_at,
+        created_by_id=actor.expert_id,
+    )
+    db.add(snapshot)
+    db.flush()
+    if commit:
+        db.commit()
+        db.refresh(snapshot)
+    return snapshot
+
+
+def get_market_data_snapshot(db: Session, snapshot_id: int) -> models.MarketDataSnapshot | None:
+    return db.get(models.MarketDataSnapshot, snapshot_id)
+
+
+def _snapshot_checksum(fetched: FetchedMarketSnapshot) -> str:
+    canonical_lines = [
+        f"{quote.shape_code}|{quote.carat_anchor}|{quote.color_code}|{quote.clarity_code}|{quote.price_per_carat}"
+        for quote in sorted(
+            fetched.quotes,
+            key=lambda item: (item.shape_code, item.carat_anchor, item.color_code, item.clarity_code),
+        )
+    ]
+    return hashlib.sha256("\n".join(canonical_lines).encode("utf-8")).hexdigest()
+
+
+def create_market_data_candidate(
+    db: Session,
+    *,
+    fetched: FetchedMarketSnapshot,
+    actor: models.Expert,
+) -> models.MarketDataSnapshot:
+    provider = db.get(models.MarketDataProvider, fetched.provider_code)
+    if provider is None or not provider.is_active:
+        raise ReportDomainError("Market-data provider is not registered or active")
+    snapshot = models.MarketDataSnapshot(
+        provider_code=fetched.provider_code,
+        snapshot_kind="market_reference",
+        status="candidate",
+        currency_code=fetched.currency_code,
+        unit=fetched.unit,
+        source_url=fetched.source_url,
+        methodology_url=fetched.methodology_url,
+        coverage_note=fetched.coverage_note,
+        quote_count=len(fetched.quotes),
+        content_sha256=_snapshot_checksum(fetched),
+        retrieved_at=fetched.retrieved_at,
+        created_by_id=actor.expert_id,
+    )
+    db.add(snapshot)
+    db.flush()
+    db.add_all(
+        models.MarketDataQuote(
+            snapshot_id=snapshot.snapshot_id,
+            shape_code=quote.shape_code,
+            carat_anchor=quote.carat_anchor,
+            color_code=quote.color_code,
+            clarity_code=quote.clarity_code,
+            price_per_carat=quote.price_per_carat,
+        )
+        for quote in fetched.quotes
+    )
+    db.commit()
+    db.refresh(snapshot)
+    return snapshot
+
+
+def decide_market_data_snapshot(
+    db: Session,
+    *,
+    snapshot: models.MarketDataSnapshot,
+    approve: bool,
+    actor: models.Expert,
+    reason: str | None,
+) -> models.MarketDataSnapshot:
+    if snapshot.status != "candidate":
+        raise ReportDomainError("Only a candidate snapshot can be decided")
+    snapshot.status = "approved" if approve else "rejected"
+    snapshot.approved_by_id = actor.expert_id
+    snapshot.approved_at = datetime.now(timezone.utc)
+    snapshot.decision_reason = reason
+    db.commit()
+    db.refresh(snapshot)
+    return snapshot
+
+
+def get_report_valuations(db: Session, report: models.DiamondReport) -> list[models.StoneValuation]:
+    if report.stone_id is None:
+        return []
+    return (
+        db.query(models.StoneValuation)
+        .filter(models.StoneValuation.stone_id == report.stone_id)
+        .order_by(models.StoneValuation.created_at.desc(), models.StoneValuation.valuation_id.desc())
+        .all()
+    )
+
+
+def _grade_label(db: Session, category: str, grade: int | None) -> str | None:
+    if grade is None:
+        return None
+    mapping = (
+        db.query(models.GradeMapping)
+        .filter(models.GradeMapping.category == category, models.GradeMapping.grade_value == grade)
+        .one_or_none()
+    )
+    return mapping.grade_label.upper() if mapping else None
+
+
+def _openfacet_price_per_carat(
+    db: Session,
+    *,
+    snapshot_id: int,
+    stone: models.Stone,
+) -> tuple[Decimal, str]:
+    """Interpolate an approved OpenFacet snapshot only within known anchors."""
+    if stone.origin != "natural":
+        raise ReportDomainError("OpenFacet reference is available only for natural stones")
+    shape_code = stone.shape.strip().lower()
+    color_code = _grade_label(db, "color", stone.color_grade)
+    clarity_code = _grade_label(db, "clarity", stone.clarity_grade)
+    if not color_code or not clarity_code or stone.carat_weight is None:
+        raise ReportDomainError("The report lacks characteristics required by the selected market snapshot")
+    quotes = (
+        db.query(models.MarketDataQuote)
+        .filter(
+            models.MarketDataQuote.snapshot_id == snapshot_id,
+            models.MarketDataQuote.shape_code == shape_code,
+            models.MarketDataQuote.color_code == color_code,
+            models.MarketDataQuote.clarity_code == clarity_code,
+        )
+        .order_by(models.MarketDataQuote.carat_anchor)
+        .all()
+    )
+    if not quotes:
+        raise ReportDomainError("The approved snapshot does not cover this shape, color or clarity")
+    carat_weight = Decimal(stone.carat_weight)
+    lower = next((quote for quote in reversed(quotes) if Decimal(quote.carat_anchor) <= carat_weight), None)
+    upper = next((quote for quote in quotes if Decimal(quote.carat_anchor) >= carat_weight), None)
+    if lower is None or upper is None:
+        raise ReportDomainError("The approved snapshot does not cover this carat weight")
+    lower_price = Decimal(lower.price_per_carat)
+    upper_price = Decimal(upper.price_per_carat)
+    if Decimal(lower.carat_anchor) == Decimal(upper.carat_anchor):
+        return lower_price, shape_code
+    share = (carat_weight - Decimal(lower.carat_anchor)) / (
+        Decimal(upper.carat_anchor) - Decimal(lower.carat_anchor)
+    )
+    price = ((Decimal("1") - share) * lower_price.ln() + share * upper_price.ln()).exp()
+    return price.quantize(Decimal("0.01")), shape_code
+
+
+@dataclass(frozen=True)
+class SystemMarketReferenceCandidate:
+    """A reproducible automatic OpenFacet reference ready for FX conversion."""
+
+    snapshot: models.MarketDataSnapshot
+    amount: Decimal
+    source_reference: str
+
+
+def prepare_system_market_reference(
+    db: Session, *, report: models.DiamondReport, provider_code: str,
+) -> SystemMarketReferenceCandidate | None:
+    """Return an applicable automatic reference, without treating a gap as an error."""
+    if report.stone is None or report.stone_id is None:
+        return None
+    return prepare_system_market_reference_for_stone(db, stone=report.stone, provider_code=provider_code)
+
+
+def prepare_system_market_reference_for_stone(
+    db: Session, *, stone: models.Stone, provider_code: str,
+) -> SystemMarketReferenceCandidate | None:
+    """Build a policy-provider preview or valuation candidate for one stone."""
+    snapshot = (
+        db.query(models.MarketDataSnapshot)
+        .filter(
+            models.MarketDataSnapshot.provider_code == provider_code,
+            models.MarketDataSnapshot.snapshot_kind == "market_reference",
+            models.MarketDataSnapshot.status == "approved",
+        )
+        .order_by(
+            models.MarketDataSnapshot.approved_at.desc(),
+            models.MarketDataSnapshot.snapshot_id.desc(),
+        )
+        .first()
+    )
+    if snapshot is None:
+        return None
+    try:
+        if provider_code != "openfacet":
+            return None
+        price_per_carat, shape_code = _openfacet_price_per_carat(db, snapshot_id=snapshot.snapshot_id, stone=stone)
+    except ReportDomainError:
+        return None
+    amount = (price_per_carat * Decimal(stone.carat_weight)).quantize(Decimal("0.01"))
+    return SystemMarketReferenceCandidate(
+        snapshot=snapshot,
+        amount=amount,
+        source_reference=(
+            f"snapshot:{snapshot.snapshot_id}; shape:{shape_code}; "
+            f"USD/ct:{price_per_carat}; automatic:latest-approved"
+        ),
+    )
+
+
+def attach_system_market_reference(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    candidate: SystemMarketReferenceCandidate,
+    actor: models.Expert,
+    fx_rate: NbuUsdUahRate | None,
+) -> models.StoneValuation | None:
+    """Persist one immutable system reference unless the same inputs were saved already."""
+    if report.stone_id is None:
+        return None
+    existing = (
+        db.query(models.StoneValuation)
+        .filter(
+            models.StoneValuation.stone_id == report.stone_id,
+            models.StoneValuation.valuation_kind == "system_market_reference",
+            models.StoneValuation.market_snapshot_id == candidate.snapshot.snapshot_id,
+            models.StoneValuation.amount == candidate.amount,
+            models.StoneValuation.source_reference == candidate.source_reference,
+        )
+        .one_or_none()
+    )
+    if existing is not None:
+        return existing
+    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False) if fx_rate else None
+    valuation = models.StoneValuation(
+        stone_id=report.stone_id,
+        valuation_kind="system_market_reference",
+        amount=candidate.amount,
+        currency_code=candidate.snapshot.currency_code,
+        unit="TOTAL_STONE",
+        source_name="OpenFacet" if candidate.snapshot.provider_code == "openfacet" else candidate.snapshot.provider_code,
+        source_reference=candidate.source_reference,
+        market_snapshot_id=candidate.snapshot.snapshot_id,
+        applicability_note=None,
+        fx_snapshot_id=fx_snapshot.fx_snapshot_id if fx_snapshot else None,
+        fx_rate=fx_rate.rate if fx_rate else None,
+        fx_rate_date=fx_rate.rate_date if fx_rate else None,
+        converted_amount=convert_usd_to_uah(candidate.amount, fx_rate.rate) if fx_rate else None,
+        converted_currency_code="UAH" if fx_rate else None,
+        observed_at=candidate.snapshot.retrieved_at,
+        created_by_id=actor.expert_id,
+    )
+    db.add(valuation)
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="system_market_reference_added",
+        actor_id=actor.expert_id,
+        from_status=None,
+        to_status=None,
+        reason=_market_reference_event_reason(valuation),
+    )
+    db.commit()
+    db.refresh(valuation)
+    return valuation
+
+
+def system_market_reference_exists(
+    db: Session, *, report: models.DiamondReport, candidate: SystemMarketReferenceCandidate,
+) -> bool:
+    """Check idempotency before requesting an external FX rate."""
+    if report.stone_id is None:
+        return False
+    return (
+        db.query(models.StoneValuation.valuation_id)
+        .filter(
+            models.StoneValuation.stone_id == report.stone_id,
+            models.StoneValuation.valuation_kind == "system_market_reference",
+            models.StoneValuation.market_snapshot_id == candidate.snapshot.snapshot_id,
+            models.StoneValuation.amount == candidate.amount,
+            models.StoneValuation.source_reference == candidate.source_reference,
+        )
+        .first()
+        is not None
+    )
+
+
+def attach_market_reference(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    request: schemas.MarketReferenceAttachRequest,
+    actor: models.Expert,
+    fx_rate: NbuUsdUahRate | None,
+) -> models.StoneValuation:
+    if report.stone is None or report.stone_id is None:
+        raise ReportDomainError("Report has no normalized stone")
+    snapshot = get_market_data_snapshot(db, request.snapshot_id)
+    if snapshot is None or snapshot.status != "approved":
+        raise ReportDomainError("Select an approved market-data snapshot")
+    if snapshot.snapshot_kind != "market_reference" or snapshot.provider_code != "openfacet":
+        raise ReportDomainError("This snapshot cannot create an OpenFacet market reference")
+    existing = (
+        db.query(models.StoneValuation)
+        .filter(
+            models.StoneValuation.stone_id == report.stone_id,
+            models.StoneValuation.valuation_kind == "market_reference",
+            models.StoneValuation.market_snapshot_id == snapshot.snapshot_id,
+        )
+        .one_or_none()
+    )
+    if existing is not None:
+        raise ReportDomainError("This approved snapshot is already attached to the report")
+    price_per_carat, shape_code = _openfacet_price_per_carat(
+        db, snapshot_id=snapshot.snapshot_id, stone=report.stone,
+    )
+    amount = (price_per_carat * Decimal(report.stone.carat_weight)).quantize(Decimal("0.01"))
+    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False) if fx_rate else None
+    valuation = models.StoneValuation(
+        stone_id=report.stone_id,
+        valuation_kind="market_reference",
+        amount=amount,
+        currency_code=snapshot.currency_code,
+        unit="TOTAL_STONE",
+        source_name="OpenFacet",
+        source_reference=f"snapshot:{snapshot.snapshot_id}; shape:{shape_code}; USD/ct:{price_per_carat}",
+        market_snapshot_id=snapshot.snapshot_id,
+        applicability_note=request.applicability_note,
+        fx_snapshot_id=fx_snapshot.fx_snapshot_id if fx_snapshot else None,
+        fx_rate=fx_rate.rate if fx_rate else None,
+        fx_rate_date=fx_rate.rate_date if fx_rate else None,
+        converted_amount=convert_usd_to_uah(amount, fx_rate.rate) if fx_rate else None,
+        converted_currency_code="UAH" if fx_rate else None,
+        observed_at=snapshot.retrieved_at,
+        created_by_id=actor.expert_id,
+    )
+    db.add(valuation)
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="market_reference_added",
+        actor_id=actor.expert_id,
+        from_status=None,
+        to_status=None,
+        reason=_market_reference_event_reason(valuation),
+    )
+    db.commit()
+    db.refresh(valuation)
+    return valuation

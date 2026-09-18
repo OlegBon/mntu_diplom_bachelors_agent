@@ -1,8 +1,8 @@
 # Схема бази даних
 
 Документ описує цільову локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0007_grading_rulesets`, яку застосовано до локальної MariaDB
-17 вересня 2026. Це карта даних для розробки, API та
+Alembic revision `0010_market_reference_policy`, яку застосовано до локальної MariaDB
+18 вересня 2026. Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -15,7 +15,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 | База | Таблиці | Призначення |
 | --- | --- | --- |
 | `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, фізичні камені, lifecycle, ruleset-и, revocable public passport, приватні вкладення та майбутні фінансові записи. |
-| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference` | Числові та текстові довідники; legacy demo-індекс ціни. |
+| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes`, `fx_data_snapshots` | Числові й текстові довідники, legacy demo-індекс та versioned дані зовнішніх провайдерів. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
 ## Контрольовані значення
@@ -49,6 +49,9 @@ erDiagram
     EXPERTS ||--o{ MEDIA_ASSETS : "uploads"
     STONES ||--o{ STONE_VALUATIONS : "has values"
     EXPERTS ||--o{ STONE_VALUATIONS : "records"
+    MARKET_DATA_PROVIDERS ||--o{ MARKET_DATA_SNAPSHOTS : "provides"
+    MARKET_DATA_SNAPSHOTS ||--o{ MARKET_DATA_QUOTES : "contains"
+    MARKET_DATA_SNAPSHOTS ||--o{ STONE_VALUATIONS : "is referenced by"
 ```
 
 `report_id` формату `DR-xxxxx` лишається бізнес-ідентифікатором звіту.
@@ -121,6 +124,12 @@ Append-only журнал lifecycle. `event_id` — первинний ключ; 
 Подія містить `action`, попередній і новий статус, необов’язкову причину та
 `created_at`.
 
+Для нового immutable ринкового орієнтиру application додає подію в тій самій
+транзакції: `system_market_reference_added` для автоматичного policy-орієнтиру
+або `market_reference_added` для ручного admin-підтвердження. `reason` містить
+private provenance: суму, провайдера і номер market snapshot-а. Historical
+valuation не отримують вигаданих подій заднім числом.
+
 Migration `0002` створила по одній події `legacy_import` для кожного
 перенесеного report і не виводила з цього факту ні видачу, ні підтвердження.
 
@@ -162,10 +171,19 @@ API не монтує storage як static directory: читання проход
 | --- | --- |
 | `valuation_kind`, `amount`, `currency_code`, `unit` | Семантика й точна сума. |
 | `source_name`, `source_reference`, `observed_at` | Перевірюване зовнішнє або експертне джерело та момент спостереження. |
+| `market_snapshot_id`, `applicability_note` | Nullable ідентифікатор immutable OpenFacet snapshot-а. Для ручного `market_reference` note є обов’язковим підтвердженням admin; системний `system_market_reference` не має такого підтвердження. Значення snapshot не копіюються й не перераховуються. |
+| `fx_snapshot_id`, `fx_rate`, `fx_rate_date`, `converted_amount`, `converted_currency_code` | Nullable frozen NBU USD/UAH projection: snapshot, Decimal rate, official rate date і обчислений UAH total. Записуються разом із новим market reference і надалі не змінюються. |
 | `created_by_id`, `created_at` | Автор запису й технічний час. |
 
-Таблиця порожня після `0002`: авторитетний market provider, scheduler, ML і
-ручний admin flow — майбутні окремі задачі за [ADR-002](./decisions/002-financial-calculation-contract.md).
+`0008` дозволяє admin створити `market_reference` лише з approved OpenFacet
+snapshot-а для natural stone та після явного підтвердження застосовності.
+Чинний сервіс також best-effort створює `system_market_reference` для
+підтримуваного нового/оновленого draft за останнім approved snapshot-ом;
+відсутність покриття або зовнішнього FX не скасовує save. Обидва записи
+immutable, а ручний має display-пріоритет.
+Це model-based retail benchmark, не appraisal, offer, transaction чи sale
+price. Legacy `DiamondReport.price` і public passport не змінюються. Wizard
+до save лише читає active policy та approved snapshot для нефіксованого preview.
 
 ## Моделі `diamond_market`
 
@@ -189,6 +207,51 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 чи джерела; не є ринковим котируванням і не використовується як нова фінансова
 сутність.
 
+### `market_reference_policies`
+
+Singleton-налаштування, яке application читає за фіксованим `policy_id=1`, лише для **майбутніх** системних
+орієнтирів: nullable `market_provider_code`, `use_fx_conversion`, nullable
+`fx_provider_code`, `updated_by_id`, `updated_at`. Обидва provider code — FK до
+`market_data_providers`; policy не посилається на конкретний snapshot, бо
+server обирає останній `approved` snapshot на момент create/update draft.
+Зміна policy не переписує `stone_valuations`.
+
+### `market_data_providers`
+
+Каталог підтримуваних зовнішніх джерел. `provider_code` — стабільний PK,
+`display_name`, `provider_type`, `base_currency`, `quote_unit`, `source_url`,
+`methodology_url`, `scope_note`, `is_active`, `created_at` пояснюють, що саме
+провайдер публікує. Revision `0008` додає `openfacet`, а `0009` — `nbu` як
+джерело official USD/UAH. Додавання іншого провайдера потребує adapter-а,
+policy та окремого рішення про умови використання.
+
+### `market_data_snapshots`
+
+Незмінний результат одного отримання даних: `snapshot_id`, `provider_code`,
+`snapshot_kind`, `status` (`candidate`, `approved`, `rejected`), base currency
+та unit, source/methodology URL, scope note, кількість quotes, SHA-256
+контрольного набору, retrieved timestamp, actor і decision metadata. Після
+створення quotes не редагуються: admin може тільки раз затвердити або
+відхилити candidate. Помилка fetch не створює snapshot і не зачіпає старі.
+
+### `market_data_quotes`
+
+Нормалізовані записи одного snapshot-а: `quote_id`, `snapshot_id`,
+`shape_code`, `carat_anchor`, `color_code`, `clarity_code`,
+`price_per_carat DECIMAL(14,2)`. Складений unique не дозволяє дубль координат
+в межах snapshot-а. Для OpenFacet цілісна сума каменю обчислюється сервером з
+обраного snapshot-а й ваги через явну interpolation між carat anchors;
+збережена `StoneValuation.amount` не змінюється з новим snapshot-ом.
+
+### `fx_data_snapshots`
+
+Незмінна відповідь офіційного курсу: `fx_snapshot_id`, `provider_code=nbu`,
+base `USD`, quote `UAH`, `rate DECIMAL(18,8)`, `rate_date`, URL,
+`retrieved_at`, actor і `created_at`. Manual refresh лише додає запис. Під час
+OpenFacet attach backend завжди бере нову відповідь НБУ; він не підставляє
+старий snapshot, якщо мережа недоступна. Для best-effort системного орієнтира
+відсутність НБУ лише пропускає enrichment, а не скасовує draft save.
+
 ## Модель `diamond_analytics`
 
 ### `ml_results`
@@ -209,6 +272,9 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 | `0005_public_passports` | Revocable public tokens для issued reports; без backfill даних, цін або media. |
 | `0006_expert_activation` | Оборотний active-стан експертних акаунтів без hard delete. |
 | `0007_grading_rulesets` | Immutable metadata `idc-demo-v1` і legacy marker без перерахунку report grades. |
+| `0008_market_data_providers` | Provider-neutral catalog, immutable OpenFacet candidate/approved/rejected snapshots і quotes; nullable snapshot provenance у `stone_valuations`. Не fetch-ить дані, не створює valuation, не переписує legacy/demo values. |
+| `0009_nbu_fx_snapshots` | Додає `nbu`, immutable `fx_data_snapshots` і nullable frozen FX/UAH поля для нових `stone_valuations`. Не backfill-ить і не переоцінює historical values. |
+| `0010_market_reference_policy` | Додає singleton policy вибору market/FX provider для майбутнього `system_market_reference`; seed `openfacet` + увімкнений `nbu`. Не змінює snapshots, historical valuations чи legacy demo-індекс. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за

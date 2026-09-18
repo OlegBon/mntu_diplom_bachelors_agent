@@ -40,6 +40,9 @@ function createChecks(baseUrl) {
     ['Статистика експертів без токена', 'GET', '/statistics/expert-performance', [401], (body) => typeof body?.detail === 'string', '401 для admin-only operational analytics'],
     ['Статистика перевірок admin без токена', 'GET', '/statistics/admin-review-performance', [401], (body) => typeof body?.detail === 'string', '401 для admin-only review analytics'],
     ['Довідники звіту без токена', 'GET', '/reference-values', [401], (body) => typeof body?.detail === 'string', '401 для приватних довідників звіту'],
+    ['Провайдери ринкових даних без токена', 'GET', '/market-data/providers', [401], (body) => typeof body?.detail === 'string', '401 для admin-only каталогу провайдерів'],
+    ['Policy ринкового орієнтиру без токена', 'GET', '/market-data/policy', [401], (body) => typeof body?.detail === 'string', '401 для admin-only policy провайдерів'],
+    ['Snapshot-и ринкових даних без токена', 'GET', '/market-data/snapshots', [401], (body) => typeof body?.detail === 'string', '401 для admin-only історії snapshot-ів'],
   ].map(([name, method, pathname, expectedStatuses, validate, contract]) => ({
     name, method, url: apiUrl(pathname), expectedStatuses, validate, contract,
   })).concat({

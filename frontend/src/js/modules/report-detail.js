@@ -7,6 +7,7 @@ import {
   getReportEvents,
   getReportMedia,
   getReportMediaContentUrl,
+  getReportValuations,
   getReportPassport,
   getReportPassportPdf,
   getReportPassportQr,
@@ -27,6 +28,8 @@ const EVENT_LABELS = {
   passport_published: "Публічний паспорт опубліковано",
   passport_reissued: "Публічний паспорт перевипущено",
   passport_revoked: "Публічний паспорт відкликано",
+  system_market_reference_added: "Системний довідковий орієнтир додано",
+  market_reference_added: "Довідковий орієнтир підтверджено адміністратором",
   legacy_import: "Імпортовано з попередньої бази",
 };
 const DRAFT_FIELDS = ["input", "select", "textarea"];
@@ -39,6 +42,15 @@ function setStatus(node, message, isError = false) {
 
 function formatDate(value) {
   return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+}
+
+function formatAmount(amount, currencyCode) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: currencyCode, minimumFractionDigits: 2 }).format(Number(amount));
+}
+
+function formatFxRate(value) {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 8 }).format(Number(value));
 }
 
 function reportIdFromUrl() {
@@ -182,6 +194,66 @@ function renderMedia(container, reportId, assets, token) {
         .then((blob) => window.open(URL.createObjectURL(blob), "_blank", "noopener"));
     });
     item.append(link, document.createTextNode(` · ${asset.asset_type}`));
+    container.append(item);
+  }
+}
+
+function renderValuations(container, helpNode, valuations) {
+  container.replaceChildren();
+  const marketReferences = valuations.filter((valuation) => ["market_reference", "system_market_reference"].includes(valuation.valuation_kind));
+  if (!marketReferences.length) {
+    const item = document.createElement("li");
+    item.textContent = "Системного або підтвердженого ринкового орієнтира ще немає.";
+    container.append(item);
+    return;
+  }
+  helpNode.textContent = "OpenFacet — model-based retail reference. Системний орієнтир формується автоматично з останнього затвердженого знімка; підтверджений орієнтир окремо перевіряє адміністратор. Обидва не є експертною, продажною чи транзакційною ціною.";
+  if (marketReferences.length > 1) {
+    helpNode.append(document.createTextNode(" Поточний запис відкритий; попередні збережені орієнтири згорнуті."));
+  }
+  for (const [index, valuation] of marketReferences.entries()) {
+    const isSystemReference = valuation.valuation_kind === "system_market_reference";
+    const item = document.createElement("li");
+    item.className = "market-reference-card";
+    const disclosure = document.createElement("details");
+    disclosure.className = "market-reference-card__disclosure";
+    disclosure.open = index === 0;
+    const summary = document.createElement("summary");
+    summary.className = "market-reference-card__summary";
+    const amount = document.createElement("strong");
+    amount.textContent = formatAmount(valuation.amount, valuation.currency_code);
+    const label = document.createElement("span");
+    label.textContent = isSystemReference ? "Системний довідковий орієнтир" : "Підтверджений довідковий орієнтир";
+    summary.append(amount, label);
+    const details = document.createElement("dl");
+    details.className = "market-reference-card__details";
+    const addDetail = (term, value) => {
+      const row = document.createElement("div");
+      const dt = document.createElement("dt"); dt.textContent = term;
+      const dd = document.createElement("dd"); dd.textContent = value;
+      row.append(dt, dd); details.append(row);
+    };
+    addDetail("Провайдер", valuation.source_name);
+    addDetail("Знімок OpenFacet", `#${valuation.market_snapshot_id ?? "—"}`);
+    addDetail("Отримано", formatDate(valuation.observed_at));
+    if (valuation.converted_amount && valuation.converted_currency_code) {
+      const rateDate = valuation.fx_rate_date ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${valuation.fx_rate_date}T12:00:00`)) : "—";
+      addDetail("Еквівалент", formatAmount(valuation.converted_amount, valuation.converted_currency_code));
+      addDetail("Курс НБУ", `${formatFxRate(valuation.fx_rate)} UAH/USD · ${rateDate} · знімок #${valuation.fx_snapshot_id ?? "—"}`);
+    }
+    disclosure.append(summary, details);
+    if (valuation.applicability_note) {
+      const note = document.createElement("p");
+      note.className = "market-reference-card__note";
+      note.append(document.createTextNode("Підтвердження: "), document.createTextNode(valuation.applicability_note));
+      disclosure.append(note);
+    } else if (isSystemReference) {
+      const note = document.createElement("p");
+      note.className = "market-reference-card__note";
+      note.textContent = "Автоматично розраховано за останнім затвердженим знімком OpenFacet; застосовність не підтверджена адміністратором.";
+      disclosure.append(note);
+    }
+    item.append(disclosure);
     container.append(item);
   }
 }
@@ -376,6 +448,12 @@ export async function initReportDetail() {
       document.getElementById("detail-expert-summary").textContent = `Експертні grades: Proportions ${confirmedProportions}, підсумковий Cut ${confirmedCut}.`;
       renderEvents(document.getElementById("detail-events"), events);
       renderMedia(document.getElementById("detail-media"), reportId, media, token);
+      try {
+        const valuations = await getReportValuations(reportId, token);
+        renderValuations(document.getElementById("detail-valuations"), document.getElementById("detail-valuations-help"), valuations);
+      } catch {
+        document.getElementById("detail-valuations").textContent = "Не вдалося завантажити ринковий орієнтир.";
+      }
       await renderPassportControls({ report, currentUser, token, onStatus: (message, isError) => setStatus(status, message, isError) });
       renderTransitionControls(document.getElementById("detail-transitions"), document.getElementById("detail-transition-help"), report, currentUser, async (targetStatus) => {
         try {

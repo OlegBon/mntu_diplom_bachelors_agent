@@ -99,20 +99,23 @@ Alembic є джерелом істини для структури таблиц�
 зроби резервну копію даних, якщо вони цінні.
 
 Поточний репозиторій має revisions від `0001_initial_schema` до
-`0007_grading_rulesets`. Для наявної локальної БД, що вже позначена
+`0009_nbu_fx_snapshots`. Для наявної локальної БД, що вже позначена
 `0001_initial_schema`, наступні revisions створюють нормалізовані `stones`,
 `report_events`, `stone_valuations`, `reference_values`, lifecycle-поля,
 private media, public tokens, active-стан користувачів і registry ruleset-ів.
 Лише `0002_report_core` переносить legacy-звіти у draft; `0007` не
 переобчислює grades, а позначає report без відомої версії
-`legacy-unversioned-v1`. Перед застосуванням звір generated SQL без зміни БД:
+`legacy-unversioned-v1`. `0008` додає OpenFacet snapshots, а `0009` —
+провайдера НБУ, immutable FX snapshots та nullable frozen UAH-поля для нових
+market references; жодна з них не переписує historical demo/legacy ціни.
+Перед застосуванням звір generated SQL без зміни БД:
 
 ```powershell
 .\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head --sql
 ```
 
 Після резервної копії та окремого підтвердження застосуй revision, а потім
-переконайся, що версія стала `0007_grading_rulesets`:
+переконайся, що версія стала `0009_nbu_fx_snapshots`:
 
 ```powershell
 .\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head

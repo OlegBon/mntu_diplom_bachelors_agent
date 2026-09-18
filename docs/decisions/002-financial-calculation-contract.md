@@ -1,8 +1,9 @@
 # ADR-002: фінансовий контракт і межі demo-прогнозу
 
-**Статус:** погоджено для локального MVP  
-**Дата:** 2026-09-14  
-**Пов’язані задачі:** [037 — фінансові розрахунки](../work_plan.md), [040 — ядро звіту](../backlog/040-report-core-and-reference-data.md)
+**Статус:** погоджено для локального MVP, уточнено 2026-09-18
+
+**Дата:** 2026-09-14
+**Пов’язані задачі:** [037 — фінансові розрахунки](../work_plan.md), 110 — provider-neutral market data
 
 ## Контекст
 
@@ -31,7 +32,56 @@
 
 Для реальних даних потрібна окрема модель із типом ціни, валютою, джерелом, датою фіксації та правилами історичного збереження. Порівняння зі свіжим курсом або ринком буде окремим аналітичним сценарієм, а не зміною історичного запису.
 
-### Цільова модель для 040 і наступних задач
+### Реалізований контрольований ринковий reference
+
+`0008_market_data_providers` реалізує перший, вузький варіант
+ринкових орієнтирів:
+
+1. OpenFacet отримується лише вручну admin-ом і зберігається як immutable
+   candidate snapshot; snapshot містить першоджерело, методологію, scope,
+   timestamp, checksum і normalized USD/ct quotes.
+2. Admin може один раз approve/reject candidate. Лише approved snapshot може
+   бути застосований до конкретного report через окремий `StoneValuation`.
+3. OpenFacet є model-based retail benchmark з публічних retail listings. Він
+   **не** є expert appraisal, asking price, transaction чи sale price. Його
+   scope для цього adapter-а — natural/GIA reference; у report немає
+   certificate-lab поля, тому admin обов’язково підтверджує застосовність і
+   залишає пояснення.
+4. Розрахунок total USD виконує backend з quote USD/ct та ваги каменю;
+   застосовуються лише підтримані форма, color/clarity і carat anchors.
+   Новий snapshot не змінює вже збережену valuation.
+5. Після появи approved snapshot-а підтримуваний новий або оновлений draft
+   може best-effort отримати `system_market_reference`: server автоматично
+   обирає останній approved snapshot, але не створює запис без покриття або
+   якщо НБУ недоступний. Ідентичні inputs не дублюють valuation. Це не
+   підтвердження застосовності admin-ом.
+6. `market_reference` з ручним підтвердженням admin лишається окремим,
+   пріоритетним відображенням. Legacy `DiamondReport.price`, public passport
+   і PDF не отримують жодної з цих сум автоматично.
+
+### Реалізований USD/UAH FX-контур
+
+`0009_nbu_fx_snapshots` додає офіційний курс НБУ, але не робить його ціною
+діаманта. Коли admin прикріплює approved OpenFacet reference, backend заново
+запитує USD/UAH, обчислює UAH через `Decimal` із `ROUND_HALF_UP` до двох
+знаків і в одній транзакції зберігає FX snapshot, rate, official rate date та
+UAH total. Якщо НБУ недоступний або повертає некоректну відповідь, reference
+не створюється і старий курс не підставляється.
+
+Новий NBU snapshot ніколи не змінює valuation, яка вже збережена. Admin може
+створити ручний snapshot для контролю, але це не є approval flow і не змінює
+звіти. Dashboard позначає legacy-demo `d`, системний OpenFacet reference `*`,
+а явний admin reference `of`; popover та private detail показують source,
+OpenFacet snapshot, USD, frozen UAH і NBU provenance. Public passport та PDF,
+як і раніше, не містять цін.
+
+OpenFacet може змінити умови, доступність або формат. Перед будь-яким
+зовнішнім показом, розповсюдженням чи комерційним використанням потрібна
+окрема перевірка ліцензій і policy: [API](https://openfacet.net/en/api-docs/),
+[методологія](https://openfacet.net/en/methodology/),
+[умови використання](https://openfacet.net/en/terms/).
+
+### Цільова модель для наступних задач
 
 Окремі величини не змішуються в одному полі:
 
@@ -54,4 +104,11 @@
 
 ## Наслідки та наступні кроки
 
-037 не змінює поточну MariaDB-схему, OpenAPI або історичні записи. У 040 потрібно окремо погодити Alembic-міграцію, API-контракти, точність і тестові приклади; лише після цього можна створювати нові поля або backfill. Тести 040 мають покривати `Decimal`, правила округлення, відхилення невалідних сум та межу між системним прогнозом, експертною оцінкою і продажем.
+037 не змінила historical записи. `0008`, `0009` і `0010` додають нові
+структури та future-only policy без backfill; їх застосування до MariaDB
+потребує окремого підтвердження й backup. Коли новий `system_market_reference`
+або ручний `market_reference` фактично створено, приватна історія звіту отримує
+append-only подію з його сумою та provenance. Для наявних valuation події
+заднім числом не створюються.
+Scheduler, інші провайдери та рішення про клієнтське/PDF-відображення не
+входять до цього зрізу й мають бути погоджені перед реалізацією.

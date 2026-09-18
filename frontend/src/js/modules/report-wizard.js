@@ -8,6 +8,7 @@ import {
 } from "./api.js";
 
 const requiredPreviewNames = ["table_percent", "depth_percent", "crown_angle", "pavilion_angle", "polish_grade", "symmetry_grade"];
+const implicitSubmitInputTypes = new Set(["date", "email", "number", "password", "search", "tel", "text", "url"]);
 
 function setStatus(element, message, isError = false) {
   element.hidden = !message;
@@ -48,6 +49,8 @@ function calculationInput(formData) {
     carat_weight: formData.get("carat_weight") === "" ? null : String(formData.get("carat_weight")),
     color_grade: formData.get("color_grade") === "" ? null : number(formData, "color_grade"),
     clarity_grade: formData.get("clarity_grade") === "" ? null : number(formData, "clarity_grade"),
+    shape: formData.get("shape") || null,
+    origin: formData.get("origin") || null,
   };
 }
 
@@ -106,6 +109,15 @@ export async function initReportWizard() {
       if (status.classList.contains("is-error")) setStatus(status, "");
     }
   });
+  form.addEventListener("keydown", (event) => {
+    const target = event.target;
+    if (
+      event.key === "Enter"
+      && !event.isComposing
+      && target instanceof HTMLInputElement
+      && implicitSubmitInputTypes.has(target.type)
+    ) event.preventDefault();
+  });
 
   try {
     const [references, mappings, nextId] = await Promise.all([getReferenceValues(token), getGradeMappings(), getNextReportId(token)]);
@@ -143,12 +155,18 @@ export async function initReportWizard() {
         document.getElementById("res-sym").textContent = gradeLabels.get(`symmetry:${data.get("symmetry_grade")}`) || data.get("symmetry_grade");
         document.getElementById("res-final").textContent = gradeLabels.get(`cut:${preview.system_cut_grade}`) || preview.system_cut_grade;
         const price = document.getElementById("res-price");
-        const priceMarker = document.getElementById("price-demo-marker");
-        price.textContent = preview.demo_price_usd === null
+        const priceMarker = document.getElementById("price-provider-marker");
+        const priceSource = document.getElementById("market-reference-preview-source");
+        const providerNames = { openfacet: "OpenFacet" };
+        const providerMarkers = { openfacet: "of" };
+        price.textContent = preview.system_market_reference_usd === null
           ? "--"
-          : `USD ${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(preview.demo_price_usd)}`;
-        priceMarker.hidden = preview.demo_price_usd === null;
-        document.getElementById("calculation-rule-version").textContent = `Правило: ${preview.calculation_rule_version}`;
+          : `USD ${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(preview.system_market_reference_usd)}`;
+        priceMarker.hidden = preview.system_market_reference_usd === null;
+        priceMarker.textContent = providerMarkers[preview.market_reference_provider_code] || preview.market_reference_provider_code || "";
+        priceSource.textContent = preview.system_market_reference_usd === null
+          ? "Немає доступного системного орієнтиру для введених характеристик."
+          : `${providerNames[preview.market_reference_provider_code] || preview.market_reference_provider_code} · знімок #${preview.market_reference_snapshot_id}. Значення буде зафіксовано під час збереження чернетки.`;
       } catch { /* invalid values are handled by native fields */ }
     }, 300);
   };

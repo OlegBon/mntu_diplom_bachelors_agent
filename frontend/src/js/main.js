@@ -8,6 +8,7 @@ import { initProfile } from "./modules/profile.js";
 import { initAdminUsers } from "./modules/admin-users.js";
 import { initReferenceCatalog } from "./modules/reference-catalog.js";
 import { initAnalytics } from "./modules/analytics.js";
+import { initMarketData } from "./modules/market-data.js";
 import { initPasswordVisibility } from "./modules/password-visibility.js";
 
 function createNavigationLink(href, label, className = "") {
@@ -64,7 +65,7 @@ function applyApprovedNavigation(isAuthenticated) {
   sessionName.hidden = false;
 
   const links = isAdmin
-    ? [["/dashboard.html", "Всі звіти"], ["/experts.html", "Експерти"], ["/references.html", "Довідники"], ["/ml-analysis.html", "Аналітика"], ["/profile.html", "Профіль"]]
+    ? [["/dashboard.html", "Всі звіти"], ["/experts.html", "Експерти"], ["/references.html", "Довідники"], ["/market-data.html", "Ринкові дані"], ["/ml-analysis.html", "Аналітика"], ["/profile.html", "Профіль"]]
     : [["/dashboard.html", "Всі звіти"], ["/create-report.html", "Новий звіт"], ["/profile.html", "Профіль"]];
   for (const [href, label] of links) navList.append(createNavigationLink(href, label));
 
@@ -97,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
   const isAdmin = localStorage.getItem("role") === "admin";
   const currentPath = window.location.pathname;
-  const isProtectedPage = ["/dashboard.html", "/create-report.html", "/report-detail.html", "/profile.html", "/experts.html", "/references.html", "/ml-analysis.html"].includes(currentPath);
+  const isProtectedPage = ["/dashboard.html", "/create-report.html", "/report-detail.html", "/profile.html", "/experts.html", "/references.html", "/market-data.html", "/ml-analysis.html"].includes(currentPath);
   const isCreateReportPage = currentPath.endsWith("/create-report.html");
 
   if (!isAuthenticated && isProtectedPage) {
@@ -132,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (isAuthenticated && currentPath.endsWith("/profile.html")) void initProfile();
   if (isAuthenticated && currentPath.endsWith("/experts.html")) void initAdminUsers();
   if (isAuthenticated && currentPath.endsWith("/references.html")) void initReferenceCatalog();
+  if (isAuthenticated && currentPath.endsWith("/market-data.html")) void initMarketData();
   if (isAuthenticated && currentPath.endsWith("/ml-analysis.html")) void initAnalytics();
   if (currentPath.endsWith("/passport.html")) void initPublicPassport();
 

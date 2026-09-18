@@ -106,6 +106,7 @@ function renderActions(report) {
 }
 
 function renderPrice(report) {
+  if (report.market_reference) return renderMarketReferencePrice(report);
   if (report.price === null || report.price === undefined) return createElement("span", "report-price__missing", "—");
   const wrapper = createElement("div", "report-price");
   const toggle = createElement("button", "report-price__toggle");
@@ -122,6 +123,65 @@ function renderPrice(report) {
     popover.append(row);
   }
   popover.append(createElement("p", "report-price__warning", "Не є актуальним ринковим котируванням."));
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isOpen = popover.hidden;
+    closeOverlays();
+    popover.hidden = !isOpen;
+    toggle.setAttribute("aria-expanded", String(isOpen));
+  });
+  wrapper.append(toggle, popover);
+  return wrapper;
+}
+
+function formatFxRate(value) {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 8 }).format(Number(value));
+}
+
+function formatDateOnly(value) {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${value}T12:00:00`));
+}
+
+function renderMarketReferencePrice(report) {
+  const reference = report.market_reference;
+  const isSystemReference = reference.valuation_kind === "system_market_reference";
+  const marker = "of";
+  const referenceType = isSystemReference
+    ? "Системний довідковий орієнтир"
+    : "Підтверджений довідковий орієнтир";
+  const wrapper = createElement("div", "report-price");
+  const toggle = createElement("button", "report-price__toggle");
+  toggle.type = "button";
+  toggle.setAttribute("aria-label", `Пояснення ринкового орієнтира звіту ${report.report_id}`);
+  toggle.setAttribute("aria-expanded", "false");
+  toggle.append(document.createTextNode(`USD ${formatDemoPrice(reference.amount)} `), createElement("sup", "report-price__indicator", marker));
+  const popover = createElement("div", "report-price__popover");
+  popover.hidden = true;
+  const observed = formatDateTime(reference.observed_at);
+  const details = [
+    ["Тип", referenceType],
+    ["Провайдер", reference.source_name],
+    ["Знімок OpenFacet", `#${reference.market_snapshot_id ?? "—"}`],
+    ["Отримано", observed.date],
+  ];
+  if (reference.converted_amount && reference.converted_currency_code) {
+    details.push(["Еквівалент", `${reference.converted_currency_code} ${formatDemoPrice(reference.converted_amount)}`]);
+    details.push(["Курс НБУ", `${formatFxRate(reference.fx_rate)} UAH/USD · ${formatDateOnly(reference.fx_rate_date)} · знімок #${reference.fx_snapshot_id ?? "—"}`]);
+  }
+  for (const [label, value] of details) {
+    const row = createElement("p", "report-price__detail");
+    row.append(createElement("strong", "", `${label}: `), document.createTextNode(value));
+    popover.append(row);
+  }
+  popover.append(createElement(
+    "p",
+    "report-price__warning",
+    isSystemReference
+      ? "Розраховано системою за останнім затвердженим знімком; не є експертною, продажною чи транзакційною ціною."
+      : "Застосовність підтверджена адміністратором; не є експертною, продажною чи транзакційною ціною.",
+  ));
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
     const isOpen = popover.hidden;

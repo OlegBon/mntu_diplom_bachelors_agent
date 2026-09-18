@@ -82,7 +82,9 @@ def test_report_wizard_preview_uses_server_contract_and_does_not_reserve_id(clie
     assert calculation_body["system_proportions_grade"] == 0
     assert calculation_body["system_cut_grade"] == 0
     assert calculation_body["calculation_rule_version"] == "idc-demo-v1"
-    assert calculation_body["demo_price_usd"] is None
+    assert calculation_body["system_market_reference_usd"] is None
+    assert calculation_body["market_reference_provider_code"] is None
+    assert calculation_body["market_reference_snapshot_id"] is None
 
     created = client.post("/reports", json=report_payload(), headers=owner_headers)
     assert created.status_code == 200

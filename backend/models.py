@@ -223,6 +223,17 @@ class StoneValuation(Base):
     unit = Column(String(24), nullable=False)
     source_name = Column(String(255), nullable=False)
     source_reference = Column(String(255), nullable=True)
+    # Cross-database FK is intentionally avoided for future PostgreSQL
+    # portability; the domain service validates this market snapshot ID.
+    market_snapshot_id = Column(Integer, nullable=True, index=True)
+    applicability_note = Column(Text, nullable=True)
+    # The FX rate is frozen with the valuation.  It is never recalculated from
+    # a subsequently published NBU rate.
+    fx_snapshot_id = Column(Integer, nullable=True, index=True)
+    fx_rate = Column(DECIMAL(18, 8), nullable=True)
+    fx_rate_date = Column(Date, nullable=True)
+    converted_amount = Column(DECIMAL(14, 2), nullable=True)
+    converted_currency_code = Column(String(3), nullable=True)
     observed_at = Column(DateTime, nullable=False)
     created_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
@@ -265,6 +276,111 @@ class MarketPriceRef(Base):
     updated_by = Column(Integer, nullable=True)
     updated_at = Column(TIMESTAMP, server_default=func.now())
     notes = Column(String(255), nullable=True)
+
+
+class MarketDataProvider(Base):
+    """Registered source metadata; adding a provider does not alter reports."""
+
+    __tablename__ = "market_data_providers"
+    __table_args__ = {"schema": "diamond_market"}
+
+    provider_code = Column(String(32), primary_key=True)
+    display_name = Column(String(100), nullable=False)
+    provider_type = Column(String(32), nullable=False)
+    documentation_url = Column(String(255), nullable=False)
+    terms_url = Column(String(255), nullable=False)
+    scope_note = Column(Text, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True, server_default="1")
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class MarketReferencePolicy(Base):
+    """The mutable admin policy used only for future system references."""
+
+    __tablename__ = "market_reference_policies"
+    __table_args__ = {"schema": "diamond_market"}
+
+    policy_id = Column(Integer, primary_key=True)
+    market_provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=True,
+    )
+    use_fx_conversion = Column(Boolean, nullable=False, default=True, server_default="1")
+    fx_provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=True,
+    )
+    updated_by_id = Column(Integer, nullable=True)
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+
+class MarketDataSnapshot(Base):
+    """Immutable candidate or approved provider import with full provenance."""
+
+    __tablename__ = "market_data_snapshots"
+    __table_args__ = {"schema": "diamond_market"}
+
+    snapshot_id = Column(Integer, primary_key=True, index=True)
+    provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=False, index=True,
+    )
+    snapshot_kind = Column(String(32), nullable=False)
+    status = Column(String(16), nullable=False, default="candidate", server_default="candidate", index=True)
+    currency_code = Column(String(3), nullable=False)
+    unit = Column(String(32), nullable=False)
+    source_url = Column(Text, nullable=False)
+    methodology_url = Column(String(255), nullable=False)
+    coverage_note = Column(Text, nullable=False)
+    quote_count = Column(Integer, nullable=False)
+    content_sha256 = Column(String(64), nullable=False)
+    retrieved_at = Column(DateTime, nullable=False)
+    created_by_id = Column(Integer, nullable=False)
+    approved_by_id = Column(Integer, nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+    decision_reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class MarketDataQuote(Base):
+    """A normalized quote within exactly one immutable market snapshot."""
+
+    __tablename__ = "market_data_quotes"
+    __table_args__ = (
+        UniqueConstraint(
+            "snapshot_id", "shape_code", "carat_anchor", "color_code", "clarity_code",
+            name="uix_market_snapshot_quote",
+        ),
+        {"schema": "diamond_market"},
+    )
+
+    quote_id = Column(Integer, primary_key=True, index=True)
+    snapshot_id = Column(
+        Integer, ForeignKey("diamond_market.market_data_snapshots.snapshot_id"), nullable=False, index=True,
+    )
+    shape_code = Column(String(32), nullable=False)
+    carat_anchor = Column(DECIMAL(8, 3), nullable=False)
+    color_code = Column(String(16), nullable=False)
+    clarity_code = Column(String(16), nullable=False)
+    price_per_carat = Column(DECIMAL(14, 2), nullable=False)
+
+
+class FxDataSnapshot(Base):
+    """Immutable official FX response used when a valuation is attached."""
+
+    __tablename__ = "fx_data_snapshots"
+    __table_args__ = {"schema": "diamond_market"}
+
+    fx_snapshot_id = Column(Integer, primary_key=True, index=True)
+    provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=False, index=True,
+    )
+    base_currency_code = Column(String(3), nullable=False)
+    quote_currency_code = Column(String(3), nullable=False)
+    rate = Column(DECIMAL(18, 8), nullable=False)
+    rate_date = Column(Date, nullable=False)
+    source_url = Column(Text, nullable=False)
+    retrieved_at = Column(DateTime, nullable=False)
+    created_by_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
 
 
 class MlResult(Base):

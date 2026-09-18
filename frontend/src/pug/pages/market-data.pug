@@ -1,0 +1,61 @@
+extends ../layout/main
+
+block content
+    .account-page(hidden data-protected-page="true" data-market-data-page)
+        .page-header
+            div
+                h1.page-title Ринкові дані
+                p.page-subtitle Версіоновані довідкові дані з джерелом, моментом отримання та ручним погодженням.
+        p#market-data-status.account-status(role="status" aria-live="polite" hidden)
+        section.account-surface.account-surface--wide
+            h2 Системний довідковий орієнтир
+            p.account-help Налаштування діють лише для майбутніх нових або змінених чернеток. Збережені орієнтири не перераховуються.
+            form#market-reference-policy-form(novalidate)
+                fieldset.market-policy-fieldset
+                    legend Провайдер ринкового орієнтиру
+                    #market-policy-market-providers.market-policy-options(aria-live="polite")
+                label.market-data-confirmation(for="market-policy-use-fx")
+                    input#market-policy-use-fx(type="checkbox")
+                    span Додавати еквівалент у UAH за офіційним курсом НБУ
+                p.account-help#market-policy-fx-note Курс НБУ фіксується лише разом із новим орієнтиром.
+                button#market-reference-policy-submit.btn.btn-primary(type="submit") Зберегти налаштування
+        section.account-surface.account-surface--wide
+            h2 Провайдери
+            p.account-help OpenFacet — model-based retail reference для порівнюваних природних GIA-каменів; це не експертна оцінка, не пропозиція та не ціна продажу. НБУ надає офіційний USD/UAH: якщо конвертацію увімкнено, курс отримується заново й назавжди фіксується з орієнтиром.
+            #market-data-providers.market-data-providers(aria-live="polite")
+        section.account-surface.account-surface--wide
+            h2 Історія знімків
+            p.account-help Кандидат не застосовується, доки адміністратор окремо не затвердить його. Дані знімка після створення не редагуються.
+            #market-data-snapshots.market-data-snapshots(aria-live="polite")
+        section.account-surface.account-surface--wide
+            h2 Прикріпити орієнтир до звіту
+            p.account-help Звіт не містить даних про GIA-сертифікат. Тому перед прикріпленням адміністратор підтверджує застосовність OpenFacet до конкретного каменя. Конвертацію UAH визначають поточні системні налаштування. Legacy-ціна звіту не змінюється.
+            p#market-reference-status.account-status(role="status" aria-live="polite" hidden)
+            form#market-reference-attach-form(novalidate)
+                .form-row
+                    .form-group.half
+                        label(for="market-reference-report-id") Номер звіту
+                        input#market-reference-report-id.form-control(type="text" required maxlength="20" placeholder="DR-01001")
+                    .form-group.half
+                        label(for="market-reference-snapshot") Затверджений знімок
+                        select#market-reference-snapshot.form-select(required disabled)
+                            option(value="") Немає затверджених знімків
+                .form-group
+                    label(for="market-reference-note") Підтвердження застосовності
+                    textarea#market-reference-note.form-control(rows="3" required minlength="10" maxlength="2000" placeholder="Наприклад: перевірено природне походження та зіставність характеристик із scope джерела.")
+                label.market-data-confirmation(for="market-reference-confirmed")
+                    input#market-reference-confirmed(type="checkbox" required)
+                    span Підтверджую, що цей орієнтир застосовується лише як довідкове зіставлення, а не як експертна чи продажна ціна.
+                button.btn.btn-primary(type="submit") Прикріпити ринковий орієнтир
+        dialog#market-decision-dialog.account-dialog(aria-labelledby="market-decision-dialog-title")
+            form#market-decision-form
+                .account-dialog__header
+                    h2#market-decision-dialog-title Підтвердити рішення
+                    button#market-decision-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
+                p#market-decision-dialog-description.account-help
+                .form-group
+                    label#market-decision-reason-label(for="market-decision-reason") Коментар
+                    textarea#market-decision-reason.form-control(rows="3" maxlength="2000" placeholder="Необов’язково")
+                .account-dialog__actions
+                    button#market-decision-cancel.btn.btn-outline(type="button") Скасувати
+                    button#market-decision-submit.btn.btn-primary(type="submit") Підтвердити

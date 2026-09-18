@@ -155,6 +155,95 @@ class MarketPriceResponse(BaseModel):
         from_attributes = True
 
 
+MarketSnapshotStatus = Literal["candidate", "approved", "rejected"]
+
+
+class MarketDataProviderResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    provider_code: str
+    display_name: str
+    provider_type: str
+    documentation_url: str
+    terms_url: str
+    scope_note: str
+    is_active: bool
+
+
+class MarketReferencePolicyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    policy_id: int
+    market_provider_code: Optional[str]
+    use_fx_conversion: bool
+    fx_provider_code: Optional[str]
+    updated_by_id: Optional[int]
+    updated_at: datetime
+
+
+class MarketReferencePolicyUpdate(BaseModel):
+    market_provider_code: Optional[str] = Field(default=None, max_length=32)
+    use_fx_conversion: bool
+    fx_provider_code: Optional[str] = Field(default=None, max_length=32)
+
+
+class MarketDataSnapshotResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    snapshot_id: int
+    provider_code: str
+    snapshot_kind: str
+    status: MarketSnapshotStatus
+    currency_code: str
+    unit: str
+    source_url: str
+    methodology_url: str
+    coverage_note: str
+    quote_count: int
+    content_sha256: str
+    retrieved_at: datetime
+    created_by_id: int
+    approved_by_id: Optional[int]
+    approved_at: Optional[datetime]
+    decision_reason: Optional[str]
+    created_at: datetime
+
+
+class MarketSnapshotDecision(BaseModel):
+    reason: Optional[str] = Field(default=None, max_length=2_000)
+
+
+class MarketReferenceAttachRequest(BaseModel):
+    snapshot_id: int = Field(gt=0)
+    applicability_confirmed: Literal[True]
+    applicability_note: str = Field(min_length=10, max_length=2_000)
+
+
+class StoneValuationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    valuation_id: int
+    stone_id: int
+    valuation_kind: str
+    amount: Decimal
+    currency_code: str
+    unit: str
+    source_name: str
+    source_reference: Optional[str]
+    market_snapshot_id: Optional[int]
+    applicability_note: Optional[str]
+    fx_snapshot_id: Optional[int]
+    fx_rate: Optional[Decimal]
+    fx_rate_date: Optional[date]
+    converted_amount: Optional[Decimal]
+    converted_currency_code: Optional[str]
+    observed_at: datetime
+    created_by_id: Optional[int]
+    created_at: datetime
+
+
+
+
 # Report-domain contract used by the current private API.
 ReportStatus = Literal["draft", "review", "issued", "void"]
 Origin = Literal["unknown", "natural", "lab_grown", "other"]
@@ -236,6 +325,22 @@ class ReportEventResponse(BaseModel):
     created_at: datetime
 
 
+class MarketReferenceSummary(BaseModel):
+    """The preferred market-reference projection for one report list row."""
+
+    amount: Decimal
+    currency_code: str
+    valuation_kind: str
+    source_name: str
+    market_snapshot_id: Optional[int]
+    observed_at: datetime
+    converted_amount: Optional[Decimal]
+    converted_currency_code: Optional[str]
+    fx_snapshot_id: Optional[int]
+    fx_rate: Optional[Decimal]
+    fx_rate_date: Optional[date]
+
+
 class ReportResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     report_id: str
@@ -255,7 +360,23 @@ class ReportResponse(BaseModel):
     expert_cut_grade: Optional[int]
     expert_confirmed_at: Optional[datetime]
     price: Optional[Decimal]
+    market_reference: Optional[MarketReferenceSummary] = None
     stone: StoneResponse
+
+
+class FxDataSnapshotResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    fx_snapshot_id: int
+    provider_code: str
+    base_currency_code: str
+    quote_currency_code: str
+    rate: Decimal
+    rate_date: date
+    source_url: str
+    retrieved_at: datetime
+    created_by_id: Optional[int]
+    created_at: datetime
 
 
 class ReportListResponse(BaseModel):
@@ -278,7 +399,9 @@ class ReportCalculationPreview(BaseModel):
     system_proportions_grade: int
     system_cut_grade: int
     calculation_rule_version: str
-    demo_price_usd: Optional[Decimal] = None
+    system_market_reference_usd: Optional[Decimal] = None
+    market_reference_provider_code: Optional[str] = None
+    market_reference_snapshot_id: Optional[int] = None
 
 
 class ReportCalculationInput(BaseModel):
@@ -293,6 +416,8 @@ class ReportCalculationInput(BaseModel):
     carat_weight: Optional[Decimal] = Field(default=None, gt=0, le=100)
     color_grade: Optional[int] = Field(default=None, ge=0, le=99)
     clarity_grade: Optional[int] = Field(default=None, ge=0, le=99)
+    shape: Optional[str] = Field(default=None, max_length=50)
+    origin: Optional[Origin] = None
 
 
 class ReferenceValueResponse(BaseModel):
