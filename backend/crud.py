@@ -1,10 +1,11 @@
-from sqlalchemy import asc, case, desc, func
+from sqlalchemy import and_, asc, case, desc, func
 from sqlalchemy.orm import Session, joinedload
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 import hashlib
 import secrets
+import uuid
 from statistics import median
 
 from . import models, schemas
@@ -21,6 +22,8 @@ CURRENT_RULESET_ID = "idc-demo-v1"
 # document and state the limited Diamant ID implementation separately.
 # Kept as a compatibility alias for callers and serialized API contracts.
 REPORT_RULE_VERSION = CURRENT_RULESET_ID
+WORK_SESSION_MAX_INTERVAL_SECONDS = 60
+WORK_SESSION_LEASE_SECONDS = 75
 
 
 class ReportDomainError(ValueError):
@@ -406,6 +409,8 @@ def transition_report_domain(
         raise ReportDomainError("Issued reports require an expert proportions grade")
 
     now = datetime.now(timezone.utc)
+    if current_status == "draft" and target_status == "review":
+        finish_active_work_session(db, report=report)
     report.status = target_status
     report.updated_at = now
     if target_status == "issued":
@@ -691,9 +696,32 @@ def get_active_experts(db: Session):
         models.Expert.role != 'admin', models.Expert.is_active.is_(True)
     ).all()
 
-def get_expert_stats(db: Session):
-    """Return an all-time, admin-facing workflow snapshot for every gemologist."""
-    return db.query(
+def _period_bounds(date_from: date | None, date_to: date | None) -> tuple[datetime | None, datetime | None]:
+    """Return UTC-like half-open bounds for date-only operational filters."""
+    if date_from is not None and date_to is not None and date_from > date_to:
+        raise ReportDomainError("date_from must not be after date_to")
+    start = datetime.combine(date_from, time.min, tzinfo=timezone.utc) if date_from else None
+    end = datetime.combine(date_to + timedelta(days=1), time.min, tzinfo=timezone.utc) if date_to else None
+    return start, end
+
+
+def _work_session_record(session: models.ReportWorkSession) -> schemas.WorkSessionDurationRecord:
+    return schemas.WorkSessionDurationRecord(
+        report_id=session.report_id,
+        duration_seconds=session.active_seconds,
+        finished_at=session.ended_at,
+    )
+
+
+def get_expert_stats(db: Session, *, date_from: date | None = None, date_to: date | None = None) -> list[schemas.ExpertStats]:
+    """Return admin-only report counts and finished, server-timed work sessions."""
+    start, end = _period_bounds(date_from, date_to)
+    report_join = models.DiamondReport.expert_id == models.Expert.expert_id
+    if start is not None:
+        report_join = and_(report_join, models.DiamondReport.created_at >= start)
+    if end is not None:
+        report_join = and_(report_join, models.DiamondReport.created_at < end)
+    report_query = db.query(
         models.Expert.expert_id.label("expert_id"),
         models.Expert.username.label("expert_username"),
         models.Expert.first_name.label("first_name"),
@@ -706,7 +734,7 @@ def get_expert_stats(db: Session):
         func.sum(case((models.DiamondReport.status == "issued", 1), else_=0)).label("issued_reports"),
         func.sum(case((models.DiamondReport.status == "void", 1), else_=0)).label("void_reports"),
     ).outerjoin(
-        models.DiamondReport, models.DiamondReport.expert_id == models.Expert.expert_id,
+        models.DiamondReport, report_join,
     ).filter(
         models.Expert.role == "gemologist",
     ).group_by(
@@ -716,7 +744,140 @@ def get_expert_stats(db: Session):
         models.Expert.last_name,
         models.Expert.middle_name,
         models.Expert.is_active,
-    ).order_by(models.Expert.username.asc()).all()
+    )
+    report_rows = report_query.order_by(models.Expert.username.asc()).all()
+
+    sessions_query = db.query(models.ReportWorkSession).filter(models.ReportWorkSession.ended_at.is_not(None))
+    if start is not None:
+        sessions_query = sessions_query.filter(models.ReportWorkSession.ended_at >= start)
+    if end is not None:
+        sessions_query = sessions_query.filter(models.ReportWorkSession.ended_at < end)
+    sessions_by_expert: dict[int, list[models.ReportWorkSession]] = {}
+    for session in sessions_query.all():
+        sessions_by_expert.setdefault(session.expert_id, []).append(session)
+
+    rows: list[schemas.ExpertStats] = []
+    for row in report_rows:
+        sessions = sessions_by_expert.get(row.expert_id, [])
+        durations = [session.active_seconds for session in sessions]
+        records = [_work_session_record(session) for session in sessions]
+        rows.append(schemas.ExpertStats(
+            expert_id=row.expert_id, expert_username=row.expert_username,
+            first_name=row.first_name, last_name=row.last_name, middle_name=row.middle_name,
+            is_active=row.is_active, total_reports=row.total_reports,
+            draft_reports=row.draft_reports or 0, review_reports=row.review_reports or 0,
+            issued_reports=row.issued_reports or 0, void_reports=row.void_reports or 0,
+            completed_work_sessions=len(records), total_active_seconds=sum(durations),
+            avg_active_seconds=round(sum(durations) / len(durations)) if durations else None,
+            median_active_seconds=round(median(durations)) if durations else None,
+            shortest_work_sessions=sorted(records, key=lambda item: (item.duration_seconds, item.report_id))[:3],
+            longest_work_sessions=sorted(records, key=lambda item: (-item.duration_seconds, item.report_id))[:3],
+        ))
+    return rows
+
+
+def _append_work_session_event(db: Session, session: models.ReportWorkSession, action: str, now: datetime) -> None:
+    db.add(models.ReportWorkSessionEvent(
+        work_session_id=session.work_session_id,
+        action=action,
+        recorded_at=now,
+        active_seconds=session.active_seconds,
+    ))
+
+
+def _accrue_work_session(session: models.ReportWorkSession, now: datetime) -> None:
+    last_activity = session.last_activity_at
+    if last_activity.tzinfo is None:
+        last_activity = last_activity.replace(tzinfo=timezone.utc)
+    elapsed = max(0, min(WORK_SESSION_MAX_INTERVAL_SECONDS, round((now - last_activity).total_seconds())))
+    session.active_seconds += elapsed
+    session.last_activity_at = now
+
+
+def _finish_work_session(db: Session, session: models.ReportWorkSession, *, reason: str, now: datetime) -> None:
+    _accrue_work_session(session, now)
+    session.ended_at = now
+    session.end_reason = reason
+    _append_work_session_event(db, session, "finish" if reason == "finish" else "pause", now)
+
+
+def record_work_session_signal(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    actor: models.Expert,
+    signal: schemas.ReportWorkSessionSignal,
+) -> schemas.ReportWorkSessionState:
+    """Accept a server-timed draft signal, ensuring one active tab per report owner."""
+    if actor.role != "gemologist" or report.expert_id != actor.expert_id or report.status != "draft":
+        raise ReportDomainError("Only the draft owner can record work time")
+    now = datetime.now(timezone.utc)
+    lease = db.query(models.ReportWorkSessionLease).filter(
+        models.ReportWorkSessionLease.report_id == report.report_id,
+        models.ReportWorkSessionLease.expert_id == actor.expert_id,
+    ).with_for_update().one_or_none()
+    if lease is not None and lease.expires_at.replace(tzinfo=timezone.utc) <= now:
+        expired = db.get(models.ReportWorkSession, lease.work_session_id)
+        if expired is not None and expired.ended_at is None:
+            _finish_work_session(db, expired, reason="timeout", now=now)
+        db.delete(lease)
+        lease = None
+
+    if signal.action in {"start", "resume"}:
+        if lease is not None:
+            prior = db.get(models.ReportWorkSession, lease.work_session_id)
+            if prior is not None and prior.ended_at is None and lease.tab_id != signal.tab_id:
+                _finish_work_session(db, prior, reason="replaced", now=now)
+                db.delete(lease)
+                lease = None
+            elif prior is not None and prior.ended_at is None:
+                _accrue_work_session(prior, now)
+                lease.expires_at = now + timedelta(seconds=WORK_SESSION_LEASE_SECONDS)
+                _append_work_session_event(db, prior, signal.action, now)
+                return schemas.ReportWorkSessionState(work_session_id=prior.work_session_id, active_seconds=prior.active_seconds, is_active=True)
+        session = models.ReportWorkSession(
+            work_session_id=str(uuid.uuid4()), report_id=report.report_id, expert_id=actor.expert_id,
+            tab_id=signal.tab_id, started_at=now, last_activity_at=now, active_seconds=0,
+        )
+        db.add(session)
+        db.flush()
+        db.add(models.ReportWorkSessionLease(
+            report_id=report.report_id, expert_id=actor.expert_id, work_session_id=session.work_session_id,
+            tab_id=signal.tab_id, expires_at=now + timedelta(seconds=WORK_SESSION_LEASE_SECONDS),
+        ))
+        _append_work_session_event(db, session, signal.action, now)
+        return schemas.ReportWorkSessionState(work_session_id=session.work_session_id, active_seconds=0, is_active=True)
+
+    if lease is None or lease.tab_id != signal.tab_id:
+        raise ReportDomainError("The work session is no longer active in this tab")
+    session = db.get(models.ReportWorkSession, lease.work_session_id)
+    if session is None or session.ended_at is not None:
+        raise ReportDomainError("The work session is no longer active")
+    _accrue_work_session(session, now)
+    _append_work_session_event(db, session, signal.action, now)
+    if signal.action == "pause":
+        session.ended_at = now
+        session.end_reason = "pause"
+        db.delete(lease)
+        return schemas.ReportWorkSessionState(work_session_id=session.work_session_id, active_seconds=session.active_seconds, is_active=False)
+    lease.expires_at = now + timedelta(seconds=WORK_SESSION_LEASE_SECONDS)
+    return schemas.ReportWorkSessionState(work_session_id=session.work_session_id, active_seconds=session.active_seconds, is_active=True)
+
+
+def finish_active_work_session(db: Session, *, report: models.DiamondReport, reason: str = "finish") -> None:
+    """Close an owner's active session when a draft is submitted for review."""
+    if report.expert_id is None:
+        return
+    lease = db.query(models.ReportWorkSessionLease).filter(
+        models.ReportWorkSessionLease.report_id == report.report_id,
+        models.ReportWorkSessionLease.expert_id == report.expert_id,
+    ).one_or_none()
+    if lease is None:
+        return
+    session = db.get(models.ReportWorkSession, lease.work_session_id)
+    if session is not None and session.ended_at is None:
+        _finish_work_session(db, session, reason=reason, now=datetime.now(timezone.utc))
+    db.delete(lease)
 
 
 def _duration_seconds(started_at: datetime, completed_at: datetime) -> int:
@@ -728,8 +889,9 @@ def _duration_seconds(started_at: datetime, completed_at: datetime) -> int:
     return max(0, round((completed_at - started_at).total_seconds()))
 
 
-def get_admin_review_stats(db: Session) -> schemas.AdminReviewStatisticsResponse:
+def get_admin_review_stats(db: Session, *, date_from: date | None = None, date_to: date | None = None) -> schemas.AdminReviewStatisticsResponse:
     """Summarize completed review cycles by administrator, not active work time."""
+    start, end = _period_bounds(date_from, date_to)
     admins = db.query(models.Expert).filter(models.Expert.role == "admin").order_by(models.Expert.username).all()
     admin_ids = {admin.expert_id for admin in admins}
     review_starts: dict[str, datetime] = {}
@@ -743,6 +905,11 @@ def get_admin_review_stats(db: Session) -> schemas.AdminReviewStatisticsResponse
             continue
         started_at = review_starts.pop(event.report_id, None)
         if started_at is None or event.to_status not in {"draft", "issued", "void"}:
+            continue
+        event_created_at = event.created_at if event.created_at.tzinfo else event.created_at.replace(tzinfo=timezone.utc)
+        if start is not None and event_created_at < start:
+            continue
+        if end is not None and event_created_at >= end:
             continue
         decisions[event.actor_id].append(schemas.ReviewDurationRecord(
             report_id=event.report_id,

@@ -148,6 +148,49 @@ class ReportEvent(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
+class ReportWorkSession(Base):
+    """A server-timed expert work session for one saved draft report."""
+
+    __tablename__ = "report_work_sessions"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    work_session_id = Column(String(36), primary_key=True)
+    report_id = Column(String(20), ForeignKey("diamond_oltp.diamond_reports.report_id"), nullable=False, index=True)
+    expert_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=False, index=True)
+    tab_id = Column(String(64), nullable=False)
+    started_at = Column(DateTime, nullable=False)
+    last_activity_at = Column(DateTime, nullable=False)
+    ended_at = Column(DateTime, nullable=True, index=True)
+    active_seconds = Column(Integer, nullable=False, default=0, server_default="0")
+    end_reason = Column(String(32), nullable=True)
+
+
+class ReportWorkSessionEvent(Base):
+    """Append-only evidence for server-timed draft work sessions."""
+
+    __tablename__ = "report_work_session_events"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    work_session_event_id = Column(Integer, primary_key=True, index=True)
+    work_session_id = Column(String(36), ForeignKey("diamond_oltp.report_work_sessions.work_session_id"), nullable=False, index=True)
+    action = Column(String(16), nullable=False)
+    recorded_at = Column(DateTime, nullable=False)
+    active_seconds = Column(Integer, nullable=False)
+
+
+class ReportWorkSessionLease(Base):
+    """Mutable single-tab lease; append-only events remain the audit source."""
+
+    __tablename__ = "report_work_session_leases"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    report_id = Column(String(20), ForeignKey("diamond_oltp.diamond_reports.report_id"), primary_key=True)
+    expert_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), primary_key=True)
+    work_session_id = Column(String(36), ForeignKey("diamond_oltp.report_work_sessions.work_session_id"), nullable=False, unique=True)
+    tab_id = Column(String(64), nullable=False)
+    expires_at = Column(DateTime, nullable=False, index=True)
+
+
 class MediaAsset(Base):
     """Private file metadata; the file body lives outside the database and Git."""
 
