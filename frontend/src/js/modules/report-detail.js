@@ -19,6 +19,7 @@ import {
 } from "./api.js";
 import { logout } from "./auth.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
+import { createDraftWorkSessionTracker } from "./report-work-session.js";
 
 const STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
 const EVENT_LABELS = {
@@ -426,6 +427,7 @@ export async function initReportDetail() {
   let currentUser;
   let gradeLabels = new Map();
   let printStarted = false;
+  let workSessionTracker;
   const refresh = async () => {
     try {
       const [freshReport, events, media] = await Promise.all([
@@ -465,9 +467,11 @@ export async function initReportDetail() {
         } catch (error) { setStatus(status, error.message || "Не вдалося змінити статус.", true); }
       });
       const canEdit = report.status === "draft" && (currentUser.role === "admin" || currentUser.expert_id === report.expert_id);
+      const canTrack = report.status === "draft" && currentUser.role === "gemologist" && currentUser.expert_id === report.expert_id;
       setEditable(form, false);
       form.querySelector("#detail-edit").hidden = !canEdit;
       if (new URLSearchParams(window.location.search).get("edit") === "1" && canEdit) setEditable(form, true);
+      workSessionTracker?.setEnabled(canTrack && !form.querySelector("#detail-save").hidden, { pauseOnDisable: report.status === "draft" });
       if (new URLSearchParams(window.location.search).get("print") === "1" && !printStarted) {
         printStarted = true;
         window.setTimeout(() => window.print(), 0);
@@ -485,8 +489,16 @@ export async function initReportDetail() {
     populateReferenceSelect(form.querySelector("#detail-girdle"), references, "girdle_thickness");
     populateReferenceSelect(form.querySelector("#detail-culet"), references, "culet_size");
   } catch { logout("/login.html"); return; }
-  form.querySelector("#detail-edit").addEventListener("click", () => setEditable(form, true));
-  form.querySelector("#detail-cancel").addEventListener("click", () => { populateForm(form, report, gradeLabels); setEditable(form, false); });
+  workSessionTracker = createDraftWorkSessionTracker({ reportId, token, form });
+  form.querySelector("#detail-edit").addEventListener("click", () => {
+    setEditable(form, true);
+    workSessionTracker.setEnabled(currentUser.role === "gemologist" && currentUser.expert_id === report.expert_id);
+  });
+  form.querySelector("#detail-cancel").addEventListener("click", () => {
+    populateForm(form, report, gradeLabels);
+    setEditable(form, false);
+    workSessionTracker.setEnabled(false);
+  });
   ["expert_proportions_grade", "polish_grade", "symmetry_grade"].forEach((name) => {
     form.elements.namedItem(name)?.addEventListener("change", () => updateDerivedExpertCut(form, gradeLabels));
   });
@@ -495,6 +507,7 @@ export async function initReportDetail() {
     if (!form.reportValidity()) return;
     try {
       setStatus(status, "Збереження змін…");
+      await workSessionTracker.checkpointSave();
       await updateDomainReport(reportId, payloadFromForm(form), token);
       setStatus(status, "Зміни чернетки збережено.");
       await refresh();

@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-22 — expert-active-time-and-analytics-periods (завершено)
+
+- **Задача:** достовірно обліковувати active-time автора draft без обліку просто відкритої вкладки та додати period filters до operational analytics.
+- **Змінені файли:** `alembic/versions/0011_expert_work_sessions.py`, `backend/{models,schemas,crud,main}.py`, `tests/{api/test_expert_statistics,unit/test_migration_foundation}.py`, `frontend/src/{pug/pages/ml-analysis.pug,scss/_ui-primitives.scss,js/modules/{api,analytics,report-detail,report-work-session}.js}`, `frontend/tests/{auth-and-api,page-dom,e2e/{analytics,report-detail}}.mjs`, `docs/{architecture,db-schema,api-mvp-audit,tech_diamant_id,work_plan,progress}.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/backlog/{README,112-expert-active-time-and-analytics-periods (видалено)}.md`.
+- **Рішення / Результат:** `0011` додає порожні `report_work_sessions`, append-only `report_work_session_events` і single-tab `report_work_session_leases`. Лише owner-`gemologist` saved `draft` стартує сесію після реальної дії в editable detail; server-time обмежує кожен інтервал 60 секундами, lease спливає за 75 секунд, друга вкладка закриває попередню, hidden/offline/page-close не додають час, а `draft → review` завершує активну сесію server-side. Admin analytics показує total/average/median та три короткі/довгі завершені сесії; `date_from`/`date_to` означають creation date для status counts, finish date для active-time та decision date для review-cycle.
+- **Перевірки:** `python -m pytest tests/unit -q` — 14 passed; `python -m pytest tests/api/test_expert_statistics.py -q` — 4 passed; `python -m pytest tests/api/test_report_domain.py tests/api/test_report_media.py -q` — 8 passed; `python -m pytest tests/api/test_public_passport_pdf.py -q` — 2 passed; `cmd /c "cd frontend && npm test"` — 20 passed; targeted Playwright analytics/detail — 2 passed; `npm run build` — успішно.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** до першого save wizard не має report ID, тому active-time ще не починається; історичні reports і legacy `evaluation_time_sec` не backfill-яться. `0011_expert_work_sessions` створена, але не застосована до локальної MariaDB без окремого підтвердження. Метрика є operational record, не рейтингом чи оцінкою продуктивності.
+
 ## 2026-09-18 — backlog-market-provider-operations (завершено)
 
 - **Задача:** прибрати завершену 121 з активного backlog, винести її нереалізований операційний залишок у самостійну задачу та виправити застаріле посилання 115.

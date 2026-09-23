@@ -1,8 +1,9 @@
 # Схема бази даних
 
 Документ описує цільову локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0010_market_reference_policy`, яку застосовано до локальної MariaDB
-18 вересня 2026. Це карта даних для розробки, API та
+Alembic revision `0011_expert_work_sessions`, готову до застосування після
+локальної `0010_market_reference_policy`. `0011` не містить backfill, тому
+поточна локальна MariaDB лишається на `0010` до окремої команди. Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -14,7 +15,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 
 | База | Таблиці | Призначення |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, фізичні камені, lifecycle, ruleset-и, revocable public passport, приватні вкладення та майбутні фінансові записи. |
+| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `report_work_sessions`, `report_work_session_events`, `report_work_session_leases`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, lifecycle, server-timed active-time, ruleset-и, revocable public passport, приватні вкладення та фінансові записи. |
 | `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes`, `fx_data_snapshots` | Числові й текстові довідники, legacy demo-індекс та versioned дані зовнішніх провайдерів. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
@@ -132,6 +133,18 @@ valuation не отримують вигаданих подій заднім ч�
 
 Migration `0002` створила по одній події `legacy_import` для кожного
 перенесеного report і не виводила з цього факту ні видачу, ні підтвердження.
+
+### `report_work_sessions`, `report_work_session_events`, `report_work_session_leases`
+
+`report_work_sessions` зберігає одну завершувану server-timed сесію автора
+збереженої чернетки: UUID, report/expert FK, tab identifier, start/last activity/
+end, підсумок `active_seconds` та reason закриття. `report_work_session_events`
+є append-only доказом `start`, `resume`, `heartbeat`, `save`, `pause` і
+`finish` з накопиченим active-time. Mutable `report_work_session_leases` має
+складений PK `(report_id, expert_id)` і підтримує тільки одну активну вкладку;
+це технічне блокування, не історичний журнал. 60-секундний maximum interval і
+75-секундний lease не дають зарахувати просто відкриту або offline-вкладку.
+Revision `0011` не створює сесії для historical reports.
 
 ### `public_passports`
 
@@ -275,6 +288,7 @@ OpenFacet attach backend завжди бере нову відповідь НБ�
 | `0008_market_data_providers` | Provider-neutral catalog, immutable OpenFacet candidate/approved/rejected snapshots і quotes; nullable snapshot provenance у `stone_valuations`. Не fetch-ить дані, не створює valuation, не переписує legacy/demo values. |
 | `0009_nbu_fx_snapshots` | Додає `nbu`, immutable `fx_data_snapshots` і nullable frozen FX/UAH поля для нових `stone_valuations`. Не backfill-ить і не переоцінює historical values. |
 | `0010_market_reference_policy` | Додає singleton policy вибору market/FX provider для майбутнього `system_market_reference`; seed `openfacet` + увімкнений `nbu`. Не змінює snapshots, historical valuations чи legacy demo-індекс. |
+| `0011_expert_work_sessions` | Додає порожні server-timed work sessions, append-only events і single-tab leases. Не backfill-ить `evaluation_time_sec`, timestamps або старі reports. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за

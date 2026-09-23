@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from datetime import date, timedelta
 from decimal import Decimal
@@ -794,6 +795,9 @@ def record_report_work_session(
     except crud.ReportDomainError as error:
         db.rollback()
         raise HTTPException(status_code=409, detail=str(error)) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="A work session was opened in another tab") from error
 
 @app.get("/market/mappings", response_model=List[schemas.GradeMappingSchema])
 def read_mappings(category: Optional[str] = None, db: Session = Depends(get_db)):

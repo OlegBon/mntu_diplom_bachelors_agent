@@ -28,7 +28,6 @@
 | Файл | Тема |
 | --- | --- |
 | [122-market-provider-operations.md](./122-market-provider-operations.md) | Freshness policy, scheduler і безпечне розширення market/FX provider-ів. |
-| [112-expert-active-time-and-analytics-periods.md](./112-expert-active-time-and-analytics-periods.md) | Достовірний active-time експертів і періоди operational analytics. |
 | [115-profile-admin-ui-polish.md](./115-profile-admin-ui-polish.md) | Узгоджені візуальні та responsive-покращення Profile й admin UI. |
 | [120-legacy-calculation-and-ml-boundary.md](./120-legacy-calculation-and-ml-boundary.md) | Безпечна доля legacy-перерахунку та межа майбутнього ML. |
 | [130-public-passport-media.md](./130-public-passport-media.md) | Контрольована видимість вкладень у public passport. |

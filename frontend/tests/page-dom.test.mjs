@@ -100,6 +100,9 @@ test("built analytics page exposes three clearly scoped administrator tabs", asy
 
   assert.equal(document.querySelector("[data-analytics-page]")?.hasAttribute("data-protected-page"), true);
   assert.equal(document.querySelectorAll("[data-analytics-tab]").length, 3);
+  assert.equal(document.querySelector("#analytics-period-form")?.tagName, "FORM");
+  assert.equal(document.querySelector("#analytics-date-from")?.getAttribute("type"), "date");
+  assert.equal(document.querySelector("#analytics-date-to")?.getAttribute("type"), "date");
   assert.equal(document.querySelector("#analytics-experts")?.getAttribute("role"), "tabpanel");
   assert.equal(document.querySelector("#analytics-admins")?.hasAttribute("hidden"), true);
   assert.match(document.querySelector("#analytics-stones")?.textContent || "", /ML/);

@@ -47,9 +47,28 @@ export const setUserActivation = (expertId, isActive, token) => requestApi(
 
 export const getExperts = (token) => requestApi("/experts/", { token });
 
-export const getExpertStatistics = (token) => requestApi("/statistics/expert-performance", { token });
+const analyticsQuery = (params = {}) => new URLSearchParams(
+  Object.entries(params).filter(([, value]) => value !== "" && value !== null && value !== undefined),
+).toString();
 
-export const getAdminReviewStatistics = (token) => requestApi("/statistics/admin-review-performance", { token });
+function analyticsRequest(path, paramsOrToken, maybeToken) {
+  const params = typeof paramsOrToken === "string" ? {} : paramsOrToken;
+  const token = typeof paramsOrToken === "string" ? paramsOrToken : maybeToken;
+  const query = analyticsQuery(params);
+  return requestApi(`${path}${query ? `?${query}` : ""}`, { token });
+}
+
+export const getExpertStatistics = (paramsOrToken, maybeToken) => analyticsRequest(
+  "/statistics/expert-performance", paramsOrToken, maybeToken,
+);
+
+export const getAdminReviewStatistics = (paramsOrToken, maybeToken) => analyticsRequest(
+  "/statistics/admin-review-performance", paramsOrToken, maybeToken,
+);
+
+export const signalReportWorkSession = (reportId, payload, token) => requestApi(
+  `/reports/${encodeURIComponent(reportId)}/work-session`, { method: "POST", token, body: payload },
+);
 
 export const getGradeMappings = () => requestApi("/market/mappings");
 

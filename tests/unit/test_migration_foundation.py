@@ -56,11 +56,11 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_market_reference_policy_revision_is_the_only_committed_head():
+def test_alembic_work_session_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0010_market_reference_policy"]
+    assert script_directory.get_heads() == ["0011_expert_work_sessions"]
 
 
 def test_nbu_fx_migration_does_not_backfill_or_reprice_historical_values():
@@ -79,6 +79,16 @@ def test_market_reference_policy_migration_changes_only_future_configuration():
     assert "openfacet" in source
     assert "nbu" in source
     assert "stone_valuations" not in source
+
+
+def test_work_session_migration_adds_empty_operational_tables_without_backfill():
+    source = (PROJECT_ROOT / "alembic" / "versions" / "0011_expert_work_sessions.py").read_text(encoding="utf-8")
+
+    assert "report_work_sessions" in source
+    assert "report_work_session_events" in source
+    assert "report_work_session_leases" in source
+    assert "INSERT" not in source
+    assert "UPDATE" not in source
 
 
 def test_grading_ruleset_migration_preserves_legacy_reports_without_recalculation():

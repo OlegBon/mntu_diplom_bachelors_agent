@@ -1,6 +1,6 @@
 # Аудит API та локального MVP Diamant ID
 
-> **Актуалізовано:** 18 вересня 2026. Перший аудит від 14 вересня нижче
+> **Актуалізовано:** 22 вересня 2026. Перший аудит від 14 вересня нижче
 > збережено як історичний доказ стану до послідовних задач 020–108. Поточним
 > джерелом контракту є `docs/architecture.md`, а безпечний runtime smoke —
 > `scripts/audit-api.mjs`.
@@ -13,8 +13,10 @@
 - Public passport, QR і PDF працюють через окрему allow-listed projection;
   послідовний report ID не є public key.
 - Profile/admin UI, server-side довідники та versioned `idc-demo-v1` реалізовані.
-- Operational analytics обмежена admin: status-зріз експертів і review-cycle
-  адміністраторів. Немає ML, ринкової ціни, рейтингу або fake active-time.
+- Operational analytics обмежена admin: status-зріз експертів, server-timed
+  active-time майбутніх draft-сесій і review-cycle адміністраторів. Period
+  filters мають різні явні date sources; немає ML, ринкової ціни, рейтингу або
+  відновленого з timestamps active-time.
 - Ринкові дані мають окрему admin-only межу `/market-data/*`: provider catalog,
   future-only policy системних орієнтирів, immutable snapshot-и OpenFacet та
   frozen NBU FX. Нові valuation мають private append-only події, але safe audit
