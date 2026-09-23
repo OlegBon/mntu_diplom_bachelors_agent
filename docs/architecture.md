@@ -4,7 +4,7 @@
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), детальна карта таблиць і зв’язків — у [db-schema.md](./db-schema.md), повний користувацький workflow звіту й паспорта — у [guide](./guides/current-domain-and-report-workflow.md), а окрема механіка market provider-ів — у [guide провайдерів](./guides/market-data-providers.md). Перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 23 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`–`0011_expert_work_sessions` застосовані до локальної MariaDB. Нова `0012_wizard_first_save_time` готова до окремого застосування: вона додає elapsed time від першої дії у майстрі до першого save лише для майбутніх чернеток, без backfill. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
+> **Статус на 23 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`–`0012_wizard_first_save_time` застосовані до локальної MariaDB. `0012` додає elapsed time від першої дії у майстрі до першого save лише для майбутніх чернеток, без backfill. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
 
 ---
 
@@ -125,7 +125,7 @@ Backend запускають із кореня репозиторію через
 
 | База | Призначення | Поточний стан |
 | --- | --- | --- |
-| `diamond_oltp` | `experts` (з `is_active`), compatibility `diamond_reports`, `stones`, `report_events`, `report_work_sessions`, append-only `report_work_session_events`, single-tab `report_work_session_leases`, короткоживучі `wizard_work_sessions`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` і lifecycle-колонки | Локальна MariaDB — `0011_expert_work_sessions`; кодова head `0012_wizard_first_save_time` очікує окремого застосування |
+| `diamond_oltp` | `experts` (з `is_active`), compatibility `diamond_reports`, `stones`, `report_events`, `report_work_sessions`, append-only `report_work_session_events`, single-tab `report_work_session_leases`, короткоживучі `wizard_work_sessions`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` і lifecycle-колонки | Локальна MariaDB та кодова head — `0012_wizard_first_save_time` |
 | `diamond_market` | `grade_mappings`, legacy demo-індекс, `reference_values`, provider catalog, versioned market snapshots/quotes, immutable FX snapshots і singleton market policy | `0009` додає NBU USD/UAH, `0010` — future-only policy; без backfill |
 | `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
 
