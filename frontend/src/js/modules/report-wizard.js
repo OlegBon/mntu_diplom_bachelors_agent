@@ -6,6 +6,7 @@ import {
   previewReportCalculation,
   uploadReportMedia,
 } from "./api.js";
+import { createWizardWorkSessionTracker } from "./wizard-work-session.js";
 
 const requiredPreviewNames = ["table_percent", "depth_percent", "crown_angle", "pavilion_angle", "polish_grade", "symmetry_grade"];
 const implicitSubmitInputTypes = new Set(["date", "email", "number", "password", "search", "tel", "text", "url"]);
@@ -134,6 +135,8 @@ export async function initReportWizard() {
     renderInitialFinish();
   } catch (error) { setStatus(status, `Не вдалося завантажити довідники: ${error.message}`, true); return; }
 
+  const workSessionTracker = createWizardWorkSessionTracker({ form, token });
+
   [["plotting-image", "plotting-preview"], ["real-image", "stone-preview"]].forEach(([inputId, previewId]) => {
     const input = document.getElementById(inputId);
     input.addEventListener("change", () => {
@@ -177,7 +180,13 @@ export async function initReportWizard() {
     if (!validateCurrentStep() || !form.reportValidity()) return;
     save.disabled = true; setStatus(status, "Збереження чернетки…");
     try {
-      const data = new FormData(form); const created = await createDomainReport({ examination_date: data.get("examination_date"), stone: stoneFromForm(data), expert_comment: data.get("expert_comment") || null }, token);
+      const data = new FormData(form);
+      const wizardSessionId = await workSessionTracker.getOrStart();
+      const created = await createDomainReport({
+        examination_date: data.get("examination_date"), stone: stoneFromForm(data),
+        expert_comment: data.get("expert_comment") || null, wizard_session_id: wizardSessionId,
+      }, token);
+      workSessionTracker.clear();
       for (const [id, type] of [["plotting-image", "plotting_diagram"], ["real-image", "stone_photo"]]) { const file = document.getElementById(id).files[0]; if (file) await uploadReportMedia(created.report_id, type, file, token); }
       window.location.assign(`/dashboard.html?created=${encodeURIComponent(created.report_id)}`);
     } catch (error) { setStatus(status, `Не вдалося зберегти чернетку: ${error.message}`, true); save.disabled = false; }

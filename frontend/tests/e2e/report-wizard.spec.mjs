@@ -15,6 +15,7 @@ const mappings = ["color", "clarity", "cut", "polish", "symmetry", "fluorescence
 test("gemologist creates a draft through the three-step wizard", async ({ page }) => {
   let createdPayload;
   let createRequestCount = 0;
+  let wizardSessionRequestCount = 0;
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
@@ -27,6 +28,10 @@ test("gemologist creates a draft through the three-step wizard", async ({ page }
     system_proportions_grade: 0, system_cut_grade: 0, calculation_rule_version: "idc-demo-v1",
     system_market_reference_usd: "10029.23", market_reference_provider_code: "openfacet", market_reference_snapshot_id: 17,
   } }));
+  await page.route("**/report-wizard-sessions", async (route) => {
+    wizardSessionRequestCount += 1;
+    await route.fulfill({ json: { wizard_session_id: "11111111-1111-1111-1111-111111111111" } });
+  });
   await page.route("**/reports", async (route) => {
     createRequestCount += 1;
     createdPayload = route.request().postDataJSON();
@@ -72,4 +77,6 @@ test("gemologist creates a draft through the three-step wizard", async ({ page }
   expect(createdPayload.examination_date).toBeTruthy();
   expect(createdPayload.stone.market_status).toBe("not_for_sale");
   expect(createdPayload.stone.carat_weight).toBe(1.25);
+  expect(createdPayload.wizard_session_id).toBe("11111111-1111-1111-1111-111111111111");
+  expect(wizardSessionRequestCount).toBe(1);
 });

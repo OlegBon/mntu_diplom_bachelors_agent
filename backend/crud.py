@@ -24,6 +24,7 @@ CURRENT_RULESET_ID = "idc-demo-v1"
 REPORT_RULE_VERSION = CURRENT_RULESET_ID
 WORK_SESSION_MAX_INTERVAL_SECONDS = 60
 WORK_SESSION_LEASE_SECONDS = 75
+WIZARD_WORK_SESSION_LEASE_SECONDS = 14_400
 
 
 class ReportDomainError(ValueError):
@@ -334,6 +335,13 @@ def create_report_domain(
     _sync_legacy_report_fields(report, stone)
     db.add(report)
     db.flush()
+    _attach_wizard_first_save_timing(
+        db,
+        report=report,
+        author=author,
+        wizard_session_id=payload.wizard_session_id,
+        now=now,
+    )
     _append_report_event(
         db,
         report_id=report.report_id,
@@ -756,10 +764,23 @@ def get_expert_stats(db: Session, *, date_from: date | None = None, date_to: dat
     for session in sessions_query.all():
         sessions_by_expert.setdefault(session.expert_id, []).append(session)
 
+    timings_query = db.query(
+        models.DiamondReport.expert_id,
+        models.DiamondReport.time_to_first_save_seconds,
+    ).filter(models.DiamondReport.time_to_first_save_seconds.is_not(None))
+    if start is not None:
+        timings_query = timings_query.filter(models.DiamondReport.created_at >= start)
+    if end is not None:
+        timings_query = timings_query.filter(models.DiamondReport.created_at < end)
+    timings_by_expert: dict[int, list[int]] = {}
+    for expert_id, seconds in timings_query.all():
+        timings_by_expert.setdefault(expert_id, []).append(seconds)
+
     rows: list[schemas.ExpertStats] = []
     for row in report_rows:
         sessions = sessions_by_expert.get(row.expert_id, [])
         durations = [session.active_seconds for session in sessions]
+        first_save_durations = timings_by_expert.get(row.expert_id, [])
         records = [_work_session_record(session) for session in sessions]
         rows.append(schemas.ExpertStats(
             expert_id=row.expert_id, expert_username=row.expert_username,
@@ -770,10 +791,69 @@ def get_expert_stats(db: Session, *, date_from: date | None = None, date_to: dat
             completed_work_sessions=len(records), total_active_seconds=sum(durations),
             avg_active_seconds=round(sum(durations) / len(durations)) if durations else None,
             median_active_seconds=round(median(durations)) if durations else None,
+            completed_first_save_timings=len(first_save_durations),
+            total_time_to_first_save_seconds=sum(first_save_durations),
+            avg_time_to_first_save_seconds=round(sum(first_save_durations) / len(first_save_durations)) if first_save_durations else None,
+            median_time_to_first_save_seconds=round(median(first_save_durations)) if first_save_durations else None,
             shortest_work_sessions=sorted(records, key=lambda item: (item.duration_seconds, item.report_id))[:3],
             longest_work_sessions=sorted(records, key=lambda item: (-item.duration_seconds, item.report_id))[:3],
         ))
     return rows
+
+
+def start_wizard_work_session(
+    db: Session,
+    *,
+    actor: models.Expert,
+    signal: schemas.WizardWorkSessionStart,
+) -> schemas.WizardWorkSessionState:
+    """Start or resume the only live pre-save wizard lease for a gemologist."""
+    if actor.role != "gemologist":
+        raise ReportDomainError("Only gemologists can record wizard preparation time")
+    now = datetime.now(timezone.utc)
+    db.query(models.WizardWorkSession).filter(models.WizardWorkSession.expires_at <= now).delete(
+        synchronize_session=False,
+    )
+    existing = db.query(models.WizardWorkSession).filter(
+        models.WizardWorkSession.expert_id == actor.expert_id,
+    ).with_for_update().one_or_none()
+    if existing is not None and existing.tab_id == signal.tab_id:
+        return schemas.WizardWorkSessionState(wizard_session_id=existing.wizard_session_id)
+    if existing is not None:
+        db.delete(existing)
+        db.flush()
+    session = models.WizardWorkSession(
+        wizard_session_id=str(uuid.uuid4()),
+        expert_id=actor.expert_id,
+        tab_id=signal.tab_id,
+        started_at=now,
+        expires_at=now + timedelta(seconds=WIZARD_WORK_SESSION_LEASE_SECONDS),
+    )
+    db.add(session)
+    db.flush()
+    return schemas.WizardWorkSessionState(wizard_session_id=session.wizard_session_id)
+
+
+def _attach_wizard_first_save_timing(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    author: models.Expert,
+    wizard_session_id: str | None,
+    now: datetime,
+) -> None:
+    if wizard_session_id is None:
+        return
+    session = db.query(models.WizardWorkSession).filter(
+        models.WizardWorkSession.wizard_session_id == wizard_session_id,
+        models.WizardWorkSession.expert_id == author.expert_id,
+    ).with_for_update().one_or_none()
+    if session is None or session.expires_at.replace(tzinfo=timezone.utc) <= now:
+        return
+    started_at = session.started_at.replace(tzinfo=timezone.utc) if session.started_at.tzinfo is None else session.started_at
+    report.first_save_started_at = started_at
+    report.time_to_first_save_seconds = max(0, round((now - started_at).total_seconds()))
+    db.delete(session)
 
 
 def _append_work_session_event(db: Session, session: models.ReportWorkSession, action: str, now: datetime) -> None:

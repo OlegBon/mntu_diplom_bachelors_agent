@@ -16,6 +16,10 @@ const expertStats = [{
   total_active_seconds: 2400,
   avg_active_seconds: 1200,
   median_active_seconds: 1200,
+  completed_first_save_timings: 1,
+  total_time_to_first_save_seconds: 300,
+  avg_time_to_first_save_seconds: 300,
+  median_time_to_first_save_seconds: 300,
   shortest_work_sessions: [{ report_id: "DR-00013", duration_seconds: 600, finished_at: "2026-09-16T11:00:00Z" }],
   longest_work_sessions: [{ report_id: "DR-00014", duration_seconds: 1800, finished_at: "2026-09-16T12:00:00Z" }],
 }];

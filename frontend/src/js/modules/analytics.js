@@ -85,8 +85,13 @@ function openExpertDialog(dialog, dialogContent, row) {
     ["Активний час", duration(row.total_active_seconds)],
     ["Середня активна сесія", duration(row.avg_active_seconds)],
     ["Медіанна активна сесія", duration(row.median_active_seconds)],
+    ["Збережень із виміром підготовки", row.completed_first_save_timings],
+    ["Час до першого збереження", duration(row.total_time_to_first_save_seconds)],
+    ["Середній час до першого збереження", duration(row.avg_time_to_first_save_seconds)],
+    ["Медіанний час до першого збереження", duration(row.median_time_to_first_save_seconds)],
   ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
   fragment.append(metrics, element("p", "account-help", "Активний час — лише server-timed сесії автора збереженої чернетки. Відкрита, прихована або offline-вкладка без взаємодії не зараховується."));
+  fragment.append(element("p", "account-help", "Час до першого збереження — окремий server-timed elapsed time від першої взаємодії з майстром до створення чернетки. Покинуті, замінені іншою вкладкою або offline-майстри не враховуються."));
   fragment.append(renderWorkSessionList("Три найкоротші активні сесії", row.shortest_work_sessions), renderWorkSessionList("Три найдовші активні сесії", row.longest_work_sessions));
   dialogContent.replaceChildren(fragment);
   dialog.showModal();

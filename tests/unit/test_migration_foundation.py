@@ -56,11 +56,11 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_work_session_revision_is_the_only_committed_head():
+def test_alembic_wizard_first_save_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0011_expert_work_sessions"]
+    assert script_directory.get_heads() == ["0012_wizard_first_save_time"]
 
 
 def test_nbu_fx_migration_does_not_backfill_or_reprice_historical_values():
@@ -87,6 +87,15 @@ def test_work_session_migration_adds_empty_operational_tables_without_backfill()
     assert "report_work_sessions" in source
     assert "report_work_session_events" in source
     assert "report_work_session_leases" in source
+    assert "INSERT" not in source
+    assert "UPDATE" not in source
+
+
+def test_wizard_first_save_migration_adds_only_future_timing_fields_and_lease():
+    source = (PROJECT_ROOT / "alembic" / "versions" / "0012_wizard_first_save_time.py").read_text(encoding="utf-8")
+
+    assert "wizard_work_sessions" in source
+    assert "time_to_first_save_seconds" in source
     assert "INSERT" not in source
     assert "UPDATE" not in source
 

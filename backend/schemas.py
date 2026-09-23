@@ -95,6 +95,10 @@ class ExpertStats(BaseModel):
     total_active_seconds: int = 0
     avg_active_seconds: Optional[int] = None
     median_active_seconds: Optional[int] = None
+    completed_first_save_timings: int = 0
+    total_time_to_first_save_seconds: int = 0
+    avg_time_to_first_save_seconds: Optional[int] = None
+    median_time_to_first_save_seconds: Optional[int] = None
     shortest_work_sessions: list["WorkSessionDurationRecord"] = Field(default_factory=list)
     longest_work_sessions: list["WorkSessionDurationRecord"] = Field(default_factory=list)
 
@@ -114,6 +118,14 @@ class ReportWorkSessionState(BaseModel):
     work_session_id: str
     active_seconds: int
     is_active: bool
+
+
+class WizardWorkSessionStart(BaseModel):
+    tab_id: str = Field(min_length=16, max_length=64, pattern=r"^[A-Za-z0-9-]+$")
+
+
+class WizardWorkSessionState(BaseModel):
+    wizard_session_id: str
 
 
 class ReviewDurationRecord(BaseModel):
@@ -317,6 +329,7 @@ class ReportCreate(BaseModel):
     examination_date: date
     expert_comment: Optional[str] = None
     expert_proportions_grade: Optional[int] = Field(default=None, ge=0, le=99)
+    wizard_session_id: Optional[str] = Field(default=None, min_length=36, max_length=36, pattern=r"^[A-Fa-f0-9-]+$")
 
 
 class ReportUpdate(BaseModel):
@@ -382,6 +395,8 @@ class ReportResponse(BaseModel):
     expert_proportions_grade: Optional[int]
     expert_cut_grade: Optional[int]
     expert_confirmed_at: Optional[datetime]
+    first_save_started_at: Optional[datetime]
+    time_to_first_save_seconds: Optional[int]
     price: Optional[Decimal]
     market_reference: Optional[MarketReferenceSummary] = None
     stone: StoneResponse
