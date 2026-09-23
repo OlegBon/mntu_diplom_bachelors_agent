@@ -11,6 +11,12 @@
 
 `MLService` є демонстраційною евристикою з випадковим коефіцієнтом. Він не є навченою ML-моделлю, експертною оцінкою чи ринковим котируванням.
 
+> **Актуалізація 2026-09-23.** Опис `MLService` вище є historical context:
+> сервіс вилучено в 085. Legacy `price` лишається некласифікованим historical
+> значенням, а нові private market reference використовують versioned
+> provider snapshots. Безпечну межу historical grades і майбутнього ML задає
+> [ADR-004](./004-legacy-calculation-and-ml-boundary.md).
+
 ## Рішення
 
 ### Поточні дані

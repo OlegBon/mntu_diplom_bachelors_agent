@@ -128,6 +128,13 @@ Proportions, Polish і Symmetry. Це спрощений системний ро
 ruleset `idc-demo-v1` не показується користувачу; межі та процес майбутнього
 оновлення описані в [guide ruleset](./idc-demo-v1-ruleset.md).
 
+Збережені system grades не є чергою на фоновий перерахунок. `draft` може
+отримати актуальну версію ruleset лише через штатне збереження; `review`,
+`issued` і `void` не переписуються. Legacy projection-колонки існують для
+сумісності та історії, але не є джерелом UI або експертного рішення. Старий
+масовий скрипт перерахунку вилучено: будь-яке майбутнє порівняння починається
+лише з read-only dry-run, обмеженого scope і плану відновлення даних.
+
 Якщо в admin policy є обраний провайдер та його застосовний `approved` snapshot,
 цей самий preview показує `USD … of`: системний довідковий орієнтир із поточних
 параметрів каменю. Це **не** ринкова, експертна, продажна або транзакційна ціна.
@@ -418,8 +425,9 @@ snapshot-а. Це не approval, не scheduler і не змінює наявн�
 Ринкові суми залишаються private: їх немає в public passport, QR і PDF.
 
 Legacy `/diamonds/*` вилучено. Historical legacy-колонки не очищалися та не
-перераховувалися; їхня безпечна доля окремо описана у
-[120](../backlog/120-legacy-calculation-and-ml-boundary.md).
+перераховувалися. Вони лишаються compatibility-проєкцією до окремого
+контрольованого retirement; межу IDC, legacy та ML фіксує
+[ADR-004](../decisions/004-legacy-calculation-and-ml-boundary.md).
 
 Поточні automated tests використовують SQLite у пам’яті для backend та mock
 HTTP для Playwright. Вони перевіряють RBAC, lifecycle, allow-list, QR/PDF і

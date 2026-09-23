@@ -1,10 +1,10 @@
 # 🏗️ Архітектура застосунку «Diamant ID»
 
-Цей документ описує фактичну високорівневу архітектуру дипломного проєкту «Diamant ID»: локальної системи для ведення звітів про діаманти, довідників оцінювання, розрахунку IDC-параметрів і демонстраційного прогнозу ціни.
+Цей документ описує фактичну високорівневу архітектуру дипломного проєкту «Diamant ID»: локальної системи для ведення звітів про діаманти, довідників оцінювання, системного IDC-розрахунку та versioned ринкових довідкових орієнтирів.
 
 Документ відображає код у репозиторії, а не лише початковий задум. Стан локального запуску наведено в [local-start.md](./local-start.md), детальна карта таблиць і зв’язків — у [db-schema.md](./db-schema.md), повний користувацький workflow звіту й паспорта — у [guide](./guides/current-domain-and-report-workflow.md), а окрема механіка market provider-ів — у [guide провайдерів](./guides/market-data-providers.md). Перелік виконаного й запланованого — у [work_plan.md](./work_plan.md), журнал змін — у [progress.md](./progress.md).
 
-> **Статус на 23 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`–`0012_wizard_first_save_time` застосовані до локальної MariaDB. `0012` додає elapsed time від першої дії у майстрі до першого save лише для майбутніх чернеток, без backfill. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` вилучено без міграції historical колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
+> **Статус на 23 вересня 2026.** Працює локальний контур: frontend на Pug/SCSS/JavaScript збирається Gulp і віддається BrowserSync; FastAPI надає JSON API та JWT-вхід; SQLAlchemy працює з MariaDB у XAMPP. Revisions `0002_report_core`–`0012_wizard_first_save_time` застосовані до локальної MariaDB. `0012` додає elapsed time від першої дії у майстрі до першого save лише для майбутніх чернеток, без backfill. Dashboard, wizard і private detail/edit використовують лише `/reports`; legacy `/diamonds/*` і небезпечний `recalc_grades.py` вилучено без міграції historical projection-колонок. Docker, PostgreSQL і завершений ML-потік ще не реалізовані.
 
 ---
 
@@ -72,7 +72,6 @@ Backend запускають із кореня репозиторію через
 ├── scripts/
 │   ├── bootstrap_mariadb_databases.py # Створення відсутніх локальних databases
 │   ├── seed_db.py                   # Перестворення й наповнення локальних БД
-│   ├── recalc_grades.py             # Допоміжний перерахунок оцінок
 │   └── audit-api.mjs                # Безпечний локальний API contract/smoke audit
 ├── data/                            # CSV-набір для локального seed
 ├── storage/                         # Gitignored приватні файли звітів (runtime)
@@ -127,7 +126,7 @@ Backend запускають із кореня репозиторію через
 | --- | --- | --- |
 | `diamond_oltp` | `experts` (з `is_active`), compatibility `diamond_reports`, `stones`, `report_events`, `report_work_sessions`, append-only `report_work_session_events`, single-tab `report_work_session_leases`, короткоживучі `wizard_work_sessions`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` і lifecycle-колонки | Локальна MariaDB та кодова head — `0012_wizard_first_save_time` |
 | `diamond_market` | `grade_mappings`, legacy demo-індекс, `reference_values`, provider catalog, versioned market snapshots/quotes, immutable FX snapshots і singleton market policy | `0009` додає NBU USD/UAH, `0010` — future-only policy; без backfill |
-| `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; API та ML-потік відсутні |
+| `diamond_analytics` | Зарезервована `ml_results` для майбутніх ML-результатів | SQLAlchemy-модель і чистий seed реалізовано; таблиця порожня, API, модель і ML-потік відсутні |
 
 Новий wizard створює звіт через `POST /reports`: сервер призначає остаточний
 `report_id`, зберігає окрему `examination_date` і встановлює
@@ -150,6 +149,28 @@ USD/UAH НБУ, а потім зберігає Decimal rate, official rate date,
 FX snapshot. Якщо НБУ недоступний, valuation не створюється; пізніші курси не
 змінюють уже збережені суми. Деталі — у
 [ADR-002](./decisions/002-financial-calculation-contract.md).
+
+### Межа IDC, historical projections і майбутнього ML
+
+`DiamondCalculator` — детермінований, спрощений системний розрахунок для
+поточної версії ruleset. Він не є IDC-сертифікацією, ML-моделлю, експертним
+підтвердженням або джерелом ринкової ціни. System grades фіксуються в report
+разом із `calculation_rule_version`; expert-confirmed grades залишаються
+окремими даними експерта.
+
+Legacy-колонки `DiamondReport` збережені лише як compatibility/historical
+projection. Старий скрипт, який масово переписував їх без dry-run, scope,
+audit trail чи rollback plan, вилучено. Жоден чинний endpoint не перераховує
+виданий або historical report. Нова IDC-методика має отримати новий ruleset і
+застосовуватись forward-only; read-only порівняння або будь-який write-flow
+можливі лише окремою погодженою задачею. Повна політика — в
+[ADR-004](./decisions/004-legacy-calculation-and-ml-boundary.md).
+
+`diamond_analytics.ml_results` не є контрактом готової аналітики: вона не
+містить даних і не має API. До появи ML чи карт Кохонена потрібні ліцензований
+dataset, versioned training/model artifact, відтворювана валідація, provenance
+кожного результату та правила його неавторитетного відображення. ML не може
+переписувати system/expert grades, lifecycle або ринкові орієнтири.
 
 Active-time не береться з `created_at`, `updated_at`, legacy
 `evaluation_time_sec` чи review-cycle. Після першого save owner-gemologist у

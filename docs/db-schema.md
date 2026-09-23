@@ -105,7 +105,7 @@ legacy-звіту: історичних даних недостатньо, що�
 | Авторство | `expert_id`, `issued_by_id` | Автор-експерт та admin-видавець. |
 | Результати | `system_proportions_grade`, `system_cut_grade`, `calculation_rule_version` | Системний preview і immutable код ruleset. |
 | Експертні grades | `expert_proportions_grade`, `expert_cut_grade`, `expert_confirmed_at`, `expert_comment` | Proportions задає експерт; `expert_cut_grade` сервер похідно обчислює з Proportions, Polish і Symmetry. |
-| Legacy projection | `shape`, 4C/геометрія, `stone_origin`, `price`, `is_sold`, image-path поля тощо | Історичні дані без активного HTTP API; їхній cleanup або контрольований backfill потребують окремого погодженого рішення. |
+| Legacy projection | `shape`, 4C/геометрія, `stone_origin`, `price`, `is_sold`, image-path поля тощо | Compatibility/historical projection без активного HTTP API. Старий mass-write скрипт вилучено; cleanup, read-only diff або контрольований write-flow потребують окремого погодженого рішення з dry-run, scope, audit trail, backup і rollback. |
 
 `price` — `legacy_unclassified_value`: він не є ринковою, експертною чи
 фактичною ціною та не переноситься автоматично у `stone_valuations`.
@@ -283,7 +283,10 @@ OpenFacet attach backend завжди бере нову відповідь НБ�
 Зарезервована таблиця майбутніх ML-результатів. `report_id` — первинний ключ;
 далі можливі `predicted_price`, `predicted_class`, cluster/SOM-координати та
 `processed_at`. Поточний seed створює таблицю порожньою; API, model artifact,
-метрики й відтворюваний ML workflow ще не реалізовані.
+метрики й відтворюваний ML workflow ще не реалізовані. Її наявність не дає
+права записувати евристики, оцінки чи ціни: перед будь-яким записом потрібен
+контракт з provenance даних, версіями dataset/model/features і валідацією
+якості — [ADR-004](./decisions/004-legacy-calculation-and-ml-boundary.md).
 
 ## Міграції та локальна безпека
 
