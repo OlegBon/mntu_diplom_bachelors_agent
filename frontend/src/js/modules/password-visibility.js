@@ -1,4 +1,4 @@
-function createEyeIcon() {
+function createEyeIcon(isVisible) {
   const namespace = "http://www.w3.org/2000/svg";
   const icon = document.createElementNS(namespace, "svg");
   icon.setAttribute("viewBox", "0 0 24 24");
@@ -10,7 +10,21 @@ function createEyeIcon() {
   pupil.setAttribute("cy", "12");
   pupil.setAttribute("r", "2.5");
   icon.append(outline, pupil);
+  if (isVisible) {
+    const slash = document.createElementNS(namespace, "path");
+    slash.setAttribute("d", "M4 4 20 20");
+    icon.append(slash);
+  }
   return icon;
+}
+
+function setPasswordVisibility(input, toggle, isVisible) {
+  input.type = isVisible ? "text" : "password";
+  toggle.replaceChildren(createEyeIcon(isVisible));
+  toggle.classList.toggle("is-visible", isVisible);
+  toggle.setAttribute("aria-label", isVisible ? "Сховати пароль" : "Показати пароль");
+  toggle.setAttribute("aria-pressed", String(isVisible));
+  toggle.title = isVisible ? "Сховати пароль" : "Показати пароль";
 }
 
 export function initPasswordVisibility(root = document) {
@@ -24,17 +38,8 @@ export function initPasswordVisibility(root = document) {
     const toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "password-control__toggle";
-    toggle.setAttribute("aria-label", "Показати пароль");
-    toggle.setAttribute("aria-pressed", "false");
-    toggle.title = "Показати пароль";
-    toggle.append(createEyeIcon());
-    toggle.addEventListener("click", () => {
-      const visible = input.type === "text";
-      input.type = visible ? "password" : "text";
-      toggle.setAttribute("aria-label", visible ? "Показати пароль" : "Сховати пароль");
-      toggle.setAttribute("aria-pressed", String(!visible));
-      toggle.title = visible ? "Показати пароль" : "Сховати пароль";
-    });
+    setPasswordVisibility(input, toggle, false);
+    toggle.addEventListener("click", () => setPasswordVisibility(input, toggle, input.type !== "text"));
     wrapper.append(toggle);
   }
 }

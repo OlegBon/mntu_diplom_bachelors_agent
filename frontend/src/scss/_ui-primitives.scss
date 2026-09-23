@@ -21,7 +21,7 @@
 
   &:hover { transform: none; }
   &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
-  &:disabled, &.disabled { cursor: not-allowed; opacity: 0.5; }
+  &:disabled, &.disabled { cursor: not-allowed; opacity: 0.5; pointer-events: none; }
 
   &.btn-sm { min-height: 2.25rem; padding: 0.45rem 0.75rem; font-size: 0.85rem; }
 }
@@ -35,7 +35,7 @@
 }
 
 .btn-outline {
-  border-color: variables.$border-color;
+  border-color: variables.$primary-color;
   background: variables.$white;
   color: variables.$primary-color;
 
@@ -62,7 +62,10 @@
 .form-control,
 .form-select,
 .passport-search input {
-  &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 1px; }
+  &:hover:not(:disabled) { border-color: variables.$primary-color; }
+  &:focus-visible { border-color: variables.$primary-color; outline: 3px solid variables.$focus-ring; outline-offset: 1px; }
+  &:disabled { cursor: not-allowed; }
+  &[aria-invalid="true"] { border-color: variables.$error-color; }
 }
 
 .password-control {
@@ -91,6 +94,7 @@
   svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
   &:hover { color: variables.$primary-color; }
   &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 1px; }
+  &.is-visible { background: variables.$surface-subtle; color: variables.$primary-hover; }
 }
 
 .main-nav li a,
