@@ -103,6 +103,7 @@ test("built analytics page exposes three clearly scoped administrator tabs", asy
   assert.equal(document.querySelector("#analytics-period-form")?.tagName, "FORM");
   assert.equal(document.querySelector("#analytics-date-from")?.getAttribute("type"), "date");
   assert.equal(document.querySelector("#analytics-date-to")?.getAttribute("type"), "date");
+  assert.equal(document.querySelector("#analytics-period-summary")?.getAttribute("role"), "status");
   assert.equal(document.querySelector("#analytics-experts")?.getAttribute("role"), "tabpanel");
   assert.equal(document.querySelector("#analytics-admins")?.hasAttribute("hidden"), true);
   assert.match(document.querySelector("#analytics-stones")?.textContent || "", /ML/);
