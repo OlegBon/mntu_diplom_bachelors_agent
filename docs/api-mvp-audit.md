@@ -24,6 +24,11 @@
   не запускає external fetch, approval або запис даних, тому перевіряє лише
   401-межі GET-маршрутів; `market/price`
   лишається legacy demo-індексом, а не джерелом ринкової оцінки.
+- `scripts/recalc_grades.py` retired: він переписував legacy grades без
+  dry-run, scope, audit trail і rollback. Historical projection-колонки
+  залишені без cleanup/backfill; `ml_results` має SQLAlchemy-модель і
+  відтворюється порожньою seed-ом, але не має API чи ML-потоку. Межу фіксує
+  [ADR-004](./decisions/004-legacy-calculation-and-ml-boundary.md).
 - Автоматизовані regression-набори існують: pytest, Node/DOM та Playwright.
   Їхні команди описано в `AGENTS.md` і `docs/local-start.md`.
 
@@ -113,7 +118,7 @@ cmd /c "cd frontend && npm run audit:api"
 ## Дані, схема й seed
 
 - Read-only інспекція підтвердила: `diamond_oltp` має `experts` і `diamond_reports`; `diamond_market` — `grade_mappings` і `market_price_reference`.
-- У фактичній `diamond_analytics` є таблиця `ml_results` із сімома полями, але в `backend/models.py` немає моделі, а `scripts/seed_db.py` не створює, не очищує й не наповнює її. Це schema drift: таблицю слід або формально включити в майбутній аналітичний контур з міграцією, або окремо прибрати після рішення щодо даних.
+- На момент історичного аудиту `diamond_analytics.ml_results` була schema drift. Згодом її формалізовано SQLAlchemy-моделлю та clean seed; вона лишається порожнім reserved schema без API, model artifact або ML-потоку. Її future контракт уточнює ADR-004.
 - `diamond_reports` має FK на `experts`, але фільтри `is_sold`, пошук `report_id` і сортування `report_date`/`price` не мають спеціальних індексів. Для малого seed це не блокер; перед масштабуванням потрібні вимірювання та індекси за реальними запитами.
 - На момент аудиту `scripts/seed_db-start.py` був застарілим альтернативним сценарієм. У наступному `secure-local-foundation` його вилучено; актуальним лишився `scripts/seed_db.py` з bcrypt seed-паролями та відтворенням усіх трьох схем. Руйнівний запуск нового seed ще не виконувався.
 

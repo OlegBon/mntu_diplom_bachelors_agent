@@ -1,10 +1,10 @@
 # ⚙️ Diamant ID — технічний опис і актуальний статус
 
-Diamant ID — дипломний вебзастосунок для ведення експертних звітів про діаманти, роботи з довідниками якості, розрахунку оцінок огранювання за правилами IDC та демонстраційного прогнозу ціни.
+Diamant ID — дипломний вебзастосунок для ведення експертних звітів про діаманти, роботи з довідниками якості, системного розрахунку оцінок огранювання за правилами IDC та versioned ринкових довідкових орієнтирів.
 
 Цей документ фіксує **фактично реалізований локальний MVP**, його технічні межі та обов’язкові умови наступних етапів. Деталі структури коду й API наведено в [architecture.md](./architecture.md), інструкція запуску — у [local-start.md](./local-start.md), а послідовність робіт — у [work_plan.md](./work_plan.md).
 
-> **Статус на 16 вересня 2026.** Локальний MVP працює на FastAPI, SQLAlchemy та MariaDB/XAMPP; frontend зібрано на Gulp, Pug, SCSS і vanilla JavaScript. Є JWT-вхід, private workflow звітів, серверні довідники, IDC-розрахунок, детермінований demo-preview і revocable public passport з кодом, URL, QR та on-demand PDF для issued reports. Це ще не production-система: Docker, PostgreSQL, реальна ML-модель і публічний deployment не реалізовані.
+> **Статус на 23 вересня 2026.** Локальний MVP працює на FastAPI, SQLAlchemy та MariaDB/XAMPP; frontend зібрано на Gulp, Pug, SCSS і vanilla JavaScript. Є JWT-вхід, private workflow звітів, versioned IDC-розрахунок, OpenFacet/NBU довідкові ринкові орієнтири та revocable public passport з кодом, URL, QR і on-demand PDF для issued reports. Це ще не production-система: Docker, PostgreSQL, реальна ML-модель і публічний deployment не реалізовані.
 
 ---
 
@@ -23,8 +23,9 @@ Diamant ID — дипломний вебзастосунок для веденн
 
 - `DiamondCalculator` оцінює `proportions_grade` для Round Brilliant за table, depth, crown і pavilion.
 - Підсумковий `cut_grade` дорівнює найгіршій з оцінок proportions, polish і symmetry.
-- Wizard показує детермінований demo-preview з позначкою `d`; він не є ринковою, експертною чи продажною ціною і не записується до фінансового контракту.
-- Авторитетні ціни, валютні курси й ML-модель не реалізовані; їхні межі зафіксовані у backlog 110 і 120.
+- Wizard показує system IDC preview та, за чинної admin policy, нефіксований OpenFacet-орієнтир `USD … of`; це не ринкова, експертна чи продажна ціна. Під час save може бути створений окремий immutable private valuation з provenance і зафіксованим НБУ FX.
+- Legacy `price`/`USD … d` існує лише для історичного demo-набору та не є ціною. Старий bulk recalculation вилучено; historical projections не переписуються автоматично.
+- Реальна ML-модель не реалізована. Зарезервована `ml_results` порожня й не є джерелом прогнозу, ціни чи кластеризації.
 
 ### Користувачі та доступ
 

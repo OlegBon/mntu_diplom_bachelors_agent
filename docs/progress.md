@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-23 — legacy-calculation-and-ml-boundary
+
+- **Задача:** безпечно визначити долю legacy bulk-перерахунку, historical projection-полів та межу між детермінованим IDC calculation і майбутнім ML/SOM.
+- **Змінені файли:** `scripts/recalc_grades.py` (видалено), `tests/unit/test_legacy_calculation_boundary.py`, `README.md`, `docs/{architecture,db-schema,tech_diamant_id,api-mvp-audit,work_plan,progress}.md`, `docs/{decisions/004-legacy-calculation-and-ml-boundary,backlog/README}.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/backlog/120-legacy-calculation-and-ml-boundary.md` (видалено).
+- **Рішення / Результат:** старий `recalc_grades.py` retired: він обходив усі `DiamondReport`, оновлював лише legacy grades і commit-ив без dry-run, scope, actor, ruleset/version, audit trail, backup чи rollback, не працюючи з normalized `Stone` і чинними system/expert даними. Legacy projection-колонки залишені без cleanup/backfill. Нова IDC-методика має бути новим ruleset і діяти forward-only для нових або штатно змінених `draft`; `review`/`issued`/`void` не переписуються. ADR-004 фіксує обов'язкові гарантії майбутнього read/write інструмента та передумови ML/SOM: ліцензований dataset, versioned code/artifact/features, validation, provenance і чесна неекспертна UI-межа.
+- **Перевірки:** read-only inventory локальної MariaDB: `legacy-unverified` — 1000 report, `idc-demo-v1` — 8; усі мають `Stone`, розбіжностей legacy/system grades — 0, `ml_results` — 0. `python -m pytest tests/unit/test_legacy_calculation_boundary.py tests/unit/test_migration_foundation.py -q` — 9 passed; повний `python -m pytest -q` — 55 passed; backend import smoke та `git diff --check` — успішно.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** міграцій, local DB write, масового backfill, cleanup legacy-колонок, ML-моделі, dataset або UI analytics не додано. ADR визначає контракт майбутньої роботи, а не дозволяє автоматичний write-flow.
+
 ## 2026-09-23 — profile-admin-ui-polish
 
 - **Задача:** уніфікувати візуальні стани повторюваних контролів Profile/admin UI та зробити перемикач видимості пароля зрозумілим у всіх password-формах.
@@ -303,7 +312,7 @@
 - **Результат:** `/diamonds/*`, dead frontend handler, legacy Pydantic/CRUD contracts і випадковий demo `MLService` вилучено. `/reports` є єдиним API для приватних звітів; API-аудитор перевіряє його межу доступу без токена. Historical legacy-колонки та значення `price` лишилися без схеми, міграції чи backfill.
 - **Перевірки:** додано API regression на 404 для кожного retired route, перенесено чинні auth/experts перевірки й додано Node guard, що active frontend не містить retired endpoint. `python -m pytest` — 21 passed; `npm test` — 11 passed; full Playwright запуск підтвердив login/dashboard/wizard flows, а targeted detail/edit — 1 passed; `npm run audit:api` — 9/9; `git diff --check` і FastAPI import/route smoke — успішно.
 - **Нові змінні середовища:** немає.
-- **Обмеження та наступна задача:** `scripts/recalc_grades.py` навмисно не запускався і не переписувався. Нова [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md) має окремо погодити його retire або безпечну versioned replacement з dry-run, scope, audit trail та планом відновлення. Public passport, authoritative pricing/FX і ML не реалізовано.
+- **Обмеження та наступна задача:** `scripts/recalc_grades.py` навмисно не запускався і не переписувався. Його retirement, межу historical projection-полів та умови можливого future write-flow пізніше зафіксовано в [ADR-004](./decisions/004-legacy-calculation-and-ml-boundary.md). Public passport, authoritative pricing/FX і ML на момент цього історичного запису ще не були реалізовані.
 - **Виявлено поза scope:** read-only audit на локальній відновленій MariaDB отримав `500` від `/statistics/expert-performance`; endpoint вилучено з вузького report/auth audit, а його перевірка й виправлення були винесені у завершену 108 до будь-якого analytics UI.
 
 ## 2026-09-16 — report-detail-layout-refinement (завершено)

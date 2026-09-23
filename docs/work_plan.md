@@ -17,13 +17,13 @@
 | `/market/*` | Compatibility mappings і технічний demo-індекс; не використовувати як authorative market data. Контрольовані provider snapshot-и належать `/market-data/*`. |
 | `/statistics/expert-performance`, `/statistics/admin-review-performance` | Admin-only operational analytics: status counts за датою створення report, завершені server-timed active sessions та review-cycle за датою admin-рішення. |
 
-Повних дублікатів endpoint-ів не лишилося. Dashboard, wizard і detail/edit працюють через `/reports`; legacy `/diamonds/*`, unreachable handler та demo `MLService` вилучено. Historical projection-колонки та `scripts/recalc_grades.py` не змінювалися: їхня доля зафіксована окремою задачею 120. `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як зарезервовану SQLAlchemy-модель.
+Повних дублікатів endpoint-ів не лишилося. Dashboard, wizard і detail/edit працюють через `/reports`; legacy `/diamonds/*`, unreachable handler, demo `MLService` і небезпечний `scripts/recalc_grades.py` вилучено. Historical projection-колонки лишаються compatibility-даними без cleanup/backfill; `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як порожню зарезервовану SQLAlchemy-модель.
 
 ### Уже реалізовано
 
 - [x] FastAPI backend із JWT-входом, RBAC для admin/gemologist, CRUD звітів і довідниками ринку.
 - [x] SQLAlchemy-моделі для OLTP та Market; локальний seed для MariaDB.
-- [x] IDC-калькулятор proportions/cut і демонстраційний ML-розрахунок ціни.
+- [x] IDC-калькулятор proportions/cut із versioned ruleset; він не є ML, експертною сертифікацією або ринковою ціною.
 - [x] Gulp-збірка Pug/SCSS/JavaScript; сторінки landing, login, dashboard і створення звіту.
 - [x] Збірка frontend і імпорт FastAPI проходять у поточному середовищі.
 
@@ -65,7 +65,7 @@
 - [x] 060 — Dashboard звітів: приватний `/reports`, server-driven список, пошук, швидкі статуси звіту та двостанова проєкція продажу «Продано / Не продано», розширені фільтри 4C/форми/діапазонів/дат, RBAC, URL-параметри, пагінація, клікабельні server-side сортування, вітрина з 4C/бейджами й demo-ціною `USD … d`, а також меню дій `⋮`; приватний detail/edit/print залишаються 080.
 - [x] 070 — Майстер створення звіту: три кроки, серверні довідники, `examination_date`, preview наступного ID, live IDC preview, детермінований demo-прогноз `USD … d`, валідація, приватні вкладення та підтверджене ручне збереження `draft`. Detail/edit, commercial state і transitions лишаються 080.
 - [x] 080 — Приватний перегляд і редагування: `/report-detail.html`, private owner/admin RBAC, draft-редагування повного контракту, детальний `market_status`, вкладення, history та lifecycle actions. Кожний успішний `PUT /reports/{id}` додає `report_updated`; `issued` доступний admin лише за видимих expert-confirmed grades. Друк не входив у цей зріз.
-- [x] 085 — Прибирання legacy API: `/diamonds/*`, unreachable frontend handler, старі Pydantic/CRUD контракти й demo `MLService` вилучені. Historical legacy-колонки залишені без міграції; їхній safe recalculation/cleanup винесено у 120.
+- [x] 085 — Прибирання legacy API: `/diamonds/*`, unreachable frontend handler, старі Pydantic/CRUD контракти й demo `MLService` вилучені. Historical legacy-колонки залишені без міграції; їхню межу, retirement write-скрипта та умови можливого майбутнього diff/write-flow зафіксовано у 120 / ADR-004.
 - [x] 090 — Публічний паспорт і QR: окрема public projection `GET /public/passports/{public_id}`, непередбачуваний revocable token, admin publish/revoke/reissue, SVG QR і `passport.html`. Не відкриває ціну, персональні/внутрішні дані чи media; контрольована публічність вкладень винесена у 130.
 - [x] 095 — Передача публічного паспорта та PDF: admin бачить і копіює код/URL, landing приймає лише код, а пряме посилання й посилання з QR відкривають паспорт напряму. Server генерує on-demand allow-listed PDF для поточного active issued report. Старі код/QR/URL не підходять після reissue; revoke і void закривають нове завантаження.
 - [x] 100 — Профіль і admin UI: profile ПІБ/password, admin roles і reversible deactivate; versioned довідники — 105, статистика — 108.
@@ -77,7 +77,7 @@
 - [x] 121 — Розширення ринкових провайдерів і FX: НБУ USD/UAH fetch/ручний refresh, immutable FX snapshot і policy майбутніх системних орієнтирів реалізовано у `0009`/`0010`. Admin обирає market provider radio-кнопкою та вмикає/вимикає UAH-конвертацію НБУ; майстер preview читає цю policy й показує нефіксований USD-орієнтир. Підтримуваний новий або змінений draft отримує `system_market_reference` з останнього approved snapshot-а policy, а ручний `market_reference` лишається пріоритетним. Dashboard/private detail показують provenance. Нереалізований операційний залишок винесено у [122](./backlog/122-market-provider-operations.md).
 - [ ] [122 — Операційний контур ринкових провайдерів](./backlog/122-market-provider-operations.md): погодити freshness policy, scheduler, observability і безпечне розширення market/FX provider-ів без historical backfill.
 - [x] 115 — UI-polish профілю та admin UI: shared primitives уніфікують primary/outline кнопки та interactive-стани полів; password-toggle у login, Profile і admin-формах має помітні hidden/visible SVG, фон, `aria-label` і `aria-pressed`. Перевірено desktop, tablet і mobile без зміни API чи бізнес-логіки.
-- [ ] [120 — Legacy-перерахунок і межа ML](./backlog/120-legacy-calculation-and-ml-boundary.md): погодити retire або безпечну versioned replacement для `recalc_grades.py`; не запускати масовий backfill чи cleanup без окремого рішення.
+- [x] 120 — Legacy-перерахунок і межа ML: `recalc_grades.py` retired, бо він переписував усі legacy-поля без dry-run/scope/audit/rollback і не працював із чинним `Stone`/system/expert контрактом. Historical projections не очищаються й не backfill-яться. Нова IDC-версія — forward-only; будь-який майбутній diff/write-flow потребує окремого рішення, dry-run, scope, audit trail, backup і rollback. `ml_results` лишається порожнім reserved schema до ліцензованого, versioned і відтворюваного ML/SOM-контракту ([ADR-004](./decisions/004-legacy-calculation-and-ml-boundary.md)).
 - [ ] [130 — Публічні вкладення паспорта](./backlog/130-public-passport-media.md): окремо погодити consent, allow-list типів і захищену видачу явно публічних media.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
@@ -96,7 +96,7 @@
 ### Зафіксовані розбіжності з початковими нотатками
 
 - Нотатки описують локальний backend у Docker, але поточний репозиторій запускає FastAPI напряму з `.venv`; Docker ще не реалізований.
-- Фактична MariaDB уже містить `diamond_analytics.ml_results`, але SQLAlchemy-моделі, актуальний seed і робочий ML-потік для неї відсутні.
+- `diamond_analytics.ml_results` має SQLAlchemy-модель і відтворюється порожньою local seed; API, dataset/model artifact, запис і ML-потік для неї відсутні.
 - Публічний passport/QR і allow-listed PDF реалізовано окремим safe flow; profile/admin UI також реалізовано. Full private print, public media й ML-аналітика ще не присутні як завершений код у репозиторії.
 
 ### Рішення щодо гілок
