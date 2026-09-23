@@ -83,5 +83,8 @@ test("administrator sees operational analytics without a fake stone chart", asyn
   await page.locator("#analytics-date-from").fill("2026-09-01");
   await page.locator("#analytics-date-to").fill("2026-09-30");
   await page.getByRole("button", { name: "Застосувати період" }).click();
+  await expect(page.locator("#analytics-period-summary")).toHaveText("Поточний зріз: з 1 вер. 2026 р. до 30 вер. 2026 р.");
+  await page.getByRole("button", { name: "За весь час" }).click();
+  await expect(page.locator("#analytics-period-summary")).toHaveText("Поточний зріз: за весь доступний час.");
   await expect(page).toHaveURL(/ml-analysis/);
 });

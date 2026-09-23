@@ -33,6 +33,19 @@ function dateTime(value) {
   return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
+function formatPeriodDate(value) {
+  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${value}T00:00:00`));
+}
+
+function periodSummary(period) {
+  if (period.date_from && period.date_to) {
+    return `Поточний зріз: з ${formatPeriodDate(period.date_from)} до ${formatPeriodDate(period.date_to)}`;
+  }
+  if (period.date_from) return `Поточний зріз: від ${formatPeriodDate(period.date_from)}`;
+  if (period.date_to) return `Поточний зріз: до ${formatPeriodDate(period.date_to)}`;
+  return "Поточний зріз: за весь доступний час.";
+}
+
 function renderTable(container, headers, rows) {
   if (!rows.length) {
     container.replaceChildren(element("p", "account-help", "Даних за цим зрізом поки немає."));
@@ -167,6 +180,7 @@ export async function initAnalytics() {
   const expertDialogContent = document.getElementById("analytics-expert-dialog-content");
   const periodForm = document.getElementById("analytics-period-form");
   const periodReset = document.getElementById("analytics-period-reset");
+  const periodSummaryNode = document.getElementById("analytics-period-summary");
   const panels = Object.fromEntries([...page.querySelectorAll(".analytics-panel")].map((panel) => [panel.id.replace("analytics-", ""), panel]));
 
   page.querySelectorAll("[data-analytics-tab]").forEach((tab) => tab.addEventListener("click", () => {
@@ -194,6 +208,7 @@ export async function initAnalytics() {
       ]);
       renderExperts(expertResults, experts, expertDialog, expertDialogContent);
       renderAdmins(adminResults, admins);
+      periodSummaryNode.textContent = periodSummary(period);
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
       status.textContent = error instanceof ApiRequestError && error.status === 403
