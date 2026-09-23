@@ -91,6 +91,29 @@ class ExpertStats(BaseModel):
     review_reports: int
     issued_reports: int
     void_reports: int
+    completed_work_sessions: int = 0
+    total_active_seconds: int = 0
+    avg_active_seconds: Optional[int] = None
+    median_active_seconds: Optional[int] = None
+    shortest_work_sessions: list["WorkSessionDurationRecord"] = Field(default_factory=list)
+    longest_work_sessions: list["WorkSessionDurationRecord"] = Field(default_factory=list)
+
+
+class WorkSessionDurationRecord(BaseModel):
+    report_id: str
+    duration_seconds: int
+    finished_at: datetime
+
+
+class ReportWorkSessionSignal(BaseModel):
+    action: Literal["start", "resume", "heartbeat", "pause", "save"]
+    tab_id: str = Field(min_length=16, max_length=64, pattern=r"^[A-Za-z0-9-]+$")
+
+
+class ReportWorkSessionState(BaseModel):
+    work_session_id: str
+    active_seconds: int
+    is_active: bool
 
 
 class ReviewDurationRecord(BaseModel):

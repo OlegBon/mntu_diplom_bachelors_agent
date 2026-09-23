@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from datetime import date, timedelta
 from decimal import Decimal
@@ -748,22 +749,55 @@ def activate_user(
 # Статистика експертів
 @app.get("/statistics/expert-performance", response_model=List[schemas.ExpertStats])
 def get_stats(
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
     """Admin-only operational snapshot; no pricing, ML, or personnel scoring."""
     require_admin(current_user)
-    return crud.get_expert_stats(db)
+    try:
+        return crud.get_expert_stats(db, date_from=date_from, date_to=date_to)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @app.get("/statistics/admin-review-performance", response_model=schemas.AdminReviewStatisticsResponse)
 def get_admin_review_stats(
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
     """Admin-only review-cycle timing, distinct from active operator work time."""
     require_admin(current_user)
-    return crud.get_admin_review_stats(db)
+    try:
+        return crud.get_admin_review_stats(db, date_from=date_from, date_to=date_to)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.post("/reports/{report_id}/work-session", response_model=schemas.ReportWorkSessionState)
+def record_report_work_session(
+    report_id: str,
+    payload: schemas.ReportWorkSessionSignal,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Record a server-timed active draft signal from its owning gemologist."""
+    report = crud.get_report_domain(db, report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    try:
+        result = crud.record_work_session_signal(db, report=report, actor=current_user, signal=payload)
+        db.commit()
+        return result
+    except crud.ReportDomainError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="A work session was opened in another tab") from error
 
 @app.get("/market/mappings", response_model=List[schemas.GradeMappingSchema])
 def read_mappings(category: Optional[str] = None, db: Session = Depends(get_db)):

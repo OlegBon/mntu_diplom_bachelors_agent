@@ -12,6 +12,12 @@ const expertStats = [{
   review_reports: 1,
   issued_reports: 2,
   void_reports: 0,
+  completed_work_sessions: 2,
+  total_active_seconds: 2400,
+  avg_active_seconds: 1200,
+  median_active_seconds: 1200,
+  shortest_work_sessions: [{ report_id: "DR-00013", duration_seconds: 600, finished_at: "2026-09-16T11:00:00Z" }],
+  longest_work_sessions: [{ report_id: "DR-00014", duration_seconds: 1800, finished_at: "2026-09-16T12:00:00Z" }],
 }];
 
 const adminStats = {
@@ -57,15 +63,16 @@ test("administrator sees operational analytics without a fake stone chart", asyn
     localStorage.setItem("role", "admin");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
-  await page.route("**/statistics/expert-performance", (route) => route.fulfill({ json: expertStats }));
-  await page.route("**/statistics/admin-review-performance", (route) => route.fulfill({ json: adminStats }));
+  await page.route("**/statistics/expert-performance**", (route) => route.fulfill({ json: expertStats }));
+  await page.route("**/statistics/admin-review-performance**", (route) => route.fulfill({ json: adminStats }));
 
   await page.goto("/ml-analysis.html");
 
   await expect(page.getByRole("heading", { name: "Експерти та звіти" })).toBeVisible();
   await expect(page.getByRole("cell", { name: /Експерт Іван/ })).toBeVisible();
   await page.getByRole("button", { name: /Експерт Іван/ }).click();
-  await expect(page.getByRole("dialog")).toContainText("Три найшвидші та найдовші завершені звіти");
+  await expect(page.getByRole("dialog")).toContainText("Три найкоротші активні сесії");
+  await expect(page.getByRole("dialog").getByRole("link", { name: "DR-00014" })).toHaveAttribute("href", "/report-detail.html?id=DR-00014");
   await page.getByRole("button", { name: "Закрити" }).click();
   await page.getByRole("tab", { name: "Адміністратори" }).click();
   await expect(page.getByText("Тривалість етапу перевірки")).toBeVisible();
@@ -73,4 +80,8 @@ test("administrator sees operational analytics without a fake stone chart", asyn
   await expect(page.getByRole("link", { name: "DR-00011" })).toHaveAttribute("href", "/report-detail.html?id=DR-00011");
   await page.getByRole("tab", { name: "Камені" }).click();
   await expect(page.getByText(/не показуються умовні графіки/)).toBeVisible();
+  await page.locator("#analytics-date-from").fill("2026-09-01");
+  await page.locator("#analytics-date-to").fill("2026-09-30");
+  await page.getByRole("button", { name: "Застосувати період" }).click();
+  await expect(page).toHaveURL(/ml-analysis/);
 });

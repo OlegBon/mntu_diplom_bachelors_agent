@@ -45,6 +45,7 @@ const valuations = [
 
 test("owner edits a draft and sees the recorded private history", async ({ page }) => {
   let updatedPayload;
+  const workSessionActions = [];
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
@@ -71,6 +72,11 @@ test("owner edits a draft and sees the recorded private history", async ({ page 
   ] }));
   await page.route("**/reports/DR-01001/media", (route) => route.fulfill({ json: [] }));
   await page.route("**/reports/DR-01001/valuations", (route) => route.fulfill({ json: valuations }));
+  await page.route("**/reports/DR-01001/work-session", async (route) => {
+    const payload = route.request().postDataJSON();
+    workSessionActions.push(payload.action);
+    await route.fulfill({ json: { work_session_id: "session-1", active_seconds: 10, is_active: payload.action !== "pause" } });
+  });
   await page.route("**/reports/DR-01001", async (route) => {
     if (route.request().method() === "PUT") updatedPayload = route.request().postDataJSON();
     await route.fulfill({ json: report });
@@ -90,9 +96,11 @@ test("owner edits a draft and sees the recorded private history", async ({ page 
   await expect(valuationDisclosures.nth(1)).toHaveAttribute("open", "");
   await page.locator("#detail-comment").fill("Updated observation");
   await Promise.all([
-    page.waitForRequest((request) => request.url().endsWith("/reports/DR-01001") && request.method() === "PUT"),
+    page.waitForResponse((response) => response.url().endsWith("/reports/DR-01001") && response.request().method() === "PUT"),
     page.locator("#detail-save").click(),
   ]);
   expect(updatedPayload.expert_comment).toBe("Updated observation");
   expect(updatedPayload.stone.market_status).toBe("not_for_sale");
+  expect(workSessionActions).toContain("start");
+  expect(workSessionActions).toContain("save");
 });

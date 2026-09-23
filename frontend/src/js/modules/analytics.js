@@ -68,15 +68,38 @@ function openExpertDialog(dialog, dialogContent, row) {
     ["Стан облікового запису", row.is_active ? "Активний" : "Неактивний"],
     ["Усього звітів", row.total_reports], ["Чернетки", row.draft_reports],
     ["На перевірці", row.review_reports], ["Видано", row.issued_reports], ["Анульовано", row.void_reports],
+    ["Завершені робочі сесії", row.completed_work_sessions],
+    ["Активний час", duration(row.total_active_seconds)],
+    ["Середня активна сесія", duration(row.avg_active_seconds)],
+    ["Медіанна активна сесія", duration(row.median_active_seconds)],
   ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
-  fragment.append(metrics, element("p", "account-help", "Дані показані за весь доступний період. Дату створення облікового запису та фактичний активний час експерта поточний контракт не зберігає."));
-  fragment.append(element("p", "account-help", "Три найшвидші та найдовші завершені звіти з'являться після окремого обліку start/pause/resume у задачі 112."));
+  fragment.append(metrics, element("p", "account-help", "Активний час — лише server-timed сесії автора збереженої чернетки. Відкрита, прихована або offline-вкладка без взаємодії не зараховується."));
+  fragment.append(renderWorkSessionList("Три найкоротші активні сесії", row.shortest_work_sessions), renderWorkSessionList("Три найдовші активні сесії", row.longest_work_sessions));
   dialogContent.replaceChildren(fragment);
   dialog.showModal();
 }
 
+function renderWorkSessionList(title, items = []) {
+  const section = element("section", "analytics-review-list");
+  section.append(element("h3", "", title));
+  if (!items.length) {
+    section.append(element("p", "account-help", "Завершених активних сесій у цьому періоді поки немає."));
+    return section;
+  }
+  const list = document.createElement("ol");
+  items.forEach((item) => {
+    const row = document.createElement("li");
+    const reportLink = element("a", "", item.report_id);
+    reportLink.href = `/report-detail.html?id=${encodeURIComponent(item.report_id)}`;
+    row.append(reportLink, document.createTextNode(`: ${duration(item.duration_seconds)} · ${dateTime(item.finished_at)}`));
+    list.append(row);
+  });
+  section.append(list);
+  return section;
+}
+
 function renderExperts(container, rows, dialog, dialogContent) {
-  renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано"], rows.map((row) => [
+  renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано", "Активний час"], rows.map((row) => [
     (() => {
       const button = element("button", "analytics-expert-button", `${fullName(row)} (${row.expert_username})`);
       button.type = "button";
@@ -84,7 +107,7 @@ function renderExperts(container, rows, dialog, dialogContent) {
       return button;
     })(), row.is_active ? "Активний" : "Неактивний",
     String(row.total_reports), String(row.draft_reports), String(row.review_reports),
-    String(row.issued_reports), String(row.void_reports),
+    String(row.issued_reports), String(row.void_reports), duration(row.total_active_seconds),
   ]));
 }
 
@@ -142,6 +165,8 @@ export async function initAnalytics() {
   const adminResults = document.getElementById("analytics-admin-results");
   const expertDialog = document.getElementById("analytics-expert-dialog");
   const expertDialogContent = document.getElementById("analytics-expert-dialog-content");
+  const periodForm = document.getElementById("analytics-period-form");
+  const periodReset = document.getElementById("analytics-period-reset");
   const panels = Object.fromEntries([...page.querySelectorAll(".analytics-panel")].map((panel) => [panel.id.replace("analytics-", ""), panel]));
 
   page.querySelectorAll("[data-analytics-tab]").forEach((tab) => tab.addEventListener("click", () => {
@@ -155,15 +180,29 @@ export async function initAnalytics() {
   }));
   expertDialog?.addEventListener("cancel", () => expertDialogContent.replaceChildren());
   expertDialog?.addEventListener("close", () => expertDialogContent.replaceChildren());
-  try {
-    const [experts, admins] = await Promise.all([getExpertStatistics(token), getAdminReviewStatistics(token)]);
-    renderExperts(expertResults, experts, expertDialog, expertDialogContent);
-    renderAdmins(adminResults, admins);
-  } catch (error) {
-    if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
-    status.textContent = error instanceof ApiRequestError && error.status === 403
-      ? "Аналітика доступна лише адміністратору."
-      : "Не вдалося завантажити аналітику. Спробуйте оновити сторінку пізніше.";
-    status.hidden = false;
-  }
+  const loadAnalytics = async () => {
+    const period = Object.fromEntries(new FormData(periodForm).entries());
+    if (period.date_from && period.date_to && period.date_from > period.date_to) {
+      status.textContent = "Дата «Від» не може бути пізнішою за дату «До».";
+      status.hidden = false;
+      return;
+    }
+    status.hidden = true;
+    try {
+      const [experts, admins] = await Promise.all([
+        getExpertStatistics(period, token), getAdminReviewStatistics(period, token),
+      ]);
+      renderExperts(expertResults, experts, expertDialog, expertDialogContent);
+      renderAdmins(adminResults, admins);
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
+      status.textContent = error instanceof ApiRequestError && error.status === 403
+        ? "Аналітика доступна лише адміністратору."
+        : "Не вдалося завантажити аналітику. Спробуйте оновити сторінку пізніше.";
+      status.hidden = false;
+    }
+  };
+  periodForm.addEventListener("submit", (event) => { event.preventDefault(); loadAnalytics(); });
+  periodReset.addEventListener("click", () => { periodForm.reset(); loadAnalytics(); });
+  await loadAnalytics();
 }

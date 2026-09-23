@@ -118,7 +118,7 @@ cmd /c "cd frontend && npm run audit:api"
 | `/users/`, `/users/me`, `/experts/` | Користувачі, поточний профіль, експерти | Захищений; керування — admin |
 | `/market/mappings` | Довідники для форм | Публічний |
 | `/market/price` | Поточний індекс та його оновлення | Читання публічне, запис — admin |
-| `/statistics/expert-performance` | Статистика експертів | Поточний публічний маршрут |
+| `/statistics/expert-performance`, `/statistics/admin-review-performance` | Operational analytics експертів і review-cycle | JWT; лише admin |
 
 FastAPI автоматично формує OpenAPI-контракт у `/openapi.json` та Swagger UI у `/docs`. Контракт перевіряється локальним аудитом, але це не скасовує потребу в API-тестах із ізольованою БД.
 
