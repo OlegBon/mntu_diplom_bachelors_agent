@@ -27,6 +27,7 @@
 
 | Файл | Тема |
 | --- | --- |
+| [113-wizard-first-save-time.md](./113-wizard-first-save-time.md) | Час від першої взаємодії в майстрі до успішного створення першої чернетки. |
 | [122-market-provider-operations.md](./122-market-provider-operations.md) | Freshness policy, scheduler і безпечне розширення market/FX provider-ів. |
 | [115-profile-admin-ui-polish.md](./115-profile-admin-ui-polish.md) | Узгоджені візуальні та responsive-покращення Profile й admin UI. |
 | [120-legacy-calculation-and-ml-boundary.md](./120-legacy-calculation-and-ml-boundary.md) | Безпечна доля legacy-перерахунку та межа майбутнього ML. |
