@@ -1,6 +1,6 @@
 # Аудит API та локального MVP Diamant ID
 
-> **Актуалізовано:** 22 вересня 2026. Перший аудит від 14 вересня нижче
+> **Актуалізовано:** 23 вересня 2026. Перший аудит від 14 вересня нижче
 > збережено як історичний доказ стану до послідовних задач 020–108. Поточним
 > джерелом контракту є `docs/architecture.md`, а безпечний runtime smoke —
 > `scripts/audit-api.mjs`.
@@ -14,7 +14,8 @@
   послідовний report ID не є public key.
 - Profile/admin UI, server-side довідники та versioned `idc-demo-v1` реалізовані.
 - Operational analytics обмежена admin: status-зріз експертів, server-timed
-  active-time майбутніх draft-сесій і review-cycle адміністраторів. Period
+  active-time майбутніх draft-сесій, окремий elapsed time до першого save
+  майстра та review-cycle адміністраторів. Period
   filters мають різні явні date sources; немає ML, ринкової ціни, рейтингу або
   відновленого з timestamps active-time.
 - Ринкові дані мають окрему admin-only межу `/market-data/*`: provider catalog,
@@ -34,6 +35,11 @@
 detail, profile, users, experts, reference values, обох admin-only analytics
 endpoint-ів і read-only market-data endpoints. Звіти створюються лише локально в ігнорованому
 `docs/audits/`.
+
+`POST /report-wizard-sessions` навмисно не входить до safe smoke: це
+авторизований write endpoint, який створює короткоживучий lease. Його RBAC,
+atomic claim разом із `POST /reports`, replacement вкладки й offline fallback
+покривають ізольовані API та Playwright-тести.
 
 Перед запуском має працювати локальний FastAPI на `:8000`:
 

@@ -42,6 +42,8 @@ class DiamondReport(Base):
     expert_proportions_grade = Column(Integer, nullable=True)
     expert_cut_grade = Column(Integer, nullable=True)
     expert_confirmed_at = Column(DateTime, nullable=True)
+    first_save_started_at = Column(DateTime, nullable=True)
+    time_to_first_save_seconds = Column(Integer, nullable=True)
     
     # --- Форма (Обов'язкове поле) ---
     shape = Column(String(50), nullable=False) 
@@ -188,6 +190,19 @@ class ReportWorkSessionLease(Base):
     expert_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), primary_key=True)
     work_session_id = Column(String(36), ForeignKey("diamond_oltp.report_work_sessions.work_session_id"), nullable=False, unique=True)
     tab_id = Column(String(64), nullable=False)
+    expires_at = Column(DateTime, nullable=False, index=True)
+
+
+class WizardWorkSession(Base):
+    """Short-lived server timestamp for a new-report wizard before its first save."""
+
+    __tablename__ = "wizard_work_sessions"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    wizard_session_id = Column(String(36), primary_key=True)
+    expert_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=False, unique=True)
+    tab_id = Column(String(64), nullable=False)
+    started_at = Column(DateTime, nullable=False)
     expires_at = Column(DateTime, nullable=False, index=True)
 
 

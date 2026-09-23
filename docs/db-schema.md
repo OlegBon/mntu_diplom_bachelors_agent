@@ -1,9 +1,9 @@
 # Схема бази даних
 
-Документ описує цільову локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0011_expert_work_sessions`, готову до застосування після
-локальної `0010_market_reference_policy`. `0011` не містить backfill, тому
-поточна локальна MariaDB лишається на `0010` до окремої команди. Це карта даних для розробки, API та
+Документ описує поточну локальну схему Diamant ID у MariaDB/XAMPP після
+Alembic revision `0012_wizard_first_save_time`. `0012` уже застосована до
+локальної MariaDB, не містить backfill і додає вимір лише для майбутніх report.
+Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
@@ -15,7 +15,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 
 | База | Таблиці | Призначення |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `report_work_sessions`, `report_work_session_events`, `report_work_session_leases`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, lifecycle, server-timed active-time, ruleset-и, revocable public passport, приватні вкладення та фінансові записи. |
+| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `report_work_sessions`, `report_work_session_events`, `report_work_session_leases`, `wizard_work_sessions`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, lifecycle, server-timed active-time, elapsed time до першого save, ruleset-и, revocable public passport, приватні вкладення та фінансові записи. |
 | `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes`, `fx_data_snapshots` | Числові й текстові довідники, legacy demo-індекс та versioned дані зовнішніх провайдерів. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
@@ -145,6 +145,17 @@ end, підсумок `active_seconds` та reason закриття. `report_wor
 це технічне блокування, не історичний журнал. 60-секундний maximum interval і
 75-секундний lease не дають зарахувати просто відкриту або offline-вкладку.
 Revision `0011` не створює сесії для historical reports.
+
+### `wizard_work_sessions` і first-save поля report
+
+`wizard_work_sessions` — лише короткоживучий технічний lease одного експерта
+до появи `report_id`: UUID, expert FK, tab ID, серверні `started_at` та
+`expires_at`. Паралельна вкладка того самого експерта замінює попередній lease.
+Під час успішного `POST /reports` сервер у тій самій транзакції перевіряє
+власника й строк lease, записує в `diamond_reports.first_save_started_at` та
+`time_to_first_save_seconds`, після чого видаляє lease. Невикористані,
+прострочені, replaced або offline-спроби не створюють показника й не
+backfill-яться для historical reports.
 
 ### `public_passports`
 
@@ -289,6 +300,7 @@ OpenFacet attach backend завжди бере нову відповідь НБ�
 | `0009_nbu_fx_snapshots` | Додає `nbu`, immutable `fx_data_snapshots` і nullable frozen FX/UAH поля для нових `stone_valuations`. Не backfill-ить і не переоцінює historical values. |
 | `0010_market_reference_policy` | Додає singleton policy вибору market/FX provider для майбутнього `system_market_reference`; seed `openfacet` + увімкнений `nbu`. Не змінює snapshots, historical valuations чи legacy demo-індекс. |
 | `0011_expert_work_sessions` | Додає порожні server-timed work sessions, append-only events і single-tab leases. Не backfill-ить `evaluation_time_sec`, timestamps або старі reports. |
+| `0012_wizard_first_save_time` | Додає nullable first-save timestamps/duration до майбутніх report і короткоживучі wizard leases. Не backfill-ить historical reports. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за

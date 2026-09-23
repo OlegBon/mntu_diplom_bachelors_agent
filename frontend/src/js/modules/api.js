@@ -70,6 +70,10 @@ export const signalReportWorkSession = (reportId, payload, token) => requestApi(
   `/reports/${encodeURIComponent(reportId)}/work-session`, { method: "POST", token, body: payload },
 );
 
+export const startWizardWorkSession = (payload, token) => requestApi(
+  "/report-wizard-sessions", { method: "POST", token, body: payload },
+);
+
 export const getGradeMappings = () => requestApi("/market/mappings");
 
 export const getReportDashboard = (params, token) => {

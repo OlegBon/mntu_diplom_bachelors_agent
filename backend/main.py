@@ -332,6 +332,24 @@ def create_report_domain(
     return report
 
 
+@app.post("/report-wizard-sessions", response_model=schemas.WizardWorkSessionState)
+def start_report_wizard_session(
+    payload: schemas.WizardWorkSessionStart,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    try:
+        session = crud.start_wizard_work_session(db, actor=current_user, signal=payload)
+        db.commit()
+        return session
+    except crud.ReportDomainError as error:
+        db.rollback()
+        raise HTTPException(status_code=403, detail=str(error)) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Wizard session is no longer active") from error
+
+
 @app.get("/reports/next-id", response_model=schemas.ReportIdPreview)
 def preview_next_report_id(
     db: Session = Depends(get_db),
