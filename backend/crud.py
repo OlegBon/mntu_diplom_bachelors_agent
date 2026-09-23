@@ -1126,8 +1126,131 @@ def get_fx_data_snapshots(db: Session) -> list[models.FxDataSnapshot]:
     )
 
 
+def get_market_provider_schedules(db: Session) -> list[models.MarketProviderSchedule]:
+    return (
+        db.query(models.MarketProviderSchedule)
+        .order_by(models.MarketProviderSchedule.provider_code)
+        .all()
+    )
+
+
+def get_market_provider_schedule(
+    db: Session, provider_code: str,
+) -> models.MarketProviderSchedule | None:
+    return db.get(models.MarketProviderSchedule, provider_code)
+
+
+def update_market_provider_schedule(
+    db: Session,
+    *,
+    payload: schemas.MarketProviderScheduleUpdate,
+    actor: models.Expert,
+) -> models.MarketProviderSchedule:
+    schedule = get_market_provider_schedule(db, payload.provider_code)
+    provider = db.get(models.MarketDataProvider, payload.provider_code)
+    if schedule is None or provider is None:
+        raise ReportDomainError("Market provider schedule is not registered")
+    if payload.block_after_hours < payload.warn_after_hours:
+        raise ReportDomainError("Block freshness threshold cannot be earlier than warning threshold")
+    schedule.enabled = payload.enabled
+    schedule.scheduled_hour = payload.scheduled_hour
+    schedule.scheduled_minute = payload.scheduled_minute
+    schedule.warn_after_hours = payload.warn_after_hours
+    schedule.block_after_hours = payload.block_after_hours
+    schedule.updated_by_id = actor.expert_id
+    db.commit()
+    db.refresh(schedule)
+    return schedule
+
+
+def get_market_provider_operations(
+    db: Session, *, limit: int = 50,
+) -> list[models.MarketProviderOperation]:
+    return (
+        db.query(models.MarketProviderOperation)
+        .order_by(
+            models.MarketProviderOperation.completed_at.desc(),
+            models.MarketProviderOperation.operation_id.desc(),
+        )
+        .limit(limit)
+        .all()
+    )
+
+
+def create_market_provider_operation(
+    db: Session,
+    *,
+    provider_code: str,
+    trigger_type: str,
+    status: str,
+    attempt_number: int,
+    started_at: datetime,
+    completed_at: datetime,
+    message: str | None = None,
+    market_snapshot_id: int | None = None,
+    fx_snapshot_id: int | None = None,
+    actor: models.Expert | None = None,
+) -> models.MarketProviderOperation:
+    operation = models.MarketProviderOperation(
+        provider_code=provider_code,
+        trigger_type=trigger_type,
+        status=status,
+        attempt_number=attempt_number,
+        started_at=started_at,
+        completed_at=completed_at,
+        message=message,
+        market_snapshot_id=market_snapshot_id,
+        fx_snapshot_id=fx_snapshot_id,
+        initiated_by_id=actor.expert_id if actor else None,
+    )
+    db.add(operation)
+    db.commit()
+    db.refresh(operation)
+    return operation
+
+
+def latest_provider_retrieved_at(
+    db: Session, provider_code: str,
+) -> datetime | None:
+    if provider_code == "nbu":
+        return (
+            db.query(models.FxDataSnapshot.retrieved_at)
+            .filter(models.FxDataSnapshot.provider_code == provider_code)
+            .order_by(models.FxDataSnapshot.retrieved_at.desc(), models.FxDataSnapshot.fx_snapshot_id.desc())
+            .scalar()
+        )
+    return (
+        db.query(models.MarketDataSnapshot.retrieved_at)
+        .filter(
+            models.MarketDataSnapshot.provider_code == provider_code,
+            models.MarketDataSnapshot.status == "approved",
+        )
+        .order_by(models.MarketDataSnapshot.approved_at.desc(), models.MarketDataSnapshot.snapshot_id.desc())
+        .scalar()
+    )
+
+
+def get_latest_fresh_fx_snapshot(
+    db: Session, *, provider_code: str, max_age_hours: int, now: datetime,
+) -> models.FxDataSnapshot | None:
+    snapshot = (
+        db.query(models.FxDataSnapshot)
+        .filter(models.FxDataSnapshot.provider_code == provider_code)
+        .order_by(models.FxDataSnapshot.retrieved_at.desc(), models.FxDataSnapshot.fx_snapshot_id.desc())
+        .first()
+    )
+    if snapshot is None:
+        return None
+    retrieved_at = snapshot.retrieved_at
+    if retrieved_at.tzinfo is None:
+        retrieved_at = retrieved_at.replace(tzinfo=timezone.utc)
+    if now - retrieved_at > timedelta(hours=max_age_hours):
+        return None
+    return snapshot
+
+
 def create_nbu_fx_snapshot(
-    db: Session, *, fetched: NbuUsdUahRate, actor: models.Expert, commit: bool,
+    db: Session, *, fetched: NbuUsdUahRate, actor: models.Expert | None, commit: bool,
 ) -> models.FxDataSnapshot:
     provider = db.get(models.MarketDataProvider, "nbu")
     if provider is None or not provider.is_active:
@@ -1140,7 +1263,7 @@ def create_nbu_fx_snapshot(
         rate_date=fetched.rate_date,
         source_url=fetched.source_url,
         retrieved_at=fetched.retrieved_at,
-        created_by_id=actor.expert_id,
+        created_by_id=actor.expert_id if actor else None,
     )
     db.add(snapshot)
     db.flush()
@@ -1154,7 +1277,7 @@ def get_market_data_snapshot(db: Session, snapshot_id: int) -> models.MarketData
     return db.get(models.MarketDataSnapshot, snapshot_id)
 
 
-def _snapshot_checksum(fetched: FetchedMarketSnapshot) -> str:
+def market_snapshot_checksum(fetched: FetchedMarketSnapshot) -> str:
     canonical_lines = [
         f"{quote.shape_code}|{quote.carat_anchor}|{quote.color_code}|{quote.clarity_code}|{quote.price_per_carat}"
         for quote in sorted(
@@ -1169,7 +1292,7 @@ def create_market_data_candidate(
     db: Session,
     *,
     fetched: FetchedMarketSnapshot,
-    actor: models.Expert,
+    actor: models.Expert | None,
 ) -> models.MarketDataSnapshot:
     provider = db.get(models.MarketDataProvider, fetched.provider_code)
     if provider is None or not provider.is_active:
@@ -1184,9 +1307,9 @@ def create_market_data_candidate(
         methodology_url=fetched.methodology_url,
         coverage_note=fetched.coverage_note,
         quote_count=len(fetched.quotes),
-        content_sha256=_snapshot_checksum(fetched),
+        content_sha256=market_snapshot_checksum(fetched),
         retrieved_at=fetched.retrieved_at,
-        created_by_id=actor.expert_id,
+        created_by_id=actor.expert_id if actor else None,
     )
     db.add(snapshot)
     db.flush()
@@ -1350,7 +1473,7 @@ def attach_system_market_reference(
     report: models.DiamondReport,
     candidate: SystemMarketReferenceCandidate,
     actor: models.Expert,
-    fx_rate: NbuUsdUahRate | None,
+    fx_snapshot: models.FxDataSnapshot | None,
 ) -> models.StoneValuation | None:
     """Persist one immutable system reference unless the same inputs were saved already."""
     if report.stone_id is None:
@@ -1368,7 +1491,6 @@ def attach_system_market_reference(
     )
     if existing is not None:
         return existing
-    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False) if fx_rate else None
     valuation = models.StoneValuation(
         stone_id=report.stone_id,
         valuation_kind="system_market_reference",
@@ -1380,10 +1502,10 @@ def attach_system_market_reference(
         market_snapshot_id=candidate.snapshot.snapshot_id,
         applicability_note=None,
         fx_snapshot_id=fx_snapshot.fx_snapshot_id if fx_snapshot else None,
-        fx_rate=fx_rate.rate if fx_rate else None,
-        fx_rate_date=fx_rate.rate_date if fx_rate else None,
-        converted_amount=convert_usd_to_uah(candidate.amount, fx_rate.rate) if fx_rate else None,
-        converted_currency_code="UAH" if fx_rate else None,
+        fx_rate=fx_snapshot.rate if fx_snapshot else None,
+        fx_rate_date=fx_snapshot.rate_date if fx_snapshot else None,
+        converted_amount=convert_usd_to_uah(candidate.amount, Decimal(fx_snapshot.rate)) if fx_snapshot else None,
+        converted_currency_code="UAH" if fx_snapshot else None,
         observed_at=candidate.snapshot.retrieved_at,
         created_by_id=actor.expert_id,
     )
@@ -1405,7 +1527,7 @@ def attach_system_market_reference(
 def system_market_reference_exists(
     db: Session, *, report: models.DiamondReport, candidate: SystemMarketReferenceCandidate,
 ) -> bool:
-    """Check idempotency before requesting an external FX rate."""
+    """Check idempotency before attaching a stored provider snapshot."""
     if report.stone_id is None:
         return False
     return (
@@ -1428,7 +1550,7 @@ def attach_market_reference(
     report: models.DiamondReport,
     request: schemas.MarketReferenceAttachRequest,
     actor: models.Expert,
-    fx_rate: NbuUsdUahRate | None,
+    fx_snapshot: models.FxDataSnapshot | None,
 ) -> models.StoneValuation:
     if report.stone is None or report.stone_id is None:
         raise ReportDomainError("Report has no normalized stone")
@@ -1452,7 +1574,6 @@ def attach_market_reference(
         db, snapshot_id=snapshot.snapshot_id, stone=report.stone,
     )
     amount = (price_per_carat * Decimal(report.stone.carat_weight)).quantize(Decimal("0.01"))
-    fx_snapshot = create_nbu_fx_snapshot(db, fetched=fx_rate, actor=actor, commit=False) if fx_rate else None
     valuation = models.StoneValuation(
         stone_id=report.stone_id,
         valuation_kind="market_reference",
@@ -1464,10 +1585,10 @@ def attach_market_reference(
         market_snapshot_id=snapshot.snapshot_id,
         applicability_note=request.applicability_note,
         fx_snapshot_id=fx_snapshot.fx_snapshot_id if fx_snapshot else None,
-        fx_rate=fx_rate.rate if fx_rate else None,
-        fx_rate_date=fx_rate.rate_date if fx_rate else None,
-        converted_amount=convert_usd_to_uah(amount, fx_rate.rate) if fx_rate else None,
-        converted_currency_code="UAH" if fx_rate else None,
+        fx_rate=fx_snapshot.rate if fx_snapshot else None,
+        fx_rate_date=fx_snapshot.rate_date if fx_snapshot else None,
+        converted_amount=convert_usd_to_uah(amount, Decimal(fx_snapshot.rate)) if fx_snapshot else None,
+        converted_currency_code="UAH" if fx_snapshot else None,
         observed_at=snapshot.retrieved_at,
         created_by_id=actor.expert_id,
     )

@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from urllib.parse import parse_qs, urlparse
 from jose import JWTError, jwt
@@ -13,8 +13,9 @@ import qrcode
 from qrcode.image.svg import SvgPathImage
 
 from . import crud, database, media_storage, models, schemas, security
-from .market_providers import MarketProviderError, get_market_provider
 from .fx import FxProviderError, fetch_nbu_usd_uah
+from .market_operations import freshness_status, run_provider_operation
+from .market_providers import get_market_provider
 from .passport_pdf import build_public_passport_pdf
 
 app = FastAPI(title="Diamond ID System API")
@@ -181,16 +182,24 @@ def _attach_system_market_reference_when_available(
     )
     if candidate is None or crud.system_market_reference_exists(db, report=report, candidate=candidate):
         return
-    fx_rate = None
+    fx_snapshot = None
     if policy.use_fx_conversion:
         if policy.fx_provider_code != "nbu":
             return
-        try:
-            fx_rate = fetch_nbu_usd_uah()
-        except FxProviderError:
+        schedule = crud.get_market_provider_schedule(db, policy.fx_provider_code)
+        if schedule is None:
+            # Compatibility for databases that have not yet applied migration 0013.
+            # Once a schedule exists, its block threshold is authoritative.
+            fx_snapshot = next(iter(crud.get_fx_data_snapshots(db)), None)
+        else:
+            fx_snapshot = crud.get_latest_fresh_fx_snapshot(
+                db, provider_code=policy.fx_provider_code,
+                max_age_hours=schedule.block_after_hours, now=datetime.now(timezone.utc),
+            )
+        if fx_snapshot is None:
             return
     crud.attach_system_market_reference(
-        db, report=report, candidate=candidate, actor=actor, fx_rate=fx_rate,
+        db, report=report, candidate=candidate, actor=actor, fx_snapshot=fx_snapshot,
     )
 
 
@@ -417,13 +426,24 @@ def attach_report_market_reference(
     if policy is None or policy.market_provider_code != snapshot.provider_code:
         raise HTTPException(status_code=422, detail="Selected snapshot is not enabled by the current market-reference policy")
     try:
-        fx_rate = None
+        fx_snapshot = None
         if policy.use_fx_conversion:
             if policy.fx_provider_code != "nbu":
                 raise HTTPException(status_code=422, detail="Configured FX provider is not supported")
-            fx_rate = fetch_nbu_usd_uah()
+            schedule = crud.get_market_provider_schedule(db, policy.fx_provider_code)
+            if schedule is None:
+                # Compatibility for a pre-0013 database; migration 0013 makes
+                # freshness blocking mandatory through the configured schedule.
+                fx_snapshot = next(iter(crud.get_fx_data_snapshots(db)), None)
+            else:
+                fx_snapshot = crud.get_latest_fresh_fx_snapshot(
+                    db, provider_code=policy.fx_provider_code,
+                    max_age_hours=schedule.block_after_hours, now=datetime.now(timezone.utc),
+                )
+            if fx_snapshot is None:
+                raise HTTPException(status_code=422, detail="Current FX snapshot is missing or stale; refresh NBU first")
         return crud.attach_market_reference(
-            db, report=report, request=payload, actor=current_user, fx_rate=fx_rate,
+            db, report=report, request=payload, actor=current_user, fx_snapshot=fx_snapshot,
         )
     except FxProviderError as error:
         raise HTTPException(status_code=502, detail=str(error)) from error
@@ -898,20 +918,83 @@ def read_fx_data_snapshots(
     return crud.get_fx_data_snapshots(db)
 
 
+@app.get("/market-data/provider-schedules", response_model=List[schemas.MarketProviderScheduleResponse])
+def read_market_provider_schedules(
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    now = datetime.now(timezone.utc)
+    responses = []
+    for schedule in crud.get_market_provider_schedules(db):
+        latest = crud.latest_provider_retrieved_at(db, schedule.provider_code)
+        responses.append(schemas.MarketProviderScheduleResponse(
+            **{
+                "provider_code": schedule.provider_code,
+                "enabled": schedule.enabled,
+                "timezone_name": schedule.timezone_name,
+                "scheduled_hour": schedule.scheduled_hour,
+                "scheduled_minute": schedule.scheduled_minute,
+                "warn_after_hours": schedule.warn_after_hours,
+                "block_after_hours": schedule.block_after_hours,
+                "updated_by_id": schedule.updated_by_id,
+                "updated_at": schedule.updated_at,
+                "freshness_status": freshness_status(
+                    latest_retrieved_at=latest, warn_after_hours=schedule.warn_after_hours,
+                    block_after_hours=schedule.block_after_hours, now=now,
+                ),
+                "latest_retrieved_at": latest,
+            }
+        ))
+    return responses
+
+
+@app.put("/market-data/provider-schedules/{provider_code}", response_model=schemas.MarketProviderScheduleResponse)
+def update_market_provider_schedule(
+    provider_code: str,
+    payload: schemas.MarketProviderScheduleUpdate,
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    if payload.provider_code != provider_code:
+        raise HTTPException(status_code=422, detail="Provider code must match the URL")
+    try:
+        schedule = crud.update_market_provider_schedule(db, payload=payload, actor=current_user)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    latest = crud.latest_provider_retrieved_at(db, schedule.provider_code)
+    return schemas.MarketProviderScheduleResponse(
+        provider_code=schedule.provider_code, enabled=schedule.enabled, timezone_name=schedule.timezone_name,
+        scheduled_hour=schedule.scheduled_hour, scheduled_minute=schedule.scheduled_minute,
+        warn_after_hours=schedule.warn_after_hours, block_after_hours=schedule.block_after_hours,
+        updated_by_id=schedule.updated_by_id, updated_at=schedule.updated_at,
+        freshness_status=freshness_status(
+            latest_retrieved_at=latest, warn_after_hours=schedule.warn_after_hours,
+            block_after_hours=schedule.block_after_hours, now=datetime.now(timezone.utc),
+        ), latest_retrieved_at=latest,
+    )
+
+
+@app.get("/market-data/operations", response_model=List[schemas.MarketProviderOperationResponse])
+def read_market_provider_operations(
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    return crud.get_market_provider_operations(db)
+
+
 @app.post("/market-data/providers/nbu/refresh", response_model=schemas.FxDataSnapshotResponse)
 def refresh_nbu_fx_rate(
     db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
 ):
     """Store a new immutable official USD/UAH response; reports are unchanged."""
     require_admin(current_user)
-    try:
-        fetched = fetch_nbu_usd_uah()
-    except FxProviderError as error:
-        raise HTTPException(status_code=502, detail=str(error)) from error
-    try:
-        return crud.create_nbu_fx_snapshot(db, fetched=fetched, actor=current_user, commit=True)
-    except crud.ReportDomainError as error:
-        raise HTTPException(status_code=422, detail=str(error)) from error
+    operation = run_provider_operation(
+        db, provider_code="nbu", trigger_type="manual", actor=current_user,
+        fx_fetcher=fetch_nbu_usd_uah,
+    )
+    if operation.status == "failed":
+        raise HTTPException(status_code=502, detail=operation.message or "NBU refresh failed")
+    return db.get(models.FxDataSnapshot, operation.fx_snapshot_id)
 
 
 @app.post("/market-data/providers/{provider_code}/fetch", response_model=schemas.MarketDataSnapshotResponse)
@@ -922,14 +1005,13 @@ def fetch_market_data_candidate(
 ):
     """Fetch external data, then persist it once as an immutable candidate."""
     require_admin(current_user)
-    try:
-        fetched = get_market_provider(provider_code).fetch_snapshot()
-    except MarketProviderError as error:
-        raise HTTPException(status_code=502, detail=str(error)) from error
-    try:
-        return crud.create_market_data_candidate(db, fetched=fetched, actor=current_user)
-    except crud.ReportDomainError as error:
-        raise HTTPException(status_code=422, detail=str(error)) from error
+    operation = run_provider_operation(
+        db, provider_code=provider_code, trigger_type="manual", actor=current_user,
+        market_provider_factory=get_market_provider,
+    )
+    if operation.status == "failed":
+        raise HTTPException(status_code=502, detail=operation.message or "Market provider fetch failed")
+    return db.get(models.MarketDataSnapshot, operation.market_snapshot_id)
 
 
 @app.post("/market-data/snapshots/{snapshot_id}/approve", response_model=schemas.MarketDataSnapshotResponse)
@@ -944,9 +1026,27 @@ def approve_market_data_snapshot(
     if snapshot is None:
         raise HTTPException(status_code=404, detail="Market-data snapshot not found")
     try:
-        return crud.decide_market_data_snapshot(
+        decided = crud.decide_market_data_snapshot(
             db, snapshot=snapshot, approve=True, actor=current_user, reason=payload.reason,
         )
+        policy = crud.get_market_reference_policy(db)
+        if policy and policy.use_fx_conversion and policy.fx_provider_code == "nbu":
+            started_at = datetime.now(timezone.utc)
+            try:
+                fetched = fetch_nbu_usd_uah()
+                fx_snapshot = crud.create_nbu_fx_snapshot(db, fetched=fetched, actor=current_user, commit=True)
+                crud.create_market_provider_operation(
+                    db, provider_code="nbu", trigger_type="manual", status="success", attempt_number=1,
+                    started_at=started_at, completed_at=datetime.now(timezone.utc),
+                    fx_snapshot_id=fx_snapshot.fx_snapshot_id,
+                    message="Курс НБУ оновлено під час ручного затвердження market snapshot-а.", actor=current_user,
+                )
+            except FxProviderError as error:
+                crud.create_market_provider_operation(
+                    db, provider_code="nbu", trigger_type="manual", status="failed", attempt_number=1,
+                    started_at=started_at, completed_at=datetime.now(timezone.utc), message=str(error), actor=current_user,
+                )
+        return decided
     except crud.ReportDomainError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 

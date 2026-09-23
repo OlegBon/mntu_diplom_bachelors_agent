@@ -390,7 +390,7 @@ class MarketDataSnapshot(Base):
     quote_count = Column(Integer, nullable=False)
     content_sha256 = Column(String(64), nullable=False)
     retrieved_at = Column(DateTime, nullable=False)
-    created_by_id = Column(Integer, nullable=False)
+    created_by_id = Column(Integer, nullable=True)
     approved_by_id = Column(Integer, nullable=True)
     approved_at = Column(DateTime, nullable=True)
     decision_reason = Column(Text, nullable=True)
@@ -437,6 +437,47 @@ class FxDataSnapshot(Base):
     source_url = Column(Text, nullable=False)
     retrieved_at = Column(DateTime, nullable=False)
     created_by_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class MarketProviderSchedule(Base):
+    """Admin-owned execution and freshness policy for one provider."""
+
+    __tablename__ = "market_provider_schedules"
+    __table_args__ = {"schema": "diamond_market"}
+
+    provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), primary_key=True,
+    )
+    enabled = Column(Boolean, nullable=False, default=True, server_default="1")
+    timezone_name = Column(String(64), nullable=False, default="Europe/Kyiv", server_default="Europe/Kyiv")
+    scheduled_hour = Column(Integer, nullable=False)
+    scheduled_minute = Column(Integer, nullable=False)
+    warn_after_hours = Column(Integer, nullable=False)
+    block_after_hours = Column(Integer, nullable=False)
+    updated_by_id = Column(Integer, nullable=True)
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+
+class MarketProviderOperation(Base):
+    """Immutable outcome of one manual or scheduled provider attempt."""
+
+    __tablename__ = "market_provider_operations"
+    __table_args__ = {"schema": "diamond_market"}
+
+    operation_id = Column(Integer, primary_key=True, index=True)
+    provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=False, index=True,
+    )
+    trigger_type = Column(String(16), nullable=False)
+    status = Column(String(16), nullable=False)
+    attempt_number = Column(Integer, nullable=False, default=1)
+    started_at = Column(DateTime, nullable=False)
+    completed_at = Column(DateTime, nullable=False)
+    market_snapshot_id = Column(Integer, nullable=True, index=True)
+    fx_snapshot_id = Column(Integer, nullable=True, index=True)
+    message = Column(Text, nullable=True)
+    initiated_by_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
