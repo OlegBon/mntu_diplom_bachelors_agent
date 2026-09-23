@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-23 — profile-admin-ui-polish
+
+- **Задача:** уніфікувати візуальні стани повторюваних контролів Profile/admin UI та зробити перемикач видимості пароля зрозумілим у всіх password-формах.
+- **Змінені файли:** `frontend/src/{pug/pages/login.pug,scss/_ui-primitives.scss,js/modules/password-visibility.js}`, `frontend/tests/e2e/password-visibility.spec.mjs`, `docs/{work_plan,progress}.md`, `docs/backlog/{README,115-profile-admin-ui-polish (видалено)}.md`.
+- **Рішення / Результат:** primary і outline кнопки використовують однакові disabled/focus правила; outline має виразну синю межу. Спільні поля мають hover, focus-visible, disabled та `aria-invalid` межі. Login приєднано до `form-control` primitive. Password-toggle змінює не лише `type`, а й icon eye/eye-off, активну підкладку, `aria-label`, `aria-pressed` і tooltip; це покриває login, Profile та admin password-forms через один JS-модуль.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 20 passed; targeted Playwright login/password/Profile/admin — 5 passed; `git diff --check` — без помилок. Ручний rendered QA Playwright: Profile на 1440×900, 800×900 та 375×812; desktop/tablet сітка не переповнюється, mobile має повноширинні дії, відкритий пароль має помітний видимий стан.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це UI-polish існуючої Pug/SCSS системи, без нової дизайн-концепції, API, RBAC або міграцій. Системні Sass `@import` і застарілі Browserslist-дані лишаються окремим технічним боргом.
+
 ## 2026-09-23 — wizard-first-save-time
 
 - **Задача:** додати до operational analytics окремий server-timed показник від першої взаємодії у майстрі до успішного створення першої чернетки.
