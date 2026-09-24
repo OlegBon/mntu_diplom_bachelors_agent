@@ -34,7 +34,7 @@
 - [x] Усунути розходження актуального `seed_db.py`, legacy `seed_db-start.py` і моделей: seed відтворює всі три схеми, а `ml_results` формалізовано моделлю.
 - [x] Виконати clean seed MariaDB та API smoke-flow: bcrypt-login admin і першого експерта, `npm run audit:api` — 10/10.
 - [x] Виправити `/experts/`, `POST/PUT/DELETE /diamonds/*`, 404-відповіді та owner/admin RBAC; синхронізувати API response models із dashboard.
-- [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit, profile/admin UI та public passport/PDF реалізовано; лишається реальний E2E з MariaDB.
+- [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit, profile/admin UI та public passport/PDF реалізовано; лишається real E2E з MariaDB у [135](./backlog/135-real-browser-e2e-and-passport-contract.md).
 - [x] Визначити долю `diamond_analytics.ml_results`: зберігаємо таблицю як зарезервований аналітичний шар, описуємо моделлю та відтворюємо порожньою через локальний seed; API/ML — окрема задача.
 
 ### Пріоритет 2 — якість і тестування
@@ -44,8 +44,8 @@
 - [x] Додати unit-тест ML-сервісу з контрольованими market price та випадковістю.
 - [x] Додати API/integration-тести auth, RBAC, створення/видалення звітів, 404/422 та ізольовану SQLite БД.
 - [x] Додати frontend JS-модульні тести, jsdom DOM smoke та базовий Playwright browser smoke login-сторінки.
-- [ ] Розширити browser E2E: реальний login → dashboard → створення → detail/edit звіту після безпечної test-auth стратегії; поточні Playwright flows використовують mock HTTP.
-- [ ] Окремо усунути попередження SQLAlchemy 2 (`declarative_base`) і Pydantic 2 (`class Config`, `.dict()`), підтвердивши сумісність API-тестами.
+- [ ] Розширити browser E2E: реальний login → dashboard → створення → detail/edit звіту після безпечної test-auth стратегії; scope і passport contract — [135](./backlog/135-real-browser-e2e-and-passport-contract.md).
+- [ ] Окремо усунути попередження SQLAlchemy 2 (`declarative_base`) і Pydantic 2 (`class Config`, `.dict()`), підтвердивши сумісність API-тестами — [136](./backlog/136-sqlalchemy-pydantic-deprecation-cleanup.md).
 
 ### Пріоритет 3 — завершення локального MVP
 
@@ -84,6 +84,7 @@
 - [x] [133 — Release-аудит local MVP](./reviews/2026-09-24-local-mvp-release-audit.md): критичних знахідок немає; schema convergence винесено у [134](./backlog/134-alembic-schema-convergence.md), а deterministic/real browser E2E — у [135](./backlog/135-real-browser-e2e-and-passport-contract.md).
 - [ ] [134 — Збіжність Alembic, ORM і MariaDB](./backlog/134-alembic-schema-convergence.md): усунути підтверджені index/metadata drift warnings і повернути green `alembic check`.
 - [ ] [135 — Реальний browser E2E і контракт паспорта](./backlog/135-real-browser-e2e-and-passport-contract.md): виправити stale mock API контракту й запустити ізольований real API/MariaDB flow.
+- [ ] [136 — SQLAlchemy/Pydantic deprecation cleanup](./backlog/136-sqlalchemy-pydantic-deprecation-cleanup.md): прибрати підтверджені warnings без зміни API чи schema.
 - [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial.
 - [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після рішення 160.
 
