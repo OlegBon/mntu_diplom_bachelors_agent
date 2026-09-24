@@ -56,11 +56,11 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_wizard_first_save_revision_is_the_only_committed_head():
+def test_alembic_market_provider_operations_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0012_wizard_first_save_time"]
+    assert script_directory.get_heads() == ["0013_market_provider_operations"]
 
 
 def test_nbu_fx_migration_does_not_backfill_or_reprice_historical_values():

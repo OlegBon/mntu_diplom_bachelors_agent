@@ -8,12 +8,15 @@ import {
   getMarketReferencePolicy,
   getMarketDataSnapshots,
   getFxDataSnapshots,
+  getMarketProviderOperations,
+  getMarketProviderSchedules,
   getNextReportId,
   getPublicPassport,
   getReportDashboard,
   getReferenceValues,
   loginUser,
   refreshNbuRate,
+  updateMarketProviderSchedule,
   updateMarketReferencePolicy,
 } from "../src/js/modules/api.js";
 import { checkAuth, logout } from "../src/js/modules/auth.js";
@@ -141,6 +144,9 @@ test("market-data APIs use protected administrator endpoints", async () => {
   await getMarketReferencePolicy("test-token");
   await getMarketDataSnapshots("test-token");
   await getFxDataSnapshots("test-token");
+  await getMarketProviderSchedules("test-token");
+  await getMarketProviderOperations("test-token");
+  await updateMarketProviderSchedule("nbu", { provider_code: "nbu" }, "test-token");
   await refreshNbuRate("test-token");
   await updateMarketReferencePolicy({ market_provider_code: "openfacet", use_fx_conversion: true, fx_provider_code: "nbu" }, "test-token");
 
@@ -149,6 +155,9 @@ test("market-data APIs use protected administrator endpoints", async () => {
     ["http://127.0.0.1:8000/market-data/policy", "Bearer test-token"],
     ["http://127.0.0.1:8000/market-data/snapshots", "Bearer test-token"],
     ["http://127.0.0.1:8000/market-data/fx-snapshots", "Bearer test-token"],
+    ["http://127.0.0.1:8000/market-data/provider-schedules", "Bearer test-token"],
+    ["http://127.0.0.1:8000/market-data/operations", "Bearer test-token"],
+    ["http://127.0.0.1:8000/market-data/provider-schedules/nbu", "Bearer test-token"],
     ["http://127.0.0.1:8000/market-data/providers/nbu/refresh", "Bearer test-token"],
     ["http://127.0.0.1:8000/market-data/policy", "Bearer test-token"],
   ]);

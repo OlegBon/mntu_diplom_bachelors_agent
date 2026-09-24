@@ -97,6 +97,15 @@ export const getMarketDataSnapshots = (token) => requestApi("/market-data/snapsh
 
 export const getFxDataSnapshots = (token) => requestApi("/market-data/fx-snapshots", { token });
 
+export const getMarketProviderSchedules = (token) => requestApi("/market-data/provider-schedules", { token });
+
+export const updateMarketProviderSchedule = (providerCode, schedule, token) => requestApi(
+  `/market-data/provider-schedules/${encodeURIComponent(providerCode)}`,
+  { method: "PUT", token, body: schedule },
+);
+
+export const getMarketProviderOperations = (token) => requestApi("/market-data/operations", { token });
+
 export const refreshNbuRate = (token) => requestApi("/market-data/providers/nbu/refresh", { method: "POST", token });
 
 export const fetchMarketDataCandidate = (providerCode, token) => requestApi(

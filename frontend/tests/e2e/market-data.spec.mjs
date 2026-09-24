@@ -25,6 +25,11 @@ let policy = {
   fx_provider_code: "nbu", updated_by_id: 1, updated_at: "2026-09-17T12:00:00Z",
 };
 
+const schedules = [
+  { provider_code: "openfacet", enabled: true, timezone_name: "Europe/Kyiv", scheduled_hour: 8, scheduled_minute: 30, warn_after_hours: 168, block_after_hours: 336, updated_by_id: null, updated_at: "2026-09-24T08:00:00Z", freshness_status: "fresh", latest_retrieved_at: "2026-09-24T08:30:00Z" },
+  { provider_code: "nbu", enabled: true, timezone_name: "Europe/Kyiv", scheduled_hour: 15, scheduled_minute: 40, warn_after_hours: 36, block_after_hours: 72, updated_by_id: null, updated_at: "2026-09-24T08:00:00Z", freshness_status: "missing", latest_retrieved_at: null },
+];
+
 test("administrator creates and approves a market-data candidate before using it", async ({ page }) => {
   let snapshots = [];
   await page.addInitScript(() => {
@@ -40,6 +45,17 @@ test("administrator creates and approves a market-data candidate before using it
   });
   await page.route("**/market-data/snapshots", (route) => route.fulfill({ json: snapshots }));
   await page.route("**/market-data/fx-snapshots", (route) => route.fulfill({ json: [] }));
+  await page.route("**/market-data/provider-schedules**", async (route) => {
+    if (route.request().method() === "PUT") {
+      const body = route.request().postDataJSON();
+      const item = schedules.find((schedule) => schedule.provider_code === body.provider_code);
+      Object.assign(item, body);
+      await route.fulfill({ json: item });
+      return;
+    }
+    await route.fulfill({ json: schedules });
+  });
+  await page.route("**/market-data/operations", (route) => route.fulfill({ json: [] }));
   await page.route("**/market-data/providers/openfacet/fetch", (route) => {
     snapshots = [candidate];
     return route.fulfill({ json: candidate });
@@ -53,6 +69,11 @@ test("administrator creates and approves a market-data candidate before using it
   await expect(page.locator("[data-market-data-page]")).toBeVisible();
   await expect(page.locator("#market-data-providers")).toContainText("OpenFacet");
   await expect(page.locator("#market-reference-policy-form")).toContainText("OpenFacet");
+  await expect(page.locator("#market-provider-schedules")).toContainText("Увімкнути планове оновлення");
+  const scheduleForm = page.locator("#market-provider-schedules form").first();
+  await scheduleForm.getByLabel("Час (Europe/Kyiv)").fill("09:00");
+  await scheduleForm.getByRole("button", { name: "Зберегти графік" }).click();
+  await expect(page.locator("#market-data-status")).toContainText("Графік оновлення збережено");
   await page.getByRole("button", { name: "Отримати кандидат" }).click();
   await expect(page.locator("#market-data-snapshots")).toContainText("Кандидат");
   await page.getByRole("button", { name: "Затвердити" }).click();

@@ -8,12 +8,17 @@ import {
   getMarketReferencePolicy,
   getMarketDataSnapshots,
   getFxDataSnapshots,
+  getMarketProviderOperations,
+  getMarketProviderSchedules,
   refreshNbuRate,
+  updateMarketProviderSchedule,
   updateMarketReferencePolicy,
 } from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const STATUS_LABELS = { candidate: "Кандидат", approved: "Затверджено", rejected: "Відхилено" };
+const FRESHNESS_LABELS = { fresh: "Актуальні", warning: "Потребують оновлення", stale: "Застарілі", missing: "Знімків немає" };
+const OPERATION_STATUS_LABELS = { success: "Успішно", no_change: "Без змін", failed: "Помилка", skipped: "Пропущено" };
 
 function formatDate(value) {
   return value ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
@@ -112,6 +117,71 @@ function renderSnapshots(container, snapshots, onDecision) {
   }
 }
 
+function formatScheduleTime(schedule) {
+  return `${String(schedule.scheduled_hour).padStart(2, "0")}:${String(schedule.scheduled_minute).padStart(2, "0")}`;
+}
+
+function renderSchedules(container, schedules, onSubmit) {
+  container.replaceChildren();
+  if (!schedules.length) {
+    container.textContent = "Графіки ще не створені. Застосуйте міграцію 0013_market_provider_operations.";
+    return;
+  }
+  for (const schedule of schedules) {
+    const form = document.createElement("form");
+    form.className = "market-data-card";
+    form.noValidate = true;
+    const title = document.createElement("h3"); title.textContent = schedule.provider_code === "nbu" ? "НБУ" : "OpenFacet";
+    const freshness = document.createElement("p");
+    freshness.textContent = `Стан даних: ${FRESHNESS_LABELS[schedule.freshness_status] || schedule.freshness_status}${schedule.latest_retrieved_at ? ` · останнє отримання ${formatDate(schedule.latest_retrieved_at)}` : ""}.`;
+    const enabled = document.createElement("input"); enabled.type = "checkbox"; enabled.checked = schedule.enabled;
+    const enabledLabel = document.createElement("label"); enabledLabel.className = "market-data-confirmation"; enabledLabel.append(enabled, document.createTextNode("Увімкнути планове оновлення"));
+    const time = document.createElement("input"); time.type = "time"; time.className = "form-control"; time.value = formatScheduleTime(schedule);
+    const warn = document.createElement("input"); warn.type = "number"; warn.className = "form-control"; warn.min = "1"; warn.max = "2160"; warn.value = schedule.warn_after_hours;
+    const block = document.createElement("input"); block.type = "number"; block.className = "form-control"; block.min = "1"; block.max = "4320"; block.value = schedule.block_after_hours;
+    const fields = document.createElement("div"); fields.className = "form-row";
+    for (const [labelText, input] of [["Час (Europe/Kyiv)", time], ["Попереджати через, год.", warn], ["Блокувати через, год.", block]]) {
+      const group = document.createElement("div"); group.className = "form-group";
+      const label = document.createElement("label"); label.textContent = labelText; label.append(input); group.append(label); fields.append(group);
+    }
+    const submit = document.createElement("button"); submit.type = "submit"; submit.className = "btn btn-outline"; submit.textContent = "Зберегти графік";
+    form.append(title, freshness, enabledLabel, fields, submit);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const [hour, minute] = time.value.split(":").map(Number);
+      const payload = {
+        provider_code: schedule.provider_code, enabled: enabled.checked, scheduled_hour: hour,
+        scheduled_minute: minute, warn_after_hours: Number(warn.value), block_after_hours: Number(block.value),
+      };
+      if (!time.value || !Number.isInteger(hour) || !Number.isInteger(minute) || payload.block_after_hours < payload.warn_after_hours) {
+        onSubmit(null, "Перевірте час і пороги: блокування не може бути раніше попередження.");
+        return;
+      }
+      submit.disabled = true;
+      try { await onSubmit(payload); } finally { submit.disabled = false; }
+    });
+    container.append(form);
+  }
+}
+
+function renderOperations(container, operations) {
+  container.replaceChildren();
+  if (!operations.length) {
+    container.textContent = "Операцій ще не було.";
+    return;
+  }
+  for (const operation of operations) {
+    const item = document.createElement("article"); item.className = "market-data-card";
+    const title = document.createElement("h3");
+    title.textContent = `${operation.provider_code} · ${OPERATION_STATUS_LABELS[operation.status] || operation.status}`;
+    const details = document.createElement("p");
+    details.textContent = `${operation.trigger_type === "manual" ? "Вручну" : "За графіком"} · спроба ${operation.attempt_number} · ${formatDate(operation.completed_at)}.`;
+    item.append(title, details);
+    if (operation.message) { const message = document.createElement("p"); message.textContent = operation.message; item.append(message); }
+    container.append(item);
+  }
+}
+
 function updateApprovedSnapshotOptions(select, snapshots) {
   const approved = snapshots.filter((snapshot) => snapshot.status === "approved");
   select.replaceChildren();
@@ -137,6 +207,8 @@ export async function initMarketData() {
   const policyFxNote = document.getElementById("market-policy-fx-note");
   const policySubmit = document.getElementById("market-reference-policy-submit");
   const snapshots = document.getElementById("market-data-snapshots");
+  const schedules = document.getElementById("market-provider-schedules");
+  const operations = document.getElementById("market-provider-operations");
   const form = document.getElementById("market-reference-attach-form");
   const referenceStatus = document.getElementById("market-reference-status");
   const snapshotSelect = document.getElementById("market-reference-snapshot");
@@ -162,7 +234,10 @@ export async function initMarketData() {
     decisionReason.focus();
   };
   const refresh = async () => {
-    const [providerRows, policy, snapshotRows, fxSnapshotRows] = await Promise.all([getMarketDataProviders(token), getMarketReferencePolicy(token), getMarketDataSnapshots(token), getFxDataSnapshots(token)]);
+    const [providerRows, policy, snapshotRows, fxSnapshotRows, scheduleRows, operationRows] = await Promise.all([
+      getMarketDataProviders(token), getMarketReferencePolicy(token), getMarketDataSnapshots(token), getFxDataSnapshots(token),
+      getMarketProviderSchedules(token).catch(() => []), getMarketProviderOperations(token).catch(() => []),
+    ]);
     currentSnapshots = snapshotRows;
     renderPolicyMarketProviders(policyProviders, providerRows, policy.market_provider_code);
     policyUseFx.checked = policy.use_fx_conversion;
@@ -188,6 +263,15 @@ export async function initMarketData() {
       finally { button.disabled = false; }
     });
     renderSnapshots(snapshots, snapshotRows, openDecisionDialog);
+    renderSchedules(schedules, scheduleRows, async (payload, validationError) => {
+      if (validationError) { setStatus(status, validationError, true); return; }
+      try {
+        await updateMarketProviderSchedule(payload.provider_code, payload, token);
+        setStatus(status, "Графік оновлення збережено.");
+        await refresh();
+      } catch (error) { setStatus(status, error.message || "Не вдалося зберегти графік.", true); }
+    });
+    renderOperations(operations, operationRows);
     updateApprovedSnapshotOptions(snapshotSelect, snapshotRows);
   };
   try {

@@ -60,6 +60,19 @@ D:\DevTools\xampp\mysql\bin\mysql.exe --protocol=TCP -h 127.0.0.1 --port=3306 -u
 .\.venv\Scripts\python.exe -m uvicorn backend.main:app --reload
 ```
 
+### Планове оновлення ринкових даних
+
+Після застосування `0013_market_provider_operations` цей одноразовий виклик перевіряє графіки
+OpenFacet і НБУ та запускає лише прострочені операції:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_market_provider_schedule.py
+```
+
+Для локальної автоматизації створи у Windows Task Scheduler задачу з цим викликом кожні 5 хвилин,
+з робочою папкою кореня репозиторію. Скрипт не є daemon-ом, не запускається всередині FastAPI та
+не змінює жоден historical report. Часи та freshness-пороги задаються admin на «Ринкові дані».
+
 Після запуску API доступний за `http://127.0.0.1:8000`, Swagger — за `/docs`. Не публікуй `.env` і не копіюй його значення в документацію.
 
 Для швидкої перевірки після запуску відкрий `http://127.0.0.1:8000/`; очікувана відповідь містить повідомлення про роботу Diamond Identification System API.

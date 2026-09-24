@@ -43,6 +43,8 @@ function createChecks(baseUrl) {
     ['Провайдери ринкових даних без токена', 'GET', '/market-data/providers', [401], (body) => typeof body?.detail === 'string', '401 для admin-only каталогу провайдерів'],
     ['Policy ринкового орієнтиру без токена', 'GET', '/market-data/policy', [401], (body) => typeof body?.detail === 'string', '401 для admin-only policy провайдерів'],
     ['Snapshot-и ринкових даних без токена', 'GET', '/market-data/snapshots', [401], (body) => typeof body?.detail === 'string', '401 для admin-only історії snapshot-ів'],
+    ['Графіки провайдерів без токена', 'GET', '/market-data/provider-schedules', [401], (body) => typeof body?.detail === 'string', '401 для admin-only графіків оновлення'],
+    ['Журнал операцій провайдерів без токена', 'GET', '/market-data/operations', [401], (body) => typeof body?.detail === 'string', '401 для admin-only журналу операцій'],
   ].map(([name, method, pathname, expectedStatuses, validate, contract]) => ({
     name, method, url: apiUrl(pathname), expectedStatuses, validate, contract,
   })).concat({
