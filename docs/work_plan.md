@@ -80,6 +80,7 @@
 - [x] 120 — Legacy-перерахунок і межа ML: `recalc_grades.py` retired, бо він переписував усі legacy-поля без dry-run/scope/audit/rollback і не працював із чинним `Stone`/system/expert контрактом. Historical projections не очищаються й не backfill-яться. Нова IDC-версія — forward-only; будь-який майбутній diff/write-flow потребує окремого рішення, dry-run, scope, audit trail, backup і rollback. `ml_results` лишається порожнім reserved schema до ліцензованого, versioned і відтворюваного ML/SOM-контракту ([ADR-004](./decisions/004-legacy-calculation-and-ml-boundary.md)).
 - [x] 130 — Публічні вкладення паспорта: admin може явно опублікувати лише `stone_photo` або `plotting_diagram` виданого report. Anonymous endpoint прив'язаний до active passport token, allow-list-ить JPEG/PNG/WebP, звіряє SHA-256 та повертає `no-store`; private/revoked/void/tampered media дає 404. PDF не містить вкладень.
 - [x] 131 — Зображення у PDF публічного паспорта: on-demand PDF додає лише чинні явно опубліковані фото каменю та plotting після основної сторінки, з allow-list/checksum/revoke гарантіями, A4 layout і PDF-тестами. PDF не є snapshot-ом: зняте з публікації медіа відсутнє лише в наступних генераціях.
+- [x] 132 — Публічні інформаційні сторінки: footer веде на responsive «Політику конфіденційності» фактичного local MVP і довідку про код/URL/QR/PDF паспорта. Production/legal деталізація потребує окремого рішення після вибору хостингу й процесів даних.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
 
