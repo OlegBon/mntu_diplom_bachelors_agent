@@ -7,9 +7,10 @@
 
 ## Передумова
 
-Спершу завершується [150](./150-analytics-and-verified-ml-strategy.md):
-dataset, baseline, validation і versioned model artifact мають бути
-відтворюваними в локальному контурі. Cloud не є передумовою цього етапу.
+Спершу погоджується [ADR-005](../decisions/005-analytics-and-verified-ml-strategy.md):
+cloud не є передумовою локального data/ML етапу. Якщо 151/152 підтвердять
+працездатний verified experiment, він лишається локально відтворюваним до
+вибору staging-платформи.
 
 ## Погоджений baseline
 

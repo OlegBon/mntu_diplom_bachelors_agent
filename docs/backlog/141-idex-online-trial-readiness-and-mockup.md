@@ -12,7 +12,7 @@
 - Лише internal development/test records: без trading, inventory search,
   redistribution або customer-facing distribution.
 - Sanitised mock-up можна підготувати локально; trial стартує лише після
-  завершення local verified ML за [150](./150-analytics-and-verified-ml-strategy.md),
+  завершення local verified ML experiment за [152](./152-verified-ml-experiment.md),
   готового staging за [161](./161-postgresql-migration-and-staging.md) та
   повідомлення IDEX із запропонованою датою.
 - IDEX Online має бути явно названий джерелом; natural-only wording і межа

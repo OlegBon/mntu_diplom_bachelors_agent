@@ -87,7 +87,8 @@
 - [x] 136 — SQLAlchemy/Pydantic deprecation cleanup: modern API без зміни schema, request/response JSON або доменної логіки; ORM→Pydantic v2 serialization має окремий regression test.
 - [ ] [137 — GitHub Actions CI](./backlog/137-github-actions-continuous-integration.md): до переходу на `main` відтворити backend, ephemeral MariaDB/Alembic, frontend, mock/real E2E та docs checks у GitHub без deploy або secrets.
 - [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial.
-- [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після рішення 160.
+- [ ] [146 — Незбережене введення майстра](./backlog/146-wizard-draft-continuity.md): per-tab restore і leave protection без hidden server draft; передумова i18n.
+- [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після 146 та рішення 160.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
 
@@ -98,11 +99,15 @@
   [mariadb-local-recovery.md](./guides/mariadb-local-recovery.md).
 - [ ] Відокремити конфігурацію БД від MariaDB-специфічного коду, зберігши локальну MariaDB.
 - [ ] Після локального MVP реалізувати перевірений ML-контур: датасет, versioned model artifact, валідація метрик, відтворюваний прогноз і окремі аналітичні результати.
-- [ ] [150 — Analytics і verified ML strategy](./backlog/150-analytics-and-verified-ml-strategy.md): спершу dataset/data-quality/target і baseline, потім model artifact/validation, а stone/SOM UI лише після валідних результатів.
-- [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локально верифікованого ML підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
-- [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 150 і рішення 160 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
+- [x] [150 — Analytics і verified ML strategy](./decisions/005-analytics-and-verified-ml-strategy.md): operational analytics, supervised market-reference experiment, SOM і quality expert texts розділено; OpenFacet/IDEX не є training data без письмового дозволу.
+- [ ] [151 — Контракт даних і якість](./backlog/151-analytics-data-contract-and-quality.md): ліцензії, dataset, target, quality report і reproducible splits до ML-коду.
+- [ ] [152 — Верифікований ML-експеримент](./backlog/152-verified-ml-experiment.md): baseline, validation, artifact, uncertainty і private result provenance після 151.
+- [ ] [153 — Stone analytics / SOM](./backlog/153-stone-analytics-visualization.md): descriptive admin-only сегменти після 151, без investment verdict.
+- [ ] [154 — Якість експертних текстів](./backlog/154-expert-narrative-quality-analysis.md): explainable form-quality checks; NLP/ML тільки після окремого data/privacy contract.
+- [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локального verified experiment 152 підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
+- [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 152, рішення 160 і CI gate 137 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.
-- [ ] [140 — Хмарне розгортання та scheduler ринкових даних](./backlog/140-cloud-deployment-and-provider-scheduler.md): після 150 → 160 → 161 обрати staging/cloud runtime, налаштувати deployment, secrets, managed scheduler кожні 5 хвилин для provider CLI, logs/alerts і runbook; локальний Windows Task Scheduler не є ціллю.
+- [ ] [140 — Хмарне розгортання та scheduler ринкових даних](./backlog/140-cloud-deployment-and-provider-scheduler.md): після 152 → 160 → 137 → 161 обрати staging/cloud runtime, налаштувати deployment, secrets, managed scheduler кожні 5 хвилин для provider CLI, logs/alerts і runbook; локальний Windows Task Scheduler не є ціллю.
 - [ ] Налаштувати CORS, env secrets, health-check, домени/TLS та ручний smoke-test до публічного запуску.
 
 ### Зафіксовані розбіжності з початковими нотатками

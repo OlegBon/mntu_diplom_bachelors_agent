@@ -30,7 +30,11 @@
 | [137-github-actions-continuous-integration.md](./137-github-actions-continuous-integration.md) | Reproducible CI до переходу на protected `main`, без deploy. |
 | [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |
 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
+| [146-wizard-draft-continuity.md](./146-wizard-draft-continuity.md) | Відновлення незбереженого wizard state без hidden server draft. |
 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
-| [150-analytics-and-verified-ml-strategy.md](./150-analytics-and-verified-ml-strategy.md) | Data contract, verified ML and future stone analytics. |
+| [151-analytics-data-contract-and-quality.md](./151-analytics-data-contract-and-quality.md) | Ліцензії, dataset, target, quality і reproducible splits. |
+| [152-verified-ml-experiment.md](./152-verified-ml-experiment.md) | Baseline, validation, artifact та model-result provenance. |
+| [153-stone-analytics-visualization.md](./153-stone-analytics-visualization.md) | Private descriptive SOM / market segments після якісних даних. |
+| [154-expert-narrative-quality-analysis.md](./154-expert-narrative-quality-analysis.md) | Explainable quality checks експертних текстів; NLP лише після policy. |
 | [160-platform-and-stack-decision.md](./160-platform-and-stack-decision.md) | Cloud platform ADR, current stack and TypeScript/Vite criteria. |
 | [161-postgresql-migration-and-staging.md](./161-postgresql-migration-and-staging.md) | PostgreSQL, staging, deployment and scheduler integration. |

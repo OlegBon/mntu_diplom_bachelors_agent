@@ -169,8 +169,11 @@ audit trail чи rollback plan, вилучено. Жоден чинний endpoi
 `diamond_analytics.ml_results` не є контрактом готової аналітики: вона не
 містить даних і не має API. До появи ML чи карт Кохонена потрібні ліцензований
 dataset, versioned training/model artifact, відтворювана валідація, provenance
-кожного результату та правила його неавторитетного відображення. ML не може
-переписувати system/expert grades, lifecycle або ринкові орієнтири.
+кожного результату та правила його неавторитетного відображення. OpenFacet і
+потенційний IDEX — runtime market-reference providers, а не training data без
+окремого письмового дозволу. SOM є descriptive segmentation, не інвестиційним
+verdict. Повна межа зафіксована в [ADR-005](./decisions/005-analytics-and-verified-ml-strategy.md).
+ML не може переписувати system/expert grades, lifecycle або ринкові орієнтири.
 
 Active-time не береться з `created_at`, `updated_at`, legacy
 `evaluation_time_sec` чи review-cycle. Після першого save owner-gemologist у
