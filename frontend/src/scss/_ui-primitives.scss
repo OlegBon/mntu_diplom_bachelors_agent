@@ -134,7 +134,12 @@
   p, li { color: variables.$text-color; line-height: 1.65; }
   ul, ol { margin: 0; padding-left: 1.35rem; }
   li + li { margin-top: 0.5rem; }
-  &__notice { border-left: 3px solid variables.$primary-color; background: variables.$surface-subtle; padding: 0.875rem 1rem; }
+  &__notice {
+    margin: 1.5rem 0;
+    border-left: 3px solid variables.$primary-color;
+    background: variables.$surface-subtle;
+    padding: 0.875rem 1rem;
+  }
 
   @media (max-width: 767px) { &__surface { padding: 1.25rem; } }
 }
