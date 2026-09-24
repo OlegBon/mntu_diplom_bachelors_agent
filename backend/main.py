@@ -486,7 +486,7 @@ def attach_report_market_reference(
         raise HTTPException(status_code=422, detail=str(error)) from error
 
 
-@app.get("/reports/{report_id}/passport", response_model=schemas.PublicPassportResponse)
+@app.get("/reports/{report_id}/passport", response_model=schemas.ReportPassportPublicationStatus)
 def read_report_publication(
     report_id: str,
     db: Session = Depends(get_db),
@@ -497,9 +497,7 @@ def read_report_publication(
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
     passport = crud.get_active_public_passport(db, report_id)
-    if passport is None:
-        raise HTTPException(status_code=404, detail="Public passport not found")
-    return passport
+    return schemas.ReportPassportPublicationStatus(passport=passport)
 
 
 @app.post("/reports/{report_id}/passport", response_model=schemas.PublicPassportResponse)

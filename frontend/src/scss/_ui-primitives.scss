@@ -755,6 +755,13 @@
   .report-detail__list,
   .report-detail__timeline { display: grid; gap: 0.75rem; list-style: none; }
   .report-detail__list a { color: variables.$primary-color; font-weight: 600; }
+  #detail-media .btn--compact { display: block; width: fit-content; margin-top: 0.5rem; }
+  .account-dialog { width: min(34rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; border: 1px solid variables.$border-color; padding: 1.5rem; background: variables.$white; overflow-y: auto; }
+  .account-dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+  .account-dialog__header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+  .account-dialog__header h2 { margin: 0; }
+  .account-dialog__close { border: 0; padding: 0.25rem; background: transparent; color: variables.$text-strong; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+  .account-dialog__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
   .market-reference-card {
     border: 1px solid variables.$border-color;
     padding: 0;
@@ -910,6 +917,8 @@
     }
     .market-reference-card__summary { align-items: flex-start; flex-direction: column; gap: 0.25rem; }
     .market-reference-card__details > div { grid-template-columns: 1fr; gap: 0.2rem; }
+    .account-dialog { width: calc(100vw - 1rem); max-width: calc(100vw - 1rem); height: calc(100dvh - 1rem); max-height: calc(100dvh - 1rem); padding: 1rem; }
+    .account-dialog__actions .btn { width: 100%; }
   }
   .public-passport-page {
     padding-bottom: 3rem;

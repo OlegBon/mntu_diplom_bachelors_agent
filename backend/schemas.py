@@ -548,6 +548,12 @@ class PublicPassportResponse(BaseModel):
     revoked_at: Optional[datetime]
 
 
+class ReportPassportPublicationStatus(BaseModel):
+    """Private admin view of whether a report currently has a public passport."""
+
+    passport: Optional[PublicPassportResponse]
+
+
 class PublicPassportView(BaseModel):
     """Minimal anonymous projection; intentionally excludes private report data."""
 

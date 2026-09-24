@@ -329,8 +329,21 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
     state.textContent = "Публікація стане доступною після видачі звіту admin.";
     return;
   }
+  publish.onclick = async () => {
+    try {
+      onStatus("Публікація паспорта…");
+      await publishReportPassport(report.report_id, token);
+      await renderPassportControls({ report, currentUser, token, onStatus });
+      onStatus("Паспорт опубліковано.");
+    } catch (error) { onStatus(error.message || "Не вдалося опублікувати паспорт.", true); }
+  };
   try {
-    const passport = await getReportPassport(report.report_id, token);
+    const { passport } = await getReportPassport(report.report_id, token);
+    if (!passport) {
+      state.textContent = "Паспорт ще не опубліковано.";
+      publish.hidden = false;
+      return;
+    }
     const url = passportUrl(passport.public_id);
     state.textContent = "Паспорт опубліковано. Його можна перевірити за посиланням, QR або кодом; перевипуск одразу відкликає попередні дані доступу.";
     code.querySelector("code").textContent = passport.public_id;
@@ -364,22 +377,10 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
         onStatus("PDF-паспорт завантажено.");
       } catch (error) { onStatus(error.message || "Не вдалося сформувати PDF-паспорт.", true); }
     };
-  } catch (error) {
-    if (!(error instanceof ApiRequestError) || error.status !== 404) {
-      state.textContent = "Не вдалося завантажити стан публікації.";
-      return;
-    }
-    state.textContent = "Паспорт ще не опубліковано.";
-    publish.hidden = false;
+  } catch {
+    state.textContent = "Не вдалося завантажити стан публікації.";
+    return;
   }
-  publish.onclick = async () => {
-    try {
-      onStatus("Публікація паспорта…");
-      await publishReportPassport(report.report_id, token);
-      await renderPassportControls({ report, currentUser, token, onStatus });
-      onStatus("Паспорт опубліковано.");
-    } catch (error) { onStatus(error.message || "Не вдалося опублікувати паспорт.", true); }
-  };
   reissue.onclick = async () => {
     if (!window.confirm("Перевипустити паспорт? Попередній код, посилання й QR перестануть працювати.")) return;
     try {
