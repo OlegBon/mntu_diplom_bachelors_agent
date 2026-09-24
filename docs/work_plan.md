@@ -105,6 +105,10 @@
 - [ ] [153 — Stone analytics / SOM](./backlog/153-stone-analytics-visualization.md): descriptive admin-only сегменти після 151, без investment verdict.
 - [ ] [154 — Якість експертних текстів](./backlog/154-expert-narrative-quality-analysis.md): explainable form-quality checks; NLP/ML тільки після окремого data/privacy contract.
 - [ ] [155 — Operational і data-quality analytics](./backlog/155-operational-and-data-quality-analytics.md): workflow funnel, completeness, provider operations і publication readiness без rating/public tracking.
+- [ ] [156 — Demo dataset contract і isolation](./backlog/156-demo-dataset-contract-and-isolation.md): `operational`/`demo` scope, admin-only RBAC, backfill plan 1 000 seed records і незалежна money semantics.
+- [ ] [157 — Synthetic demo dataset generator](./backlog/157-synthetic-demo-dataset-generator.md): deterministic `DEMO-…`, manifest, filled synthetic fields і safe assets після 156.
+- [ ] [158 — Admin demo report/PDF/passport preview](./backlog/158-admin-demo-report-and-passport-preview.md): immutable private preview без public code/QR після 156–157.
+- [ ] [159 — Synthetic SOM demo](./backlog/159-synthetic-som-demo.md): reproducible admin-only карта для demo dataset, не заміна 151–153.
 - [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локального verified experiment 152 підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
 - [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 152, рішення 160 і CI gate 137 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.

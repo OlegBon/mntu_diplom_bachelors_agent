@@ -37,5 +37,9 @@
 | [153-stone-analytics-visualization.md](./153-stone-analytics-visualization.md) | Private descriptive SOM / market segments після якісних даних. |
 | [154-expert-narrative-quality-analysis.md](./154-expert-narrative-quality-analysis.md) | Explainable quality checks експертних текстів; NLP лише після policy. |
 | [155-operational-and-data-quality-analytics.md](./155-operational-and-data-quality-analytics.md) | Workflow, data-quality і provider analytics без rating або public tracking. |
+| [156-demo-dataset-contract-and-isolation.md](./156-demo-dataset-contract-and-isolation.md) | Admin-only synthetic scope, RBAC, migration plan і money semantics. |
+| [157-synthetic-demo-dataset-generator.md](./157-synthetic-demo-dataset-generator.md) | Детермінований synthetic dataset, provenance та safe showcase assets. |
+| [158-admin-demo-report-and-passport-preview.md](./158-admin-demo-report-and-passport-preview.md) | Read-only admin demo detail, PDF і private passport preview. |
+| [159-synthetic-som-demo.md](./159-synthetic-som-demo.md) | Isolated reproducible SOM technical demo для admin. |
 | [160-platform-and-stack-decision.md](./160-platform-and-stack-decision.md) | Cloud platform ADR, current stack and TypeScript/Vite criteria. |
 | [161-postgresql-migration-and-staging.md](./161-postgresql-migration-and-staging.md) | PostgreSQL, staging, deployment and scheduler integration. |

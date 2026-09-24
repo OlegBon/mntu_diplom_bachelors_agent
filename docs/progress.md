@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — demo-dataset-contract-planning
+
+- **Задача:** провести передреалізаційний аудит і декомпозицію admin-only synthetic demo data, щоб не змішати її з operational reports, public delivery, market providers або verified ML.
+- **Змінені файли:** `docs/decisions/006-demo-dataset-isolation.md`, `docs/backlog/{README,151-analytics-data-contract-and-quality,153-stone-analytics-visualization,156-demo-dataset-contract-and-isolation,157-synthetic-demo-dataset-generator,158-admin-demo-report-and-passport-preview,159-synthetic-som-demo}.md`, `docs/{progress,work_plan}.md`.
+- **Рішення / Результат:** demo використовує спільні доменні таблиці з server-enforced `record_scope=demo`, immutable dataset manifest і `DEMO-…` лише для нових generated records; окремі дублікати таблиць відхилені. Експерт не бачить/не вгадує demo через list, search або direct URL; admin бачить лише explicit isolated mode без глобального toggle. Demo не має public passport/code/QR: PDF/passport — private watermark preview. Існуючі 1 000 synthetic seed records не перейменовуються; лише після inventory, backup і окремого дозволу можуть отримати scope/dataset link. Money refactor розділяє type (`SYS`/`ADM`) і provider, прибирає `d` з operational UI, а demo показує лише `DEMO · synthetic-demo-vN`. Окремо зафіксовано, що generator не має приписувати assets/events реальному користувачу: system-origin треба вирішити в 156 до 157. 157–159 відокремлюють generator, preview та SOM technical demo від 151–153 verified ML.
+- **Перевірки:** виконано read-only code/document audit моделей, CRUD, report/media/passport/analytics routes, seed і current documentation; `python scripts/check_doc_links.py` — `Documentation links: OK`; `git diff --check` — без помилок. Міграції, backfill, seed, зовнішні запити й локальна БД не запускалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це лише планування: `record_scope`, manifest, API guards, data generator, previews, SOM, migration і tests ще не реалізовано. Ліцензійність реальних report даних не встановлюється цим ADR.
+
 ## 2026-09-24 — guest-navigation-home-fallback
 
 - **Задача:** прибрати миготіння неактуального пункту «Головна» у гостьовій навігації до client-side auth render.

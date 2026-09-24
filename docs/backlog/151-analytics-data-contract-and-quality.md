@@ -5,6 +5,9 @@
 Визначити легальний, відтворюваний dataset для експериментів ціни та
 кластеризації до написання ML-коду.
 
+Synthetic demo за 156–159 є окремим technical population і не задовольняє
+критерії цього завдання для verified ML або real-world SOM.
+
 ## Обов'язкові рішення
 
 - Розділити data tiers у manifest: synthetic project seed
