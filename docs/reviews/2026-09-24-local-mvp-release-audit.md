@@ -5,8 +5,8 @@
 Локальний MVP має цілісний private workflow звіту, public passport/QR/PDF,
 media allow-list, ринкові snapshot-и та базові RBAC межі. Критичних
 функціональних або підтверджених витоків даних у виконаному зрізі не знайдено.
-Водночас release не варто вважати готовим до staging, доки не вирішено
-schema-convergence і реальний browser E2E.
+Водночас release не варто вважати готовим до staging, доки не реалізовано
+реальний browser E2E.
 
 ## Виконані перевірки
 
@@ -16,22 +16,24 @@ schema-convergence і реальний browser E2E.
   перевірок пройшли.
 - Повний Playwright — 16/17: знайдено застарілий mock-контракт паспорта,
   винесено у [135](../backlog/135-real-browser-e2e-and-passport-contract.md).
-- `alembic current` — `0013_market_provider_operations (head)`; `alembic
-  check` не проходить через index/metadata розбіжності, винесено у
-  [134](../backlog/134-alembic-schema-convergence.md).
+- `alembic current` — `0013_market_provider_operations (head)`; початкова
+  index/metadata розбіжність усунена metadata correction без DDL, а
+  `alembic check` проходить.
 - `python -m compileall -q backend scripts` — пройшов.
 - Внутрішні Markdown-посилання перевіряються
   `python scripts/check_doc_links.py`.
 
 ## Знахідки та рішення
 
-### Важливо — Alembic schema convergence
+### Вирішено — Alembic schema convergence
 
-`alembic check` бачить remove/add index operations для `public_passports`,
-`report_work_session_events` і `market_provider_operations`, хоча runtime DB
-вже на head. Це release-gate для staging і майбутньої PostgreSQL-міграції.
-Не змінюємо DDL наосліп: read-only інвентаризація, рішення про metadata або
-revision і безпечний migration plan належать [134](../backlog/134-alembic-schema-convergence.md).
+`alembic check` початково бачив remove/add index operations для
+`public_passports`, `report_work_session_events` і
+`market_provider_operations`, хоча runtime DB вже на head. Read-only
+інвентаризація підтвердила: MariaDB відповідає canonical Alembic revisions,
+а зайві ORM `index=True`/неназвана unique metadata були джерелом false drift.
+Metadata приведена у відповідність без DDL; `alembic check` green і regression
+test фіксує canonical names.
 
 ### Середньо — browser E2E не є green
 
