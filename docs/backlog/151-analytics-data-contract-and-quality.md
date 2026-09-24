@@ -7,6 +7,13 @@
 
 ## Обов'язкові рішення
 
+- Розділити data tiers у manifest: synthetic project seed
+  `DR-00001`–`DR-01000`, private reports після `DR-01000` і кожне зовнішнє
+  джерело. Їх не об'єднувати за замовчуванням. Seed дозволений лише для
+  технічного demo/experiment, не як verified market label.
+- Для private reports після `DR-01000` зафіксувати owner, legal/purpose basis,
+  consent за потреби, retention, доступ і de-identification до будь-якого
+  ML/SOM використання. Відсутність такої картки означає exclude by default.
 - Зафіксувати письмову ліцензію, owner, дозволені training/derivative uses,
   retention і атрибуцію кожного джерела. OpenFacet та майбутній IDEX не є
   training dataset, доки відповідний дозвіл прямо не отримано.

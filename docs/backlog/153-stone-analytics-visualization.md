@@ -10,6 +10,11 @@
 - SOM — descriptive unsupervised segmentation, а не механізм прогнозу ціни і
   не доказ інвестиційної привабливості. Візуальна карта з Figma є концептом,
   а не готовим product contract.
+- Synthetic seed `DR-00001`–`DR-01000` можна застосувати для локального
+  technical demo карти, але UI має явно маркувати його як synthetic development
+  demo. Він не позначає реальний report, market segment, confidence або
+  investment quality. Private reports після `DR-01000` не включаються без
+  дозволеного data manifest із 151.
 - Кожна карта показує population, period, dataset/model version, features,
   метод normalisation, seed, кількість об'єктів і застереження щодо меж.
 - Кластер має нейтральну назву/опис, який підтверджують агреговані ознаки.

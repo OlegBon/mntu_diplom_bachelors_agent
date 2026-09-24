@@ -104,6 +104,7 @@
 - [ ] [152 — Верифікований ML-експеримент](./backlog/152-verified-ml-experiment.md): baseline, validation, artifact, uncertainty і private result provenance після 151.
 - [ ] [153 — Stone analytics / SOM](./backlog/153-stone-analytics-visualization.md): descriptive admin-only сегменти після 151, без investment verdict.
 - [ ] [154 — Якість експертних текстів](./backlog/154-expert-narrative-quality-analysis.md): explainable form-quality checks; NLP/ML тільки після окремого data/privacy contract.
+- [ ] [155 — Operational і data-quality analytics](./backlog/155-operational-and-data-quality-analytics.md): workflow funnel, completeness, provider operations і publication readiness без rating/public tracking.
 - [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локального verified experiment 152 підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
 - [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 152, рішення 160 і CI gate 137 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.

@@ -44,6 +44,19 @@ OpenFacet і потенційний IDEX використовуються тіл
 reference providers. Їхні відповіді не потрапляють у training/labels/SOM,
 доки право на таке використання не погоджене письмово.
 
+### 2a. Три рівні даних для експериментів
+
+| Рівень | Допустиме використання | Заборона / межа |
+| --- | --- | --- |
+| `data/diamonds_dataset.csv`, `DR-00001`–`DR-01000` | Технічний seed experiment: import, cleaning, reproducible SOM pipeline, карта, empty/error UI. | Набір синтетичний; не є підтвердженим ринковим/training джерелом і не підтримує verified price, investment або market claims. |
+| Локальні звіти після `DR-01000` | Лише після окремо задокументованої підстави, owner/consent, purpose limitation, retention і privacy review; за потреби — de-identification. | Не стають ML/SOM data за замовчуванням лише через те, що потрапили в OLTP. Не змішуються із seed без manifest і чіткого маркування. |
+| Ліцензований зовнішній dataset | Лише відповідно до письмових training/derivative-use прав і dataset card. | Provider runtime responses не прирівнюються до такого dataset. |
+
+Отже, seed може дати цінний демонстраційний SOM-механізм уже локально, але
+його екран має прямо називатися synthetic development demo та не показувати
+прогноз, confidence, market segment або investment quality як властивість
+реального каменю.
+
 ### 3. Верифікований результат
 
 До private UI результат не називається ML/model reference. Потрібні locked
