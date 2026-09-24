@@ -183,7 +183,7 @@ publication state без зміни приватного report. Public API по
 | `created_at`, `is_public` | Технічний час і явне рішення admin про видимість; за замовчуванням `false`. |
 
 API не монтує storage як static directory: private читання проходить тільки через
-авторизований endpoint owner/admin. Для public passport доступні тільки
+авторизований endpoint owner/admin. Для public passport та його on-demand PDF доступні тільки
 `stone_photo` і `plotting_diagram` із MIME `image/jpeg`, `image/png` або
 `image/webp`, якщо admin у виданому report явно встановив `is_public=true`.
 Public content endpoint повторно звіряє SHA-256, повертає `no-store` та не

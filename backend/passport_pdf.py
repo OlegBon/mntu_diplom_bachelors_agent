@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
-from typing import Mapping
+from typing import Mapping, Sequence
+from zoneinfo import ZoneInfo
 
 import qrcode
 from reportlab.lib import colors
@@ -40,6 +43,19 @@ IDENTIFICATION_LABELS = {
     "inconclusive": "Невизначено",
 }
 
+MEDIA_LABELS = {
+    "stone_photo": "Фото каменю",
+    "plotting_diagram": "Схема огранювання",
+}
+
+
+@dataclass(frozen=True)
+class PublicPassportPdfMedia:
+    """Already-authorized public image bytes for one on-demand PDF."""
+
+    asset_type: str
+    content: bytes
+
 
 def _register_fonts() -> None:
     """Register bundled Unicode fonts without a dependency on the host system."""
@@ -66,10 +82,48 @@ def _draw_label_value(document: canvas.Canvas, x: float, y: float, label: str, v
     return y - 38
 
 
+def _draw_media_page(document: canvas.Canvas, media: PublicPassportPdfMedia) -> bool:
+    """Draw a single proportional public image page; skip unreadable image bytes."""
+    label = MEDIA_LABELS.get(media.asset_type)
+    if label is None:
+        return False
+    try:
+        image = ImageReader(BytesIO(media.content))
+        image_width, image_height = image.getSize()
+    except Exception:  # ImageReader normalizes decoder-specific errors.
+        return False
+    if image_width <= 0 or image_height <= 0:
+        return False
+
+    document.setFillColor(colors.HexColor("#2563eb"))
+    document.rect(0, PAGE_HEIGHT - 12, PAGE_WIDTH, 12, fill=1, stroke=0)
+    document.setFillColor(colors.HexColor("#0f172a"))
+    document.setFont(FONT_BOLD, 18)
+    document.drawString(MARGIN, PAGE_HEIGHT - 52, "Зображення каменю")
+    document.setFont(FONT_REGULAR, 10)
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.drawString(MARGIN, PAGE_HEIGHT - 70, label)
+
+    max_width = PAGE_WIDTH - (MARGIN * 2)
+    max_height = PAGE_HEIGHT - 178
+    scale = min(max_width / image_width, max_height / image_height)
+    draw_width = image_width * scale
+    draw_height = image_height * scale
+    image_x = (PAGE_WIDTH - draw_width) / 2
+    image_y = 86 + (max_height - draw_height) / 2
+    document.drawImage(image, image_x, image_y, draw_width, draw_height, preserveAspectRatio=True, mask="auto")
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.setFont(FONT_REGULAR, 7.5)
+    document.drawCentredString(PAGE_WIDTH / 2, 48, "Матеріал доступний у чинному публічному паспорті на момент формування PDF.")
+    document.showPage()
+    return True
+
+
 def build_public_passport_pdf(
     passport: PublicPassportView,
     public_url: str,
     grade_labels: Mapping[tuple[str, int], str],
+    public_media: Sequence[PublicPassportPdfMedia] = (),
 ) -> bytes:
     """Render one public passport PDF from the explicit anonymous projection only."""
     _register_fonts()
@@ -156,7 +210,12 @@ def build_public_passport_pdf(
     document.setFillColor(colors.HexColor("#64748b"))
     document.setFont(FONT_REGULAR, 7.5)
     document.drawString(MARGIN, footer_top - 7, public_url)
+    generated_at = datetime.now(timezone.utc).astimezone(ZoneInfo("Europe/Kyiv")).strftime("%d.%m.%Y %H:%M")
+    document.drawString(MARGIN, 62, f"Сформовано: {generated_at} (Europe/Kyiv)")
     document.drawString(MARGIN, 48, "PDF містить лише публічно доступні дані. Перевіряйте стан за кодом, посиланням або QR.")
     document.showPage()
+    ordered_media = sorted(public_media, key=lambda item: (item.asset_type != "stone_photo", item.asset_type))
+    for media in ordered_media:
+        _draw_media_page(document, media)
     document.save()
     return output.getvalue()

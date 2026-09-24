@@ -560,6 +560,7 @@ class PublicPassportView(BaseModel):
     public_id: str
     report_id: str
     issued_at: datetime
+    public_updated_at: datetime
     examination_date: Optional[date]
     shape: str
     carat_weight: Decimal
