@@ -367,14 +367,23 @@ bundled DejaVu Sans, тому файл не залежить від набору
 
 ## 7. Вкладення та розширення публічних полів
 
-Сьогодні plotting і фото з wizard — **private-only**, навіть якщо metadata має
-`is_public`. Їх не віддають ні browser-паспорт, ні QR, ні PDF.
+Фото каменю (`stone_photo`) і plotting (`plotting_diagram`) спочатку завжди
+**private-only**. Після видачі report admin може окремо опублікувати кожне
+таке зображення в блоці «Вкладення» приватного detail. Це не публікує storage:
+anonymous browser отримує файл лише через allow-listed URL, прив'язаний до
+чинного коду паспорта. `supporting_document` і `instrument_image` не можуть
+бути public.
+
+Відкликання паспорта, перевипуск старого посилання або `void` робить media URL
+недоступним (404). Публічний endpoint приймає лише JPEG/PNG/WebP, звіряє
+збережений SHA-256 і віддає `Cache-Control: no-store`; private filename, hash,
+comment та інші metadata у public API не потрапляють. PDF як і раніше не
+містить вкладень.
 
 Потреба додати фото, plotting або інші поля до публічної частини не вимагає
 переписувати lifecycle, але потребує окремого security-рішення: явного
 allow-list, consent/admin-flow, окремого content endpoint, MIME/hash/cache
-перевірок і сценаріїв revoke/void. Це зафіксовано в
-[130 — Публічні вкладення паспорта](../backlog/130-public-passport-media.md).
+перевірок і сценаріїв revoke/void.
 
 Будь-яке інше нове поле для паспорта також має пройти такий порядок:
 

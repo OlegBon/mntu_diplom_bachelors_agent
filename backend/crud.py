@@ -580,6 +580,69 @@ def get_media_asset(db: Session, report_id: str, media_id: int) -> models.MediaA
     )
 
 
+PUBLIC_MEDIA_ASSET_TYPES = {"stone_photo", "plotting_diagram"}
+PUBLIC_MEDIA_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+def get_public_media_assets(db: Session, report_id: str) -> list[models.MediaAsset]:
+    """Return only public-safe image metadata for an already-authorized passport."""
+    return (
+        db.query(models.MediaAsset)
+        .filter(
+            models.MediaAsset.report_id == report_id,
+            models.MediaAsset.is_public.is_(True),
+            models.MediaAsset.asset_type.in_(PUBLIC_MEDIA_ASSET_TYPES),
+            models.MediaAsset.mime_type.in_(PUBLIC_MEDIA_MIME_TYPES),
+        )
+        .order_by(models.MediaAsset.media_id)
+        .all()
+    )
+
+
+def get_public_media_asset(db: Session, report_id: str, media_id: int) -> models.MediaAsset | None:
+    return (
+        db.query(models.MediaAsset)
+        .filter(
+            models.MediaAsset.report_id == report_id,
+            models.MediaAsset.media_id == media_id,
+            models.MediaAsset.is_public.is_(True),
+            models.MediaAsset.asset_type.in_(PUBLIC_MEDIA_ASSET_TYPES),
+            models.MediaAsset.mime_type.in_(PUBLIC_MEDIA_MIME_TYPES),
+        )
+        .first()
+    )
+
+
+def set_media_asset_publication(
+    db: Session,
+    *,
+    report: models.DiamondReport,
+    media_asset: models.MediaAsset,
+    is_public: bool,
+    actor: models.Expert,
+) -> models.MediaAsset:
+    """Apply an explicit admin publication decision to an eligible issued-report image."""
+    if report.status != "issued":
+        raise ReportDomainError("Only media of issued reports can be published")
+    if media_asset.asset_type not in PUBLIC_MEDIA_ASSET_TYPES or media_asset.mime_type not in PUBLIC_MEDIA_MIME_TYPES:
+        raise ReportDomainError("Only stone photos and plotting diagrams with a supported image type can be public")
+    if media_asset.is_public == is_public:
+        return media_asset
+    media_asset.is_public = is_public
+    _append_report_event(
+        db,
+        report_id=report.report_id,
+        action="media_published" if is_public else "media_unpublished",
+        actor_id=actor.expert_id,
+        from_status=report.status,
+        to_status=report.status,
+        reason=f"{media_asset.asset_type} · #{media_asset.media_id}",
+    )
+    db.commit()
+    db.refresh(media_asset)
+    return media_asset
+
+
 def create_media_asset(
     db: Session,
     *,

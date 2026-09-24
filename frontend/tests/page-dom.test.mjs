@@ -12,6 +12,16 @@ const dashboardPath = path.resolve(testDir, "../dist/dashboard.html");
 const reportDetailPath = path.resolve(testDir, "../dist/report-detail.html");
 const passportPath = path.resolve(testDir, "../dist/passport.html");
 const analyticsPath = path.resolve(testDir, "../dist/ml-analysis.html");
+const homePath = path.resolve(testDir, "../dist/index.html");
+
+test("built home page exposes the login CTA for anonymous visitors", async () => {
+  const html = await readFile(homePath, "utf8");
+  const document = new JSDOM(html).window.document;
+
+  const loginCta = document.querySelector("#home-login-cta");
+  assert.equal(loginCta?.getAttribute("href"), "/login.html");
+  assert.equal(loginCta?.hidden, false);
+});
 
 test("built login page exposes accessible authentication fields", async () => {
   const html = await readFile(loginPath, "utf8");

@@ -112,6 +112,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const protectedPage = document.querySelector("[data-protected-page]");
   if (protectedPage) protectedPage.hidden = false;
+  const homeLoginCta = document.getElementById("home-login-cta");
+  if (homeLoginCta) homeLoginCta.hidden = isAuthenticated;
   applyApprovedNavigation(isAuthenticated);
 
   if (isAuthenticated) {

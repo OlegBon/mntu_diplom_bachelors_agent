@@ -27,12 +27,19 @@ test("guest reads only the safe public passport projection", async ({ page }) =>
     { category: "proportions", grade_value: 0, grade_label: "Excellent" },
     { category: "cut", grade_value: 0, grade_label: "Excellent" },
   ] }));
+  await page.route("**/public/passports/public-id/media", (route) => route.fulfill({ json: [
+    { media_id: 7, asset_type: "stone_photo", mime_type: "image/png" },
+  ] }));
+  await page.route("**/public/passports/public-id/media/7/content", (route) => route.fulfill({
+    contentType: "image/png", body: "image-placeholder",
+  }));
 
   await page.goto("/passport.html?id=public-id");
 
   await expect(page.locator("#public-passport-title")).toHaveText("Паспорт DR-01001");
   await expect(page.locator("#passport-color")).toHaveText("D");
   await expect(page.locator("#passport-expert-cut")).toHaveText("Excellent");
+  await expect(page.locator("#passport-media")).toBeVisible();
   await expect(page.locator("#public-passport-card")).toContainText("Природний");
   await expect(page.locator("#public-passport-card")).not.toContainText("Initial observation");
 });

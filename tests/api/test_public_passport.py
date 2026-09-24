@@ -33,12 +33,18 @@ def test_only_admin_can_publish_an_issued_report_and_public_view_is_allow_listed
     assert client.post(f"/reports/{draft_id}/passport", headers=auth_headers(client, experts["admin"].username)).status_code == 422
 
     report_id, owner_headers, admin_headers = issue_report(client, experts)
+    unpublished = client.get(f"/reports/{report_id}/passport", headers=admin_headers)
+    assert unpublished.status_code == 200
+    assert unpublished.json() == {"passport": None}
     assert client.post(f"/reports/{report_id}/passport", headers=owner_headers).status_code == 403
     published = client.post(f"/reports/{report_id}/passport", headers=admin_headers)
     assert published.status_code == 200
     public_id = published.json()["public_id"]
     assert public_id != report_id
     assert len(public_id) >= 32
+    publication_state = client.get(f"/reports/{report_id}/passport", headers=admin_headers)
+    assert publication_state.status_code == 200
+    assert publication_state.json()["passport"]["public_id"] == public_id
 
     public = client.get(f"/public/passports/{public_id}")
     assert public.status_code == 200

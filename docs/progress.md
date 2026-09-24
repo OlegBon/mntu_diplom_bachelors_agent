@@ -5,6 +5,33 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — home-authenticated-login-cta
+
+- **Задача:** прибрати неактуальне посилання входу з hero-блоку головної сторінки для вже автентифікованого користувача.
+- **Змінені файли:** `frontend/src/{pug/pages/index.pug,js/main.js}`, `frontend/tests/page-dom.test.mjs`, `docs/progress.md`.
+- **Рішення / Результат:** anonymous visitor як і раніше бачить «Увійти для роботи зі звітами». За наявності локальної сесії frontend приховує цей CTA під час ініціалізації сторінки; заголовок і навігація лишаються єдиним місцем переходу до робочого середовища.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 21 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** видимість CTA є лише UI-зручністю; доступ до приватних маршрутів, як і раніше, контролює auth-потік і сервер.
+
+## 2026-09-24 — public-media-history-labels-and-pdf-backlog
+
+- **Задача:** зробити історію зміни видимості вкладень зрозумілою користувачу та зафіксувати наступний PDF-крок.
+- **Змінені файли:** `frontend/src/js/modules/report-detail.js`, `frontend/tests/e2e/report-detail.spec.mjs`, `docs/{work_plan,progress}.md`, `docs/backlog/{README,131-public-passport-pdf-media}.md`.
+- **Рішення / Результат:** UI транслює технічні коди media у подіях: `stone_photo` → «Фото каменю», `plotting_diagram` → «Схема огранювання (plotting)». Append-only `report_events` і historical reason у БД не переписуються. Створено 131 для PDF: лише явно public allow-listed зображення активного паспорта, із checksum/revoke/void гарантіями та A4 layout-тестами.
+- **Перевірки:** targeted Playwright `report-detail.spec.mjs` — 2 passed, включно з історичними media-labels; `npm test` — 21 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** 131 лише планує PDF-media; поточний PDF залишається без вкладень до окремої реалізації.
+
+## 2026-09-24 — public-passport-media (завершено)
+
+- **Задача:** реалізувати контрольовану видимість вкладень у публічному паспорті без відкриття private storage.
+- **Змінені файли:** `backend/{crud,main,media_storage,schemas}.py`, `frontend/src/{pug/pages/passport,report-detail}.pug,scss/_ui-primitives.scss,js/modules/{api,public-passport,report-detail}.js}`, `tests/api/{test_public_passport,test_public_passport_media}.py`, `frontend/tests/e2e/{public-passport,report-detail}.spec.mjs`, `docs/{architecture,db-schema,work_plan,progress}.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/backlog/{README.md,130-public-passport-media.md (видалено)}`.
+- **Рішення / Результат:** усі вкладення стартують private. Лише admin і лише для `issued` report може окремо увімкнути public-доступ для `stone_photo` або `plotting_diagram`; у private UI вони названі «Фото каменю» та «Схема огранювання (plotting)». Кнопка має окремий відступ і на час запиту показує «Публікація…» та блокує повторний клік. Публікацію та відкликання media підтверджує стандартний діалог проєкту, не browser alert; на mobile він має природну висоту за вмістом, а не розтягується до низу екрана. Він пояснює наслідок для чинного посилання/QR і не впливає на PDF. Private `GET /reports/{id}/passport` повертає `200` з `passport: null`, якщо паспорт ще не опубліковано, тому цей нормальний UI-стан не створює 404 у browser console. Anonymous API перевіряє active issued passport token, exact asset allow-list, JPEG/PNG/WebP MIME, наявність файлу й SHA-256; у public response немає filename, hash або private metadata. Content віддається з `Cache-Control: no-store` та `X-Content-Type-Options: nosniff`; revoke, reissue старого token-а, void, private або tampered asset повертають 404. PDF лишається без вкладень.
+- **Перевірки:** targeted API tests — 6 passed; 31 unit/domain/PDF tests; після UI/contract polish: `pytest tests/api/test_public_passport.py tests/api/test_public_passport_media.py -q` — 4 passed, `npm test` — 20 passed, targeted Playwright `report-detail.spec.mjs` — 2 passed (включно з публікацією паспорта, стилями діалогу та mobile-висотою); `git diff --check` перевірено.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** public media не потрапляє до PDF; доступні лише два наявні image asset types. Додавання іншого media type потребує окремого allow-list, UX та security review.
+
 ## 2026-09-24 — cloud-provider-scheduler-backlog
 
 - **Задача:** зафіксувати місце й умови запуску scheduler-а ринкових provider-ів після реалізації 122.
@@ -310,7 +337,7 @@
 - **Результат:** admin для активного опублікованого `issued` report бачить `public_id`, URL, QR та може скопіювати код/посилання і завантажити «Публічний паспорт». `GET /reports/{id}/passport/pdf` лишається admin-only, вимагає саме current valid public URL і будує односторінковий PDF on-demand з того ж allow-list, що й anonymous endpoint: без ціни, коментарів, market status, історії, експерта чи media. PDF містить номер звіту для читання, характеристики, дату дослідження/видачі, QR, URL і код; DejaVu Sans bundled як runtime-asset для українського тексту. Landing приймає лише raw code зі сторінки звіту; пряме публічне посилання та посилання з QR відкривають паспорт напряму. `DR-…` не є публічним ключем. Reissue вимикає PDF зі старим URL, revoke/void закривають нове завантаження.
 - **Перевірки:** targeted API/PDF tests, `npm test`, targeted Playwright lookup/download, FastAPI import smoke, rendered PDF visual QA та `git diff --check` — успішно.
 - **Нові змінні середовища:** немає. URL для PDF бере поточний browser origin, тому після deploy QR/PDF міститимуть фактичний public origin, а не локальний `localhost`.
-- **Обмеження:** PDF не є persisted або юридично незмінним snapshot; відкликання не може забрати вже переданий файл, але одразу робить його QR/URL нечинним. Набір публічних полів лишається явним allow-list і може бути переглянутий окремо; public media як і раніше винесено у 130.
+- **Обмеження:** PDF не є persisted або юридично незмінним snapshot; відкликання не може забрати вже переданий файл, але одразу робить його QR/URL нечинним. Набір публічних полів лишається явним allow-list; browser media реалізовано пізніше у 130, PDF і далі їх не містить.
 
 ## 2026-09-16 — public-passport-and-qr (завершено)
 
@@ -320,7 +347,7 @@
 - **Перевірки:** `python -m pytest` — 23 passed; `npm test` — 13 passed; targeted Playwright public passport — 1 passed; full mock E2E запущено для наявних flows. `git diff --check` — успішно. API regression перевіряє RBAC, allow-list, QR SVG, reissue, revoke і void. Після застосування міграції `npm run audit:api` — 10/10. Додаткові Playwright regression підтвердили: для report `review` admin бачить лише пояснення, без QR і дій публікації; експерт обирає text grades із server mappings, а збереження передає їхні numeric codes.
 - **Нові змінні середовища:** немає.
 - **MariaDB:** migration `0005_public_passports` застосовано до локальної MariaDB; `alembic current` — `0005_public_passports (head)`. Створено лише таблицю токенів `public_passports`, без дублювання або перерахунку даних звітів.
-- **Відкладено окремо:** public media не підтримується навіть для `MediaAsset.is_public`; consent, asset allow-list і окремий content endpoint зафіксовано у [130](./backlog/130-public-passport-media.md).
+- **Відкладено окремо:** на момент 090 public media не підтримувалося навіть для `MediaAsset.is_public`; це реалізовано пізніше у 130 з consent/admin-flow, asset allow-list і окремим content endpoint.
 - **Реалізовано наступним кроком:** передача паспорта замовнику — видимий код, lookup за URL/кодом і server-generated allow-listed PDF — описана в актуальному записі вище.
 
 ## 2026-09-16 — legacy-api-retirement (завершено)

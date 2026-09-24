@@ -7,6 +7,7 @@ import {
   getReportEvents,
   getReportMedia,
   getReportMediaContentUrl,
+  updateReportMediaPublication,
   getReportValuations,
   getReportPassport,
   getReportPassportPdf,
@@ -22,6 +23,10 @@ import { registerVisibleDataRefresh } from "./page-refresh.js";
 import { createDraftWorkSessionTracker } from "./report-work-session.js";
 
 const STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
+const MEDIA_TYPE_LABELS = {
+  stone_photo: "Фото каменю",
+  plotting_diagram: "Схема огранювання (plotting)",
+};
 const EVENT_LABELS = {
   created: "Створено",
   report_updated: "Дані чернетки оновлено",
@@ -29,6 +34,8 @@ const EVENT_LABELS = {
   passport_published: "Публічний паспорт опубліковано",
   passport_reissued: "Публічний паспорт перевипущено",
   passport_revoked: "Публічний паспорт відкликано",
+  media_published: "Вкладення опубліковано в паспорті",
+  media_unpublished: "Вкладення прибрано з паспорта",
   system_market_reference_added: "Системний довідковий орієнтир додано",
   market_reference_added: "Довідковий орієнтир підтверджено адміністратором",
   legacy_import: "Імпортовано з попередньої бази",
@@ -166,13 +173,16 @@ function renderEvents(container, events) {
     const transition = event.from_status || event.to_status
       ? ` · ${STATUS_LABELS[event.from_status] || event.from_status || "—"} → ${STATUS_LABELS[event.to_status] || event.to_status || "—"}`
       : "";
-    details.textContent = `${formatDate(event.created_at)}${transition}${event.reason ? ` · ${event.reason}` : ""}`;
+    const reason = ["media_published", "media_unpublished"].includes(event.action) && event.reason
+      ? event.reason.replace(/^(stone_photo|plotting_diagram)(?= · |$)/, (assetType) => MEDIA_TYPE_LABELS[assetType])
+      : event.reason;
+    details.textContent = `${formatDate(event.created_at)}${transition}${reason ? ` · ${reason}` : ""}`;
     item.append(title, details);
     container.append(item);
   }
 }
 
-function renderMedia(container, reportId, assets, token) {
+function renderMedia(container, report, assets, currentUser, token, onRequestPublication) {
   container.replaceChildren();
   if (!assets.length) {
     const item = document.createElement("li");
@@ -183,7 +193,7 @@ function renderMedia(container, reportId, assets, token) {
   for (const asset of assets) {
     const item = document.createElement("li");
     const link = document.createElement("a");
-    link.href = getReportMediaContentUrl(reportId, asset.media_id);
+    link.href = getReportMediaContentUrl(report.report_id, asset.media_id);
     link.textContent = asset.original_filename;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
@@ -194,7 +204,21 @@ function renderMedia(container, reportId, assets, token) {
         .then((response) => response.ok ? response.blob() : Promise.reject())
         .then((blob) => window.open(URL.createObjectURL(blob), "_blank", "noopener"));
     });
-    item.append(link, document.createTextNode(` · ${asset.asset_type}`));
+    item.append(link, document.createTextNode(` · ${MEDIA_TYPE_LABELS[asset.asset_type] || "Вкладення"}`));
+    const canManagePublication = currentUser.role === "admin"
+      && report.status === "issued"
+      && ["stone_photo", "plotting_diagram"].includes(asset.asset_type)
+      && ["image/jpeg", "image/png", "image/webp"].includes(asset.mime_type);
+    if (canManagePublication) {
+      const publication = document.createElement("button");
+      publication.type = "button";
+      publication.className = "btn btn-outline btn--compact";
+      publication.textContent = asset.is_public ? "Прибрати з паспорта" : "Опублікувати в паспорті";
+      publication.addEventListener("click", () => onRequestPublication(asset, !asset.is_public, publication));
+      item.append(document.createTextNode(" "), publication);
+    } else if (asset.is_public) {
+      item.append(document.createTextNode(" · Опубліковано в паспорті"));
+    }
     container.append(item);
   }
 }
@@ -308,12 +332,37 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
   if (!section || currentUser.role !== "admin") return;
   section.hidden = false;
   [code, link, qr, publish, copyLink, copyCode, pdf, reissue, revoke].forEach((element) => { element.hidden = true; });
+  publish.disabled = false;
+  publish.textContent = "Опублікувати паспорт";
   if (report.status !== "issued") {
     state.textContent = "Публікація стане доступною після видачі звіту admin.";
     return;
   }
+  publish.onclick = async () => {
+    if (publish.dataset.submitting === "true") return;
+    publish.dataset.submitting = "true";
+    publish.disabled = true;
+    publish.textContent = "Публікація…";
+    try {
+      onStatus("Публікація паспорта…");
+      await publishReportPassport(report.report_id, token);
+      await renderPassportControls({ report, currentUser, token, onStatus });
+      onStatus("Паспорт опубліковано.");
+    } catch (error) {
+      onStatus(error.message || "Не вдалося опублікувати паспорт.", true);
+      publish.disabled = false;
+      publish.textContent = "Опублікувати паспорт";
+    } finally {
+      delete publish.dataset.submitting;
+    }
+  };
   try {
-    const passport = await getReportPassport(report.report_id, token);
+    const { passport } = await getReportPassport(report.report_id, token);
+    if (!passport) {
+      state.textContent = "Паспорт ще не опубліковано.";
+      publish.hidden = false;
+      return;
+    }
     const url = passportUrl(passport.public_id);
     state.textContent = "Паспорт опубліковано. Його можна перевірити за посиланням, QR або кодом; перевипуск одразу відкликає попередні дані доступу.";
     code.querySelector("code").textContent = passport.public_id;
@@ -347,22 +396,10 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
         onStatus("PDF-паспорт завантажено.");
       } catch (error) { onStatus(error.message || "Не вдалося сформувати PDF-паспорт.", true); }
     };
-  } catch (error) {
-    if (!(error instanceof ApiRequestError) || error.status !== 404) {
-      state.textContent = "Не вдалося завантажити стан публікації.";
-      return;
-    }
-    state.textContent = "Паспорт ще не опубліковано.";
-    publish.hidden = false;
+  } catch {
+    state.textContent = "Не вдалося завантажити стан публікації.";
+    return;
   }
-  publish.onclick = async () => {
-    try {
-      onStatus("Публікація паспорта…");
-      await publishReportPassport(report.report_id, token);
-      await renderPassportControls({ report, currentUser, token, onStatus });
-      onStatus("Паспорт опубліковано.");
-    } catch (error) { onStatus(error.message || "Не вдалося опублікувати паспорт.", true); }
-  };
   reissue.onclick = async () => {
     if (!window.confirm("Перевипустити паспорт? Попередній код, посилання й QR перестануть працювати.")) return;
     try {
@@ -419,6 +456,11 @@ export async function initReportDetail() {
   const reportId = reportIdFromUrl();
   const form = document.getElementById("report-detail-form");
   const status = document.getElementById("report-detail-status");
+  const mediaPublicationDialog = document.getElementById("media-publication-dialog");
+  const mediaPublicationForm = document.getElementById("media-publication-form");
+  const mediaPublicationDescription = document.getElementById("media-publication-description");
+  const mediaPublicationStatus = document.getElementById("media-publication-status");
+  const mediaPublicationSubmit = document.getElementById("media-publication-submit");
   if (!token || !reportId || !form) {
     setStatus(status, "Не вказано номер звіту.", true);
     return;
@@ -428,6 +470,24 @@ export async function initReportDetail() {
   let gradeLabels = new Map();
   let printStarted = false;
   let workSessionTracker;
+  let pendingMediaPublication;
+  let mediaPublicationTrigger;
+  const closeMediaPublicationDialog = () => {
+    pendingMediaPublication = undefined;
+    mediaPublicationStatus.hidden = true;
+    mediaPublicationStatus.textContent = "";
+    if (mediaPublicationDialog.open) mediaPublicationDialog.close();
+  };
+  const openMediaPublicationDialog = (asset, isPublic, trigger) => {
+    pendingMediaPublication = { asset, isPublic };
+    mediaPublicationTrigger = trigger;
+    mediaPublicationDescription.textContent = isPublic
+      ? "Зображення стане доступним у публічному паспорті лише за чинним посиланням або QR-кодом. Воно не потрапляє до PDF."
+      : "Зображення перестане відображатися у публічному паспорті. Приватне вкладення у звіті буде збережено.";
+    mediaPublicationSubmit.textContent = isPublic ? "Опублікувати в паспорті" : "Прибрати з паспорта";
+    mediaPublicationStatus.hidden = true;
+    mediaPublicationDialog.showModal();
+  };
   const refresh = async () => {
     try {
       const [freshReport, events, media] = await Promise.all([
@@ -449,7 +509,9 @@ export async function initReportDetail() {
         : gradeLabels.get(`cut:${report.expert_cut_grade}`) || String(report.expert_cut_grade);
       document.getElementById("detail-expert-summary").textContent = `Експертні grades: Proportions ${confirmedProportions}, підсумковий Cut ${confirmedCut}.`;
       renderEvents(document.getElementById("detail-events"), events);
-      renderMedia(document.getElementById("detail-media"), reportId, media, token);
+      renderMedia(
+        document.getElementById("detail-media"), report, media, currentUser, token, openMediaPublicationDialog,
+      );
       try {
         const valuations = await getReportValuations(reportId, token);
         renderValuations(document.getElementById("detail-valuations"), document.getElementById("detail-valuations-help"), valuations);
@@ -490,6 +552,35 @@ export async function initReportDetail() {
     populateReferenceSelect(form.querySelector("#detail-culet"), references, "culet_size");
   } catch { logout("/login.html"); return; }
   workSessionTracker = createDraftWorkSessionTracker({ reportId, token, form });
+  document.getElementById("media-publication-dialog-close").addEventListener("click", closeMediaPublicationDialog);
+  document.getElementById("media-publication-cancel").addEventListener("click", closeMediaPublicationDialog);
+  mediaPublicationDialog.addEventListener("close", () => {
+    pendingMediaPublication = undefined;
+    mediaPublicationStatus.hidden = true;
+    mediaPublicationStatus.textContent = "";
+    if (document.activeElement === document.body) mediaPublicationTrigger?.focus();
+    mediaPublicationTrigger = undefined;
+  });
+  mediaPublicationForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!pendingMediaPublication) return;
+    mediaPublicationSubmit.disabled = true;
+    try {
+      await updateReportMediaPublication(
+        report.report_id, pendingMediaPublication.asset.media_id, pendingMediaPublication.isPublic, token,
+      );
+      const message = pendingMediaPublication.isPublic
+        ? "Вкладення опубліковано в паспорті."
+        : "Вкладення прибрано з паспорта.";
+      closeMediaPublicationDialog();
+      setStatus(status, message);
+      await refresh();
+    } catch (error) {
+      setStatus(mediaPublicationStatus, error.message || "Не вдалося змінити видимість вкладення.", true);
+    } finally {
+      mediaPublicationSubmit.disabled = false;
+    }
+  });
   form.querySelector("#detail-edit").addEventListener("click", () => {
     setEditable(form, true);
     workSessionTracker.setEnabled(currentUser.role === "gemologist" && currentUser.expert_id === report.expert_id);

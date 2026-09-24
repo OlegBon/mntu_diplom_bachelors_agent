@@ -179,3 +179,13 @@ block content
                     h2 Історія змін
                     ol#detail-events.report-detail__timeline
                         li Завантаження…
+        dialog#media-publication-dialog.account-dialog(aria-labelledby="media-publication-dialog-title")
+            form#media-publication-form
+                .account-dialog__header
+                    h2#media-publication-dialog-title Підтвердити публікацію вкладення
+                    button#media-publication-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
+                p#media-publication-description.account-help
+                p#media-publication-status.form-status(role="status" aria-live="polite" hidden)
+                .account-dialog__actions
+                    button#media-publication-cancel.btn.btn-outline(type="button") Скасувати
+                    button#media-publication-submit.btn.btn-primary(type="submit") Підтвердити

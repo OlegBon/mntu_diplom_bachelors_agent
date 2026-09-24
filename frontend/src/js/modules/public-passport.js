@@ -1,4 +1,7 @@
-import { ApiRequestError, getGradeMappings, getPublicPassport } from "./api.js";
+import {
+  ApiRequestError, getGradeMappings, getPublicPassport, getPublicPassportMedia,
+  getPublicPassportMediaContentUrl,
+} from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const ORIGIN_LABELS = {
@@ -61,6 +64,24 @@ function renderPassport(passport, labels) {
   setText("passport-identification", IDENTIFICATION_LABELS[passport.identification_status] || passport.identification_status);
 }
 
+function renderPublicMedia(publicId, assets) {
+  const section = document.getElementById("passport-media");
+  const gallery = document.getElementById("passport-media-gallery");
+  gallery.replaceChildren();
+  section.hidden = assets.length === 0;
+  for (const asset of assets) {
+    const figure = document.createElement("figure");
+    const image = document.createElement("img");
+    image.src = getPublicPassportMediaContentUrl(publicId, asset.media_id);
+    image.alt = asset.asset_type === "stone_photo" ? "Фото каменю" : "Діаграма огранювання";
+    image.loading = "lazy";
+    const caption = document.createElement("figcaption");
+    caption.textContent = asset.asset_type === "stone_photo" ? "Фото каменю" : "Діаграма огранювання";
+    figure.append(image, caption);
+    gallery.append(figure);
+  }
+}
+
 export async function initPublicPassport() {
   const root = document.querySelector("[data-public-passport]");
   if (!root) return;
@@ -73,9 +94,12 @@ export async function initPublicPassport() {
   }
   const load = async () => {
     try {
-    const [passport, mappings] = await Promise.all([getPublicPassport(publicId), getGradeMappings()]);
+    const [passport, mappings, media] = await Promise.all([
+      getPublicPassport(publicId), getGradeMappings(), getPublicPassportMedia(publicId),
+    ]);
     const labels = new Map(mappings.map((item) => [`${item.category}:${item.grade_value}`, item.grade_label]));
     renderPassport(passport, labels);
+    renderPublicMedia(publicId, media);
     document.getElementById("public-passport-title").textContent = `Паспорт ${passport.report_id}`;
     document.getElementById("public-passport-subtitle").textContent = "Публічна проєкція виданого звіту.";
     card.hidden = false;
