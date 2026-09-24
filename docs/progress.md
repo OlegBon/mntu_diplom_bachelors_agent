@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — openfacet-descriptive-analytics-boundary
+
+- **Задача:** зафіксувати межу між допустимою internal descriptive OpenFacet-аналітикою та verified ML/public distribution.
+- **Змінені файли:** `docs/decisions/005-analytics-and-verified-ml-strategy.md`, `docs/backlog/{151-analytics-data-contract-and-quality,153-stone-analytics-visualization}.md`, `docs/guides/market-data-providers.md`, `docs/progress.md`.
+- **Рішення / Результат:** чинні OpenFacet Terms (перевірено 2026-09-24) допускають public information для research та ordinary internal business use, тому versioned snapshots можуть бути окремою admin-only descriptive SOM population за атрибуцією, timestamp і scope. Це не є правом на training/labels/verified ML, public/customer display, raw-data redistribution, investment claim або використання IDEX. Кожен новий retention/use policy повторно звіряє Terms і provider provenance.
+- **Перевірки:** переглянуто офіційні OpenFacet API, Methodology та Terms; документаційні посилання буде перевірено перед commit. Код, схема, snapshots і зовнішні запити не змінювалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це product/data-policy boundary, не юридичний висновок і не license agreement. Реальний SOM, retention policy і verified ML ще не реалізовані.
+
 ## 2026-09-24 — demo-analytics-eligibility-gate
 
 - **Задача:** зафіксувати, як сервер відрізняє дозволений synthetic dataset для demo-аналітики від довільних demo або operational звітів.
