@@ -81,15 +81,18 @@ Dashboard operational scope лишає заголовок **«Ціна (USD)»**
 
 ### 4. Поточні 1 000 seed records
 
-Перед реалізацією 156 складає read-only inventory і backup/rollback plan.
-Якщо всі `DR-00001…DR-01000` підтверджено synthetic project seed, migration
-лише класифікує їх як `demo` і прив'язує до manifest без зміни фізичних
+`data/diamonds_dataset.csv` і `DR-00001…DR-01000` підтверджені як synthetic
+project seed, який неодноразово регенерувався під час розвитку локальної схеми.
+Перед реалізацією 156 складається read-only inventory і backup/rollback plan,
+після чого migration класифікує цей діапазон як `demo` і прив'язує до manifest
+без зміни фізичних
 характеристик, lifecycle, legacy fields, valuations, events або ID. Rename
 `DR-… → DEMO-…` не виконується для historical rows: він ламає FK, compatibility
 та посилання. Новий generated demo dataset використовує `DEMO-…`.
 
-Якщо inventory знайде хоча б один не-synthetic record у цій зоні, автоматичний
-backfill зупиняється: потрібний explicit allow-list/deny-list і окреме рішення.
+Inventory перевіряє range, count, referential integrity і можливі локальні
+ручні відхилення до backfill. Він не має очищувати або перекласифіковувати
+`DR-01001+`: це окремі operational records, які лишаються недоторканими.
 
 ## Наслідки
 

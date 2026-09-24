@@ -13,7 +13,8 @@
 - Не вводити глобальний user/environment toggle для змішування даних: demo
   доступний лише як явний admin-only route/mode і лише якщо існує manifest.
 - Провести read-only inventory `DR-00001…DR-01000`, backup/rollback plan і
-  лише за окремим дозволом — класифікаційний backfill підтвердженого seed.
+  лише за окремим дозволом — класифікаційний backfill підтвердженого synthetic
+  seed. `DR-01001+` не очищати й не включати до цього backfill.
 - Застосувати scope guard до list/search/detail/events/valuations/media/work
   sessions, dashboard actions, analytics, market attachment, pagination і
   прямого `report_id` access. Expert demo access — opaque `404`.
@@ -28,7 +29,9 @@
 
 - Нова Alembic revision; не запускати без окремого підтвердження.
 - Перед backfill: counts, ID range, referential integrity, backup і dry-run
-  report. Якщо dataset provenance не однозначний — нічого не оновлювати.
+  report. Походження `DR-00001…DR-01000` already confirmed synthetic; inventory
+  зупиняє операцію лише при неочікуваних локальних відхиленнях або порушенні
+  цілісності.
 - Rollback класифікації має повертати лише `record_scope`/dataset link; ніколи
   не перейменовує historical report ID і не переписує lifecycle/price.
 

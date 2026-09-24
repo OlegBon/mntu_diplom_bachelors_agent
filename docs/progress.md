@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — demo-seed-classification-confirmed
+
+- **Задача:** уточнити походження historical `DR-00001…DR-01000` та межу з поточними локальними звітами.
+- **Змінені файли:** `docs/decisions/006-demo-dataset-isolation.md`, `docs/backlog/156-demo-dataset-contract-and-isolation.md`, `docs/progress.md`.
+- **Рішення / Результат:** `data/diamonds_dataset.csv` і діапазон `DR-00001…DR-01000` підтверджено як неодноразово регенерований synthetic project seed; 156 планує його класифікаційний backfill після inventory/backup і окремого дозволу. Ручне або автоматичне очищення `DR-01001+` не планується: це operational локальні записи, які лишаються без змін.
+- **Перевірки:** read-only historical review у `main` і ADR-005 підтверджує synthetic technical-seed boundary; schema, data та Git IDs не змінювалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** фактичний inventory, migration, backfill і generator усе ще не реалізовані й вимагатимуть окремого підтвердження.
+
 ## 2026-09-24 — demo-dataset-contract-planning
 
 - **Задача:** провести передреалізаційний аудит і декомпозицію admin-only synthetic demo data, щоб не змішати її з operational reports, public delivery, market providers або verified ML.
