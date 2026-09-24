@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — roadmap-next-stages
+
+- **Задача:** зафіксувати погоджений шлях після local MVP: аудит, IDEX, i18n, verified ML, platform decision і PostgreSQL/staging.
+- **Змінені файли:** `docs/backlog/{README,133-local-mvp-release-audit,140-cloud-deployment-and-provider-scheduler,141-idex-online-trial-readiness-and-mockup,145-internationalization-contract,150-analytics-and-verified-ml-strategy,160-platform-and-stack-decision,161-postgresql-migration-and-staging}.md`, `docs/{work_plan,progress}.md`.
+- **Рішення / Результат:** local MVP спершу проходить 133 audit; findings отримують власні fix-задачі. IDEX trial відокремлено від реального API activation до staging: 30-day private natural-only low-volume trial, English mock-up, mandatory credit і logo лише після підтвердження IDEX. i18n визначено як English-first/uk presentation-only contract зі збереженням форми й URL state. Analytics/ML рухається від data contract до validated model, а не навпаки. Platform ADR підтверджує поточний FastAPI + Gulp/Pug/JS як baseline, без PHP rewrite; Vite/TypeScript оцінюються за критеріями, не за модою. PostgreSQL/staging і 140 scheduler залежать від 160.
+- **Перевірки:** перевірено зв'язки та послідовність у `docs/backlog/README.md`, `docs/work_plan.md` і backlog-файлах; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це лише планування; provider key, cloud account, staging, PostgreSQL, i18n і ML не реалізовувалися.
+
 ## 2026-09-24 — public-information-pages
 
 - **Задача:** завершити 132 — наповнити два placeholder-посилання footer змістовними публічними сторінками.

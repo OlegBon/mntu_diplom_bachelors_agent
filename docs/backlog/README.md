@@ -27,4 +27,10 @@
 
 | Файл | Тема |
 | --- | --- |
+| [133-local-mvp-release-audit.md](./133-local-mvp-release-audit.md) | Ретельний release-аудит коду, документації, тестів і local runtime. |
 | [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |
+| [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
+| [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
+| [150-analytics-and-verified-ml-strategy.md](./150-analytics-and-verified-ml-strategy.md) | Data contract, verified ML and future stone analytics. |
+| [160-platform-and-stack-decision.md](./160-platform-and-stack-decision.md) | Cloud platform ADR, current stack and TypeScript/Vite criteria. |
+| [161-postgresql-migration-and-staging.md](./161-postgresql-migration-and-staging.md) | PostgreSQL, staging, deployment and scheduler integration. |

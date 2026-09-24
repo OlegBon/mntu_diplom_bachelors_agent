@@ -13,6 +13,8 @@
   і не виконує зайвий fetch.
 - Локальний Windows Task Scheduler навмисно не налаштовується: він залежить від
   увімкненого ПК та не є production-contour.
+- Спершу має бути виконано platform decision у [160](./160-platform-and-stack-decision.md)
+  та створено staging за [161](./161-postgresql-migration-and-staging.md).
 
 ## Scope
 
