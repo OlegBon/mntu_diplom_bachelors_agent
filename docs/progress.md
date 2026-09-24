@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — sqlalchemy-pydantic-deprecation-cleanup
+
+- **Задача:** завершити 136 та зафіксувати наступну 137 — прибрати runtime deprecation warnings SQLAlchemy 2/Pydantic 2 без зміни контрактів і додати GitHub Actions CI до плану до переходу на `main`.
+- **Змінені файли:** `backend/{database,schemas}.py`, `tests/unit/test_pydantic_v2_compatibility.py`, `docs/{backlog/{README,136-sqlalchemy-pydantic-deprecation-cleanup (видалено),137-github-actions-continuous-integration}.md,progress,work_plan}.md`.
+- **Рішення / Результат:** `declarative_base` імпортується з `sqlalchemy.orm`; три legacy response schemas перейшли з nested `Config` на Pydantic 2 `ConfigDict(from_attributes=True)`. Інвентаризація не знайшла `.dict()` у runtime-коді, тому serialization не переписувався. Новий тест доводить ORM→Pydantic `model_validate`/`model_dump` для експерта, grade mapping і legacy market price. 137 планує CI як окремий етап до protected `main`: backend, ephemeral MariaDB/Alembic, frontend, mock/real E2E та docs checks без deploy/secrets.
+- **Перевірки:** `pytest -q tests/unit/test_pydantic_v2_compatibility.py` — 1 passed без deprecation warnings; `pytest -q tests/api/test_auth_and_experts.py tests/api/test_profile_and_admin.py` — 9 passed; public passport media — 2 passed, PDF — 3 passed; `python -c "from backend.main import app; print(app.title)"` — успішно. Пошук `declarative_base|class Config|.dict(` не виявив застарілих runtime-викликів.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** не змінювалися dependency versions, migrations, БД-схема, request/response JSON або frontend. Sass/Browserslist warnings лишаються окремим tooling debt до рішення 160; CI workflow ще не реалізований — це scope 137.
+
 ## 2026-09-24 — real-browser-e2e-and-passport-contract
 
 - **Задача:** завершити 135 — синхронізувати Playwright mock private passport із чинним API та додати реальний безпечний browser workflow без доступу до локальної MariaDB.

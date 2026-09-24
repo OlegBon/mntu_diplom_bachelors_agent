@@ -45,7 +45,7 @@
 - [x] Додати API/integration-тести auth, RBAC, створення/видалення звітів, 404/422 та ізольовану SQLite БД.
 - [x] Додати frontend JS-модульні тести, jsdom DOM smoke та базовий Playwright browser smoke login-сторінки.
 - [x] Розширити browser E2E: реальний login → dashboard → створення → detail/edit → review → issued → passport/PDF виконується у disposable SQLite runtime з окремими test accounts і storage; mock contract приватного паспорта синхронізований із wrapper-відповіддю API.
-- [ ] Окремо усунути попередження SQLAlchemy 2 (`declarative_base`) і Pydantic 2 (`class Config`, `.dict()`), підтвердивши сумісність API-тестами — [136](./backlog/136-sqlalchemy-pydantic-deprecation-cleanup.md).
+- [x] Усунути підтверджені warnings SQLAlchemy 2/Pydantic 2: modern `declarative_base` і `ConfigDict(from_attributes=True)` не змінюють API serialization; `.dict()` у коді не використовується.
 
 ### Пріоритет 3 — завершення локального MVP
 
@@ -84,7 +84,7 @@
 - [x] [133 — Release-аудит local MVP](./reviews/2026-09-24-local-mvp-release-audit.md): критичних знахідок немає; schema convergence завершено у 134, deterministic passport contract та isolated real browser E2E — у 135.
 - [x] 134 — Збіжність Alembic, ORM і MariaDB: read-only інвентаризація підтвердила canonical MariaDB індекси на `0013`; ORM metadata скориговано без DDL/new revision, `alembic check` green і regression test фіксує імена ключів.
 - [x] 135 — Реальний browser E2E і контракт паспорта: stale mock синхронізовано з `{ passport: ... }`; disposable SQLite runtime виконує реальний workflow без MariaDB, user records або `seed_db.py`.
-- [ ] [136 — SQLAlchemy/Pydantic deprecation cleanup](./backlog/136-sqlalchemy-pydantic-deprecation-cleanup.md): прибрати підтверджені warnings без зміни API чи schema.
+- [x] 136 — SQLAlchemy/Pydantic deprecation cleanup: modern API без зміни schema, request/response JSON або доменної логіки; ORM→Pydantic v2 serialization має окремий regression test.
 - [ ] [137 — GitHub Actions CI](./backlog/137-github-actions-continuous-integration.md): до переходу на `main` відтворити backend, ephemeral MariaDB/Alembic, frontend, mock/real E2E та docs checks у GitHub без deploy або secrets.
 - [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial.
 - [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після рішення 160.
