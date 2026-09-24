@@ -11,7 +11,10 @@
   орієнтовно 100/month.
 - Лише internal development/test records: без trading, inventory search,
   redistribution або customer-facing distribution.
-- Trial стартує лише після повідомлення IDEX із запропонованою датою.
+- Sanitised mock-up можна підготувати локально; trial стартує лише після
+  завершення local verified ML за [150](./150-analytics-and-verified-ml-strategy.md),
+  готового staging за [161](./161-postgresql-migration-and-staging.md) та
+  повідомлення IDEX із запропонованою датою.
 - IDEX Online має бути явно названий джерелом; natural-only wording і межа
   «not an appraisal, transaction price or offer» потрібні завжди.
 

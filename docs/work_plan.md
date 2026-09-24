@@ -97,10 +97,10 @@
 - [ ] Відокремити конфігурацію БД від MariaDB-специфічного коду, зберігши локальну MariaDB.
 - [ ] Після локального MVP реалізувати перевірений ML-контур: датасет, versioned model artifact, валідація метрик, відтворюваний прогноз і окремі аналітичні результати.
 - [ ] [150 — Analytics і verified ML strategy](./backlog/150-analytics-and-verified-ml-strategy.md): спершу dataset/data-quality/target і baseline, потім model artifact/validation, а stone/SOM UI лише після валідних результатів.
-- [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
-- [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): migration, integrity/dry-run/rollback, staging runtime й інтеграція 140 scheduler-а після рішення 160.
+- [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локально верифікованого ML підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
+- [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 150 і рішення 160 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.
-- [ ] [140 — Хмарне розгортання та scheduler ринкових даних](./backlog/140-cloud-deployment-and-provider-scheduler.md): обрати staging/cloud runtime, налаштувати deployment, secrets, managed scheduler кожні 5 хвилин для provider CLI, logs/alerts і runbook; локальний Windows Task Scheduler не є ціллю.
+- [ ] [140 — Хмарне розгортання та scheduler ринкових даних](./backlog/140-cloud-deployment-and-provider-scheduler.md): після 150 → 160 → 161 обрати staging/cloud runtime, налаштувати deployment, secrets, managed scheduler кожні 5 хвилин для provider CLI, logs/alerts і runbook; локальний Windows Task Scheduler не є ціллю.
 - [ ] Налаштувати CORS, env secrets, health-check, домени/TLS та ручний smoke-test до публічного запуску.
 
 ### Зафіксовані розбіжності з початковими нотатками

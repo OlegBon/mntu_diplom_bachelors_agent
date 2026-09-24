@@ -3,7 +3,8 @@
 ## Мета
 
 Перенести підтверджений local контур MariaDB до перевіреного PostgreSQL staging
-після рішення 160, без втрати даних або зміни domain behavior.
+після локального verified ML за [150](./150-analytics-and-verified-ml-strategy.md)
+та platform decision 160, без втрати даних або зміни domain behavior.
 
 ## Scope
 
