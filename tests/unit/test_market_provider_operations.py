@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+from backend import crud, models
 from backend.market_operations import freshness_status
 
 
@@ -30,3 +31,27 @@ def test_market_provider_operations_migration_is_future_only() -> None:
     assert "market_provider_operations" in source
     assert "UPDATE" not in source
     assert "stone_valuations" not in source
+
+
+def test_latest_nbu_retrieval_reads_the_first_ordered_snapshot_not_scalar() -> None:
+    latest = type("FxSnapshot", (), {"retrieved_at": datetime(2026, 9, 24, 9, tzinfo=timezone.utc)})()
+
+    class FakeQuery:
+        def filter(self, *_args):
+            return self
+
+        def order_by(self, *_args):
+            return self
+
+        def first(self):
+            return latest
+
+        def scalar(self):
+            raise AssertionError("scalar() must not be used when several snapshots can exist")
+
+    class FakeSession:
+        def query(self, model):
+            assert model is models.FxDataSnapshot
+            return FakeQuery()
+
+    assert crud.latest_provider_retrieved_at(FakeSession(), "nbu") == latest.retrieved_at

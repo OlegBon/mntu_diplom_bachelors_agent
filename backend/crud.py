@@ -1213,21 +1213,23 @@ def latest_provider_retrieved_at(
     db: Session, provider_code: str,
 ) -> datetime | None:
     if provider_code == "nbu":
-        return (
-            db.query(models.FxDataSnapshot.retrieved_at)
+        snapshot = (
+            db.query(models.FxDataSnapshot)
             .filter(models.FxDataSnapshot.provider_code == provider_code)
             .order_by(models.FxDataSnapshot.retrieved_at.desc(), models.FxDataSnapshot.fx_snapshot_id.desc())
-            .scalar()
+            .first()
         )
-    return (
-        db.query(models.MarketDataSnapshot.retrieved_at)
+        return snapshot.retrieved_at if snapshot else None
+    snapshot = (
+        db.query(models.MarketDataSnapshot)
         .filter(
             models.MarketDataSnapshot.provider_code == provider_code,
             models.MarketDataSnapshot.status == "approved",
         )
         .order_by(models.MarketDataSnapshot.approved_at.desc(), models.MarketDataSnapshot.snapshot_id.desc())
-        .scalar()
+        .first()
     )
+    return snapshot.retrieved_at if snapshot else None
 
 
 def get_latest_fresh_fx_snapshot(
