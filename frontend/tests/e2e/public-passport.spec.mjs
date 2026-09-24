@@ -5,6 +5,7 @@ test("guest reads only the safe public passport projection", async ({ page }) =>
     public_id: "public-id",
     report_id: "DR-01001",
     issued_at: "2026-09-16T09:00:00Z",
+    public_updated_at: "2026-09-24T12:30:00Z",
     examination_date: "2026-09-15",
     shape: "Round",
     carat_weight: "1.00",
@@ -39,6 +40,7 @@ test("guest reads only the safe public passport projection", async ({ page }) =>
   await expect(page.locator("#public-passport-title")).toHaveText("Паспорт DR-01001");
   await expect(page.locator("#passport-color")).toHaveText("D");
   await expect(page.locator("#passport-expert-cut")).toHaveText("Excellent");
+  await expect(page.locator("#passport-public-updated-at")).toContainText("2026");
   await expect(page.locator("#passport-media")).toBeVisible();
   await expect(page.locator("#public-passport-card")).toContainText("Природний");
   await expect(page.locator("#public-passport-card")).not.toContainText("Initial observation");

@@ -613,6 +613,24 @@ def get_public_media_asset(db: Session, report_id: str, media_id: int) -> models
     )
 
 
+def get_public_projection_updated_at(
+    db: Session,
+    passport: models.PublicPassport,
+) -> datetime:
+    """Return the latest public-projection change without exposing its audit data."""
+    media_event_at = (
+        db.query(models.ReportEvent.created_at)
+        .filter(
+            models.ReportEvent.report_id == passport.report_id,
+            models.ReportEvent.action.in_(("media_published", "media_unpublished")),
+        )
+        .order_by(models.ReportEvent.created_at.desc(), models.ReportEvent.event_id.desc())
+        .limit(1)
+        .scalar()
+    )
+    return max(value for value in (passport.created_at, media_event_at) if value is not None)
+
+
 def set_media_asset_publication(
     db: Session,
     *,

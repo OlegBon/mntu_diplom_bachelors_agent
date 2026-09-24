@@ -27,5 +27,4 @@
 
 | Файл | Тема |
 | --- | --- |
-| [131-public-passport-pdf-media.md](./131-public-passport-pdf-media.md) | Allow-listed зображення у PDF публічного паспорта. |
 | [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |

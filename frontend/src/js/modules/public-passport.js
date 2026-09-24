@@ -40,6 +40,10 @@ function formatDate(value) {
   return new Intl.DateTimeFormat("uk-UA", { dateStyle: "long" }).format(new Date(value));
 }
 
+function formatDateTime(value) {
+  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "long", timeStyle: "short" }).format(new Date(value));
+}
+
 function labelFor(labels, category, value) {
   return labels.get(`${category}:${value}`) || String(value ?? "—");
 }
@@ -47,6 +51,7 @@ function labelFor(labels, category, value) {
 function renderPassport(passport, labels) {
   setText("passport-report-id", passport.report_id);
   setText("passport-issued-at", formatDate(passport.issued_at));
+  setText("passport-public-updated-at", formatDateTime(passport.public_updated_at));
   setText("passport-shape", passport.shape);
   setText("passport-carat", `${passport.carat_weight} ct`);
   setText("passport-color", labelFor(labels, "color", passport.color_grade));

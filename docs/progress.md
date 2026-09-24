@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — public-passport-pdf-media
+
+- **Задача:** завершити 131 — додати явно опубліковані медіа до on-demand PDF публічного паспорта та зробити відмінність між живою проєкцією і вже завантаженим PDF прозорою.
+- **Змінені файли:** `backend/{crud,main,passport_pdf,schemas}.py`, `frontend/src/{pug/pages/passport.pug,js/modules/public-passport.js}`, `tests/api/test_public_passport_pdf.py`, `frontend/tests/e2e/public-passport.spec.mjs`, `docs/{architecture,db-schema,work_plan,progress}.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/backlog/{README.md,131-public-passport-pdf-media.md (видалено)}`.
+- **Рішення / Результат:** PDF бере тільки поточний allow-listed `stone_photo` та `plotting_diagram` активного `issued` паспорта. Перед читанням файлу сервер повторює MIME/allow-list, наявність і SHA-256-перевірку; private, відкликані, `void` або пошкоджені дані не потрапляють до PDF. Фото й схема мають читабельні підписи, стабільний порядок і окремі пропорційно масштабовані A4-сторінки. Browser-паспорт показує «Публічний паспорт оновлено», PDF — час формування. Зняте з публікації медіа одразу зникає з live-паспорта й наступних PDF, але не може бути видалене з раніше завантаженого файлу; QR/URL лишається перевіркою актуального стану.
+- **Перевірки:** `python -m pytest tests/api/test_public_passport_pdf.py tests/api/test_public_passport_media.py -q` — 5 passed; `python -m compileall -q backend` — успішно; `cmd /c "cd frontend && npm test"` — 21 passed; targeted Playwright `public-passport.spec.mjs` — 1 passed.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** PDF не зберігається як versioned/signed snapshot і не може відкликати вже передані копії; інші типи вкладень лишаються private. Публічні ринкові суми, коментарі та metadata як і раніше не входять до PDF.
+
 ## 2026-09-24 — home-authenticated-login-cta
 
 - **Задача:** прибрати неактуальне посилання входу з hero-блоку головної сторінки для вже автентифікованого користувача.

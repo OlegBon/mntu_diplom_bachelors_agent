@@ -16,7 +16,7 @@ from . import crud, database, media_storage, models, schemas, security
 from .fx import FxProviderError, fetch_nbu_usd_uah
 from .market_operations import freshness_status, run_provider_operation
 from .market_providers import get_market_provider
-from .passport_pdf import build_public_passport_pdf
+from .passport_pdf import PublicPassportPdfMedia, build_public_passport_pdf
 
 app = FastAPI(title="Diamond ID System API")
 
@@ -220,6 +220,7 @@ def ensure_active_admin_remains(
 
 
 def to_public_passport_view(
+    db: Session,
     passport: models.PublicPassport,
     report: models.DiamondReport,
     stone: models.Stone,
@@ -229,6 +230,7 @@ def to_public_passport_view(
         public_id=passport.public_id,
         report_id=report.report_id,
         issued_at=report.issued_at,
+        public_updated_at=crud.get_public_projection_updated_at(db, passport),
         examination_date=report.examination_date,
         shape=stone.shape,
         carat_weight=stone.carat_weight,
@@ -271,7 +273,7 @@ def read_public_passport(
     if result is None:
         raise HTTPException(status_code=404, detail="Passport not found")
     passport, report, stone = result
-    return to_public_passport_view(passport, report, stone)
+    return to_public_passport_view(db, passport, report, stone)
 
 
 def get_public_passport_report_or_404(db: Session, public_id: str) -> models.DiamondReport:
@@ -569,10 +571,16 @@ def download_report_passport_pdf(
         (mapping.category, mapping.grade_value): mapping.grade_label
         for mapping in crud.get_mappings(db)
     }
+    public_media: list[PublicPassportPdfMedia] = []
+    for asset in crud.get_public_media_assets(db, report.report_id):
+        path = media_storage.get_storage_path(asset.storage_key)
+        if path.is_file() and media_storage.has_expected_digest(path, asset.sha256):
+            public_media.append(PublicPassportPdfMedia(asset_type=asset.asset_type, content=path.read_bytes()))
     document = build_public_passport_pdf(
-        to_public_passport_view(public_passport, report, stone),
+        to_public_passport_view(db, public_passport, report, stone),
         public_url,
         grade_labels,
+        public_media,
     )
     return Response(
         content=document,
