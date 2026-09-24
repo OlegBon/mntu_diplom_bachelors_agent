@@ -15,6 +15,8 @@
   demo. Він не позначає реальний report, market segment, confidence або
   investment quality. Private reports після `DR-01000` не включаються без
   дозволеного data manifest із 151.
+- Окремий механізм synthetic SOM demo планується у 159; він не виконує
+  передумови цього завдання й не зменшує вимоги до real-world dataset.
 - Кожна карта показує population, period, dataset/model version, features,
   метод normalisation, seed, кількість об'єктів і застереження щодо меж.
 - Кластер має нейтральну назву/опис, який підтверджують агреговані ознаки.
