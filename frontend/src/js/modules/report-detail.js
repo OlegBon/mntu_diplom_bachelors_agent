@@ -23,6 +23,10 @@ import { registerVisibleDataRefresh } from "./page-refresh.js";
 import { createDraftWorkSessionTracker } from "./report-work-session.js";
 
 const STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
+const MEDIA_TYPE_LABELS = {
+  stone_photo: "Фото каменю",
+  plotting_diagram: "Схема огранювання (plotting)",
+};
 const EVENT_LABELS = {
   created: "Створено",
   report_updated: "Дані чернетки оновлено",
@@ -197,7 +201,7 @@ function renderMedia(container, report, assets, currentUser, token, onRequestPub
         .then((response) => response.ok ? response.blob() : Promise.reject())
         .then((blob) => window.open(URL.createObjectURL(blob), "_blank", "noopener"));
     });
-    item.append(link, document.createTextNode(` · ${asset.asset_type}`));
+    item.append(link, document.createTextNode(` · ${MEDIA_TYPE_LABELS[asset.asset_type] || "Вкладення"}`));
     const canManagePublication = currentUser.role === "admin"
       && report.status === "issued"
       && ["stone_photo", "plotting_diagram"].includes(asset.asset_type)
@@ -325,17 +329,29 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
   if (!section || currentUser.role !== "admin") return;
   section.hidden = false;
   [code, link, qr, publish, copyLink, copyCode, pdf, reissue, revoke].forEach((element) => { element.hidden = true; });
+  publish.disabled = false;
+  publish.textContent = "Опублікувати паспорт";
   if (report.status !== "issued") {
     state.textContent = "Публікація стане доступною після видачі звіту admin.";
     return;
   }
   publish.onclick = async () => {
+    if (publish.dataset.submitting === "true") return;
+    publish.dataset.submitting = "true";
+    publish.disabled = true;
+    publish.textContent = "Публікація…";
     try {
       onStatus("Публікація паспорта…");
       await publishReportPassport(report.report_id, token);
       await renderPassportControls({ report, currentUser, token, onStatus });
       onStatus("Паспорт опубліковано.");
-    } catch (error) { onStatus(error.message || "Не вдалося опублікувати паспорт.", true); }
+    } catch (error) {
+      onStatus(error.message || "Не вдалося опублікувати паспорт.", true);
+      publish.disabled = false;
+      publish.textContent = "Опублікувати паспорт";
+    } finally {
+      delete publish.dataset.submitting;
+    }
   };
   try {
     const { passport } = await getReportPassport(report.report_id, token);

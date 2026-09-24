@@ -173,6 +173,8 @@ test("admin confirms passport-media publication in a project dialog", async ({ p
   await expect(dialog).toHaveCSS("border-top-width", "1px");
   await expect(dialog).toHaveCSS("padding-top", "24px");
   await expect(dialog).toContainText("чинним посиланням або QR-кодом");
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect.poll(async () => (await dialog.boundingBox())?.height ?? 0).toBeLessThan(400);
   await dialog.getByRole("button", { name: "Опублікувати в паспорті" }).click();
   await expect.poll(() => publicationRequests).toEqual([{ is_public: true }]);
   await expect(dialog).not.toBeVisible();
