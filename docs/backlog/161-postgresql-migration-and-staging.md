@@ -7,7 +7,7 @@
 
 ## Scope
 
-- MariaDB/PostgreSQL schema compatibility, Alembic plan, test data migration,
+- MariaDB/PostgreSQL schema compatibility (після [134](./134-alembic-schema-convergence.md)), Alembic plan, test data migration,
   row counts, integrity checks, dry-run і rollback.
 - Docker/runtime config, production env/secrets, exact CORS, healthcheck,
   backups, TLS/domain і manual staging smoke test.

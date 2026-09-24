@@ -67,7 +67,7 @@ Proportions: після неї server гарантує наявність нес
   формулювання й переклади можуть бути окремим versioned catalog, якщо
   прив'язуються до нових report і мають reason/source/effective date.
 - **Ринкові дані:** ціни, FX і provenance не є частиною цього ruleset;
-  вони залишаються у [110](../backlog/110-authoritative-market-data-and-fx.md).
+  вони описані у [гайді market provider-ів](./market-data-providers.md).
 
 Поточний admin UI для довідників — read-only. Редагований versioned catalog
 не реалізований цією задачею, бо спочатку потрібен окремий контракт release,

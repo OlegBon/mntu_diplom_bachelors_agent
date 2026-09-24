@@ -18,7 +18,9 @@
 
 ## Scope
 
-- Обрати cloud/staging runtime, домен, TLS, секрети та MariaDB/PostgreSQL strategy.
+- Обрати cloud/staging runtime, домен, TLS, секрети та MariaDB/PostgreSQL strategy;
+  задати exact CORS origins і trusted public app origin, з якого сервер приймає
+  QR URL публічного паспорта.
 - Налаштувати managed cron/scheduled job кожні 5 хвилин з робочою папкою проєкту й
   командою `python scripts/run_market_provider_schedule.py`.
 - Перевірити timezone `Europe/Kyiv`, один активний scheduler, timeout, вихідний код,
