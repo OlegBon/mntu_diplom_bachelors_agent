@@ -17,6 +17,12 @@
   дозволеного data manifest із 151.
 - Окремий механізм synthetic SOM demo планується у 159; він не виконує
   передумови цього завдання й не зменшує вимоги до real-world dataset.
+- OpenFacet може бути окремою admin-only descriptive population за чинними
+  [Terms](https://openfacet.net/en/terms/): лише versioned snapshots у
+  підтримуваному natural GIA scope, з атрибуцією, timestamp і disclaimer.
+  Не змішувати його з internal reports або synthetic seed; не показувати raw
+  matrix/карту public, у passport/PDF, customer UI або як investment verdict.
+  Це не дозволяє verified ML, training labels чи IDEX data без окремої license.
 - Кожна карта показує population, period, dataset/model version, features,
   метод normalisation, seed, кількість об'єктів і застереження щодо меж.
 - Кластер має нейтральну назву/опис, який підтверджують агреговані ознаки.

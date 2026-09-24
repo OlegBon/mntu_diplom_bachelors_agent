@@ -19,7 +19,10 @@ Synthetic demo за 156–159 є окремим technical population і не з�
   ML/SOM використання. Відсутність такої картки означає exclude by default.
 - Зафіксувати письмову ліцензію, owner, дозволені training/derivative uses,
   retention і атрибуцію кожного джерела. OpenFacet та майбутній IDEX не є
-  training dataset, доки відповідний дозвіл прямо не отримано.
+  training dataset, доки відповідний дозвіл прямо не отримано. Виняток лише
+  для окремої descriptive internal OpenFacet-аналітики: Terms review,
+  `terms_url`/date, snapshot provenance, source scope, attribution і заборона
+  public/raw redistribution мають бути зафіксовані в dataset card.
 - Визначити окремі population: natural і lab-grown не змішуються без
   обґрунтованої моделі та даних. Оброблені/невідомі камені мають явне правило
   включення або виключення.

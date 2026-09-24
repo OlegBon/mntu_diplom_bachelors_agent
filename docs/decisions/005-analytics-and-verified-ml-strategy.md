@@ -40,9 +40,30 @@ quality report.
 market reference, actual sale price або listing/asking price. Вони не є
 взаємозамінними. Natural та lab-grown популяції не змішуються за замовчуванням.
 
-OpenFacet і потенційний IDEX використовуються тільки як runtime market
-reference providers. Їхні відповіді не потрапляють у training/labels/SOM,
-доки право на таке використання не погоджене письмово.
+OpenFacet і потенційний IDEX не є training data за замовчуванням. Їхні
+відповіді не потрапляють у supervised training/labels або verified ML, доки
+право на training і derivative outputs не погоджене письмово.
+
+Водночас чинні [OpenFacet Terms of Use](https://openfacet.net/en/terms/)
+(перевірено 2026-09-24; Terms last updated 2026-08-09) дозволяють public
+information для educational, research та ordinary internal business purposes
+і коректне citation. Тому окремий admin-only descriptive SOM/market-analysis
+може використовувати versioned OpenFacet snapshots за такими межами:
+
+- only natural GIA-certified scope, який фактично покриває snapshot; не
+  узагальнювати його на lab-grown, treated або непідтримувані reports;
+- зберігати provider, `terms_url`, retrieved timestamp, snapshot version і
+  attribution; показувати, що це model-based retail benchmark, не transaction
+  data, appraisal або інвестиційний висновок;
+- не публікувати карту, raw matrix або substantial portion data у passport,
+  PDF, customer UI, resale чи white-label контурі без окремого license;
+- не обходити rate limits і перевіряти Terms перед кожним новим use/retention
+  policy, бо provider може змінити, обмежити або припинити automated access.
+
+Це дозволяє descriptive analysis, але не скасовує вимоги 151 для verified ML:
+SOM не має містити `predict_price`, confidence, investment grade або
+commercial claim. IDEX trial є ще вужчим: тільки internal development/testing
+у межах письмово погодженого trial і без customer-facing redistribution.
 
 ### 2a. Три рівні даних для експериментів
 
@@ -50,6 +71,7 @@ reference providers. Їхні відповіді не потрапляють у 
 | --- | --- | --- |
 | `data/diamonds_dataset.csv`, `DR-00001`–`DR-01000` | Технічний seed experiment: import, cleaning, reproducible SOM pipeline, карта, empty/error UI. | Набір синтетичний; не є підтвердженим ринковим/training джерелом і не підтримує verified price, investment або market claims. |
 | Локальні звіти після `DR-01000` | Лише після окремо задокументованої підстави, owner/consent, purpose limitation, retention і privacy review; за потреби — de-identification. | Не стають ML/SOM data за замовчуванням лише через те, що потрапили в OLTP. Не змішуються із seed без manifest і чіткого маркування. |
+| OpenFacet versioned snapshots | Admin-only descriptive market/SOM analysis у межах чинних Terms: attribution, source scope, no public/raw redistribution. | Не training/labels/verified ML; не доказ transaction price, investment claim або coverage поза supported natural GIA scope. |
 | Ліцензований зовнішній dataset | Лише відповідно до письмових training/derivative-use прав і dataset card. | Provider runtime responses не прирівнюються до такого dataset. |
 
 Отже, seed може дати цінний демонстраційний SOM-механізм уже локально, але

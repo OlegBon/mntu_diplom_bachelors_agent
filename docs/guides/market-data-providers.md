@@ -91,3 +91,21 @@ Private popover/detail пояснює, чи запис системний або
 валюти, unit, rate limits і тестів. Лише після цього він з’являється в каталозі
 й у radio-виборі policy. Новий FX-провайдер також потребує server fetcher:
 сама конфігурація не дозволяє підміняти НБУ невідомим джерелом.
+
+## Межа аналітичного використання OpenFacet
+
+OpenFacet snapshots не є ціною продажу, transaction data, експертною оцінкою
+або автоматично дозволеним ML dataset. За чинними
+[OpenFacet Terms of Use](https://openfacet.net/en/terms/) (перевірено
+2026-09-24) public information може використовуватися для research та ordinary
+internal business purposes за коректної атрибуції. Це допускає окремий
+admin-only descriptive analysis на versioned snapshots у фактичному supported
+natural GIA scope.
+
+Такий analysis не може перевидавати substantial raw data, бути customer-facing
+або потрапляти у public passport/PDF без окремої ліцензії. Він показує provider,
+Terms URL/date, snapshot timestamp/version і disclaimer про model-based retail
+benchmark. Перед retention, новим автоматизованим використанням або зміною
+призначення потрібно повторно перевіряти Terms: OpenFacet може змінити,
+обмежити чи припинити API access. Verified ML, training labels і будь-яка
+аналітика IDEX потребують окремого письмового дозволу.
