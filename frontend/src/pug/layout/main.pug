@@ -22,11 +22,13 @@ html(lang="uk")
 
                     nav#main-nav.main-nav(aria-label="Основна навігація")
                         ul#nav-list
-                            li: a(href="#public-passport") Перевірити паспорт
+                            li: a(href="/#public-passport") Перевірити паспорт
+                            li.mobile-login: a(href="/login.html") Увійти
 
                     .header-right
                         span#header-session-name.header-session-name(hidden)
                         .header-auth#auth-block
+                            a.header-session-action.header-login(href="/login.html") Увійти
                         button#burger-btn.burger-btn(type="button" aria-label="Відкрити меню" aria-expanded="false")
                             span
                             span

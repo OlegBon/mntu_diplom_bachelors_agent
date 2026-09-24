@@ -9,7 +9,7 @@
 
 - **Задача:** прибрати миготіння неактуального пункту «Головна» у гостьовій навігації до client-side auth render.
 - **Змінені файли:** `frontend/src/pug/layout/main.pug`, `frontend/tests/page-dom.test.mjs`, `docs/progress.md`.
-- **Рішення / Результат:** статичний Pug fallback більше не містить меню «Головна»; він показує лише доречну гостьову дію «Перевірити паспорт». Логотип зберігає окреме семантичне посилання на головну. JavaScript як і раніше рендерить approved guest/authenticated navigation після `DOMContentLoaded`, але тепер не замінює видимий застарілий пункт.
+- **Рішення / Результат:** статичний Pug fallback більше не містить меню «Головна»; до старту JavaScript він уже містить повний guest-nav: «Перевірити паспорт» та desktop/mobile «Увійти» з тими самими class/href, які потім відтворює approved renderer. Це прибирає і неправильний пункт, і layout jump від пізнього login link. Логотип зберігає окреме семантичне посилання на головну. JavaScript як і раніше рендерить approved guest/authenticated navigation після `DOMContentLoaded`.
 - **Перевірки:** `cmd /c "cd frontend && npm test"` — 23 passed (включно з новим DOM regression); `npx playwright test -c playwright.config.mjs tests/e2e/login-page.spec.mjs` — 2 passed; `git diff --check` — без помилок. Sass `@import` і застарілий Browserslist database лишаються відомими tooling warnings поза scope.
 - **Нові змінні середовища:** немає.
 - **Обмеження:** не змінювалися auth, RBAC, API або стилі; без JavaScript у guest fallback доступна лише перевірка паспорта, як і задумано для статичного public navigation.

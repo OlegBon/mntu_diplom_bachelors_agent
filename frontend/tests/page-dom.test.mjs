@@ -30,7 +30,9 @@ test("built anonymous navigation has no retired home menu fallback", async () =>
   const document = new JSDOM(html).window.document;
 
   assert.equal(document.querySelector("#nav-list > li > a[href='/']"), null);
-  assert.equal(document.querySelector("#nav-list > li > a[href='#public-passport']")?.textContent.trim(), "Перевірити паспорт");
+  assert.equal(document.querySelector("#nav-list > li > a[href='/#public-passport']")?.textContent.trim(), "Перевірити паспорт");
+  assert.equal(document.querySelector("#nav-list > li.mobile-login > a[href='/login.html']")?.textContent.trim(), "Увійти");
+  assert.equal(document.querySelector("#auth-block > a.header-login[href='/login.html']")?.textContent.trim(), "Увійти");
 });
 
 test("footer links lead to substantive public privacy and passport guidance pages", async () => {
