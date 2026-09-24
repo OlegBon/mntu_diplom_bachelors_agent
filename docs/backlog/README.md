@@ -27,5 +27,5 @@
 
 | Файл | Тема |
 | --- | --- |
-| [122-market-provider-operations.md](./122-market-provider-operations.md) | Freshness policy, scheduler і безпечне розширення market/FX provider-ів. |
 | [130-public-passport-media.md](./130-public-passport-media.md) | Контрольована видимість вкладень у public passport. |
+| [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |

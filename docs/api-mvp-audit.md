@@ -1,6 +1,6 @@
 # Аудит API та локального MVP Diamant ID
 
-> **Актуалізовано:** 23 вересня 2026. Перший аудит від 14 вересня нижче
+> **Актуалізовано:** 24 вересня 2026. Перший аудит від 14 вересня нижче
 > збережено як історичний доказ стану до послідовних задач 020–108. Поточним
 > джерелом контракту є `docs/architecture.md`, а безпечний runtime smoke —
 > `scripts/audit-api.mjs`.
@@ -20,7 +20,7 @@
   відновленого з timestamps active-time.
 - Ринкові дані мають окрему admin-only межу `/market-data/*`: provider catalog,
   future-only policy системних орієнтирів, immutable snapshot-и OpenFacet та
-  frozen NBU FX. Нові valuation мають private append-only події, але safe audit
+  frozen NBU FX, графіки оновлення й журнал операцій. Нові valuation мають private append-only події, але safe audit
   не запускає external fetch, approval або запис даних, тому перевіряє лише
   401-межі GET-маршрутів; `market/price`
   лишається legacy demo-індексом, а не джерелом ринкової оцінки.
@@ -35,7 +35,7 @@
 ## Безпечний локальний API smoke
 
 `npm run audit:api` приймає лише `localhost`/`127.0.0.1`, не використовує
-токенів і не змінює дані. Він перевіряє 15 контрактів: root/OpenAPI/CORS,
+токенів і не змінює дані. Він перевіряє 17 контрактів: root/OpenAPI/CORS,
 публічні mappings і паспорт-404, а також 401-межі для private reports,
 detail, profile, users, experts, reference values, обох admin-only analytics
 endpoint-ів і read-only market-data endpoints. Звіти створюються лише локально в ігнорованому

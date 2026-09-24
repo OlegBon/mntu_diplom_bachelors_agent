@@ -16,6 +16,7 @@
 | `market_data_providers` | Каталог доступних джерел та їхніх умов | Так, лише admin і окремий provider flow. |
 | `market_reference_policies` | Одна активна policy для **майбутніх** системних орієнтирів | Так, лише admin. |
 | `market_data_snapshots`, `fx_data_snapshots`, `stone_valuations` | Конкретні отримані дані й суми звіту | Ні, immutable. |
+| `market_provider_schedules`, `market_provider_operations` | Графік, freshness-пороги та журнал спроб отримання | Графік змінює admin; журнал append-only. |
 
 ## Налаштування admin
 
@@ -28,6 +29,22 @@
    це означає НБУ USD/UAH.
 3. Зберігає policy. Вона не змінює вже створені або видані звіти.
 4. Отримує candidate даних обраного провайдера, перевіряє та approve його.
+5. У блоці «Автоматичне оновлення» задає час у `Europe/Kyiv`, увімкнення та пороги warning/block. Початкові значення: OpenFacet — 08:30, НБУ — 15:40; повторні спроби після помилки — 15, 30 і 60 хвилин.
+
+## Операційне оновлення
+
+FastAPI не запускає фоновий цикл самостійно. Hosting або Windows Task Scheduler викликає
+`python scripts/run_market_provider_schedule.py` у потрібний інтервал (наприклад, кожні 5 хвилин).
+Команда сама визначає, чи настав час конкретного provider-а, записує кожну спробу в
+`market_provider_operations` і є безпечною при повторному запуску. OpenFacet за графіком створює
+лише immutable `candidate`; approve завжди лишається окремим рішенням admin. НБУ зберігає
+новий immutable snapshot або фіксує `no_change` для того самого курсу й official date.
+
+Під час `POST /reports`, `PUT /reports/{id}` та ручного attach зовнішній HTTP-запит **не** виконується.
+Коли UAH увімкнено, server використовує останній вже збережений NBU snapshot тільки якщо він не
+перевищив `block_after_hours`. Якщо snapshot відсутній або застарілий, draft не ламається і
+системний орієнтир не додається; ручний attach повертає контрольовану помилку з вимогою оновити НБУ.
+Збережені valuation, historical report, public passport і PDF не перераховуються.
 
 У `0010_market_reference_policy` локальна початкова policy: `openfacet` як
 ринковий провайдер і `nbu` з увімкненою UAH-конвертацією. Це відтворює чинну

@@ -20,6 +20,10 @@ block content
                 p.account-help#market-policy-fx-note Курс НБУ фіксується лише разом із новим орієнтиром.
                 button#market-reference-policy-submit.btn.btn-primary(type="submit") Зберегти налаштування
         section.account-surface.account-surface--wide
+            h2 Автоматичне оновлення
+            p.account-help Планувальник середовища запускає безпечну команду за розкладом. Звіти ніколи не виконують зовнішній запит самостійно: вони беруть лише вже збережені актуальні знімки.
+            #market-provider-schedules.market-data-providers(aria-live="polite")
+        section.account-surface.account-surface--wide
             h2 Провайдери
             p.account-help OpenFacet — model-based retail reference для порівнюваних природних GIA-каменів; це не експертна оцінка, не пропозиція та не ціна продажу. НБУ надає офіційний USD/UAH: якщо конвертацію увімкнено, курс отримується заново й назавжди фіксується з орієнтиром.
             #market-data-providers.market-data-providers(aria-live="polite")
@@ -27,6 +31,10 @@ block content
             h2 Історія знімків
             p.account-help Кандидат не застосовується, доки адміністратор окремо не затвердить його. Дані знімка після створення не редагуються.
             #market-data-snapshots.market-data-snapshots(aria-live="polite")
+        section.account-surface.account-surface--wide
+            h2 Журнал операцій
+            p.account-help Останні 50 ручних і запланованих спроб. Для невдалого планового оновлення система повторює спробу через 15, 30 і 60 хвилин.
+            #market-provider-operations.market-data-snapshots(aria-live="polite")
         section.account-surface.account-surface--wide
             h2 Прикріпити орієнтир до звіту
             p.account-help Звіт не містить даних про GIA-сертифікат. Тому перед прикріпленням адміністратор підтверджує застосовність OpenFacet до конкретного каменя. Конвертацію UAH визначають поточні системні налаштування. Legacy-ціна звіту не змінюється.

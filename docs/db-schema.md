@@ -1,7 +1,8 @@
 # Схема бази даних
 
 Документ описує поточну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic revision `0012_wizard_first_save_time`. `0012` уже застосована до
+Alembic code head і локальна MariaDB — `0013_market_provider_operations`.
+`0012` уже застосована до
 локальної MariaDB, не містить backfill і додає вимір лише для майбутніх report.
 Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
@@ -16,7 +17,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 | База | Таблиці | Призначення |
 | --- | --- | --- |
 | `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `report_work_sessions`, `report_work_session_events`, `report_work_session_leases`, `wizard_work_sessions`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, lifecycle, server-timed active-time, elapsed time до першого save, ruleset-и, revocable public passport, приватні вкладення та фінансові записи. |
-| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes`, `fx_data_snapshots` | Числові й текстові довідники, legacy demo-індекс та versioned дані зовнішніх провайдерів. |
+| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes`, `fx_data_snapshots`, `market_provider_schedules`, `market_provider_operations` | Числові й текстові довідники, legacy demo-індекс, versioned дані зовнішніх провайдерів і їхній операційний контур. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
 ## Контрольовані значення
@@ -271,10 +272,24 @@ policy та окремого рішення про умови використа
 
 Незмінна відповідь офіційного курсу: `fx_snapshot_id`, `provider_code=nbu`,
 base `USD`, quote `UAH`, `rate DECIMAL(18,8)`, `rate_date`, URL,
-`retrieved_at`, actor і `created_at`. Manual refresh лише додає запис. Під час
-OpenFacet attach backend завжди бере нову відповідь НБУ; він не підставляє
-старий snapshot, якщо мережа недоступна. Для best-effort системного орієнтира
-відсутність НБУ лише пропускає enrichment, а не скасовує draft save.
+`retrieved_at`, nullable actor і `created_at`. Manual або scheduled refresh додає
+лише новий snapshot; однаковий rate/date фіксується у журналі як `no_change`.
+Під час OpenFacet attach і системного орієнтира backend не робить HTTP-запит:
+він бере останній збережений snapshot, якщо той не старший за `block_after_hours`
+графіка НБУ. Для best-effort системного орієнтира відсутність або stale НБУ лише
+пропускає enrichment, а не скасовує draft save.
+
+### `market_provider_schedules` і `market_provider_operations`
+
+`market_provider_schedules` має один рядок на підтримуваний provider: `enabled`,
+IANA timezone, час добового запуску, пороги `warn_after_hours` і
+`block_after_hours`, actor/time останньої зміни. Початково OpenFacet працює о 08:30,
+а НБУ — о 15:40 за `Europe/Kyiv`.
+
+`market_provider_operations` — append-only журнал ручних і scheduled спроб:
+provider, тип запуску, статус (`success`, `no_change`, `failed`, `skipped`), номер
+спроби, timestamps, nullable snapshot provenance, безпечне повідомлення й optional
+actor. Він не є чергою та не змінює historical valuation/report.
 
 ## Модель `diamond_analytics`
 
@@ -304,6 +319,7 @@ OpenFacet attach backend завжди бере нову відповідь НБ�
 | `0010_market_reference_policy` | Додає singleton policy вибору market/FX provider для майбутнього `system_market_reference`; seed `openfacet` + увімкнений `nbu`. Не змінює snapshots, historical valuations чи legacy demo-індекс. |
 | `0011_expert_work_sessions` | Додає порожні server-timed work sessions, append-only events і single-tab leases. Не backfill-ить `evaluation_time_sec`, timestamps або старі reports. |
 | `0012_wizard_first_save_time` | Додає nullable first-save timestamps/duration до майбутніх report і короткоживучі wizard leases. Не backfill-ить historical reports. |
+| `0013_market_provider_operations` | Додає provider schedules і immutable operation log, робить `market_data_snapshots.created_by_id` nullable для scheduled candidate. Seed-ить OpenFacet 08:30 та НБУ 15:40 у `Europe/Kyiv`; не змінює snapshots, valuations або reports. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за

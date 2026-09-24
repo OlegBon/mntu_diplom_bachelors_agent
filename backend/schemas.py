@@ -237,7 +237,7 @@ class MarketDataSnapshotResponse(BaseModel):
     quote_count: int
     content_sha256: str
     retrieved_at: datetime
-    created_by_id: int
+    created_by_id: Optional[int]
     approved_by_id: Optional[int]
     approved_at: Optional[datetime]
     decision_reason: Optional[str]
@@ -415,6 +415,47 @@ class FxDataSnapshotResponse(BaseModel):
     retrieved_at: datetime
     created_by_id: Optional[int]
     created_at: datetime
+
+
+class MarketProviderScheduleResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    provider_code: str
+    enabled: bool
+    timezone_name: str
+    scheduled_hour: int
+    scheduled_minute: int
+    warn_after_hours: int
+    block_after_hours: int
+    updated_by_id: Optional[int]
+    updated_at: datetime
+    freshness_status: Literal["fresh", "warning", "stale", "missing"]
+    latest_retrieved_at: Optional[datetime]
+
+
+class MarketProviderScheduleUpdate(BaseModel):
+    provider_code: str = Field(min_length=1, max_length=32)
+    enabled: bool
+    scheduled_hour: int = Field(ge=0, le=23)
+    scheduled_minute: int = Field(ge=0, le=59)
+    warn_after_hours: int = Field(ge=1, le=24 * 90)
+    block_after_hours: int = Field(ge=1, le=24 * 180)
+
+
+class MarketProviderOperationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    operation_id: int
+    provider_code: str
+    trigger_type: Literal["manual", "scheduled"]
+    status: Literal["success", "no_change", "failed", "skipped"]
+    attempt_number: int
+    started_at: datetime
+    completed_at: datetime
+    market_snapshot_id: Optional[int]
+    fx_snapshot_id: Optional[int]
+    message: Optional[str]
+    initiated_by_id: Optional[int]
 
 
 class ReportListResponse(BaseModel):
