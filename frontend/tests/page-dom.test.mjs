@@ -13,6 +13,8 @@ const reportDetailPath = path.resolve(testDir, "../dist/report-detail.html");
 const passportPath = path.resolve(testDir, "../dist/passport.html");
 const analyticsPath = path.resolve(testDir, "../dist/ml-analysis.html");
 const homePath = path.resolve(testDir, "../dist/index.html");
+const privacyPath = path.resolve(testDir, "../dist/privacy.html");
+const documentationPath = path.resolve(testDir, "../dist/documentation.html");
 
 test("built home page exposes the login CTA for anonymous visitors", async () => {
   const html = await readFile(homePath, "utf8");
@@ -21,6 +23,21 @@ test("built home page exposes the login CTA for anonymous visitors", async () =>
   const loginCta = document.querySelector("#home-login-cta");
   assert.equal(loginCta?.getAttribute("href"), "/login.html");
   assert.equal(loginCta?.hidden, false);
+});
+
+test("footer links lead to substantive public privacy and passport guidance pages", async () => {
+  const [homeHtml, privacyHtml, documentationHtml] = await Promise.all([
+    readFile(homePath, "utf8"), readFile(privacyPath, "utf8"), readFile(documentationPath, "utf8"),
+  ]);
+  const home = new JSDOM(homeHtml).window.document;
+  const privacy = new JSDOM(privacyHtml).window.document;
+  const documentation = new JSDOM(documentationHtml).window.document;
+
+  assert.equal(home.querySelector(".footer-links a[href='/privacy.html']")?.textContent.trim(), "Політика конфіденційності");
+  assert.equal(home.querySelector(".footer-links a[href='/documentation.html']")?.textContent.trim(), "Документація");
+  assert.match(privacy.querySelector("main")?.textContent || "", /локальн/);
+  assert.match(documentation.querySelector("main")?.textContent || "", /QR/);
+  assert.match(documentation.querySelector("main")?.textContent || "", /не є кодом перевірки/);
 });
 
 test("built login page exposes accessible authentication fields", async () => {

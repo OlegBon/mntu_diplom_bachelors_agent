@@ -113,6 +113,26 @@
   &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
 }
 
+.information-page {
+  max-width: 880px;
+  margin: 0 auto;
+
+  &__surface {
+    border: 1px solid variables.$border-color;
+    background: variables.$white;
+    padding: 2rem;
+  }
+
+  h2 { margin: 2rem 0 0.75rem; font-size: 1.15rem; }
+  h2:first-of-type { margin-top: 0; }
+  p, li { color: variables.$text-color; line-height: 1.65; }
+  ul, ol { margin: 0; padding-left: 1.35rem; }
+  li + li { margin-top: 0.5rem; }
+  &__notice { border-left: 3px solid variables.$primary-color; background: variables.$surface-subtle; padding: 0.875rem 1rem; }
+
+  @media (max-width: 767px) { &__surface { padding: 1.25rem; } }
+}
+
 .main-header {
   .header-content { gap: 2rem; }
 

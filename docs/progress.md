@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — public-information-pages
+
+- **Задача:** завершити 132 — наповнити два placeholder-посилання footer змістовними публічними сторінками.
+- **Змінені файли:** `frontend/src/{pug/layout/main.pug,pug/pages/{privacy,documentation}.pug,scss/_ui-primitives.scss}`, `frontend/tests/{page-dom.test.mjs,e2e/public-information-pages.spec.mjs}`, `docs/{work_plan,progress}.md`, `docs/backlog/{README.md,132-public-information-pages.md (видалено)}`.
+- **Рішення / Результат:** footer тепер веде на «Політику конфіденційності» та «Документацію». Privacy-сторінка описує фактичний local MVP: account/profile/report/media data, role-based доступ, public passport, локальне runtime-сховище та JWT у браузері; вона явно не видає себе за фінальну legal/production політику. Public documentation пояснює code/direct URL/QR, межі публічних даних, статус актуальності, PDF і медіа. Обидві сторінки використовують один responsive semantic layout.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 22 passed; Playwright `public-information-pages.spec.mjs` — перевіряє desktop і mobile; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** немає cookie banner, consent management, production contact, retention/backup policy чи юридичної верифікації. Їх потрібно погодити окремо після вибору хостингу, зовнішніх сервісів і production-процесів.
+
 ## 2026-09-24 — public-passport-pdf-media
 
 - **Задача:** завершити 131 — додати явно опубліковані медіа до on-demand PDF публічного паспорта та зробити відмінність між живою проєкцією і вже завантаженим PDF прозорою.
