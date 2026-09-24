@@ -25,6 +25,14 @@ test("built home page exposes the login CTA for anonymous visitors", async () =>
   assert.equal(loginCta?.hidden, false);
 });
 
+test("built anonymous navigation has no retired home menu fallback", async () => {
+  const html = await readFile(homePath, "utf8");
+  const document = new JSDOM(html).window.document;
+
+  assert.equal(document.querySelector("#nav-list > li > a[href='/']"), null);
+  assert.equal(document.querySelector("#nav-list > li > a[href='#public-passport']")?.textContent.trim(), "Перевірити паспорт");
+});
+
 test("footer links lead to substantive public privacy and passport guidance pages", async () => {
   const [homeHtml, privacyHtml, documentationHtml] = await Promise.all([
     readFile(homePath, "utf8"), readFile(privacyPath, "utf8"), readFile(documentationPath, "utf8"),
