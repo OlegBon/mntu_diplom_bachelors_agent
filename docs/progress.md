@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — local-mvp-release-audit
+
+- **Задача:** завершити 133 — доказово звірити документацію, code/test/API/security/local runtime local MVP і винести підтверджені прогалини в окремі задачі.
+- **Змінені файли:** `docs/{backlog/{README,133-local-mvp-release-audit (видалено),134-alembic-schema-convergence,135-real-browser-e2e-and-passport-contract,136-sqlalchemy-pydantic-deprecation-cleanup,141-idex-online-trial-readiness-and-mockup,160-platform-and-stack-decision,161-postgresql-migration-and-staging}.md,decisions/{001-report-domain-contract,003-report-core-migration-plan}.md,guides/{idc-demo-v1-ruleset,product-ux-foundation}.md,reviews/2026-09-24-local-mvp-release-audit.md,work_plan,progress}.md`, `scripts/check_doc_links.py`, `tests/unit/test_doc_links.py`.
+- **Рішення / Результат:** критичних functional/security знахідок у перевіреному local зрізі немає. Виявлено дві release-важливі прогалини: `alembic check` бачить index/metadata drift при MariaDB revision `0013`, а Playwright passport delivery mock не відповідає чинному wrapper-контракту й дає 16/17. Їх не виправляли неявно: створено 134 для schema convergence і 135 для deterministic passport contract та isolated real browser E2E. Підтверджені SQLAlchemy/Pydantic deprecation warnings винесено у 136. Completed backlog links замінено durable docs/plain history; додана dependency-free перевірка локальних Markdown-посилань. Порядок наступного етапу уточнено: `134 → 135 → 136 → 150`, далі `160 → 161 → 140`; IDEX mock-up можна готувати локально, але trial activation відбудеться лише після staging.
+- **Перевірки:** `python -m pytest` — 62 passed; `cmd /c "cd frontend && npm test"` — 22 passed; `cmd /c "cd frontend && npm run audit:api"` — 18/18; `cmd /c "cd frontend && npm run test:e2e"` — 16/17, documented finding 135; `alembic current` — `0013_market_provider_operations (head)`; `alembic check` — expected finding 134; `python -m compileall -q backend scripts`, `python scripts/check_doc_links.py`, targeted `test_doc_links.py` і `git diff --check` — успішно.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** не виконувалися seed, migration, manual DDL, external provider fetch, penetration testing або authenticated write API audit. Реальний browser flow з MariaDB навмисно не запускався без isolated test-auth strategy; це scope 135. Production security hardening (exact CORS, trusted QR origin, TLS/secrets) лишається 161.
+
 ## 2026-09-24 — roadmap-next-stages
 
 - **Задача:** зафіксувати погоджений шлях після local MVP: аудит, IDEX, i18n, verified ML, platform decision і PostgreSQL/staging.
@@ -548,7 +557,7 @@
 - **Рішення:** гість бачить `Перевірити паспорт` і кнопку `Увійти`; gemologist — `Всі звіти`, `Новий звіт`, `Профіль` і окрему дію `Вийти`; admin — `Всі звіти`, `Експерти`, `Довідники`, `Аналітика`, `Профіль` і `Вийти`, без створення звітів. На mobile в burger-меню видно ім’я користувача та одну дію виходу, без дублювання профілю.
 - **Перевірки:** `npm run build`, `npm test` (5 passed), `npm run test:e2e` (1 passed), `git diff --check`; Playwright-візуальна перевірка на `1440×900` та `390×844` для гостя, gemologist і admin. Вбудований Browser у цій сесії недоступний, застосовано Playwright fallback.
 - **Нові змінні середовища:** немає.
-- **Обмеження:** приховання пункту «Новий звіт» для admin є лише UI-логікою; чинний `POST /diamonds/` ще не забороняє цю дію на сервері. Це зафіксовано як [035 — admin report RBAC](./backlog/035-admin-report-rbac.md).
+- **Обмеження:** історичне обмеження UI було знято задачею 035: чинний server-side RBAC забороняє admin створювати report.
 
 ## 2026-09-14 — product-ux-visual-foundation (завершено)
 

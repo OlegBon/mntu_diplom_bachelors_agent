@@ -2,7 +2,14 @@
 
 ## Мета
 
-Підтвердити практичний cloud-contour без передчасного frontend rewrite.
+Підтвердити практичний cloud-contour після локально перевіреного ML, без
+передчасного frontend rewrite.
+
+## Передумова
+
+Спершу завершується [150](./150-analytics-and-verified-ml-strategy.md):
+dataset, baseline, validation і versioned model artifact мають бути
+відтворюваними в локальному контурі. Cloud не є передумовою цього етапу.
 
 ## Погоджений baseline
 

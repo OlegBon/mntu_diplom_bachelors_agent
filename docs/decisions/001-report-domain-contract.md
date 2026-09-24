@@ -2,7 +2,7 @@
 
 **Статус:** погоджено для реалізації локального MVP  
 **Дата:** 2026-09-14  
-**Пов'язані задачі:** [020 — міграції (завершено)](../work_plan.md), [040 — ядро звіту](../backlog/040-report-core-and-reference-data.md), [050 — медіа](../backlog/050-media-assets.md)
+**Пов'язані документи:** [work plan](../work_plan.md), [ADR-003 — ядро звіту](./003-report-core-migration-plan.md), [схема БД](../db-schema.md)
 
 ## Контекст
 

@@ -2,7 +2,7 @@
 
 **Статус:** погоджено для реалізації локального MVP  
 **Дата:** 2026-09-14  
-**Пов’язані документи:** [ADR-001](./001-report-domain-contract.md), [ADR-002](./002-financial-calculation-contract.md), [040 — ядро звіту](../backlog/040-report-core-and-reference-data.md)
+**Пов’язані документи:** [ADR-001](./001-report-domain-contract.md), [ADR-002](./002-financial-calculation-contract.md), [схема БД](../db-schema.md)
 
 ## Контекст
 

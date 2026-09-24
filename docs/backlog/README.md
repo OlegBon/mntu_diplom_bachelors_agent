@@ -27,7 +27,9 @@
 
 | Файл | Тема |
 | --- | --- |
-| [133-local-mvp-release-audit.md](./133-local-mvp-release-audit.md) | Ретельний release-аудит коду, документації, тестів і local runtime. |
+| [134-alembic-schema-convergence.md](./134-alembic-schema-convergence.md) | Збіжність Alembic, ORM metadata та MariaDB-індексів. |
+| [135-real-browser-e2e-and-passport-contract.md](./135-real-browser-e2e-and-passport-contract.md) | Надійний passport contract і isolated real browser E2E. |
+| [136-sqlalchemy-pydantic-deprecation-cleanup.md](./136-sqlalchemy-pydantic-deprecation-cleanup.md) | Сумісне прибирання SQLAlchemy/Pydantic deprecation warnings. |
 | [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |
 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |

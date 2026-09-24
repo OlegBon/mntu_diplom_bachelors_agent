@@ -3,11 +3,12 @@
 ## Мета
 
 Перенести підтверджений local контур MariaDB до перевіреного PostgreSQL staging
-після рішення 160, без втрати даних або зміни domain behavior.
+після локального verified ML за [150](./150-analytics-and-verified-ml-strategy.md)
+та platform decision 160, без втрати даних або зміни domain behavior.
 
 ## Scope
 
-- MariaDB/PostgreSQL schema compatibility, Alembic plan, test data migration,
+- MariaDB/PostgreSQL schema compatibility (після [134](./134-alembic-schema-convergence.md)), Alembic plan, test data migration,
   row counts, integrity checks, dry-run і rollback.
 - Docker/runtime config, production env/secrets, exact CORS, healthcheck,
   backups, TLS/domain і manual staging smoke test.
