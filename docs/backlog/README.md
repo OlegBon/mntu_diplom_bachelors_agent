@@ -27,7 +27,6 @@
 
 | Файл | Тема |
 | --- | --- |
-| [135-real-browser-e2e-and-passport-contract.md](./135-real-browser-e2e-and-passport-contract.md) | Надійний passport contract і isolated real browser E2E. |
 | [136-sqlalchemy-pydantic-deprecation-cleanup.md](./136-sqlalchemy-pydantic-deprecation-cleanup.md) | Сумісне прибирання SQLAlchemy/Pydantic deprecation warnings. |
 | [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |
 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
