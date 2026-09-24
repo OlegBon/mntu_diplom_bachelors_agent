@@ -9,7 +9,8 @@
 
 - Реалізувати ADR-006: `record_scope`, immutable `demo_datasets` manifest,
   `DEMO-…` ID для нових synthetic records, індекси й explicit operational
-  `_next_report_id()`.
+  `_next_report_id()`. Manifest має server-enforced `analysis_eligibility`, а
+  не implicit rule за ID-пrefix.
 - Не вводити глобальний user/environment toggle для змішування даних: demo
   доступний лише як явний admin-only route/mode і лише якщо існує manifest.
 - Провести read-only inventory `DR-00001…DR-01000`, backup/rollback plan і
@@ -41,6 +42,9 @@
 - API: admin vs gemologist list/search/direct ID/each write route; demo `404`
   public passport/media; next operational ID ignores `DEMO-…`; analytics and
   provider queries exclude demo by default.
+- Analytics API приймає dataset manifest, а не довільні report IDs; перевіряє
+  `scope=demo`, provenance та `analysis_eligibility` перед будь-якою
+  demo-аналітикою.
 - Негативні перевірки: demo не потрапляє в public ID/QR/PDF routes, cacheable
   public response, operational counters, review queue, `next-id`, page-refresh
   і background work-session/wizard flows.

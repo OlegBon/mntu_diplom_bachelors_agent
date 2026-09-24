@@ -25,7 +25,14 @@ Demo не отримує дублікати `diamond_reports`, `stones`, `media_
   operational create-flow;
 - nullable `demo_dataset_id`, що посилається на окремий immutable manifest
   `demo_datasets` (`dataset_id`, label, version, generator/checksum,
-  provenance, created_at, record_count, scope note).
+  provenance, created_at, record_count, scope note, `analysis_eligibility`).
+
+`analysis_eligibility` — не UI-прапорець і не висновок з `report_id`, а
+server-enforced перелік дозволених сценаріїв набору: наприклад
+`demo_operations` і `synthetic_som`. Аналітичний endpoint приймає лише
+`dataset_id`, звіряє scope/provenance/eligibility та відбирає тільки reports
+цього manifest. Arbitrary `DEMO-*`, historical `DR-*` або operational reports
+не можуть бути непомітно додані до карти лише через ID або URL-параметр.
 
 `Stone`, media, events, work sessions та valuations успадковують scope через
 report. Це усуває роздвоєні migrations/CRUD/PDF і дає одну гарантію доступу.
@@ -105,3 +112,6 @@ Inventory перевіряє range, count, referential integrity і можлив
 - Demo lifecycle може бути синтетично позначений як `issued` лише для
   внутрішнього preview. Він не означає реальну видачу, не створює QR/public
   code і не потрапляє в operational лічильники, статистику чи черги.
+- `analysis_eligibility=synthetic_som` дозволяє тільки technical demo 159.
+  Він не є дозволом на verified ML, price prediction, investment claim або
+  використання operational reports; для цього лишається окремий contract 151.

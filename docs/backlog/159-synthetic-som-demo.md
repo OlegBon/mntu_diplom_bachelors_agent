@@ -7,8 +7,10 @@
 
 ## Scope
 
-- Приймати тільки manifest `synthetic-demo-vN` із 157; жодних operational
-  reports, OpenFacet/IDEX responses чи private texts.
+- Приймати тільки manifest `synthetic-demo-vN` із 157, у якого server-side
+  `analysis_eligibility` містить `synthetic_som`; endpoint отримує `dataset_id`,
+  а не довільні report IDs. Жодних operational reports, OpenFacet/IDEX responses
+  чи private texts.
 - Versioned reproducible SOM experiment: feature schema, normalisation, grid,
   random seed, training code/dependencies, dataset checksum і report→cell map.
 - Admin-only карта: population/count, dataset version, feature list, methods,
@@ -21,7 +23,8 @@
 ## Перевірки
 
 Reproducible artifact на тому самому manifest/seed, stable cell mapping,
-admin-only API/UI, expert/anonymous 404, empty-state без dataset та a11y без
+admin-only API/UI, expert/anonymous 404, rejection для dataset без
+`synthetic_som` або для чужого report ID, empty-state без dataset та a11y без
 покладання лише на колір.
 
 ## Залежності

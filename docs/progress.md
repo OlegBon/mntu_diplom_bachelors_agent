@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — demo-analytics-eligibility-gate
+
+- **Задача:** зафіксувати, як сервер відрізняє дозволений synthetic dataset для demo-аналітики від довільних demo або operational звітів.
+- **Змінені файли:** `docs/decisions/006-demo-dataset-isolation.md`, `docs/backlog/{156-demo-dataset-contract-and-isolation,159-synthetic-som-demo}.md`, `docs/progress.md`.
+- **Рішення / Результат:** ID-префікс не є authorization або data-eligibility механізмом. Immutable manifest має `analysis_eligibility`; demo SOM endpoint приймає тільки `dataset_id`, перевіряє `scope`, provenance і дозвіл `synthetic_som`, а потім відбирає reports лише цього manifest. Це не надає права на verified ML, price prediction або включення operational даних.
+- **Перевірки:** документаційний контракт узгоджено між ADR-006, 156 і 159; schema, data та runtime не змінювалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** поле manifest, endpoint guard і тести буде реалізовано у 156/159; чинна аналітика поки не має demo mode.
+
 ## 2026-09-24 — demo-seed-classification-confirmed
 
 - **Задача:** уточнити походження historical `DR-00001…DR-01000` та межу з поточними локальними звітами.
