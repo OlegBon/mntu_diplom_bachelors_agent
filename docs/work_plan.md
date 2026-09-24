@@ -81,6 +81,9 @@
 - [x] 130 — Публічні вкладення паспорта: admin може явно опублікувати лише `stone_photo` або `plotting_diagram` виданого report. Anonymous endpoint прив'язаний до active passport token, allow-list-ить JPEG/PNG/WebP, звіряє SHA-256 та повертає `no-store`; private/revoked/void/tampered media дає 404. PDF не містить вкладень.
 - [x] 131 — Зображення у PDF публічного паспорта: on-demand PDF додає лише чинні явно опубліковані фото каменю та plotting після основної сторінки, з allow-list/checksum/revoke гарантіями, A4 layout і PDF-тестами. PDF не є snapshot-ом: зняте з публікації медіа відсутнє лише в наступних генераціях.
 - [x] 132 — Публічні інформаційні сторінки: footer веде на responsive «Політику конфіденційності» фактичного local MVP і довідку про код/URL/QR/PDF паспорта. Production/legal деталізація потребує окремого рішення після вибору хостингу й процесів даних.
+- [ ] [133 — Release-аудит local MVP](./backlog/133-local-mvp-release-audit.md): перед переходом до ML або cloud звірити код, документацію, critical tests, MariaDB runtime, security і UX; підтверджені знахідки оформлювати окремими fix-задачами.
+- [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial.
+- [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після рішення 160.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
 
@@ -91,6 +94,9 @@
   [mariadb-local-recovery.md](./guides/mariadb-local-recovery.md).
 - [ ] Відокремити конфігурацію БД від MariaDB-специфічного коду, зберігши локальну MariaDB.
 - [ ] Після локального MVP реалізувати перевірений ML-контур: датасет, versioned model artifact, валідація метрик, відтворюваний прогноз і окремі аналітичні результати.
+- [ ] [150 — Analytics і verified ML strategy](./backlog/150-analytics-and-verified-ml-strategy.md): спершу dataset/data-quality/target і baseline, потім model artifact/validation, а stone/SOM UI лише після валідних результатів.
+- [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
+- [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): migration, integrity/dry-run/rollback, staging runtime й інтеграція 140 scheduler-а після рішення 160.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.
 - [ ] [140 — Хмарне розгортання та scheduler ринкових даних](./backlog/140-cloud-deployment-and-provider-scheduler.md): обрати staging/cloud runtime, налаштувати deployment, secrets, managed scheduler кожні 5 хвилин для provider CLI, logs/alerts і runbook; локальний Windows Task Scheduler не є ціллю.
 - [ ] Налаштувати CORS, env secrets, health-check, домени/TLS та ручний smoke-test до публічного запуску.
