@@ -85,6 +85,7 @@
 - [x] 134 — Збіжність Alembic, ORM і MariaDB: read-only інвентаризація підтвердила canonical MariaDB індекси на `0013`; ORM metadata скориговано без DDL/new revision, `alembic check` green і regression test фіксує імена ключів.
 - [x] 135 — Реальний browser E2E і контракт паспорта: stale mock синхронізовано з `{ passport: ... }`; disposable SQLite runtime виконує реальний workflow без MariaDB, user records або `seed_db.py`.
 - [ ] [136 — SQLAlchemy/Pydantic deprecation cleanup](./backlog/136-sqlalchemy-pydantic-deprecation-cleanup.md): прибрати підтверджені warnings без зміни API чи schema.
+- [ ] [137 — GitHub Actions CI](./backlog/137-github-actions-continuous-integration.md): до переходу на `main` відтворити backend, ephemeral MariaDB/Alembic, frontend, mock/real E2E та docs checks у GitHub без deploy або secrets.
 - [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial.
 - [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після рішення 160.
 
