@@ -1,8 +1,8 @@
 # Схема бази даних
 
 Документ описує поточну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic code head `0013_market_provider_operations`; локальна MariaDB ще має `0012_wizard_first_save_time`.
-`0013` ще потрібно окремо застосувати. `0012` уже застосована до
+Alembic code head і локальна MariaDB — `0013_market_provider_operations`.
+`0012` уже застосована до
 локальної MariaDB, не містить backfill і додає вимір лише для майбутніх report.
 Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
