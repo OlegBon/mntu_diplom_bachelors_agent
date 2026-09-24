@@ -173,7 +173,10 @@ function renderEvents(container, events) {
     const transition = event.from_status || event.to_status
       ? ` · ${STATUS_LABELS[event.from_status] || event.from_status || "—"} → ${STATUS_LABELS[event.to_status] || event.to_status || "—"}`
       : "";
-    details.textContent = `${formatDate(event.created_at)}${transition}${event.reason ? ` · ${event.reason}` : ""}`;
+    const reason = ["media_published", "media_unpublished"].includes(event.action) && event.reason
+      ? event.reason.replace(/^(stone_photo|plotting_diagram)(?= · |$)/, (assetType) => MEDIA_TYPE_LABELS[assetType])
+      : event.reason;
+    details.textContent = `${formatDate(event.created_at)}${transition}${reason ? ` · ${reason}` : ""}`;
     item.append(title, details);
     container.append(item);
   }

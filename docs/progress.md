@@ -14,6 +14,15 @@
 - **Нові змінні середовища:** немає.
 - **Обмеження:** видимість CTA є лише UI-зручністю; доступ до приватних маршрутів, як і раніше, контролює auth-потік і сервер.
 
+## 2026-09-24 — public-media-history-labels-and-pdf-backlog
+
+- **Задача:** зробити історію зміни видимості вкладень зрозумілою користувачу та зафіксувати наступний PDF-крок.
+- **Змінені файли:** `frontend/src/js/modules/report-detail.js`, `frontend/tests/e2e/report-detail.spec.mjs`, `docs/{work_plan,progress}.md`, `docs/backlog/{README,131-public-passport-pdf-media}.md`.
+- **Рішення / Результат:** UI транслює технічні коди media у подіях: `stone_photo` → «Фото каменю», `plotting_diagram` → «Схема огранювання (plotting)». Append-only `report_events` і historical reason у БД не переписуються. Створено 131 для PDF: лише явно public allow-listed зображення активного паспорта, із checksum/revoke/void гарантіями та A4 layout-тестами.
+- **Перевірки:** targeted Playwright `report-detail.spec.mjs` — 2 passed, включно з історичними media-labels; `npm test` — 21 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** 131 лише планує PDF-media; поточний PDF залишається без вкладень до окремої реалізації.
+
 ## 2026-09-24 — public-passport-media (завершено)
 
 - **Задача:** реалізувати контрольовану видимість вкладень у публічному паспорті без відкриття private storage.

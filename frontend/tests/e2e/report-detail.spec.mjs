@@ -166,6 +166,13 @@ test("admin confirms passport-media publication in a project dialog", async ({ p
   await page.locator("#detail-passport-publish").click();
   await expect.poll(() => passportPublicationRequests).toBe(1);
   await expect(page.locator("#detail-passport-state")).toContainText("Паспорт опубліковано");
+  await page.route("**/reports/DR-01001/events", (route) => route.fulfill({ json: [
+    { event_id: 11, action: "media_published", from_status: "issued", to_status: "issued", actor_id: 1, reason: "stone_photo · #7", created_at: "2026-09-24T09:00:00Z" },
+    { event_id: 12, action: "media_unpublished", from_status: "issued", to_status: "issued", actor_id: 1, reason: "plotting_diagram · #8", created_at: "2026-09-24T09:01:00Z" },
+  ] }));
+  await page.reload();
+  await expect(page.locator("#detail-events")).toContainText("Фото каменю · #7");
+  await expect(page.locator("#detail-events")).toContainText("Схема огранювання (plotting) · #8");
   await page.getByRole("button", { name: "Опублікувати в паспорті" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
