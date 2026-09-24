@@ -75,6 +75,7 @@ test("built dashboard exposes real list controls without mock rows", async () =>
   const document = new JSDOM(html).window.document;
 
   assert.equal(document.querySelector("#create-report-action")?.textContent.trim(), "Новий звіт");
+  assert.equal(document.querySelector(".page-subtitle")?.textContent.trim(), "Управління сертифікатами та оцінками.");
   assert.equal(document.querySelector("#dashboard-filters")?.tagName, "FORM");
   assert.equal(document.querySelector("#report-search")?.getAttribute("type"), "search");
   assert.equal(document.querySelector("#toggle-filters")?.getAttribute("aria-controls"), "advanced-filters");

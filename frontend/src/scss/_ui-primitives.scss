@@ -114,8 +114,14 @@
 }
 
 .information-page {
-  max-width: 880px;
-  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4.5rem) 0;
+
+  .page-header {
+    margin-bottom: 2rem;
+
+    .page-title { color: variables.$text-strong; font-size: clamp(2rem, 3.5vw, 3rem); letter-spacing: -0.05em; }
+    .page-subtitle { margin-top: 0.6rem; }
+  }
 
   &__surface {
     border: 1px solid variables.$border-color;
