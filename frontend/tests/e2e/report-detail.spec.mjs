@@ -70,7 +70,16 @@ test("owner edits a draft and sees the recorded private history", async ({ page 
     { event_id: 3, action: "system_market_reference_added", from_status: null, to_status: null, actor_id: 2, reason: "USD 11,668.00 · OpenFacet · знімок #1", created_at: "2026-09-17T15:00:00Z" },
     { event_id: 4, action: "market_reference_added", from_status: null, to_status: null, actor_id: 1, reason: "USD 62,782.00 · OpenFacet · знімок #1", created_at: "2026-09-18T09:00:00Z" },
   ] }));
-  await page.route("**/reports/DR-01001/media", (route) => route.fulfill({ json: [] }));
+  await page.route("**/reports/DR-01001/media", (route) => route.fulfill({ json: [
+    {
+      media_id: 7, report_id: "DR-01001", asset_type: "stone_photo", original_filename: "stone.png",
+      mime_type: "image/png", size_bytes: 10, sha256: "a".repeat(64), uploaded_by_id: 2,
+      created_at: "2026-09-16T09:00:00Z", is_public: false,
+    },
+  ] }));
+  await page.route("**/reports/DR-01001/media/7/content", (route) => route.fulfill({
+    contentType: "image/png", body: "image-placeholder",
+  }));
   await page.route("**/reports/DR-01001/valuations", (route) => route.fulfill({ json: valuations }));
   await page.route("**/reports/DR-01001/work-session", async (route) => {
     const payload = route.request().postDataJSON();
@@ -88,6 +97,8 @@ test("owner edits a draft and sees the recorded private history", async ({ page 
   await expect(page.locator("#detail-events")).toContainText("Дані чернетки оновлено");
   await expect(page.locator("#detail-events")).toContainText("Системний довідковий орієнтир додано");
   await expect(page.locator("#detail-events")).toContainText("Довідковий орієнтир підтверджено адміністратором");
+  await expect(page.locator("#detail-media")).toContainText("stone.png");
+  await expect(page.locator("#detail-transitions")).toContainText("Передати на перевірку");
   const valuationDisclosures = page.locator("#detail-valuations details");
   await expect(valuationDisclosures).toHaveCount(2);
   await expect(valuationDisclosures.nth(0)).toHaveAttribute("open", "");

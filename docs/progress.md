@@ -10,7 +10,7 @@
 - **Задача:** реалізувати контрольовану видимість вкладень у публічному паспорті без відкриття private storage.
 - **Змінені файли:** `backend/{crud,main,media_storage,schemas}.py`, `frontend/src/{pug/pages/passport.pug,scss/_ui-primitives.scss,js/modules/{api,public-passport,report-detail}.js}`, `tests/api/test_public_passport_media.py`, `frontend/tests/e2e/public-passport.spec.mjs`, `docs/{architecture,db-schema,work_plan,progress}.md`, `docs/guides/current-domain-and-report-workflow.md`, `docs/backlog/{README.md,130-public-passport-media.md (видалено)}`.
 - **Рішення / Результат:** усі вкладення стартують private. Лише admin і лише для `issued` report може окремо увімкнути public-доступ для `stone_photo` або `plotting_diagram`; потрібна явна підтверджувальна дія в UI. Anonymous API перевіряє active issued passport token, exact asset allow-list, JPEG/PNG/WebP MIME, наявність файлу й SHA-256; у public response немає filename, hash або private metadata. Content віддається з `Cache-Control: no-store` та `X-Content-Type-Options: nosniff`; revoke, reissue старого token-а, void, private або tampered asset повертають 404. PDF лишається без вкладень.
-- **Перевірки:** targeted API tests — 6 passed; `npm run build`, `npm test` і targeted Playwright public passport — успішно; `git diff --check` перевірено.
+- **Перевірки:** targeted API tests — 6 passed; 31 unit/domain/PDF tests; `npm run build`, `npm test` і targeted Playwright public-passport/report-detail — успішно; `git diff --check` перевірено.
 - **Нові змінні середовища:** немає.
 - **Обмеження:** public media не потрапляє до PDF; доступні лише два наявні image asset types. Додавання іншого media type потребує окремого allow-list, UX та security review.
 

@@ -186,7 +186,7 @@ function renderMedia(container, report, assets, currentUser, token, refresh, onS
   for (const asset of assets) {
     const item = document.createElement("li");
     const link = document.createElement("a");
-    link.href = getReportMediaContentUrl(reportId, asset.media_id);
+    link.href = getReportMediaContentUrl(report.report_id, asset.media_id);
     link.textContent = asset.original_filename;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
