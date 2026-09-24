@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, DateTime, Integer, String, DECIMAL, ForeignKey, Enum, TIMESTAMP, Boolean, UniqueConstraint, Text
+from sqlalchemy import Column, Date, DateTime, Integer, String, DECIMAL, ForeignKey, Enum, TIMESTAMP, Boolean, Index, UniqueConstraint, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -173,7 +173,7 @@ class ReportWorkSessionEvent(Base):
     __tablename__ = "report_work_session_events"
     __table_args__ = {"schema": "diamond_oltp"}
 
-    work_session_event_id = Column(Integer, primary_key=True, index=True)
+    work_session_event_id = Column(Integer, primary_key=True)
     work_session_id = Column(String(36), ForeignKey("diamond_oltp.report_work_sessions.work_session_id"), nullable=False, index=True)
     action = Column(String(16), nullable=False)
     recorded_at = Column(DateTime, nullable=False)
@@ -234,16 +234,19 @@ class PublicPassport(Base):
     """Revocable public projection token for an issued report."""
 
     __tablename__ = "public_passports"
-    __table_args__ = {"schema": "diamond_oltp"}
+    __table_args__ = (
+        UniqueConstraint("public_id", name="uq_public_passports_public_id"),
+        {"schema": "diamond_oltp"},
+    )
 
-    passport_id = Column(Integer, primary_key=True, index=True)
+    passport_id = Column(Integer, primary_key=True)
     report_id = Column(
         String(20),
         ForeignKey("diamond_oltp.diamond_reports.report_id"),
         nullable=False,
         index=True,
     )
-    public_id = Column(String(64), nullable=False, unique=True, index=True)
+    public_id = Column(String(64), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True, server_default="1")
     created_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
@@ -463,19 +466,22 @@ class MarketProviderOperation(Base):
     """Immutable outcome of one manual or scheduled provider attempt."""
 
     __tablename__ = "market_provider_operations"
-    __table_args__ = {"schema": "diamond_market"}
+    __table_args__ = (
+        Index("ix_market_operation_provider_started", "provider_code", "started_at"),
+        {"schema": "diamond_market"},
+    )
 
-    operation_id = Column(Integer, primary_key=True, index=True)
+    operation_id = Column(Integer, primary_key=True)
     provider_code = Column(
-        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=False, index=True,
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=False,
     )
     trigger_type = Column(String(16), nullable=False)
     status = Column(String(16), nullable=False)
     attempt_number = Column(Integer, nullable=False, default=1)
     started_at = Column(DateTime, nullable=False)
     completed_at = Column(DateTime, nullable=False)
-    market_snapshot_id = Column(Integer, nullable=True, index=True)
-    fx_snapshot_id = Column(Integer, nullable=True, index=True)
+    market_snapshot_id = Column(Integer, nullable=True)
+    fx_snapshot_id = Column(Integer, nullable=True)
     message = Column(Text, nullable=True)
     initiated_by_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())

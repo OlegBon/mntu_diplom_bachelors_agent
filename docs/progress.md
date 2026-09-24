@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — alembic-schema-convergence
+
+- **Задача:** завершити 134 — звірити Alembic, SQLAlchemy metadata та локальну MariaDB і повернути green `alembic check` без небезпечного DDL.
+- **Змінені файли:** `backend/models.py`, `tests/unit/test_schema_metadata.py`, `docs/{backlog/{README,134-alembic-schema-convergence (видалено)}.md,reviews/2026-09-24-local-mvp-release-audit.md,work_plan,progress}.md`.
+- **Рішення / Результат:** `SHOW INDEX` підтвердив, що MariaDB на `0013` вже відповідає canonical migrations. False drift виникав через ORM `index=True` на PK/unique та окремих полях operation log, тоді як revision має named unique constraint і складений `(provider_code, started_at)` index. Metadata скоригована до canonical names; migration, backfill і DDL не потрібні.
+- **Перевірки:** read-only `SHOW INDEX` для трьох таблиць; `alembic current` — `0013_market_provider_operations (head)`; `alembic check` — `No new upgrade operations detected`; migration/metadata tests — 11 passed; `python -m compileall -q backend`; `git diff --check`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** не запускалися seed, migration, DDL, upgrade або downgrade. SQLAlchemy/Pydantic deprecation warnings не належать цій зміні й лишаються окремою задачею 136.
+
 ## 2026-09-24 — local-mvp-release-audit
 
 - **Задача:** завершити 133 — доказово звірити документацію, code/test/API/security/local runtime local MVP і винести підтверджені прогалини в окремі задачі.
