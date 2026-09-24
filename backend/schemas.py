@@ -59,6 +59,8 @@ class PasswordUpdate(BaseModel):
 
 # Схема для експерта (дані, що ми віддаємо на фронт)
 class ExpertBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     expert_id: int
     username: str
     first_name: Optional[str]
@@ -66,10 +68,6 @@ class ExpertBase(BaseModel):
     middle_name: Optional[str]
     role: str
     is_active: bool
-
-    class Config:
-        from_attributes = True
-
 
 class ExpertListResponse(BaseModel):
     items: list[ExpertBase]
@@ -163,6 +161,8 @@ class Token(BaseModel):
     token_type: str
 
 class GradeMappingSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     """
     Схема для передачі довідкових даних (метаданих) на клієнт.
     Використовується для заповнення Select-елементів у формах.
@@ -171,24 +171,19 @@ class GradeMappingSchema(BaseModel):
     grade_value: int   # Числове значення в БД (напр. 2)
     grade_label: str   # Текстова назва для людини (напр. 'F')
 
-    class Config:
-        from_attributes = True
-
 class MarketPriceCreate(BaseModel):
     """Схема для встановлення нової ринкової ціни (Admin input)"""
     price_index_value: float
     notes: Optional[str] = None
 
 class MarketPriceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     """Схема для відображення поточної ціни"""
     id: int
     price_index_value: float
     updated_at: datetime
     notes: Optional[str]
-
-    class Config:
-        from_attributes = True
-
 
 MarketSnapshotStatus = Literal["candidate", "approved", "rejected"]
 

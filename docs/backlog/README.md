@@ -27,7 +27,7 @@
 
 | Файл | Тема |
 | --- | --- |
-| [136-sqlalchemy-pydantic-deprecation-cleanup.md](./136-sqlalchemy-pydantic-deprecation-cleanup.md) | Сумісне прибирання SQLAlchemy/Pydantic deprecation warnings. |
+| [137-github-actions-continuous-integration.md](./137-github-actions-continuous-integration.md) | Reproducible CI до переходу на protected `main`, без deploy. |
 | [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |
 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
