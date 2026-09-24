@@ -120,3 +120,12 @@ def get_storage_path(storage_key: str) -> Path:
 
 def remove_stored_file(storage_key: str) -> None:
     get_storage_path(storage_key).unlink(missing_ok=True)
+
+
+def has_expected_digest(path: Path, expected_sha256: str) -> bool:
+    """Verify an allow-listed public file has not changed after its upload."""
+    digest = hashlib.sha256()
+    with path.open("rb") as stored_file:
+        while chunk := stored_file.read(64 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest() == expected_sha256

@@ -522,6 +522,20 @@ class MediaAssetResponse(BaseModel):
     is_public: bool
 
 
+class MediaPublicationUpdate(BaseModel):
+    """Explicit admin decision whether an eligible image appears in a public passport."""
+
+    is_public: bool
+
+
+class PublicPassportMediaAsset(BaseModel):
+    """Anonymous allow-listed media metadata; private file metadata stays private."""
+
+    media_id: int
+    asset_type: Literal["stone_photo", "plotting_diagram"]
+    mime_type: Literal["image/jpeg", "image/png", "image/webp"]
+
+
 class PublicPassportResponse(BaseModel):
     """Private publication state returned only to an administrator."""
 

@@ -135,6 +135,12 @@ export const getDomainReport = (reportId, token) => requestApi(`/reports/${encod
 
 export const getPublicPassport = (publicId) => requestApi(`/public/passports/${encodeURIComponent(publicId)}`);
 
+export const getPublicPassportMedia = (publicId) => requestApi(`/public/passports/${encodeURIComponent(publicId)}/media`);
+
+export const getPublicPassportMediaContentUrl = (publicId, mediaId) => (
+  `${BASE_URL}/public/passports/${encodeURIComponent(publicId)}/media/${encodeURIComponent(mediaId)}/content`
+);
+
 export const getReportPassport = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/passport`, { token });
 
 export const publishReportPassport = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/passport`, { method: "POST", token });
@@ -176,6 +182,11 @@ export const getReportEvents = (reportId, token) => requestApi(`/reports/${encod
 export const getReportMedia = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/media`, { token });
 
 export const getReportMediaContentUrl = (reportId, mediaId) => `${BASE_URL}/reports/${encodeURIComponent(reportId)}/media/${encodeURIComponent(mediaId)}/content`;
+
+export const updateReportMediaPublication = (reportId, mediaId, isPublic, token) => requestApi(
+  `/reports/${encodeURIComponent(reportId)}/media/${encodeURIComponent(mediaId)}/publication`,
+  { method: "PUT", token, body: { is_public: isPublic } },
+);
 
 /**
  * Функція логіну (отримання токена)

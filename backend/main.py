@@ -274,6 +274,41 @@ def read_public_passport(
     return to_public_passport_view(passport, report, stone)
 
 
+def get_public_passport_report_or_404(db: Session, public_id: str) -> models.DiamondReport:
+    """Resolve a valid public token without disclosing why an unavailable token failed."""
+    result = crud.get_public_passport_view(db, public_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Passport not found")
+    _passport, report, _stone = result
+    return report
+
+
+@app.get("/public/passports/{public_id}/media", response_model=List[schemas.PublicPassportMediaAsset])
+def read_public_passport_media(public_id: str, db: Session = Depends(get_db)):
+    report = get_public_passport_report_or_404(db, public_id)
+    return crud.get_public_media_assets(db, report.report_id)
+
+
+@app.get("/public/passports/{public_id}/media/{media_id}/content")
+def read_public_passport_media_content(
+    public_id: str,
+    media_id: int,
+    db: Session = Depends(get_db),
+):
+    report = get_public_passport_report_or_404(db, public_id)
+    asset = crud.get_public_media_asset(db, report.report_id, media_id)
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Public passport media not found")
+    path = media_storage.get_storage_path(asset.storage_key)
+    if not path.is_file() or not media_storage.has_expected_digest(path, asset.sha256):
+        raise HTTPException(status_code=404, detail="Public passport media not found")
+    return FileResponse(
+        path,
+        media_type=asset.mime_type,
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+    )
+
+
 @app.get("/reports", response_model=schemas.ReportListResponse)
 def read_report_domain_list(
     page: int = Query(default=1, ge=1),
@@ -692,6 +727,29 @@ def read_report_media_content(
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Media file not found")
     return FileResponse(path, media_type=asset.mime_type, filename=asset.original_filename)
+
+
+@app.put("/reports/{report_id}/media/{media_id}/publication", response_model=schemas.MediaAssetResponse)
+def update_report_media_publication(
+    report_id: str,
+    media_id: int,
+    payload: schemas.MediaPublicationUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    require_admin(current_user)
+    report = crud.get_report_domain(db, report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    asset = crud.get_media_asset(db, report_id, media_id)
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Media asset not found")
+    try:
+        return crud.set_media_asset_publication(
+            db, report=report, media_asset=asset, is_public=payload.is_public, actor=current_user,
+        )
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @app.delete("/reports/{report_id}/media/{media_id}")

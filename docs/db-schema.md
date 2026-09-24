@@ -165,8 +165,8 @@ Revocable public projection для виданого звіту. `passport_id` �
 непослідовний token. `is_active`, `created_at` і `revoked_at` зберігають
 publication state без зміни приватного report. Public API повертає дані лише
 коли token активний, report має `status=issued` та непорожній `issued_at`.
-Відкликання або `void` робить старе посилання непридатним. Публічні media не
-підтримуються у цій revision і винесені в 130.
+Відкликання або `void` робить старе посилання непридатним разом із усіма
+опублікованими media за цим token-ом.
 
 ### `media_assets`
 
@@ -180,11 +180,14 @@ publication state без зміни приватного report. Public API по
 | `asset_type` | `stone_photo`, `plotting_diagram`, `instrument_image` або `supporting_document`. |
 | `storage_key`, `original_filename` | Згенерований сервером ключ і відображувана назва; клієнтський шлях не використовується. |
 | `mime_type`, `size_bytes`, `sha256` | Перевірені сервером тип, розмір і контрольний хеш файлу. |
-| `created_at`, `is_public` | Технічний час і майбутня ознака видимості; за замовчуванням `false`. |
+| `created_at`, `is_public` | Технічний час і явне рішення admin про видимість; за замовчуванням `false`. |
 
-API не монтує storage як static directory: читання проходить тільки через
-авторизований endpoint owner/admin. `is_public` ще не відкриває файл — це
-окреме рішення для публічного паспорта. Legacy `plotting_image` і `real_image`
+API не монтує storage як static directory: private читання проходить тільки через
+авторизований endpoint owner/admin. Для public passport доступні тільки
+`stone_photo` і `plotting_diagram` із MIME `image/jpeg`, `image/png` або
+`image/webp`, якщо admin у виданому report явно встановив `is_public=true`.
+Public content endpoint повторно звіряє SHA-256, повертає `no-store` та не
+працює без чинного public token; revoke/void одразу повертає 404. Legacy `plotting_image` і `real_image`
 не переносилися, бо містять непідтверджені placeholder-шляхи, а не файли.
 
 ### `stone_valuations`
