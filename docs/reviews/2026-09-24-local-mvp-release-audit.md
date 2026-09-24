@@ -5,8 +5,8 @@
 Локальний MVP має цілісний private workflow звіту, public passport/QR/PDF,
 media allow-list, ринкові snapshot-и та базові RBAC межі. Критичних
 функціональних або підтверджених витоків даних у виконаному зрізі не знайдено.
-Водночас release не варто вважати готовим до staging, доки не реалізовано
-реальний browser E2E.
+Водночас release не варто вважати готовим до staging без окремих staging/security
+рішень, проте release-важливий real browser E2E локального workflow вже реалізовано.
 
 ## Виконані перевірки
 
@@ -14,8 +14,9 @@ media allow-list, ринкові snapshot-и та базові RBAC межі. К
 - `frontend npm test` — 22/22 пройшли; build успішний.
 - `npm run audit:api` проти `127.0.0.1:8000` — 18/18 read-only/CORS
   перевірок пройшли.
-- Повний Playwright — 16/17: знайдено застарілий mock-контракт паспорта,
-  винесено у [135](../backlog/135-real-browser-e2e-and-passport-contract.md).
+- Повний Playwright — 17/17 після виправлення застарілого mock-контракту паспорта.
+- `npm run test:e2e:real` — isolated real API/browser flow через disposable SQLite:
+  login → dashboard → wizard → draft/edit → review → issued → public passport/PDF.
 - `alembic current` — `0013_market_provider_operations (head)`; початкова
   index/metadata розбіжність усунена metadata correction без DDL, а
   `alembic check` проходить.
@@ -35,12 +36,12 @@ media allow-list, ринкові snapshot-и та базові RBAC межі. К
 Metadata приведена у відповідність без DDL; `alembic check` green і regression
 test фіксує canonical names.
 
-### Середньо — browser E2E не є green
+### Вирішено — passport contract і real browser E2E
 
-Passport delivery test повертав стару raw JSON форму, а private API тепер
-повертає wrapper `passport`. Це тестова, не UI-регресія, але вона приховує
-цінний сценарій PDF/QR. Виправлення mock-а й ізольований real E2E flow
-належать [135](../backlog/135-real-browser-e2e-and-passport-contract.md).
+Passport delivery test повертав стару raw JSON форму, а private API повертає
+wrapper `passport`; mock синхронізовано. Додано окремий runtime із test
+accounts, SQLite schema translation і private storage, який не торкається
+MariaDB та виконує повний browser flow включно з PDF.
 
 ### Низько — tooling debt
 

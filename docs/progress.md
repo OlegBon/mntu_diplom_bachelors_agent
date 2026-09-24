@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — real-browser-e2e-and-passport-contract
+
+- **Задача:** завершити 135 — синхронізувати Playwright mock private passport із чинним API та додати реальний безпечний browser workflow без доступу до локальної MariaDB.
+- **Змінені файли:** `backend/database.py`, `scripts/e2e_app.py`, `frontend/{gulpfile.js,package.json,playwright.real.config.mjs,scripts/{run-real-e2e,serve-real-e2e}.mjs,src/js/modules/api.js,tests/e2e/{public-passport-delivery,real-report-workflow}.spec.mjs}`, `docs/{architecture,backlog/{README,135-real-browser-e2e-and-passport-contract (видалено)},local-start,reviews/2026-09-24-local-mvp-release-audit,work_plan,progress}.md`.
+- **Рішення / Результат:** `GET /reports/{id}/passport` mock тепер відтворює реальний wrapper `{ passport: ... }`, тому повний mock Playwright набір більше не має stale failure. `npm run test:e2e:real` виконує одноразову Gulp-збірку, піднімає static frontend `:3211` та FastAPI `:8010`, але тільки з явними `DIAMANT_E2E_MODE=1` і SQLite runtime. `scripts/e2e_app.py` відмовляється стартувати без цих умов, очищує виключно `tmp/e2e-runtime`, створює два disposable test accounts, schema-translated SQLite та private test storage. Реальний сценарій перевіряє login → dashboard → wizard → draft/edit з expert Proportions → review → issued → public passport → PDF download. API default лишився `127.0.0.1:8000`; test override існує лише до завантаження E2E-сторінки.
+- **Перевірки:** `cmd /c "cd frontend && npm run test:e2e:real"` — 1 passed; повторний чистий запуск також пройшов і не залишив listeners `:3211`/`:8010`; `cmd /c "cd frontend && npm test"` — build і Node/jsdom набір без помилок; `git diff --check`.
+- **Нові змінні середовища:** користувацьких немає. Внутрішній раннер сам установлює `DIAMANT_E2E_MODE=1`, test-only `DATABASE_URL=sqlite:///tmp/e2e-runtime/diamant-id-e2e.sqlite3`, `MEDIA_STORAGE_PATH` і non-production `SECRET_KEY`; їх не слід задавати для звичайного запуску.
+- **Обмеження:** реальний flow навмисно не є тестом MariaDB, міграцій, production CORS, TLS або staging. Mock browser suite лишається окремим швидким зрізом; MariaDB/PostgreSQL перевіряються у відповідних майбутніх задачах.
+
 ## 2026-09-24 — alembic-schema-convergence
 
 - **Задача:** завершити 134 — звірити Alembic, SQLAlchemy metadata та локальну MariaDB і повернути green `alembic check` без небезпечного DDL.

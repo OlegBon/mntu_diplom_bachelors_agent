@@ -48,7 +48,9 @@ test("admin sees the public code and downloads a PDF passport", async ({ page })
   await page.route("**/reports/DR-01001/media", (route) => route.fulfill({ json: [] }));
   await page.route("**/reports/DR-01001/passport/qr?*", (route) => route.fulfill({ contentType: "image/svg+xml", body: "<svg></svg>" }));
   await page.route("**/reports/DR-01001/passport/pdf?*", (route) => route.fulfill({ contentType: "application/pdf", body: "%PDF-1.4" }));
-  await page.route("**/reports/DR-01001/passport", (route) => route.fulfill({ json: { public_id: publicId, report_id: "DR-01001", is_active: true, created_at: "2026-09-16T09:00:00Z", revoked_at: null } }));
+  await page.route("**/reports/DR-01001/passport", (route) => route.fulfill({ json: {
+    passport: { public_id: publicId, report_id: "DR-01001", is_active: true, created_at: "2026-09-16T09:00:00Z", revoked_at: null },
+  } }));
   await page.route("**/reports/DR-01001", (route) => {
     if (new URL(route.request().url()).pathname === "/reports/DR-01001") {
       return route.fulfill({ json: issuedReport });

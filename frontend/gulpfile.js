@@ -90,7 +90,7 @@ function server() {
     server: {
       baseDir: "./dist",
     },
-    port: 3000,
+    port: Number(process.env.FRONTEND_PORT || 3000),
     notify: false,
     // Local operator windows must not replay each other's clicks or form input.
     ghostMode: false,

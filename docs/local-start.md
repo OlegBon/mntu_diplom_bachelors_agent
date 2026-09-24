@@ -189,6 +189,7 @@ Gulp/Browsersync зазвичай віддає збірку на `http://localho
 .\.venv\Scripts\python.exe -m pytest
 cmd /c "cd frontend && npm test"
 cmd /c "cd frontend && npm run test:e2e"
+cmd /c "cd frontend && npm run test:e2e:real"
 ```
 
-Перед першим browser E2E один раз встанови локальний браузер Playwright: `cmd /c "cd frontend && npx playwright install chromium chromium-headless-shell"`. Поточний E2E перевіряє лише відображення login-сторінки й не виконує вхід під реальним користувачем.
+Перед першим browser E2E один раз встанови локальний браузер Playwright: `cmd /c "cd frontend && npx playwright install chromium chromium-headless-shell"`. `npm run test:e2e` лишається швидким набором з mock HTTP. `npm run test:e2e:real` збирає frontend, піднімає окремі frontend/API на `127.0.0.1:3211` і `:8010`, створює disposable SQLite runtime у `tmp/e2e-runtime` та перевіряє реальний login → dashboard → wizard → draft/edit → review → issued → public passport/PDF. Команда вимагає `node_modules` і `.venv`, не читає, не змінює та не seed-ить XAMPP/MariaDB; після завершення зупиняє власні тестові процеси.

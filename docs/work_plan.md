@@ -34,7 +34,7 @@
 - [x] Усунути розходження актуального `seed_db.py`, legacy `seed_db-start.py` і моделей: seed відтворює всі три схеми, а `ml_results` формалізовано моделлю.
 - [x] Виконати clean seed MariaDB та API smoke-flow: bcrypt-login admin і першого експерта, `npm run audit:api` — 10/10.
 - [x] Виправити `/experts/`, `POST/PUT/DELETE /diamonds/*`, 404-відповіді та owner/admin RBAC; синхронізувати API response models із dashboard.
-- [ ] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit, profile/admin UI та public passport/PDF реалізовано; лишається real E2E з MariaDB у [135](./backlog/135-real-browser-e2e-and-passport-contract.md).
+- [x] Завершити інтеграцію frontend ↔ API: єдиний API-клієнт, server mappings/price, dashboard, створення, private detail/edit, profile/admin UI та public passport/PDF реалізовано; real browser E2E проходить у disposable SQLite runtime без доступу до MariaDB.
 - [x] Визначити долю `diamond_analytics.ml_results`: зберігаємо таблицю як зарезервований аналітичний шар, описуємо моделлю та відтворюємо порожньою через локальний seed; API/ML — окрема задача.
 
 ### Пріоритет 2 — якість і тестування
@@ -44,7 +44,7 @@
 - [x] Додати unit-тест ML-сервісу з контрольованими market price та випадковістю.
 - [x] Додати API/integration-тести auth, RBAC, створення/видалення звітів, 404/422 та ізольовану SQLite БД.
 - [x] Додати frontend JS-модульні тести, jsdom DOM smoke та базовий Playwright browser smoke login-сторінки.
-- [ ] Розширити browser E2E: реальний login → dashboard → створення → detail/edit звіту після безпечної test-auth стратегії; scope і passport contract — [135](./backlog/135-real-browser-e2e-and-passport-contract.md).
+- [x] Розширити browser E2E: реальний login → dashboard → створення → detail/edit → review → issued → passport/PDF виконується у disposable SQLite runtime з окремими test accounts і storage; mock contract приватного паспорта синхронізований із wrapper-відповіддю API.
 - [ ] Окремо усунути попередження SQLAlchemy 2 (`declarative_base`) і Pydantic 2 (`class Config`, `.dict()`), підтвердивши сумісність API-тестами — [136](./backlog/136-sqlalchemy-pydantic-deprecation-cleanup.md).
 
 ### Пріоритет 3 — завершення локального MVP
@@ -81,9 +81,9 @@
 - [x] 130 — Публічні вкладення паспорта: admin може явно опублікувати лише `stone_photo` або `plotting_diagram` виданого report. Anonymous endpoint прив'язаний до active passport token, allow-list-ить JPEG/PNG/WebP, звіряє SHA-256 та повертає `no-store`; private/revoked/void/tampered media дає 404. PDF не містить вкладень.
 - [x] 131 — Зображення у PDF публічного паспорта: on-demand PDF додає лише чинні явно опубліковані фото каменю та plotting після основної сторінки, з allow-list/checksum/revoke гарантіями, A4 layout і PDF-тестами. PDF не є snapshot-ом: зняте з публікації медіа відсутнє лише в наступних генераціях.
 - [x] 132 — Публічні інформаційні сторінки: footer веде на responsive «Політику конфіденційності» фактичного local MVP і довідку про код/URL/QR/PDF паспорта. Production/legal деталізація потребує окремого рішення після вибору хостингу й процесів даних.
-- [x] [133 — Release-аудит local MVP](./reviews/2026-09-24-local-mvp-release-audit.md): критичних знахідок немає; schema convergence завершено у 134, а deterministic/real browser E2E лишається у [135](./backlog/135-real-browser-e2e-and-passport-contract.md).
+- [x] [133 — Release-аудит local MVP](./reviews/2026-09-24-local-mvp-release-audit.md): критичних знахідок немає; schema convergence завершено у 134, deterministic passport contract та isolated real browser E2E — у 135.
 - [x] 134 — Збіжність Alembic, ORM і MariaDB: read-only інвентаризація підтвердила canonical MariaDB індекси на `0013`; ORM metadata скориговано без DDL/new revision, `alembic check` green і regression test фіксує імена ключів.
-- [ ] [135 — Реальний browser E2E і контракт паспорта](./backlog/135-real-browser-e2e-and-passport-contract.md): виправити stale mock API контракту й запустити ізольований real API/MariaDB flow.
+- [x] 135 — Реальний browser E2E і контракт паспорта: stale mock синхронізовано з `{ passport: ... }`; disposable SQLite runtime виконує реальний workflow без MariaDB, user records або `seed_db.py`.
 - [ ] [136 — SQLAlchemy/Pydantic deprecation cleanup](./backlog/136-sqlalchemy-pydantic-deprecation-cleanup.md): прибрати підтверджені warnings без зміни API чи schema.
 - [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial.
 - [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після рішення 160.
