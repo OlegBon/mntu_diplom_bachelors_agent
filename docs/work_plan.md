@@ -90,7 +90,7 @@
 - [ ] Відокремити конфігурацію БД від MariaDB-специфічного коду, зберігши локальну MariaDB.
 - [ ] Після локального MVP реалізувати перевірений ML-контур: датасет, versioned model artifact, валідація метрик, відтворюваний прогноз і окремі аналітичні результати.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.
-- [ ] Підготувати Dockerfile й deployment-конфігурацію для обраного backend-провайдера; frontend — для shared hosting.
+- [ ] [140 — Хмарне розгортання та scheduler ринкових даних](./backlog/140-cloud-deployment-and-provider-scheduler.md): обрати staging/cloud runtime, налаштувати deployment, secrets, managed scheduler кожні 5 хвилин для provider CLI, logs/alerts і runbook; локальний Windows Task Scheduler не є ціллю.
 - [ ] Налаштувати CORS, env secrets, health-check, домени/TLS та ручний smoke-test до публічного запуску.
 
 ### Зафіксовані розбіжності з початковими нотатками

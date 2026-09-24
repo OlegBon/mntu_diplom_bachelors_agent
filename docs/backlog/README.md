@@ -28,3 +28,4 @@
 | Файл | Тема |
 | --- | --- |
 | [130-public-passport-media.md](./130-public-passport-media.md) | Контрольована видимість вкладень у public passport. |
+| [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |

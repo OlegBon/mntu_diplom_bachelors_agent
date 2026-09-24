@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — cloud-provider-scheduler-backlog
+
+- **Задача:** зафіксувати місце й умови запуску scheduler-а ринкових provider-ів після реалізації 122.
+- **Змінені файли:** `docs/{work_plan,progress}.md`, `docs/backlog/{README,140-cloud-deployment-and-provider-scheduler}.md`.
+- **Рішення / Результат:** managed scheduler належить до staging/cloud deployment, а не до локального Windows Task Scheduler. Нова 140 включає interval 5 хвилин, timezone, singleton execution, logs/alerts, least-privilege env, runbook і deployment rollback.
+- **Перевірки:** посилання з `work_plan.md` та `docs/backlog/README.md` перевірені локально.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** cloud provider, deployment model, домени, TLS, DB strategy та alert channel ще не обрані.
+
 ## 2026-09-24 — market-provider-operations
 
 - **Задача:** завершити 122: кероване оновлення OpenFacet/НБУ, freshness policy, scheduler contract, observability та безпечну межу між зовнішнім fetch і збереженням звіту.
