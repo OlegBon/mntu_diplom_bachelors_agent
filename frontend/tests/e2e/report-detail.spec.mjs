@@ -115,3 +115,44 @@ test("owner edits a draft and sees the recorded private history", async ({ page 
   expect(workSessionActions).toContain("start");
   expect(workSessionActions).toContain("save");
 });
+
+test("admin confirms passport-media publication in a project dialog", async ({ page }) => {
+  const issuedReport = { ...report, status: "issued", issued_at: "2026-09-18T09:00:00Z", issued_by_id: 1 };
+  const publicationRequests = [];
+  await page.addInitScript(() => {
+    localStorage.setItem("token", "admin-e2e-token");
+    localStorage.setItem("username", "admin");
+  });
+  await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
+  await page.route("**/reference-values", (route) => route.fulfill({ json: [] }));
+  await page.route("**/market/mappings", (route) => route.fulfill({ json: [] }));
+  await page.route("**/reports/DR-01001/events", (route) => route.fulfill({ json: [] }));
+  await page.route("**/reports/DR-01001/valuations", (route) => route.fulfill({ json: [] }));
+  await page.route("**/reports/DR-01001/passport", (route) => route.fulfill({
+    status: 404, contentType: "application/json", body: JSON.stringify({ detail: "Паспорт не опубліковано" }),
+  }));
+  await page.route("**/reports/DR-01001/media/7/publication", async (route) => {
+    publicationRequests.push(route.request().postDataJSON());
+    await route.fulfill({ json: { media_id: 7, is_public: true } });
+  });
+  await page.route("**/reports/DR-01001/media", (route) => route.fulfill({ json: [
+    {
+      media_id: 7, report_id: "DR-01001", asset_type: "stone_photo", original_filename: "stone.png",
+      mime_type: "image/png", size_bytes: 10, sha256: "a".repeat(64), uploaded_by_id: 1,
+      created_at: "2026-09-16T09:00:00Z", is_public: false,
+    },
+  ] }));
+  await page.route("**/reports/DR-01001/media/7/content", (route) => route.fulfill({
+    contentType: "image/png", body: "image-placeholder",
+  }));
+  await page.route("**/reports/DR-01001", (route) => route.fulfill({ json: issuedReport }));
+
+  await page.goto("/report-detail.html?id=DR-01001");
+  await page.getByRole("button", { name: "Опублікувати в паспорті" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("чинним посиланням або QR-кодом");
+  await dialog.getByRole("button", { name: "Опублікувати в паспорті" }).click();
+  await expect.poll(() => publicationRequests).toEqual([{ is_public: true }]);
+  await expect(dialog).not.toBeVisible();
+});
