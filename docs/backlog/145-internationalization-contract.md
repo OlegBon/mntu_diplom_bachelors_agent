@@ -16,6 +16,12 @@
 - QR/token не залежать від мови; public page може мати locale у URL без зміни
   public ID. PDF потребує явного validated locale parameter.
 
+## Залежність
+
+- До реалізації необхідна [146 — незбережене введення майстра](./146-wizard-draft-continuity.md):
+  саме вона дає browser-state для безпечного locale switch, reload і
+  повернення на сторінку. I18n не створює hidden server draft.
+
 ## Декомпозиція перед реалізацією
 
 - Translation catalog, fallback, formatting dates/numbers/currency, server labels,

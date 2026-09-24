@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-24 — analytics-verified-ml-strategy
+
+- **Задача:** завершити 150 як продуктово-архітектурне рішення: відокремити operational analytics від ML, SOM і перевірки експертних текстів; уточнити економний момент запуску 137 та не втрачати введення майстра.
+- **Змінені файли:** `docs/{architecture,work_plan,progress}.md`, `docs/decisions/005-analytics-and-verified-ml-strategy.md`, `docs/backlog/{README,137-github-actions-continuous-integration,145-internationalization-contract,146-wizard-draft-continuity,151-analytics-data-contract-and-quality,152-verified-ml-experiment,153-stone-analytics-visualization,154-expert-narrative-quality-analysis,155-operational-and-data-quality-analytics}.md`; `150-analytics-and-verified-ml-strategy.md` видалено з active backlog.
+- **Рішення / Результат:** ML-ціна, SOM і text quality стали різними контурами. Перший ML target може бути лише чітко ліцензованим normalised USD/ct reference або actual sale price; listing, provider reference і transaction не змішуються. OpenFacet/IDEX не можна використати для training/labels без письмового derivative-use дозволу. SOM не є `predict_price()` або `is_investment_grade`; Figma-карта — лише концепт private descriptive UI. Synthetic seed `DR-00001`–`DR-01000` дозволено лише для technical SOM demo без ринкових/investment claims; private reports після `DR-01000` — лише після documented purpose/privacy basis та manifest. Для текстів спочатку можливі explainable warnings якості та admin-only metadata statistics за кожним полем (words/chars/min/max report links), без excerpt, rating чи висновку про якість. Додано 155 для workflow/data-quality/provider/public-delivery метрик. Додано 146: per-tab `sessionStorage` restore, leave-warning і явне очищення після успішного save без hidden server draft; це передумова 145. 137 перенесено на gate перед першим PR до `main`/161: full CI лише PR/manual, concurrency cancellation, Linux-only, failure-only artifacts і usage budget/alerts.
+- **Перевірки:** `python scripts/check_doc_links.py` — `Documentation links: OK`; `git diff --check` — без помилок. Код, схема, залежності й runtime не змінювалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** ML-код, dataset, API, migrations, i18n і wizard persistence ще не реалізовані. Чинна форма все ще втрачає введення до виконання 146; 150 лише зафіксувала безпечний напрям.
+
 ## 2026-09-24 — sqlalchemy-pydantic-deprecation-cleanup
 
 - **Задача:** завершити 136 та зафіксувати наступну 137 — прибрати runtime deprecation warnings SQLAlchemy 2/Pydantic 2 без зміни контрактів і додати GitHub Actions CI до плану до переходу на `main`.
