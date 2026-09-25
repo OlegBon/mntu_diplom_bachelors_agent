@@ -1,7 +1,7 @@
 import { startWizardWorkSession } from "./api.js";
 
 const TAB_STORAGE_KEY = "diamond-id:wizard-tab-id";
-const SESSION_STORAGE_KEY = "diamond-id:wizard-work-session-id";
+const SESSION_STORAGE_KEY_PREFIX = "diamond-id:wizard-work-session-id";
 
 function makeId() {
   return crypto.randomUUID();
@@ -16,8 +16,9 @@ function tabId() {
   return value;
 }
 
-export function createWizardWorkSessionTracker({ form, token }) {
-  let sessionId = sessionStorage.getItem(SESSION_STORAGE_KEY);
+export function createWizardWorkSessionTracker({ form, token, userId }) {
+  const sessionStorageKey = `${SESSION_STORAGE_KEY_PREFIX}:user:${userId}`;
+  let sessionId = sessionStorage.getItem(sessionStorageKey);
   let pendingStart = null;
 
   async function start() {
@@ -26,7 +27,7 @@ export function createWizardWorkSessionTracker({ form, token }) {
     pendingStart = startWizardWorkSession({ tab_id: tabId() }, token)
       .then((state) => {
         sessionId = state.wizard_session_id;
-        sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+        sessionStorage.setItem(sessionStorageKey, sessionId);
         return sessionId;
       })
       .catch(() => null)
@@ -47,7 +48,7 @@ export function createWizardWorkSessionTracker({ form, token }) {
     getOrStart: start,
     clear() {
       sessionId = null;
-      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      sessionStorage.removeItem(sessionStorageKey);
     },
   };
 }
