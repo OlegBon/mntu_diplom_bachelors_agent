@@ -5,8 +5,8 @@
 порядок обговорення, а не обіцянку терміну реалізації.
 
 `docs/work_plan.md` лишається короткою дорожньою картою: він показує етапи,
-пріоритети, стан і залежності. Backlog містить деталізацію активних задач, але
-не дублює журнал змін.
+порядок і залежності. Backlog містить деталізацію активних задач, але не
+дублює журнал змін.
 
 ## Як працювати з backlog
 
@@ -23,23 +23,38 @@
    створіть окремий запис у `docs/decisions/`, а не зберігайте завершену
    backlog-копію.
 
+## Пріоритети
+
+Пріоритет — це рекомендована черга цінності та залежностей, а не обіцянка
+терміну. Менший номер важливіший; точний порядок усередині одного рівня
+визначають залежності у файлі задачі.
+
+| Рівень | Значення |
+| --- | --- |
+| `P0` | Захищає поточний workflow або дані; виконується наступним. |
+| `P1` | Наступний продуктово важливий зріз після P0. |
+| `P2` | Аналітика, partner readiness або розширення після фундаменту. |
+| `P3` | Staging/deployment gate після локальної перевірки. |
+
 ## Активні задачі
 
-| Файл | Тема |
-| --- | --- |
-| [137-github-actions-continuous-integration.md](./137-github-actions-continuous-integration.md) | Reproducible CI до переходу на protected `main`, без deploy. |
-| [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |
-| [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
-| [146-wizard-draft-continuity.md](./146-wizard-draft-continuity.md) | Відновлення незбереженого wizard state без hidden server draft. |
-| [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
-| [151-analytics-data-contract-and-quality.md](./151-analytics-data-contract-and-quality.md) | Ліцензії, dataset, target, quality і reproducible splits. |
-| [152-verified-ml-experiment.md](./152-verified-ml-experiment.md) | Baseline, validation, artifact та model-result provenance. |
-| [153-stone-analytics-visualization.md](./153-stone-analytics-visualization.md) | Private descriptive SOM / market segments після якісних даних. |
-| [154-expert-narrative-quality-analysis.md](./154-expert-narrative-quality-analysis.md) | Explainable quality checks експертних текстів; NLP лише після policy. |
-| [155-operational-and-data-quality-analytics.md](./155-operational-and-data-quality-analytics.md) | Workflow, data-quality і provider analytics без rating або public tracking. |
-| [156-demo-dataset-contract-and-isolation.md](./156-demo-dataset-contract-and-isolation.md) | Admin-only synthetic scope, RBAC, migration plan і money semantics. |
-| [157-synthetic-demo-dataset-generator.md](./157-synthetic-demo-dataset-generator.md) | Детермінований synthetic dataset, provenance та safe showcase assets. |
-| [158-admin-demo-report-and-passport-preview.md](./158-admin-demo-report-and-passport-preview.md) | Read-only admin demo detail, PDF і private passport preview. |
-| [159-synthetic-som-demo.md](./159-synthetic-som-demo.md) | Isolated reproducible SOM technical demo для admin. |
-| [160-platform-and-stack-decision.md](./160-platform-and-stack-decision.md) | Cloud platform ADR, current stack and TypeScript/Vite criteria. |
-| [161-postgresql-migration-and-staging.md](./161-postgresql-migration-and-staging.md) | PostgreSQL, staging, deployment and scheduler integration. |
+| Пріоритет | Файл | Тема |
+| --- | --- | --- |
+| P0 | [146-wizard-draft-continuity.md](./146-wizard-draft-continuity.md) | Відновлення незбереженого wizard state без hidden server draft. |
+| P1 | [156-demo-dataset-contract-and-isolation.md](./156-demo-dataset-contract-and-isolation.md) | Admin-only synthetic scope, RBAC, migration plan і money semantics. |
+| P1 | [162-multi-provider-market-references.md](./162-multi-provider-market-references.md) | Незалежні provider valuations, primary display і private presentation. |
+| P1 | [157-synthetic-demo-dataset-generator.md](./157-synthetic-demo-dataset-generator.md) | Детермінований synthetic dataset, provenance, safe assets і demo provider-и. |
+| P1 | [158-admin-demo-report-and-passport-preview.md](./158-admin-demo-report-and-passport-preview.md) | Read-only admin demo detail, PDF і private passport preview. |
+| P1 | [159-synthetic-som-demo.md](./159-synthetic-som-demo.md) | Isolated reproducible SOM technical demo для admin. |
+| P2 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
+| P2 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
+| P2 | [163-provider-operations-and-coverage-analytics.md](./163-provider-operations-and-coverage-analytics.md) | Admin tab operations, freshness і coverage provider-ів. |
+| P2 | [154-expert-narrative-quality-analysis.md](./154-expert-narrative-quality-analysis.md) | Explainable quality checks експертних текстів; NLP лише після policy. |
+| P2 | [155-operational-and-data-quality-analytics.md](./155-operational-and-data-quality-analytics.md) | Workflow і data-quality analytics без rating або public tracking. |
+| P2 | [151-analytics-data-contract-and-quality.md](./151-analytics-data-contract-and-quality.md) | Ліцензії, dataset, target, quality і reproducible splits. |
+| P2 | [152-verified-ml-experiment.md](./152-verified-ml-experiment.md) | Baseline, validation, artifact та model-result provenance. |
+| P2 | [153-stone-analytics-visualization.md](./153-stone-analytics-visualization.md) | Private descriptive SOM / market segments після якісних даних. |
+| P3 | [160-platform-and-stack-decision.md](./160-platform-and-stack-decision.md) | Cloud platform ADR, current stack and TypeScript/Vite criteria. |
+| P3 | [137-github-actions-continuous-integration.md](./137-github-actions-continuous-integration.md) | Reproducible CI до переходу на protected `main`, без deploy. |
+| P3 | [161-postgresql-migration-and-staging.md](./161-postgresql-migration-and-staging.md) | PostgreSQL, staging, deployment and scheduler integration. |
+| P3 | [140-cloud-deployment-and-provider-scheduler.md](./140-cloud-deployment-and-provider-scheduler.md) | Хмарне розгортання, managed scheduler і observability ринкових provider-ів. |

@@ -6,6 +6,9 @@
 показниками workflow та якості даних, не перетворюючи її на рейтинг людей,
 ML-прогноз або приховане спостереження за публічними відвідувачами.
 
+Provider operations і coverage виділені в 163 після multi-provider foundation
+162, щоб не змішувати workflow/data-quality статистику з provider contract.
+
 ## Кандидати до реалізації
 
 - **Workflow funnel:** створено → review → issued / повернено / void, кількість
@@ -14,9 +17,6 @@ ML-прогноз або приховане спостереження за пу
 - **Якість report data:** coverage обов'язкових і необов'язкових полів,
   розподіли shape/4C/origin/treatment, completeness geometry, медіа та
   publication readiness. Це опис набору, не оцінка експерта.
-- **Ринкові операції:** freshness OpenFacet/НБУ, candidate approve/reject,
-  coverage/missing combinations, schedule failures/retries і частка report-ів
-  із system/manual reference. Не робити «точність ціни» без незалежного target.
 - **Публічний delivery workflow:** частота publish/revoke/reissue та PDF/media
   readiness на рівні report. Не збирати analytics про anonymous visitors,
   QR-scans або персональні дані без окремої privacy/product задачі.

@@ -104,16 +104,31 @@
 - [ ] [152 — Верифікований ML-експеримент](./backlog/152-verified-ml-experiment.md): baseline, validation, artifact, uncertainty і private result provenance після 151.
 - [ ] [153 — Stone analytics / SOM](./backlog/153-stone-analytics-visualization.md): descriptive admin-only сегменти після 151, без investment verdict.
 - [ ] [154 — Якість експертних текстів](./backlog/154-expert-narrative-quality-analysis.md): explainable form-quality checks; NLP/ML тільки після окремого data/privacy contract.
-- [ ] [155 — Operational і data-quality analytics](./backlog/155-operational-and-data-quality-analytics.md): workflow funnel, completeness, provider operations і publication readiness без rating/public tracking.
+- [ ] [155 — Operational і data-quality analytics](./backlog/155-operational-and-data-quality-analytics.md): workflow funnel, completeness і publication readiness без rating/public tracking; provider metrics — 163.
 - [ ] [156 — Demo dataset contract і isolation](./backlog/156-demo-dataset-contract-and-isolation.md): `operational`/`demo` scope, admin-only RBAC, backfill plan 1 000 seed records і незалежна money semantics.
+- [ ] [162 — Multi-provider market references](./backlog/162-multi-provider-market-references.md): enabled provider set, dashboard primary, independent immutable valuations та private presentation без aggregation/public display.
 - [ ] [157 — Synthetic demo dataset generator](./backlog/157-synthetic-demo-dataset-generator.md): deterministic `DEMO-…`, manifest, filled synthetic fields і safe assets після 156.
 - [ ] [158 — Admin demo report/PDF/passport preview](./backlog/158-admin-demo-report-and-passport-preview.md): immutable private preview без public code/QR після 156–157.
 - [ ] [159 — Synthetic SOM demo](./backlog/159-synthetic-som-demo.md): reproducible admin-only карта для demo dataset, не заміна 151–153.
+- [ ] [163 — Provider operations and coverage analytics](./backlog/163-provider-operations-and-coverage-analytics.md): admin tab freshness, operation outcome і coverage після 122/162.
 - [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локального verified experiment 152 підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
 - [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 152, рішення 160 і CI gate 137 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.
 - [ ] [140 — Хмарне розгортання та scheduler ринкових даних](./backlog/140-cloud-deployment-and-provider-scheduler.md): після 152 → 160 → 137 → 161 обрати staging/cloud runtime, налаштувати deployment, secrets, managed scheduler кожні 5 хвилин для provider CLI, logs/alerts і runbook; локальний Windows Task Scheduler не є ціллю.
 - [ ] Налаштувати CORS, env secrets, health-check, домени/TLS та ручний smoke-test до публічного запуску.
+
+### Рекомендована черга активних задач
+
+1. `146` — не втрачати незбережене введення експерта.
+2. `156 → 162 → 157 → 158 → 159` — ізолювати demo, додати multi-provider
+   foundation, згенерувати повний synthetic dataset, private previews і SOM.
+3. `163` — показати operations/coverage provider-ів на вже реальних і demo
+   provider records; `141` може готувати English IDEX mock-up паралельно, але
+   не відкриває live IDEX без їхнього письмового approval.
+4. `145`, `154`, `155`, `151 → 152 → 153` — i18n та наступні аналітичні
+   контури за їхніми окремими залежностями.
+5. `160 → 137 → 161 → 140` — лише після локального verified experiment:
+   platform decision, CI gate, PostgreSQL/staging і managed deployment.
 
 ### Зафіксовані розбіжності з початковими нотатками
 
