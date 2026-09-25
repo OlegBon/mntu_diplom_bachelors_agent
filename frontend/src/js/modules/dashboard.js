@@ -3,7 +3,7 @@ import { logout } from "./auth.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const PAGE_SIZE = 25;
-const DEFAULT_SORT = "report_date_desc";
+const DEFAULT_SORT = "report_id_desc";
 const REPORT_STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
 const SALE_STATUS_LABELS = { false: "Не продано", true: "Продано" };
 
