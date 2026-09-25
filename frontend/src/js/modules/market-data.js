@@ -70,7 +70,7 @@ function renderProviders(container, providers, fxSnapshots, onAction) {
   }
 }
 
-function renderPolicyMarketProviders(container, providers, selectedProviderCode) {
+function renderPolicyMarketProviders(container, providers, enabledProviderCodes, primaryProviderCode) {
   container.replaceChildren();
   const marketProviders = providers.filter((provider) => provider.provider_type === "market_reference");
   if (!marketProviders.length) {
@@ -81,13 +81,25 @@ function renderPolicyMarketProviders(container, providers, selectedProviderCode)
     const label = document.createElement("label");
     label.className = "market-policy-option";
     const input = document.createElement("input");
-    input.type = "radio";
+    input.type = "checkbox";
     input.name = "market-policy-provider";
     input.value = provider.provider_code;
-    input.checked = provider.provider_code === selectedProviderCode;
+    input.checked = enabledProviderCodes.includes(provider.provider_code);
+    const primary = document.createElement("input");
+    primary.type = "radio";
+    primary.name = "market-policy-primary-provider";
+    primary.value = provider.provider_code;
+    primary.checked = provider.provider_code === primaryProviderCode;
+    primary.disabled = !input.checked;
+    input.addEventListener("change", () => {
+      primary.disabled = !input.checked;
+      if (!input.checked) primary.checked = false;
+    });
     const text = document.createElement("span");
     text.textContent = `${provider.display_name} — ${provider.scope_note}`;
-    label.append(input, text);
+    const primaryText = document.createElement("span");
+    primaryText.textContent = " Основний для списку звітів";
+    label.append(input, text, primary, primaryText);
     container.append(label);
   }
 }
@@ -239,7 +251,10 @@ export async function initMarketData() {
       getMarketProviderSchedules(token).catch(() => []), getMarketProviderOperations(token).catch(() => []),
     ]);
     currentSnapshots = snapshotRows;
-    renderPolicyMarketProviders(policyProviders, providerRows, policy.market_provider_code);
+    renderPolicyMarketProviders(
+      policyProviders, providerRows, policy.enabled_market_provider_codes || [],
+      policy.dashboard_primary_provider_code || null,
+    );
     policyUseFx.checked = policy.use_fx_conversion;
     const fxProvider = providerRows.find((provider) => provider.provider_code === policy.fx_provider_code);
     policyFxNote.textContent = policy.use_fx_conversion
@@ -304,15 +319,18 @@ export async function initMarketData() {
   });
   policyForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const selectedProvider = policyForm.querySelector('input[name="market-policy-provider"]:checked');
-    if (!selectedProvider) {
-      setStatus(status, "Оберіть провайдера ринкового орієнтиру.", true);
+    const enabledProviderCodes = [...policyForm.querySelectorAll('input[name="market-policy-provider"]:checked')]
+      .map((input) => input.value);
+    const primaryProvider = policyForm.querySelector('input[name="market-policy-primary-provider"]:checked');
+    if (primaryProvider && !enabledProviderCodes.includes(primaryProvider.value)) {
+      setStatus(status, "Основний провайдер має входити до увімкненого набору.", true);
       return;
     }
     policySubmit.disabled = true;
     try {
       await updateMarketReferencePolicy({
-        market_provider_code: selectedProvider.value,
+        enabled_market_provider_codes: enabledProviderCodes,
+        dashboard_primary_provider_code: primaryProvider?.value || null,
         use_fx_conversion: policyUseFx.checked,
         fx_provider_code: policyUseFx.checked ? "nbu" : null,
       }, token);

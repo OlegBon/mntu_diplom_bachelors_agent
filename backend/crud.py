@@ -1282,6 +1282,39 @@ def get_market_reference_policy(db: Session) -> models.MarketReferencePolicy | N
     return db.get(models.MarketReferencePolicy, 1)
 
 
+def get_enabled_market_reference_provider_codes(db: Session, *, policy_id: int = 1) -> list[str]:
+    """Return only the explicitly enabled future-reference providers."""
+    codes = [
+        provider_code
+        for (provider_code,) in db.query(models.MarketReferencePolicyProvider.provider_code)
+        .filter(models.MarketReferencePolicyProvider.policy_id == policy_id)
+        .order_by(
+            models.MarketReferencePolicyProvider.display_order,
+            models.MarketReferencePolicyProvider.provider_code,
+        )
+        .all()
+    ]
+    if codes:
+        return codes
+    policy = get_market_reference_policy(db)
+    return [policy.market_provider_code] if policy and policy.market_provider_code else []
+
+
+def get_market_reference_policy_response(
+    db: Session, policy: models.MarketReferencePolicy,
+) -> schemas.MarketReferencePolicyResponse:
+    return schemas.MarketReferencePolicyResponse(
+        policy_id=policy.policy_id,
+        enabled_market_provider_codes=get_enabled_market_reference_provider_codes(db, policy_id=policy.policy_id),
+        dashboard_primary_provider_code=policy.market_provider_code,
+        market_provider_code=policy.market_provider_code,
+        use_fx_conversion=policy.use_fx_conversion,
+        fx_provider_code=policy.fx_provider_code,
+        updated_by_id=policy.updated_by_id,
+        updated_at=policy.updated_at,
+    )
+
+
 def update_market_reference_policy(
     db: Session,
     *,
@@ -1289,13 +1322,25 @@ def update_market_reference_policy(
     actor: models.Expert,
 ) -> models.MarketReferencePolicy:
     """Validate selected provider capabilities before replacing the future-only policy."""
-    market_provider = None
-    if payload.market_provider_code is not None:
-        market_provider = db.get(models.MarketDataProvider, payload.market_provider_code)
-        if market_provider is None or not market_provider.is_active:
+    enabled_codes = list(dict.fromkeys(payload.enabled_market_provider_codes))
+    if not enabled_codes and payload.market_provider_code is not None:
+        enabled_codes = [payload.market_provider_code]
+    primary_provider_code = payload.dashboard_primary_provider_code
+    if primary_provider_code is None and payload.market_provider_code is not None:
+        primary_provider_code = payload.market_provider_code
+    enabled_providers = []
+    for provider_code in enabled_codes:
+        provider = db.get(models.MarketDataProvider, provider_code)
+        if provider is None or not provider.is_active:
             raise ReportDomainError("Selected market-data provider is unavailable")
-        if market_provider.provider_type != "market_reference":
+        if provider.provider_type != "market_reference":
             raise ReportDomainError("Selected provider cannot supply a market reference")
+        enabled_providers.append(provider)
+    if (
+        primary_provider_code is not None
+        and primary_provider_code not in enabled_codes
+    ):
+        raise ReportDomainError("Dashboard primary provider must be enabled")
     fx_provider = None
     if payload.use_fx_conversion:
         if payload.fx_provider_code is None:
@@ -1309,10 +1354,24 @@ def update_market_reference_policy(
     if policy is None:
         policy = models.MarketReferencePolicy(policy_id=1)
         db.add(policy)
-    policy.market_provider_code = market_provider.provider_code if market_provider else None
+    # Retain the historical singleton column as a compatibility projection of
+    # the canonical primary selection; the child rows are the source of truth.
+    policy.market_provider_code = primary_provider_code
     policy.use_fx_conversion = payload.use_fx_conversion
     policy.fx_provider_code = fx_provider.provider_code if fx_provider else None
     policy.updated_by_id = actor.expert_id
+    db.query(models.MarketReferencePolicyProvider).filter(
+        models.MarketReferencePolicyProvider.policy_id == policy.policy_id,
+    ).delete(synchronize_session=False)
+    db.add_all(
+        models.MarketReferencePolicyProvider(
+            policy_id=policy.policy_id,
+            provider_code=provider.provider_code,
+            display_order=index,
+            updated_by_id=actor.expert_id,
+        )
+        for index, provider in enumerate(enabled_providers)
+    )
     db.commit()
     db.refresh(policy)
     return policy

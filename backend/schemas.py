@@ -197,6 +197,7 @@ class MarketDataProviderResponse(BaseModel):
     documentation_url: str
     terms_url: str
     scope_note: str
+    brand_asset_key: Optional[str]
     is_active: bool
 
 
@@ -204,6 +205,9 @@ class MarketReferencePolicyResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     policy_id: int
+    enabled_market_provider_codes: list[str]
+    dashboard_primary_provider_code: Optional[str]
+    # Deprecated compatibility projection; equals dashboard primary.
     market_provider_code: Optional[str]
     use_fx_conversion: bool
     fx_provider_code: Optional[str]
@@ -212,6 +216,9 @@ class MarketReferencePolicyResponse(BaseModel):
 
 
 class MarketReferencePolicyUpdate(BaseModel):
+    enabled_market_provider_codes: list[str] = Field(default_factory=list, max_length=20)
+    dashboard_primary_provider_code: Optional[str] = Field(default=None, max_length=32)
+    # Accepted only to keep existing local clients usable during the transition.
     market_provider_code: Optional[str] = Field(default=None, max_length=32)
     use_fx_conversion: bool
     fx_provider_code: Optional[str] = Field(default=None, max_length=32)

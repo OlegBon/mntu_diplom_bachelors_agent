@@ -199,12 +199,10 @@ def _attach_system_market_reference_when_available(
     endpoint leaves the report valid but without a new automatic reference.
     """
     policy = crud.get_market_reference_policy(db)
-    if policy is None or policy.market_provider_code is None:
+    if policy is None:
         return
-    candidate = crud.prepare_system_market_reference(
-        db, report=report, provider_code=policy.market_provider_code,
-    )
-    if candidate is None or crud.system_market_reference_exists(db, report=report, candidate=candidate):
+    provider_codes = crud.get_enabled_market_reference_provider_codes(db, policy_id=policy.policy_id)
+    if not provider_codes:
         return
     fx_snapshot = None
     if policy.use_fx_conversion:
@@ -222,9 +220,13 @@ def _attach_system_market_reference_when_available(
             )
         if fx_snapshot is None:
             return
-    crud.attach_system_market_reference(
-        db, report=report, candidate=candidate, actor=actor, fx_snapshot=fx_snapshot,
-    )
+    for provider_code in provider_codes:
+        candidate = crud.prepare_system_market_reference(db, report=report, provider_code=provider_code)
+        if candidate is None or crud.system_market_reference_exists(db, report=report, candidate=candidate):
+            continue
+        crud.attach_system_market_reference(
+            db, report=report, candidate=candidate, actor=actor, fx_snapshot=fx_snapshot,
+        )
 
 
 def ensure_active_admin_remains(
@@ -540,10 +542,10 @@ def attach_report_market_reference(
     snapshot = crud.get_market_data_snapshot(db, payload.snapshot_id)
     if snapshot is None or snapshot.status != "approved":
         raise HTTPException(status_code=422, detail="Select an approved market-data snapshot")
-    if snapshot.snapshot_kind != "market_reference" or snapshot.provider_code != "openfacet":
-        raise HTTPException(status_code=422, detail="This snapshot cannot create an OpenFacet market reference")
+    if snapshot.snapshot_kind != "market_reference":
+        raise HTTPException(status_code=422, detail="This snapshot cannot create a market reference")
     policy = crud.get_market_reference_policy(db)
-    if policy is None or policy.market_provider_code != snapshot.provider_code:
+    if policy is None or snapshot.provider_code not in crud.get_enabled_market_reference_provider_codes(db):
         raise HTTPException(status_code=422, detail="Selected snapshot is not enabled by the current market-reference policy")
     try:
         fx_snapshot = None
@@ -1041,7 +1043,7 @@ def read_market_reference_policy(
     policy = crud.get_market_reference_policy(db)
     if policy is None:
         raise HTTPException(status_code=404, detail="Market-reference policy is not initialized")
-    return policy
+    return crud.get_market_reference_policy_response(db, policy)
 
 
 @app.put("/market-data/policy", response_model=schemas.MarketReferencePolicyResponse)
@@ -1051,7 +1053,8 @@ def update_market_reference_policy(
 ):
     require_admin(current_user)
     try:
-        return crud.update_market_reference_policy(db, payload=payload, actor=current_user)
+        policy = crud.update_market_reference_policy(db, payload=payload, actor=current_user)
+        return crud.get_market_reference_policy_response(db, policy)
     except crud.ReportDomainError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 

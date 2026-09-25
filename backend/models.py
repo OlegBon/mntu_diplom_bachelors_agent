@@ -387,6 +387,8 @@ class MarketDataProvider(Base):
     documentation_url = Column(String(255), nullable=False)
     terms_url = Column(String(255), nullable=False)
     scope_note = Column(Text, nullable=False)
+    # Local vetted asset key only; never a remote provider-logo URL.
+    brand_asset_key = Column(String(100), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True, server_default="1")
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
@@ -405,6 +407,27 @@ class MarketReferencePolicy(Base):
     fx_provider_code = Column(
         String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=True,
     )
+    updated_by_id = Column(Integer, nullable=True)
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+
+class MarketReferencePolicyProvider(Base):
+    """One enabled market-reference provider in the future-only policy."""
+
+    __tablename__ = "market_reference_policy_providers"
+    __table_args__ = (
+        UniqueConstraint("policy_id", "provider_code", name="uq_market_policy_provider"),
+        {"schema": "diamond_market"},
+    )
+
+    policy_provider_id = Column(Integer, primary_key=True)
+    policy_id = Column(
+        Integer, ForeignKey("diamond_market.market_reference_policies.policy_id"), nullable=False,
+    )
+    provider_code = Column(
+        String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=False,
+    )
+    display_order = Column(Integer, nullable=False, default=0, server_default="0")
     updated_by_id = Column(Integer, nullable=True)
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
 
