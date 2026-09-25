@@ -132,13 +132,15 @@ function renderMarketReferencePrice(report) {
   toggle.type = "button";
   toggle.setAttribute("aria-label", `Пояснення ринкового орієнтира звіту ${report.report_id}`);
   toggle.setAttribute("aria-expanded", "false");
-  toggle.append(
-    document.createTextNode(`USD ${formatPrice(reference.amount)} `),
+  const amount = createElement("span", "report-price__amount", `USD ${formatPrice(reference.amount)}`);
+  const metadata = createElement("span", "report-price__metadata");
+  metadata.append(
     createElement("span", "report-price__indicator", `${typeMarker} · ${reference.source_name}`),
     references.length > 1
-      ? createElement("span", "report-price__indicator", ` +${references.length - 1}`)
+      ? createElement("span", "report-price__indicator", `+${references.length - 1}`)
       : document.createTextNode(""),
   );
+  toggle.append(amount, metadata);
   const popover = createElement("div", "report-price__popover");
   popover.hidden = true;
   const observed = formatDateTime(reference.observed_at);

@@ -550,10 +550,21 @@ input[type="number"]::-webkit-outer-spin-button {
     &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
   }
 
+  .report-price__amount,
+  .report-price__metadata { display: block; }
+
+  .report-price__metadata {
+    margin-top: 0.15rem;
+    line-height: 1.15;
+  }
+
   .report-price__indicator {
     color: variables.$primary-color;
     font-size: 0.7em;
     font-weight: 700;
+    white-space: nowrap;
+
+    & + & { margin-left: 0.35rem; }
   }
 
   .report-price__popover {
