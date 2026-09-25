@@ -1,4 +1,4 @@
-from sqlalchemy import and_, asc, case, desc, func
+from sqlalchemy import and_, asc, case, desc, func, select
 from sqlalchemy.orm import Session, joinedload
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
@@ -70,6 +70,24 @@ def get_demo_dataset_response(dataset: models.DemoDataset) -> schemas.DemoDatase
         record_count=dataset.record_count,
         created_at=dataset.created_at,
     )
+
+
+def require_demo_dataset_analysis_eligibility(
+    db: Session, *, dataset_id: str, scenario: str,
+) -> models.DemoDataset:
+    """Authorize one explicitly declared synthetic-analysis scenario.
+
+    Future demo analytics must call this boundary before selecting any report.
+    It intentionally checks the persisted manifest rather than a report-ID
+    prefix, query parameter, or frontend mode.
+    """
+    dataset = get_demo_dataset(db, dataset_id)
+    if dataset is None or not dataset.provenance.startswith("synthetic-demo-v"):
+        raise ReportDomainError("Demo dataset is not eligible for synthetic analysis")
+    eligibility = get_demo_dataset_response(dataset).analysis_eligibility
+    if scenario not in eligibility:
+        raise ReportDomainError("Demo dataset is not eligible for this analysis scenario")
+    return dataset
 
 
 def _legacy_origin_code(origin: str) -> int:
@@ -229,6 +247,20 @@ def get_report_domain_list(
         .options(joinedload(models.DiamondReport.stone))
         .filter(models.DiamondReport.record_scope == "operational")
     )
+    market_reference_amount = (
+        select(models.StoneValuation.amount)
+        .where(
+            models.StoneValuation.stone_id == models.DiamondReport.stone_id,
+            models.StoneValuation.valuation_kind.in_(("market_reference", "system_market_reference")),
+        )
+        .order_by(
+            case((models.StoneValuation.valuation_kind == "market_reference", 0), else_=1),
+            models.StoneValuation.created_at.desc(),
+            models.StoneValuation.valuation_id.desc(),
+        )
+        .limit(1)
+        .scalar_subquery()
+    )
     if current_user.role != "admin":
         query = query.filter(models.DiamondReport.expert_id == current_user.expert_id)
     elif expert_id is not None:
@@ -254,9 +286,9 @@ def get_report_domain_list(
     if carat_max is not None:
         query = query.filter(models.Stone.carat_weight <= carat_max)
     if price_min is not None:
-        query = query.filter(models.DiamondReport.price >= price_min)
+        query = query.filter(market_reference_amount >= price_min)
     if price_max is not None:
-        query = query.filter(models.DiamondReport.price <= price_max)
+        query = query.filter(market_reference_amount <= price_max)
     if date_from is not None:
         query = query.filter(models.DiamondReport.report_date >= datetime.combine(date_from, time.min))
     if date_to is not None:
@@ -279,8 +311,8 @@ def get_report_domain_list(
         "clarity_desc": (desc(models.Stone.clarity_grade), desc(models.DiamondReport.report_id)),
         "cut_asc": (asc(models.DiamondReport.system_cut_grade), asc(models.DiamondReport.report_id)),
         "cut_desc": (desc(models.DiamondReport.system_cut_grade), desc(models.DiamondReport.report_id)),
-        "price_desc": (desc(models.DiamondReport.price), desc(models.DiamondReport.report_id)),
-        "price_asc": (asc(models.DiamondReport.price), asc(models.DiamondReport.report_id)),
+        "price_desc": (desc(market_reference_amount), desc(models.DiamondReport.report_id)),
+        "price_asc": (asc(market_reference_amount), asc(models.DiamondReport.report_id)),
         "report_status_asc": (asc(models.DiamondReport.status), asc(models.DiamondReport.report_id)),
         "report_status_desc": (desc(models.DiamondReport.status), desc(models.DiamondReport.report_id)),
         "market_status_asc": (asc(models.Stone.market_status), asc(models.DiamondReport.report_id)),

@@ -4,7 +4,6 @@ import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const PAGE_SIZE = 25;
 const DEFAULT_SORT = "report_date_desc";
-const DATASET_PERIOD = "01.01.2023–31.12.2025";
 const REPORT_STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
 const SALE_STATUS_LABELS = { false: "Не продано", true: "Продано" };
 
@@ -23,7 +22,7 @@ function formatDateTime(value) {
   };
 }
 
-function formatDemoPrice(value) {
+function formatPrice(value) {
   if (value === null || value === undefined) return "—";
   return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 2 }).format(Number(value));
 }
@@ -107,31 +106,7 @@ function renderActions(report) {
 
 function renderPrice(report) {
   if (report.market_reference) return renderMarketReferencePrice(report);
-  if (report.price === null || report.price === undefined) return createElement("span", "report-price__missing", "—");
-  const wrapper = createElement("div", "report-price");
-  const toggle = createElement("button", "report-price__toggle");
-  toggle.type = "button";
-  toggle.setAttribute("aria-label", `Пояснення demo-ціни звіту ${report.report_id}`);
-  toggle.setAttribute("aria-expanded", "false");
-  toggle.append(document.createTextNode(`USD ${formatDemoPrice(report.price)} `), createElement("sup", "report-price__indicator", "d"));
-  const popover = createElement("div", "report-price__popover");
-  popover.hidden = true;
-  const date = formatDateTime(report.report_date);
-  for (const [label, value] of [["Тип", "Demo-значення"], ["Джерело", "diamonds_dataset.csv"], ["Дата фіксації", date.date], ["Період набору", DATASET_PERIOD]]) {
-    const row = createElement("p", "report-price__detail");
-    row.append(createElement("strong", "", `${label}: `), document.createTextNode(value));
-    popover.append(row);
-  }
-  popover.append(createElement("p", "report-price__warning", "Не є актуальним ринковим котируванням."));
-  toggle.addEventListener("click", (event) => {
-    event.stopPropagation();
-    const isOpen = popover.hidden;
-    closeOverlays();
-    popover.hidden = !isOpen;
-    toggle.setAttribute("aria-expanded", String(isOpen));
-  });
-  wrapper.append(toggle, popover);
-  return wrapper;
+  return createElement("span", "report-price__missing", "—");
 }
 
 function formatFxRate(value) {
@@ -147,7 +122,7 @@ function formatDateOnly(value) {
 function renderMarketReferencePrice(report) {
   const reference = report.market_reference;
   const isSystemReference = reference.valuation_kind === "system_market_reference";
-  const marker = "of";
+  const typeMarker = isSystemReference ? "SYS" : "ADM";
   const referenceType = isSystemReference
     ? "Системний довідковий орієнтир"
     : "Підтверджений довідковий орієнтир";
@@ -156,18 +131,21 @@ function renderMarketReferencePrice(report) {
   toggle.type = "button";
   toggle.setAttribute("aria-label", `Пояснення ринкового орієнтира звіту ${report.report_id}`);
   toggle.setAttribute("aria-expanded", "false");
-  toggle.append(document.createTextNode(`USD ${formatDemoPrice(reference.amount)} `), createElement("sup", "report-price__indicator", marker));
+  toggle.append(
+    document.createTextNode(`USD ${formatPrice(reference.amount)} `),
+    createElement("span", "report-price__indicator", `${typeMarker} · ${reference.source_name}`),
+  );
   const popover = createElement("div", "report-price__popover");
   popover.hidden = true;
   const observed = formatDateTime(reference.observed_at);
   const details = [
     ["Тип", referenceType],
     ["Провайдер", reference.source_name],
-    ["Знімок OpenFacet", `#${reference.market_snapshot_id ?? "—"}`],
+    ["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`],
     ["Отримано", observed.date],
   ];
   if (reference.converted_amount && reference.converted_currency_code) {
-    details.push(["Еквівалент", `${reference.converted_currency_code} ${formatDemoPrice(reference.converted_amount)}`]);
+    details.push(["Еквівалент", `${reference.converted_currency_code} ${formatPrice(reference.converted_amount)}`]);
     details.push(["Курс НБУ", `${formatFxRate(reference.fx_rate)} UAH/USD · ${formatDateOnly(reference.fx_rate_date)} · знімок #${reference.fx_snapshot_id ?? "—"}`]);
   }
   for (const [label, value] of details) {

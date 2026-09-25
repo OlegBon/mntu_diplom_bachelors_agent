@@ -123,3 +123,16 @@ def test_regular_report_writes_and_public_projection_reject_demo(client, db_sess
 def test_next_operational_report_id_ignores_demo_identifiers(db_session, experts) -> None:
     create_demo_report(db_session, experts)
     assert crud._next_report_id(db_session) == "DR-00001"
+
+
+@pytest.mark.unit
+def test_synthetic_analysis_requires_manifest_allow_list(db_session, experts) -> None:
+    create_demo_report(db_session, experts)
+
+    assert crud.require_demo_dataset_analysis_eligibility(
+        db_session, dataset_id=DATASET_ID, scenario="synthetic_som",
+    ).dataset_id == DATASET_ID
+    with pytest.raises(crud.ReportDomainError):
+        crud.require_demo_dataset_analysis_eligibility(
+            db_session, dataset_id=DATASET_ID, scenario="verified_ml",
+        )

@@ -531,7 +531,7 @@ class MediaAssetResponse(BaseModel):
     mime_type: str
     size_bytes: int
     sha256: str
-    uploaded_by_id: int
+    uploaded_by_id: int | None
     created_at: datetime
     is_public: bool
 

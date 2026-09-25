@@ -259,7 +259,9 @@ class MediaAsset(Base):
     mime_type = Column(String(100), nullable=False)
     size_bytes = Column(Integer, nullable=False)
     sha256 = Column(String(64), nullable=False)
-    uploaded_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=False)
+    # Synthetic demo assets deliberately have no fictional or real operator.
+    # Operational uploads still always set this field in the normal API flow.
+    uploaded_by_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     is_public = Column(Boolean, nullable=False, default=False, server_default="0")
 

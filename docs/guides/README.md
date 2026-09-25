@@ -19,6 +19,7 @@
 | --- | --- |
 | [current-domain-and-report-workflow.md](./current-domain-and-report-workflow.md) | Повний актуальний шлях звіту: ролі, wizard, поля, IDC, statuses/review, private media, public passport, код/URL/QR, PDF та межі публічних даних. |
 | [idc-demo-v1-ruleset.md](./idc-demo-v1-ruleset.md) | Межі `idc-demo-v1`, матриця IDC 2013, джерела expert grades і безпечне оновлення ruleset. |
+| [demo-dataset-operations.md](./demo-dataset-operations.md) | Ізоляція synthetic demo dataset, scope, manifest, inventory, backfill і rollback межі. |
 | [mariadb-local-recovery.md](./mariadb-local-recovery.md) | Безпечний перехід з аварійного XAMPP MariaDB у чисте локальне середовище через SQL-дампи. |
 
 ## Заплановані guides

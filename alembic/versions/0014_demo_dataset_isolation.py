@@ -80,9 +80,25 @@ def upgrade() -> None:
         ["demo_dataset_id"],
         schema="diamond_oltp",
     )
+    # A generated synthetic file has system origin, not an existing operator.
+    # Normal uploads continue to populate the FK through the protected API.
+    op.alter_column(
+        "media_assets",
+        "uploaded_by_id",
+        existing_type=sa.Integer(),
+        nullable=True,
+        schema="diamond_oltp",
+    )
 
 
 def downgrade() -> None:
+    op.alter_column(
+        "media_assets",
+        "uploaded_by_id",
+        existing_type=sa.Integer(),
+        nullable=False,
+        schema="diamond_oltp",
+    )
     op.drop_index(
         "ix_diamond_reports_demo_dataset_id",
         table_name="diamond_reports",

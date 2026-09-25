@@ -434,21 +434,34 @@ Dashboard використовує private `GET /reports`: server-side paginatio
 детального commercial status, а не його заміною. Звіт відкривається через
 `/report-detail.html?id=<report_id>`.
 
+### Operational та synthetic demo scope
+
+Звичайний workflow цього guide працює лише з `record_scope=operational`.
+Synthetic demo records мають окремий scope і immutable manifest; вони не
+потрапляють у dashboard, пошук, operational-аналітику, public passport, QR або
+public PDF. Expert отримує для такого ID opaque `404`; admin може лише читати
+конкретний manifest через ізольований admin-only API. Генерація, private preview
+і SOM-показ — наступні задачі, тому demo не є звичайною робочою чернеткою.
+Повний операційний порядок, зокрема inventory historical seed, наведено у
+[гайді synthetic demo dataset](./demo-dataset-operations.md).
+
 ### Ринковий орієнтир і курс НБУ
 
 На dashboard колонка «Ціна (USD)» може мати лише один із таких сенсів:
 
 | Вигляд | Значення |
 | --- | --- |
-| `USD … d` | Legacy demo-значення з навчального набору; не ринкова, експертна чи продажна ціна. |
-| `USD … of` | Системний або явно прикріплений admin-ом довідковий OpenFacet market reference. Detail/popover показує його тип; ручний запис має пріоритет над системним і legacy demo. |
+| `USD …` + `SYS · <provider>` | Системний довідковий орієнтир, сформований із актуального approved provider snapshot. |
+| `USD …` + `ADM · <provider>` | Довідковий орієнтир, застосовність якого явно підтвердив admin. Він має пріоритет над системним. |
 | `—` | Немає жодного з наведених значень. |
 
-Натискання відкриває popover з provenance. Для `*` і `of` це також frozen UAH
-еквівалент, snapshot OpenFacet, snapshot НБУ, курс та official rate date.
+Натискання відкриває popover з provenance. Для system/admin reference це також
+frozen UAH еквівалент, snapshot провайдера, snapshot НБУ, курс та official rate
+date. Legacy `DiamondReport.price` і позначка `d` не використовуються в
+operational dashboard.
 OpenFacet reference не є appraisal, offer, transaction чи sale price.
 
-Як admin прикріплює `of`:
+Як admin прикріплює довідковий орієнтир:
 
 1. На «Ринкові дані» отримує OpenFacet candidate та окремо approve його.
 2. Вказує report і пояснює застосовність для конкретного natural stone.

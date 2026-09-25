@@ -1,9 +1,9 @@
 # Схема бази даних
 
 Документ описує поточну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic code head і локальна MariaDB — `0013_market_provider_operations`.
-`0012` уже застосована до
-локальної MariaDB, не містить backfill і додає вимір лише для майбутніх report.
+Alembic code head — `0014_demo_dataset_isolation`; локальна MariaDB лишається
+на `0013_market_provider_operations`, доки оператор окремо не погодить upgrade.
+`0014` є schema-only: додає demo isolation, але не класифікує historical records.
 Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
@@ -16,7 +16,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 
 | База | Таблиці | Призначення |
 | --- | --- | --- |
-| `diamond_oltp` | `experts`, `diamond_reports`, `stones`, `report_events`, `report_work_sessions`, `report_work_session_events`, `report_work_session_leases`, `wizard_work_sessions`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі, звіти, lifecycle, server-timed active-time, elapsed time до першого save, ruleset-и, revocable public passport, приватні вкладення та фінансові записи. |
+| `diamond_oltp` | `experts`, `diamond_reports`, `demo_datasets`, `stones`, `report_events`, `report_work_sessions`, `report_work_session_events`, `report_work_session_leases`, `wizard_work_sessions`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі й server-enforced ізольований synthetic demo scope, звіти, lifecycle, server-timed active-time, elapsed time до першого save, ruleset-и, revocable public passport, приватні вкладення та фінансові записи. |
 | `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes`, `fx_data_snapshots`, `market_provider_schedules`, `market_provider_operations` | Числові й текстові довідники, legacy demo-індекс, versioned дані зовнішніх провайдерів і їхній операційний контур. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
@@ -103,6 +103,7 @@ legacy-звіту: історичних даних недостатньо, що�
 | Група | Поля | Призначення |
 | --- | --- | --- |
 | Ключі й lifecycle | `report_id`, `stone_id`, `status`, `examination_date`, `created_at`, `updated_at`, `issued_at` | Ідентифікатор, зв’язок із каменем, фактична дата дослідження та життєвий цикл `draft → review → issued → void`. |
+| Scope | `record_scope`, `demo_dataset_id` | Server-enforced `operational` або `demo`. Operational report мусить мати `demo_dataset_id=NULL`; demo report мусить посилатися на immutable manifest. Звичайні API й public routes відбирають лише `operational`. |
 | Авторство | `expert_id`, `issued_by_id` | Автор-експерт та admin-видавець. |
 | Результати | `system_proportions_grade`, `system_cut_grade`, `calculation_rule_version` | Системний preview і immutable код ruleset. |
 | Експертні grades | `expert_proportions_grade`, `expert_cut_grade`, `expert_confirmed_at`, `expert_comment` | Proportions задає експерт; `expert_cut_grade` сервер похідно обчислює з Proportions, Polish і Symmetry. |
@@ -110,6 +111,15 @@ legacy-звіту: історичних даних недостатньо, що�
 
 `price` — `legacy_unclassified_value`: він не є ринковою, експертною чи
 фактичною ціною та не переноситься автоматично у `stone_valuations`.
+
+### `demo_datasets`
+
+Immutable manifest одного synthetic набору: `dataset_id`, label/version,
+generator version, SHA-256, provenance, scope note, record count, `created_at`
+та JSON allow-list `analysis_eligibility`. Він є єдиною підставою для майбутньої
+demo-аналітики: `DEMO-…` prefix або довільний report ID не дають доступу.
+Revision `0014` не створює manifest, не генерує records і не backfill-ить
+історичні `DR-00001…DR-01000`.
 
 ### `grading_rulesets`
 
@@ -176,7 +186,7 @@ publication state без зміни приватного report. Public API по
 
 | Поля | Призначення |
 | --- | --- |
-| `media_id`, `report_id`, `uploaded_by_id` | Первинний ключ і обов’язкові FK на звіт та автора upload. |
+| `media_id`, `report_id`, `uploaded_by_id` | Первинний ключ, FK на звіт і nullable FK на автора upload. Normal API завжди встановлює автора; `NULL` зарезервовано для system-origin synthetic asset, щоб не приписувати його реальній людині. |
 | `asset_type` | `stone_photo`, `plotting_diagram`, `instrument_image` або `supporting_document`. |
 | `storage_key`, `original_filename` | Згенерований сервером ключ і відображувана назва; клієнтський шлях не використовується. |
 | `mime_type`, `size_bytes`, `sha256` | Перевірені сервером тип, розмір і контрольний хеш файлу. |
@@ -323,6 +333,7 @@ actor. Він не є чергою та не змінює historical valuation/r
 | `0011_expert_work_sessions` | Додає порожні server-timed work sessions, append-only events і single-tab leases. Не backfill-ить `evaluation_time_sec`, timestamps або старі reports. |
 | `0012_wizard_first_save_time` | Додає nullable first-save timestamps/duration до майбутніх report і короткоживучі wizard leases. Не backfill-ить historical reports. |
 | `0013_market_provider_operations` | Додає provider schedules і immutable operation log, робить `market_data_snapshots.created_by_id` nullable для scheduled candidate. Seed-ить OpenFacet 08:30 та НБУ 15:40 у `Europe/Kyiv`; не змінює snapshots, valuations або reports. |
+| `0014_demo_dataset_isolation` | Додає immutable `demo_datasets`, report `record_scope`/`demo_dataset_id`, scope constraints/indexes і nullable `media_assets.uploaded_by_id` для system-origin synthetic assets. Schema-only: не створює demo records і не класифікує historical seed. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за

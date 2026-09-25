@@ -69,6 +69,8 @@ def test_demo_dataset_migration_is_schema_only_until_explicit_backfill_approval(
     assert "demo_datasets" in source
     assert "record_scope" in source
     assert "demo_dataset_id" in source
+    assert '"uploaded_by_id"' in source
+    assert "nullable=True" in source
     assert "op.execute(" not in source
     assert "op.bulk_insert(" not in source
 
