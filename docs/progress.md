@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-25 — wizard-draft-continuity
+
+- **Задача:** виконати 146 — не втрачати незбережене введення майстра без прихованої server-side чернетки.
+- **Змінені файли:** `frontend/src/js/modules/{report-wizard,wizard-work-session,wizard-draft-storage}.js`, `frontend/src/pug/pages/create-report.pug`, `frontend/tests/{wizard-draft-storage.test.mjs,e2e/wizard-draft-continuity.spec.mjs}`, `frontend/package.json`, `docs/{architecture,work_plan,progress}.md`, `docs/guides/current-domain-and-report-workflow.md`; завершений `docs/backlog/146-wizard-draft-continuity.md` вилучено з active backlog.
+- **Рішення / Результат:** wizard записує лише serializable значення форми й активний крок у versioned `sessionStorage` ключі поточної вкладки та поточного user ID. Restore потребує явного вибору, clear — окремого підтвердження; після успішного `POST /reports` стан стирається. Project dialog захищає переходи за внутрішніми посиланнями й ручний logout, а native `beforeunload` лишається для reload/закриття вкладки. File inputs і credentials не потрапляють у payload. Персональний pre-save work-session key також ізольовано за user ID.
+- **Перевірки:** `node --test tests/wizard-draft-storage.test.mjs`, `npm run build`, цільовий Playwright flow `tests/e2e/wizard-draft-continuity.spec.mjs`; перевірено: untouched wizard не створює draft і не блокує navigation, reload → explicit restore, повернення кроку, confirmed clear, initial select values після clear, project dialog для in-app navigation/logout і відсутність stale storage. Browser runtime у цій сесії не був доступний, тому використано наявний project Playwright.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** `sessionStorage` не синхронізується між вкладками, акаунтами або пристроями; браузерний leave-warning не гарантує однакову поведінку чи текст, зокрема на mobile. Файли після restore потрібно вибрати знову. Немає autosave до API, collaborative editing чи offline sync.
+
 ## 2026-09-25 — multi-provider-market-reference-roadmap
 
 - **Задача:** погодити модель кількох provider-ів, їх private presentation, demo-перевірку, provider analytics та зрозумілу пріоритетність active backlog.

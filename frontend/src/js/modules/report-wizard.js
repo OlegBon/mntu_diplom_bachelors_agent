@@ -1,11 +1,14 @@
 import {
   createDomainReport,
+  getCurrentUser,
   getGradeMappings,
   getNextReportId,
   getReferenceValues,
   previewReportCalculation,
   uploadReportMedia,
 } from "./api.js";
+import { logout } from "./auth.js";
+import { createWizardDraftStorage } from "./wizard-draft-storage.js";
 import { createWizardWorkSessionTracker } from "./wizard-work-session.js";
 
 const requiredPreviewNames = ["table_percent", "depth_percent", "crown_angle", "pavilion_angle", "polish_grade", "symmetry_grade"];
@@ -65,6 +68,24 @@ export async function initReportWizard() {
   const next = document.getElementById("next-btn");
   const previous = document.getElementById("prev-btn");
   const save = document.getElementById("save-btn");
+  const clearDraftButton = document.getElementById("clear-wizard-draft");
+  const restoreDialog = document.getElementById("wizard-restore-dialog");
+  const clearDialog = document.getElementById("wizard-clear-dialog");
+  const leaveDialog = document.getElementById("wizard-leave-dialog");
+  let draftStorage = null;
+  let hasUnsavedDraft = false;
+  let hasUserModifiedDraft = false;
+  let suppressDraftPersistence = false;
+  let workSessionTracker = null;
+  let schedulePreview = () => {};
+  let pendingLeaveAction = null;
+  let allowBrowserLeave = false;
+  const updateClearDraftButton = () => { clearDraftButton.hidden = !hasUnsavedDraft; };
+  const persistDraft = () => {
+    if (!draftStorage || suppressDraftPersistence || !hasUserModifiedDraft) return;
+    hasUnsavedDraft = draftStorage.save(form, currentStep);
+    updateClearDraftButton();
+  };
   let gradeLabels = new Map();
   const renderInitialFinish = () => {
     ["polish", "symmetry"].forEach((category) => {
@@ -79,6 +100,7 @@ export async function initReportWizard() {
     steps.forEach((step) => { const active = Number(step.dataset.step) === currentStep; step.classList.toggle("active", active); step.hidden = !active; });
     tabs.forEach((tab) => { const active = Number(tab.dataset.step) === currentStep; tab.classList.toggle("active", active); tab.setAttribute("aria-selected", String(active)); });
     previous.disabled = currentStep === 1; next.hidden = currentStep === 3; save.hidden = currentStep !== 3;
+    persistDraft();
   };
   const validateCurrentStep = () => {
     const active = steps.find((step) => Number(step.dataset.step) === currentStep);
@@ -100,7 +122,6 @@ export async function initReportWizard() {
     if (validateCurrentStep()) { currentStep += 1; updateStep(); }
   });
   previous.addEventListener("click", () => { currentStep -= 1; updateStep(); });
-  document.getElementById("examination-date").valueAsDate = new Date();
   form.addEventListener("invalid", (event) => {
     event.target.setAttribute("aria-invalid", "true");
   }, true);
@@ -109,6 +130,12 @@ export async function initReportWizard() {
       event.target.removeAttribute("aria-invalid");
       if (status.classList.contains("is-error")) setStatus(status, "");
     }
+    hasUserModifiedDraft = true;
+    persistDraft();
+  });
+  form.addEventListener("change", () => {
+    hasUserModifiedDraft = true;
+    persistDraft();
   });
   form.addEventListener("keydown", (event) => {
     const target = event.target;
@@ -120,8 +147,9 @@ export async function initReportWizard() {
     ) event.preventDefault();
   });
 
+  let currentUserId;
   try {
-    const [references, mappings, nextId] = await Promise.all([getReferenceValues(token), getGradeMappings(), getNextReportId(token)]);
+    const [references, mappings, nextId, currentUser] = await Promise.all([getReferenceValues(token), getGradeMappings(), getNextReportId(token), getCurrentUser(token)]);
     document.getElementById("report-id-preview").value = nextId.report_id;
     document.querySelectorAll("[data-reference-category]").forEach((select) => {
       const entries = references.filter((entry) => entry.category === select.dataset.referenceCategory);
@@ -133,9 +161,11 @@ export async function initReportWizard() {
     });
     mappings.forEach((entry) => gradeLabels.set(`${entry.category}:${entry.grade_value}`, entry.grade_label));
     renderInitialFinish();
+    currentUserId = currentUser.expert_id;
+    draftStorage = createWizardDraftStorage({ userId: currentUserId });
   } catch (error) { setStatus(status, `Не вдалося завантажити довідники: ${error.message}`, true); return; }
 
-  const workSessionTracker = createWizardWorkSessionTracker({ form, token });
+  workSessionTracker = createWizardWorkSessionTracker({ form, token, userId: currentUserId });
 
   [["plotting-image", "plotting-preview"], ["real-image", "stone-preview"]].forEach(([inputId, previewId]) => {
     const input = document.getElementById(inputId);
@@ -147,7 +177,7 @@ export async function initReportWizard() {
   });
 
   let previewTimer;
-  const schedulePreview = () => {
+  schedulePreview = () => {
     clearTimeout(previewTimer);
     const data = new FormData(form);
     if (requiredPreviewNames.every((name) => data.get(name) !== "")) previewTimer = setTimeout(async () => {
@@ -175,6 +205,115 @@ export async function initReportWizard() {
   };
   form.addEventListener("input", schedulePreview);
   form.addEventListener("change", schedulePreview);
+
+  const resetFileInputs = () => {
+    [["plotting-image", "plotting-preview", "/img/plotting-placeholder.svg"], ["real-image", "stone-preview", "/img/stone-placeholder.svg"]].forEach(([inputId, previewId, placeholder]) => {
+      const input = document.getElementById(inputId);
+      input.value = "";
+      document.querySelector(`[data-file-name-for="${inputId}"]`).textContent = "Файл не вибрано";
+      document.getElementById(previewId).src = placeholder;
+    });
+  };
+  const resetForm = () => {
+    suppressDraftPersistence = true;
+    hasUserModifiedDraft = false;
+    for (const field of form.elements) {
+      if (!field.name || field.disabled) continue;
+      if (field.type === "file") { field.value = ""; continue; }
+      if (field.type === "checkbox" || field.type === "radio") field.checked = false;
+      else if (field.tagName === "SELECT") field.selectedIndex = 0;
+      else field.value = "";
+    }
+    document.getElementById("examination-date").valueAsDate = new Date();
+    resetFileInputs();
+    currentStep = 1;
+    renderInitialFinish();
+    updateStep();
+    schedulePreview();
+    suppressDraftPersistence = false;
+  };
+  const startNew = () => {
+    draftStorage.clear();
+    workSessionTracker.clear();
+    hasUnsavedDraft = false;
+    resetForm();
+    updateClearDraftButton();
+    setStatus(status, "Почато нове незбережене введення.");
+  };
+  const restoreDraft = (draft) => {
+    suppressDraftPersistence = true;
+    draftStorage.restore(form, draft);
+    currentStep = draft.current_step;
+    hasUnsavedDraft = true;
+    hasUserModifiedDraft = true;
+    renderInitialFinish();
+    updateStep();
+    suppressDraftPersistence = false;
+    updateClearDraftButton();
+    schedulePreview();
+    setStatus(status, "Незбережене введення відновлено. Вкладення додайте повторно.");
+  };
+  const storedDraft = draftStorage.read();
+  if (storedDraft) {
+    restoreDialog.addEventListener("cancel", (event) => event.preventDefault());
+    document.getElementById("wizard-restore").addEventListener("click", () => { restoreDialog.close(); restoreDraft(storedDraft); });
+    document.getElementById("wizard-start-new").addEventListener("click", () => { restoreDialog.close(); startNew(); });
+    restoreDialog.showModal();
+  } else {
+    resetForm();
+  }
+  clearDraftButton.addEventListener("click", () => clearDialog.showModal());
+  document.getElementById("wizard-clear-dialog-close").addEventListener("click", () => clearDialog.close());
+  document.getElementById("wizard-clear-cancel").addEventListener("click", () => clearDialog.close());
+  document.getElementById("wizard-clear-confirm").addEventListener("click", () => { clearDialog.close(); startNew(); });
+  const leaveDescription = document.getElementById("wizard-leave-dialog-description");
+  const leaveConfirm = document.getElementById("wizard-leave-confirm");
+  const cancelLeave = () => { pendingLeaveAction = null; leaveDialog.close(); };
+  document.getElementById("wizard-leave-dialog-close").addEventListener("click", cancelLeave);
+  document.getElementById("wizard-leave-cancel").addEventListener("click", cancelLeave);
+  document.getElementById("wizard-leave-confirm").addEventListener("click", () => {
+    if (!pendingLeaveAction) return;
+    allowBrowserLeave = true;
+    leaveDialog.close();
+    if (pendingLeaveAction.type === "logout") logout();
+    else window.location.assign(pendingLeaveAction.url);
+  });
+  document.addEventListener("click", (event) => {
+    const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+    const logoutButton = event.target instanceof Element ? event.target.closest(".header-logout, .mobile-logout") : null;
+    if (
+      (!anchor && !logoutButton)
+      || !hasUnsavedDraft
+      || event.defaultPrevented
+      || event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || event.altKey
+      || (anchor && (anchor.target === "_blank" || anchor.hasAttribute("download")))
+    ) return;
+    if (logoutButton) event.stopPropagation();
+    if (logoutButton) {
+      pendingLeaveAction = { type: "logout" };
+      leaveDescription.textContent = "Введені дані ще не стали чернеткою на сервері. Після виходу вони залишаться лише в цій вкладці та будуть доступні для явного відновлення лише після повторного входу цим самим обліковим записом.";
+      leaveConfirm.textContent = "Вийти";
+      event.preventDefault();
+      leaveDialog.showModal();
+      return;
+    }
+    const destination = new URL(anchor.href, window.location.href);
+    if (destination.href === window.location.href || !["http:", "https:"].includes(destination.protocol)) return;
+    event.preventDefault();
+    pendingLeaveAction = { type: "navigation", url: destination.href };
+    leaveDescription.textContent = "Введені дані ще не стали чернеткою на сервері. Вони залишаться лише в цій вкладці, і після повернення їх можна буде явно відновити.";
+    leaveConfirm.textContent = "Перейти";
+    leaveDialog.showModal();
+  }, true);
+  window.addEventListener("beforeunload", (event) => {
+    if (!hasUnsavedDraft || allowBrowserLeave) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!validateCurrentStep() || !form.reportValidity()) return;
@@ -186,6 +325,10 @@ export async function initReportWizard() {
         examination_date: data.get("examination_date"), stone: stoneFromForm(data),
         expert_comment: data.get("expert_comment") || null, wizard_session_id: wizardSessionId,
       }, token);
+      draftStorage.clear();
+      hasUnsavedDraft = false;
+      hasUserModifiedDraft = false;
+      updateClearDraftButton();
       workSessionTracker.clear();
       for (const [id, type] of [["plotting-image", "plotting_diagram"], ["real-image", "stone_photo"]]) { const file = document.getElementById(id).files[0]; if (file) await uploadReportMedia(created.report_id, type, file, token); }
       window.location.assign(`/dashboard.html?created=${encodeURIComponent(created.report_id)}`);

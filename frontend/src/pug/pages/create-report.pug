@@ -151,6 +151,7 @@ block content
 
                     .wizard-actions
                         button#prev-btn.btn.btn-outline(type="button" disabled) Назад
+                        button#clear-wizard-draft.btn.btn-outline(type="button" hidden) Очистити введення
                         button#save-btn.btn.btn-primary(type="submit" hidden)
                             span.save-label-desktop Зберегти чернетку
                             span.save-label-mobile Зберегти
@@ -184,3 +185,33 @@ block content
                     p.text-muted#market-reference-preview-source Системний орієнтир буде показано після введення параметрів каменю.
                     p.text-muted#calculation-methodology Методична основа: IDC Rules for Grading Polished Diamonds, 6th edition (2013).
                     p.text-muted#calculation-rule-version Спрощений системний розрахунок Diamant ID; не є сертифікацією IDC.
+
+        dialog#wizard-restore-dialog.account-dialog(aria-labelledby="wizard-restore-dialog-title")
+            form(method="dialog")
+                .account-dialog__header
+                    h2#wizard-restore-dialog-title Відновити незбережене введення?
+                p.account-help Знайдено незбережені дані цієї вкладки. Вони не були надіслані на сервер.
+                p.account-help Вкладення не відновлюються — після відновлення додайте файли повторно.
+                .account-dialog__actions
+                    button#wizard-start-new.btn.btn-outline(type="button") Почати заново
+                    button#wizard-restore.btn.btn-primary(type="button") Відновити
+
+        dialog#wizard-clear-dialog.account-dialog(aria-labelledby="wizard-clear-dialog-title")
+            form(method="dialog")
+                .account-dialog__header
+                    h2#wizard-clear-dialog-title Очистити незбережене введення?
+                    button#wizard-clear-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
+                p.account-help Дані цієї вкладки буде видалено з форми й локального сховища. Це не змінить жодного збереженого звіту.
+                .account-dialog__actions
+                    button#wizard-clear-cancel.btn.btn-outline(type="button") Скасувати
+                    button#wizard-clear-confirm.btn.btn-primary(type="button") Очистити введення
+
+        dialog#wizard-leave-dialog.account-dialog(aria-labelledby="wizard-leave-dialog-title")
+            form(method="dialog")
+                .account-dialog__header
+                    h2#wizard-leave-dialog-title Залишити майстер?
+                    button#wizard-leave-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
+                p#wizard-leave-dialog-description.account-help Введені дані ще не стали чернеткою на сервері. Вони залишаться лише в цій вкладці, і після повернення їх можна буде явно відновити.
+                .account-dialog__actions
+                    button#wizard-leave-cancel.btn.btn-outline(type="button") Залишитися
+                    button#wizard-leave-confirm.btn.btn-primary(type="button") Перейти

@@ -87,7 +87,7 @@
 - [x] 136 — SQLAlchemy/Pydantic deprecation cleanup: modern API без зміни schema, request/response JSON або доменної логіки; ORM→Pydantic v2 serialization має окремий regression test.
 - [ ] [137 — GitHub Actions CI](./backlog/137-github-actions-continuous-integration.md): до переходу на `main` відтворити backend, ephemeral MariaDB/Alembic, frontend, mock/real E2E та docs checks у GitHub без deploy або secrets.
 - [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial.
-- [ ] [146 — Незбережене введення майстра](./backlog/146-wizard-draft-continuity.md): per-tab restore і leave protection без hidden server draft; передумова i18n.
+- [x] 146 — Незбережене введення майстра: versioned per-tab/per-user `sessionStorage`, явний restore або start-new, confirmed clear, leave protection і очищення лише після успішного `POST /reports`; файли та credentials не серіалізуються. Це передумова i18n.
 - [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після 146 та рішення 160.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
@@ -119,15 +119,14 @@
 
 ### Рекомендована черга активних задач
 
-1. `146` — не втрачати незбережене введення експерта.
-2. `156 → 162 → 157 → 158 → 159` — ізолювати demo, додати multi-provider
+1. `156 → 162 → 157 → 158 → 159` — ізолювати demo, додати multi-provider
    foundation, згенерувати повний synthetic dataset, private previews і SOM.
-3. `163` — показати operations/coverage provider-ів на вже реальних і demo
+2. `163` — показати operations/coverage provider-ів на вже реальних і demo
    provider records; `141` може готувати English IDEX mock-up паралельно, але
    не відкриває live IDEX без їхнього письмового approval.
-4. `145`, `154`, `155`, `151 → 152 → 153` — i18n та наступні аналітичні
+3. `145`, `154`, `155`, `151 → 152 → 153` — i18n та наступні аналітичні
    контури за їхніми окремими залежностями.
-5. `160 → 137 → 161 → 140` — лише після локального verified experiment:
+4. `160 → 137 → 161 → 140` — лише після локального verified experiment:
    platform decision, CI gate, PostgreSQL/staging і managed deployment.
 
 ### Зафіксовані розбіжності з початковими нотатками
