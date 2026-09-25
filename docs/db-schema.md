@@ -1,8 +1,7 @@
 # Схема бази даних
 
 Документ описує поточну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic code head — `0014_demo_dataset_isolation`; локальна MariaDB лишається
-на `0013_market_provider_operations`, доки оператор окремо не погодить upgrade.
+Alembic code head і локальна MariaDB — `0014_demo_dataset_isolation`.
 `0014` є schema-only: додає demo isolation, але не класифікує historical records.
 Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
