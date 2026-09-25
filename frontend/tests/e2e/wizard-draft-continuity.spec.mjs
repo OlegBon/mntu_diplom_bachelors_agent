@@ -59,6 +59,16 @@ test("wizard restores an unsaved tab draft only after the expert confirms it", a
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem("diamant-id:wizard-draft:v1:user:2"))).toBeNull();
 });
 
+test("untouched wizard does not create a local draft or block navigation", async ({ page }) => {
+  await mockWizardDependencies(page);
+  await page.goto("/create-report.html");
+
+  await expect(page.locator("#clear-wizard-draft")).toBeHidden();
+  await page.locator(".logo").click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem("diamant-id:wizard-draft:v1:user:2"))).toBeNull();
+});
+
 test("wizard uses a project dialog before an in-app navigation", async ({ page }) => {
   await mockWizardDependencies(page);
   await page.goto("/create-report.html");

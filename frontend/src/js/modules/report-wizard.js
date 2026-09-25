@@ -74,6 +74,7 @@ export async function initReportWizard() {
   const leaveDialog = document.getElementById("wizard-leave-dialog");
   let draftStorage = null;
   let hasUnsavedDraft = false;
+  let hasUserModifiedDraft = false;
   let suppressDraftPersistence = false;
   let workSessionTracker = null;
   let schedulePreview = () => {};
@@ -81,7 +82,7 @@ export async function initReportWizard() {
   let allowBrowserLeave = false;
   const updateClearDraftButton = () => { clearDraftButton.hidden = !hasUnsavedDraft; };
   const persistDraft = () => {
-    if (!draftStorage || suppressDraftPersistence) return;
+    if (!draftStorage || suppressDraftPersistence || !hasUserModifiedDraft) return;
     hasUnsavedDraft = draftStorage.save(form, currentStep);
     updateClearDraftButton();
   };
@@ -129,9 +130,13 @@ export async function initReportWizard() {
       event.target.removeAttribute("aria-invalid");
       if (status.classList.contains("is-error")) setStatus(status, "");
     }
+    hasUserModifiedDraft = true;
     persistDraft();
   });
-  form.addEventListener("change", persistDraft);
+  form.addEventListener("change", () => {
+    hasUserModifiedDraft = true;
+    persistDraft();
+  });
   form.addEventListener("keydown", (event) => {
     const target = event.target;
     if (
@@ -211,6 +216,7 @@ export async function initReportWizard() {
   };
   const resetForm = () => {
     suppressDraftPersistence = true;
+    hasUserModifiedDraft = false;
     for (const field of form.elements) {
       if (!field.name || field.disabled) continue;
       if (field.type === "file") { field.value = ""; continue; }
@@ -239,6 +245,7 @@ export async function initReportWizard() {
     draftStorage.restore(form, draft);
     currentStep = draft.current_step;
     hasUnsavedDraft = true;
+    hasUserModifiedDraft = true;
     renderInitialFinish();
     updateStep();
     suppressDraftPersistence = false;
@@ -320,6 +327,7 @@ export async function initReportWizard() {
       }, token);
       draftStorage.clear();
       hasUnsavedDraft = false;
+      hasUserModifiedDraft = false;
       updateClearDraftButton();
       workSessionTracker.clear();
       for (const [id, type] of [["plotting-image", "plotting_diagram"], ["real-image", "stone_photo"]]) { const file = document.getElementById(id).files[0]; if (file) await uploadReportMedia(created.report_id, type, file, token); }
