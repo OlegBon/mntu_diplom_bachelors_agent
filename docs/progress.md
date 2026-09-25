@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-25 — multi-provider-market-references
+
+- **Задача:** виконати 162 — підготувати кілька незалежних provider-specific ринкових орієнтирів без агрегації або прихованого fallback.
+- **Змінені файли:** `backend/{models,schemas,crud,main}.py`, `alembic/versions/0015_multi_provider_market_references.py`, `frontend/src/{pug/pages/{create-report,market-data}.pug,js/modules/{dashboard,market-data,report-detail,report-wizard}.js,scss/main.scss}`, `tests/{api/test_multi_provider_policy.py,unit/test_migration_foundation.py}`, `docs/{architecture,db-schema,progress,work_plan}.md`, `docs/{decisions/007-multi-provider-market-references.md,guides/{market-data-providers,current-domain-and-report-workflow}.md}`; завершений backlog-файл `162-multi-provider-market-references.md` вилучено.
+- **Рішення / Результат:** `0015` додає normalised `market_reference_policy_providers` та local-only nullable `brand_asset_key`; існуючий OpenFacet перенесено в enabled/primary без backfill. Policy може увімкнути кілька provider-ів і вибрати nullable primary. Кожен enabled adapter формує власний immutable valuation; dashboard показує лише primary і `+N`, а popover/private detail — provider-specific значення. Немає average, total, ranking або fallback. Wizard показує незалежні preview-кандидати. Public passport/PDF не отримали суми або брендинг provider-ів; IDEX logo не додано.
+- **Перевірки:** застосовано `0015_multi_provider_market_references`; `alembic current` підтвердив head, `alembic check` — без нових upgrade operations; read-only SQL підтвердив OpenFacet enabled/primary. `pytest tests/unit/test_migration_foundation.py tests/api/test_market_data.py tests/api/test_multi_provider_policy.py tests/api/test_report_domain.py -q -rA` — 21 passed; `npm test` — 25 passed; `npm run test:e2e` — 22 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** фактичний production-like market adapter поки лише OpenFacet; НБУ залишається FX provider. Новий provider потребує окремого adapter-а, ліцензії/coverage та тестів; IDEX live access/brand approval належать 141. Fictional Demo Market A/B і multi-provider demonstration належать 157. Логотипи не завантажуються з remote URL.
+
 ## 2026-09-25 — work-plan-post-156-cleanup
 
 - **Задача:** привести рекомендовану чергу активних задач у відповідність до завершеної та застосованої 156.

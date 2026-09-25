@@ -1,8 +1,8 @@
 # Схема бази даних
 
 Документ описує поточну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic code head і локальна MariaDB — `0014_demo_dataset_isolation`.
-`0014` є schema-only: додає demo isolation, але не класифікує historical records.
+Alembic code head і локальна MariaDB — `0015_multi_provider_market_references`.
+`0015` нормалізує лише майбутню policy: не класифікує historical records і не переписує valuation.
 Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
@@ -16,7 +16,7 @@ revisions у `alembic/versions/`. Не створюйте таблиці чер�
 | База | Таблиці | Призначення |
 | --- | --- | --- |
 | `diamond_oltp` | `experts`, `diamond_reports`, `demo_datasets`, `stones`, `report_events`, `report_work_sessions`, `report_work_session_events`, `report_work_session_leases`, `wizard_work_sessions`, `public_passports`, `grading_rulesets`, `stone_valuations`, `media_assets` | Оперативні користувачі й server-enforced ізольований synthetic demo scope, звіти, lifecycle, server-timed active-time, elapsed time до першого save, ruleset-и, revocable public passport, приватні вкладення та фінансові записи. |
-| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_data_snapshots`, `market_data_quotes`, `fx_data_snapshots`, `market_provider_schedules`, `market_provider_operations` | Числові й текстові довідники, legacy demo-індекс, versioned дані зовнішніх провайдерів і їхній операційний контур. |
+| `diamond_market` | `grade_mappings`, `reference_values`, `market_price_reference`, `market_data_providers`, `market_reference_policies`, `market_reference_policy_providers`, `market_data_snapshots`, `market_data_quotes`, `fx_data_snapshots`, `market_provider_schedules`, `market_provider_operations` | Числові й текстові довідники, legacy demo-індекс, versioned дані зовнішніх провайдерів і їхній операційний контур. |
 | `diamond_analytics` | `ml_results` | Зарезервований аналітичний шар без чинного API або ML-потоку. |
 
 ## Контрольовані значення
@@ -247,11 +247,18 @@ Legacy demo-індекс: `id`, `price_index_value DECIMAL(10,4)`, `updated_by`,
 ### `market_reference_policies`
 
 Singleton-налаштування, яке application читає за фіксованим `policy_id=1`, лише для **майбутніх** системних
-орієнтирів: nullable `market_provider_code`, `use_fx_conversion`, nullable
-`fx_provider_code`, `updated_by_id`, `updated_at`. Обидва provider code — FK до
-`market_data_providers`; policy не посилається на конкретний snapshot, бо
-server обирає останній `approved` snapshot на момент create/update draft.
+орієнтирів: nullable compatibility/primary `market_provider_code`, `use_fx_conversion`, nullable
+`fx_provider_code`, `updated_by_id`, `updated_at`. Enabled set живе у дочірній таблиці
+`market_reference_policy_providers`; primary має бути enabled або бути `NULL`.
+Policy не посилається на конкретний snapshot, бо server обирає останній `approved` snapshot на момент create/update draft.
 Зміна policy не переписує `stone_valuations`.
+
+### `market_reference_policy_providers`
+
+Нормалізований enabled set для singleton policy: `policy_provider_id`, FK `policy_id`, FK
+`provider_code`, `display_order`, `updated_by_id`, `updated_at` та unique
+`(policy_id, provider_code)`. Кожен enabled provider обчислює власний immutable
+орієнтир; записи не усереднюються і не є fallback один одному.
 
 ### `market_data_providers`
 
@@ -333,6 +340,7 @@ actor. Він не є чергою та не змінює historical valuation/r
 | `0012_wizard_first_save_time` | Додає nullable first-save timestamps/duration до майбутніх report і короткоживучі wizard leases. Не backfill-ить historical reports. |
 | `0013_market_provider_operations` | Додає provider schedules і immutable operation log, робить `market_data_snapshots.created_by_id` nullable для scheduled candidate. Seed-ить OpenFacet 08:30 та НБУ 15:40 у `Europe/Kyiv`; не змінює snapshots, valuations або reports. |
 | `0014_demo_dataset_isolation` | Додає immutable `demo_datasets`, report `record_scope`/`demo_dataset_id`, scope constraints/indexes і nullable `media_assets.uploaded_by_id` для system-origin synthetic assets. Schema-only: не створює demo records і не класифікує historical seed. |
+| `0015_multi_provider_market_references` | Додає `market_data_providers.brand_asset_key` і `market_reference_policy_providers`; переносить поточний scalar OpenFacet policy у enabled/primary. Не змінює snapshots, reports, historical valuations чи events. |
 
 `alembic upgrade`, `downgrade`, `stamp` і `scripts/seed_db.py` змінюють
 локальні дані або схему. Перед ними перевіряйте backup і виконуйте лише за
