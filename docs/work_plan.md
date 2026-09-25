@@ -119,9 +119,8 @@
 
 ### Рекомендована черга активних задач
 
-1. `162 → 157 → 158 → 159` — після завершеної demo-ізоляції додати
-   multi-provider foundation, згенерувати повний synthetic dataset, private
-   previews і SOM.
+1. `157 → 158 → 159` — після завершених demo-ізоляції та multi-provider
+   foundation згенерувати повний synthetic dataset, private previews і SOM.
 2. `163` — показати operations/coverage provider-ів на вже реальних і demo
    provider records; `141` може готувати English IDEX mock-up паралельно, але
    не відкриває live IDEX без їхнього письмового approval.
