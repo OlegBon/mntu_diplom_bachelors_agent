@@ -187,6 +187,11 @@ Active-time не береться з `created_at`, `updated_at`, legacy
 
 ## 6. Frontend
 
+До першого явного save wizard зберігає лише serializable поля й активний крок у
+versioned `sessionStorage` ключі поточного user ID. Відновлення завжди потребує
+вибору користувача; file inputs, JWT і будь-які credentials не серіалізуються,
+а browser не створює приховану server-side чернетку.
+
 Gulp перетворює Pug на HTML, SCSS на CSS, копіює JavaScript та зображення у `frontend/dist`. BrowserSync віддає `dist` як статичний сайт і стежить за файлами `frontend/src`. `ghostMode: false` навмисно вимикає дзеркалення кліків і вводу між кількома локальними вікнами, щоб action виконувався лише там, де його натиснули. Спискові та read-only екрани синхронізують дані з API після повернення вкладки у фокус і кожні 30 секунд, коли вкладка видима: dashboard, private detail поза режимом редагування, admin directory, довідники та public passport. Форми з незбереженим вводом (wizard, profile, detail edit) автоматично не перезаписуються.
 
 Клієнтський JavaScript містить базовий API-клієнт із локальним default `127.0.0.1:8000`, модуль входу, доступний перемикач видимості для кожного password input та сторінкову логіку для landing, login, dashboard і створення звіту. Лише ізольований real E2E перед завантаженням сторінки задає `globalThis.DIAMANT_API_BASE_URL` для власного API на іншому порту; операторський runtime цього не використовує. Це окремий frontend без SSR, React чи TypeScript. Адреса API та зберігання токена потребують окремої конфігурації перед розгортанням на домені.
