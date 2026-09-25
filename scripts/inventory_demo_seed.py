@@ -8,8 +8,17 @@ DR-00001…DR-01000 as a demo dataset.
 from __future__ import annotations
 
 import json
+import sys
+from pathlib import Path
 
 from sqlalchemy import text
+
+# `python scripts/inventory_demo_seed.py` sets sys.path to scripts/, while the
+# documented invocation runs from the repository root. Make the local backend
+# package available without relying on an installed distribution.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.database import engine
 
