@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, DateTime, Integer, String, DECIMAL, ForeignKey, Enum, TIMESTAMP, Boolean, Index, UniqueConstraint, Text
+from sqlalchemy import CheckConstraint, Column, Date, DateTime, Integer, String, DECIMAL, ForeignKey, Enum, TIMESTAMP, Boolean, Index, UniqueConstraint, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -19,9 +19,24 @@ class Expert(Base):
 
 class DiamondReport(Base):
     __tablename__ = "diamond_reports"
-    __table_args__ = {"schema": "diamond_oltp"}
+    __table_args__ = (
+        CheckConstraint("record_scope IN ('operational', 'demo')", name="ck_diamond_reports_record_scope"),
+        CheckConstraint(
+            "(record_scope = 'operational' AND demo_dataset_id IS NULL) OR "
+            "(record_scope = 'demo' AND demo_dataset_id IS NOT NULL)",
+            name="ck_diamond_reports_scope_dataset",
+        ),
+        Index("ix_diamond_reports_scope_report_id", "record_scope", "report_id"),
+        Index("ix_diamond_reports_demo_dataset_id", "demo_dataset_id"),
+        {"schema": "diamond_oltp"},
+    )
 
     report_id = Column(String(20), primary_key=True, index=True)
+    # Scope is authoritative.  ID prefixes are only a human-visible convention.
+    record_scope = Column(String(16), nullable=False, default="operational", server_default="operational")
+    demo_dataset_id = Column(
+        String(64), ForeignKey("diamond_oltp.demo_datasets.dataset_id"), nullable=True,
+    )
     report_date = Column(DateTime, nullable=False)
     # Factual date supplied by the expert; never infer it from creation time.
     examination_date = Column(Date, nullable=True)
@@ -95,6 +110,25 @@ class DiamondReport(Base):
     is_sold = Column(Boolean, default=False)
     days_on_market = Column(Integer, nullable=True)
     sale_date = Column(DateTime, nullable=True)
+
+
+class DemoDataset(Base):
+    """Immutable manifest that authorizes one synthetic demonstration dataset."""
+
+    __tablename__ = "demo_datasets"
+    __table_args__ = {"schema": "diamond_oltp"}
+
+    dataset_id = Column(String(64), primary_key=True)
+    label = Column(String(120), nullable=False)
+    version = Column(String(64), nullable=False)
+    generator_version = Column(String(64), nullable=False)
+    content_sha256 = Column(String(64), nullable=False)
+    provenance = Column(Text, nullable=False)
+    scope_note = Column(Text, nullable=False)
+    # JSON list of server-recognized scenarios, for example ["synthetic_som"].
+    analysis_eligibility = Column(Text, nullable=False)
+    record_count = Column(Integer, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
 class Stone(Base):

@@ -161,9 +161,33 @@ def require_report_access(report: models.DiamondReport, current_user: models.Exp
         raise HTTPException(status_code=403, detail="You do not have access to this report")
 
 
+def require_operational_report_access(
+    report: models.DiamondReport,
+    current_user: models.Expert,
+    *,
+    write: bool = False,
+) -> None:
+    """Keep demo records out of every ordinary report route.
+
+    A gemologist receives an opaque response.  Administrators use a separate
+    read-only dataset route; attempts to mutate a demo row remain explicit.
+    """
+    if report.record_scope != "operational":
+        if current_user.role != "admin" or not write:
+            raise HTTPException(status_code=404, detail="Report not found")
+        raise HTTPException(status_code=409, detail="Demo reports are read-only")
+    require_report_access(report, current_user)
+
+
 def require_admin(current_user: models.Expert) -> None:
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
+
+
+def require_demo_admin(current_user: models.Expert) -> None:
+    """Do not reveal the existence of the isolated demo surface to experts."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=404, detail="Demo dataset not found")
 
 
 def _attach_system_market_reference_when_available(
@@ -365,6 +389,64 @@ def read_report_domain_list(
     )
 
 
+@app.get("/demo/datasets/{dataset_id}", response_model=schemas.DemoDatasetResponse)
+def read_demo_dataset(
+    dataset_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Read one immutable synthetic-data manifest through an explicit admin route."""
+    require_demo_admin(current_user)
+    dataset = crud.get_demo_dataset(db, dataset_id)
+    if dataset is None:
+        raise HTTPException(status_code=404, detail="Demo dataset not found")
+    try:
+        return crud.get_demo_dataset_response(dataset)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@app.get("/demo/datasets/{dataset_id}/reports", response_model=schemas.ReportListResponse)
+def read_demo_dataset_reports(
+    dataset_id: str,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """List exactly one dataset, never a mixed operational/demo population."""
+    require_demo_admin(current_user)
+    if crud.get_demo_dataset(db, dataset_id) is None:
+        raise HTTPException(status_code=404, detail="Demo dataset not found")
+    reports, total = crud.get_demo_report_domain_list(
+        db, dataset_id=dataset_id, page=page, page_size=page_size,
+    )
+    return schemas.ReportListResponse(
+        items=reports,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
+
+
+@app.get("/demo/datasets/{dataset_id}/reports/{report_id}", response_model=schemas.ReportResponse)
+def read_demo_dataset_report(
+    dataset_id: str,
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Read a demo report only in its manifest-bound, admin-only route."""
+    require_demo_admin(current_user)
+    if crud.get_demo_dataset(db, dataset_id) is None:
+        raise HTTPException(status_code=404, detail="Demo dataset not found")
+    report = crud.get_demo_report_domain(db, dataset_id=dataset_id, report_id=report_id)
+    if report is None or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Demo report not found")
+    return report
+
+
 @app.post("/reports", response_model=schemas.ReportResponse)
 def create_report_domain(
     payload: schemas.ReportCreate,
@@ -426,7 +508,7 @@ def read_report_domain(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
-    require_report_access(report, current_user)
+    require_operational_report_access(report, current_user)
     return report
 
 
@@ -439,7 +521,7 @@ def read_report_valuations(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
-    require_report_access(report, current_user)
+    require_operational_report_access(report, current_user)
     return crud.get_report_valuations(db, report)
 
 
@@ -454,6 +536,7 @@ def attach_report_market_reference(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    require_operational_report_access(report, current_user, write=True)
     snapshot = crud.get_market_data_snapshot(db, payload.snapshot_id)
     if snapshot is None or snapshot.status != "approved":
         raise HTTPException(status_code=422, detail="Select an approved market-data snapshot")
@@ -498,6 +581,7 @@ def read_report_publication(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    require_operational_report_access(report, current_user)
     passport = crud.get_active_public_passport(db, report_id)
     return schemas.ReportPassportPublicationStatus(passport=passport)
 
@@ -512,6 +596,7 @@ def publish_report_passport(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    require_operational_report_access(report, current_user, write=True)
     try:
         return crud.publish_public_passport(db, report=report, actor=current_user)
     except crud.ReportDomainError as error:
@@ -528,6 +613,7 @@ def reissue_report_passport(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    require_operational_report_access(report, current_user, write=True)
     try:
         return crud.publish_public_passport(db, report=report, actor=current_user, reissue=True)
     except crud.ReportDomainError as error:
@@ -599,6 +685,7 @@ def revoke_report_passport(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    require_operational_report_access(report, current_user, write=True)
     if not crud.revoke_public_passport(db, report=report, actor=current_user):
         raise HTTPException(status_code=404, detail="Public passport not found")
 
@@ -613,7 +700,7 @@ def update_report_domain(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
-    require_report_access(report, current_user)
+    require_operational_report_access(report, current_user, write=True)
     try:
         updated_report = crud.update_report_domain(
             db,
@@ -637,7 +724,7 @@ def transition_report_domain(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
-    require_report_access(report, current_user)
+    require_operational_report_access(report, current_user, write=True)
     try:
         return crud.transition_report_domain(
             db,
@@ -659,7 +746,7 @@ def read_report_domain_events(
     report = crud.get_report_domain(db, report_id)
     if not report or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Report not found")
-    require_report_access(report, current_user)
+    require_operational_report_access(report, current_user)
     return crud.get_report_events(db, report_id)
 
 
@@ -667,12 +754,14 @@ def get_report_for_media(
     db: Session,
     report_id: str,
     current_user: models.Expert,
+    *,
+    write: bool = False,
 ) -> models.DiamondReport:
     """Authorize an existing private report for media access."""
     report = crud.get_report_domain(db, report_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
-    require_report_access(report, current_user)
+    require_operational_report_access(report, current_user, write=write)
     return report
 
 
@@ -694,7 +783,7 @@ async def upload_report_media(
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
-    report = get_report_for_media(db, report_id, current_user)
+    report = get_report_for_media(db, report_id, current_user, write=True)
     if report.status != "draft":
         raise HTTPException(status_code=422, detail="Only draft reports can receive media assets")
     try:
@@ -747,6 +836,7 @@ def update_report_media_publication(
     report = crud.get_report_domain(db, report_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    require_operational_report_access(report, current_user, write=True)
     asset = crud.get_media_asset(db, report_id, media_id)
     if asset is None:
         raise HTTPException(status_code=404, detail="Media asset not found")
@@ -765,7 +855,7 @@ def delete_report_media(
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
-    report = get_report_for_media(db, report_id, current_user)
+    report = get_report_for_media(db, report_id, current_user, write=True)
     if report.status != "draft":
         raise HTTPException(status_code=422, detail="Only draft reports can remove media assets")
     asset = crud.get_media_asset(db, report_id, media_id)
@@ -890,6 +980,7 @@ def record_report_work_session(
     report = crud.get_report_domain(db, report_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
+    require_operational_report_access(report, current_user, write=True)
     try:
         result = crud.record_work_session_signal(db, report=report, actor=current_user, signal=payload)
         db.commit()

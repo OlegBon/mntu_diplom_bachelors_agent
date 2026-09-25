@@ -22,3 +22,17 @@ def test_orm_metadata_matches_canonical_named_indexes_for_audited_tables():
     assert {index.name for index in operations.indexes} == {
         "ix_market_operation_provider_started",
     }
+
+    reports = models.DiamondReport.__table__
+    assert {index.name for index in reports.indexes} >= {
+        "ix_diamond_reports_scope_report_id",
+        "ix_diamond_reports_demo_dataset_id",
+    }
+    assert {
+        constraint.name
+        for constraint in reports.constraints
+        if constraint.name
+    } >= {
+        "ck_diamond_reports_record_scope",
+        "ck_diamond_reports_scope_dataset",
+    }

@@ -276,6 +276,7 @@ class StoneValuationResponse(BaseModel):
 
 # Report-domain contract used by the current private API.
 ReportStatus = Literal["draft", "review", "issued", "void"]
+RecordScope = Literal["operational", "demo"]
 Origin = Literal["unknown", "natural", "lab_grown", "other"]
 TreatmentStatus = Literal["not_assessed", "none_detected", "disclosed", "confirmed"]
 IdentificationStatus = Literal["preliminary", "confirmed", "inconclusive"]
@@ -375,6 +376,7 @@ class MarketReferenceSummary(BaseModel):
 class ReportResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     report_id: str
+    record_scope: RecordScope
     status: ReportStatus
     report_date: datetime
     examination_date: Optional[date]
@@ -395,6 +397,23 @@ class ReportResponse(BaseModel):
     price: Optional[Decimal]
     market_reference: Optional[MarketReferenceSummary] = None
     stone: StoneResponse
+
+
+class DemoDatasetResponse(BaseModel):
+    """Read-only manifest metadata available only through the isolated admin API."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    dataset_id: str
+    label: str
+    version: str
+    generator_version: str
+    content_sha256: str
+    provenance: str
+    scope_note: str
+    analysis_eligibility: list[str]
+    record_count: int
+    created_at: datetime
 
 
 class FxDataSnapshotResponse(BaseModel):
