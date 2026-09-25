@@ -232,7 +232,7 @@ function renderValuations(container, helpNode, valuations) {
     container.append(item);
     return;
   }
-  helpNode.textContent = "OpenFacet — model-based retail reference. Системний орієнтир формується автоматично з останнього затвердженого знімка; підтверджений орієнтир окремо перевіряє адміністратор. Обидва не є експертною, продажною чи транзакційною ціною.";
+  helpNode.textContent = "Кожен орієнтир належить окремому провайдеру та знімку. Системний орієнтир формується автоматично з останнього затвердженого знімка; підтверджений орієнтир окремо перевіряє адміністратор. Орієнтири не є експертною, продажною чи транзакційною ціною.";
   if (marketReferences.length > 1) {
     helpNode.append(document.createTextNode(" Поточний запис відкритий; попередні збережені орієнтири згорнуті."));
   }
@@ -259,7 +259,7 @@ function renderValuations(container, helpNode, valuations) {
       row.append(dt, dd); details.append(row);
     };
     addDetail("Провайдер", valuation.source_name);
-    addDetail("Знімок OpenFacet", `#${valuation.market_snapshot_id ?? "—"}`);
+    addDetail("Знімок провайдера", `#${valuation.market_snapshot_id ?? "—"}`);
     addDetail("Отримано", formatDate(valuation.observed_at));
     if (valuation.converted_amount && valuation.converted_currency_code) {
       const rateDate = valuation.fx_rate_date ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${valuation.fx_rate_date}T12:00:00`)) : "—";
@@ -275,7 +275,7 @@ function renderValuations(container, helpNode, valuations) {
     } else if (isSystemReference) {
       const note = document.createElement("p");
       note.className = "market-reference-card__note";
-      note.textContent = "Автоматично розраховано за останнім затвердженим знімком OpenFacet; застосовність не підтверджена адміністратором.";
+      note.textContent = `Автоматично розраховано за останнім затвердженим знімком ${valuation.source_name}; застосовність не підтверджена адміністратором.`;
       disclosure.append(note);
     }
     item.append(disclosure);

@@ -133,7 +133,7 @@ function formatScheduleTime(schedule) {
   return `${String(schedule.scheduled_hour).padStart(2, "0")}:${String(schedule.scheduled_minute).padStart(2, "0")}`;
 }
 
-function renderSchedules(container, schedules, onSubmit) {
+function renderSchedules(container, schedules, providerNames, onSubmit) {
   container.replaceChildren();
   if (!schedules.length) {
     container.textContent = "Графіки ще не створені. Застосуйте міграцію 0013_market_provider_operations.";
@@ -143,7 +143,7 @@ function renderSchedules(container, schedules, onSubmit) {
     const form = document.createElement("form");
     form.className = "market-data-card";
     form.noValidate = true;
-    const title = document.createElement("h3"); title.textContent = schedule.provider_code === "nbu" ? "НБУ" : "OpenFacet";
+    const title = document.createElement("h3"); title.textContent = providerNames.get(schedule.provider_code) || schedule.provider_code;
     const freshness = document.createElement("p");
     freshness.textContent = `Стан даних: ${FRESHNESS_LABELS[schedule.freshness_status] || schedule.freshness_status}${schedule.latest_retrieved_at ? ` · останнє отримання ${formatDate(schedule.latest_retrieved_at)}` : ""}.`;
     const enabled = document.createElement("input"); enabled.type = "checkbox"; enabled.checked = schedule.enabled;
@@ -278,7 +278,7 @@ export async function initMarketData() {
       finally { button.disabled = false; }
     });
     renderSnapshots(snapshots, snapshotRows, openDecisionDialog);
-    renderSchedules(schedules, scheduleRows, async (payload, validationError) => {
+    renderSchedules(schedules, scheduleRows, new Map(providerRows.map((provider) => [provider.provider_code, provider.display_name])), async (payload, validationError) => {
       if (validationError) { setStatus(status, validationError, true); return; }
       try {
         await updateMarketProviderSchedule(payload.provider_code, payload, token);
