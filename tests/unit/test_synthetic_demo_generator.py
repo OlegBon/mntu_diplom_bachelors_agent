@@ -53,6 +53,7 @@ def test_apply_creates_an_isolated_dataset_once_without_accounts_or_passports(db
     assert [report.report_id for report in reports] == ["DEMO-00001", "DEMO-00002", "DEMO-00003"]
     assert all(report.record_scope == "demo" and report.demo_dataset_id == module.DATASET_ID for report in reports)
     assert all(report.expert_id is None and report.issued_by_id is None and report.price is None for report in reports)
+    assert all(report.report_notes_length == 10 and report.report_sentiment == 0 for report in reports)
     assert len(events) == 6 and all(event.actor_id is None for event in events)
     assert len(valuations) == 6
     assert {value.source_name for value in valuations} == {"Demo Market A", "Demo Market B"}

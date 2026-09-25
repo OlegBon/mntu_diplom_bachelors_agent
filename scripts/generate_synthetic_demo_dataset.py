@@ -143,6 +143,10 @@ def apply_dataset(db: Session, records: list[DemoRecord]) -> bool:
             report_sentiment=0,
         )
         db.add(report)
+        # MariaDB enforces the ReportEvent foreign key immediately. Flush the
+        # parent before adding its append-only child events (SQLite tests do
+        # not expose this ordering difference by default).
+        db.flush()
         db.add(models.ReportEvent(report_id=record.report_id, action="created", to_status="draft", reason="Synthetic demonstration dataset", created_at=report_date))
         db.add(models.ReportEvent(report_id=record.report_id, action="status_changed", from_status="draft", to_status="issued", reason="Synthetic internal demonstration state", created_at=report_date + timedelta(hours=2)))
         for source_name, amount in (("Demo Market A", record.provider_a_usd), ("Demo Market B", record.provider_b_usd)):
