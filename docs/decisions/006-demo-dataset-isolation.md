@@ -64,10 +64,11 @@ report. Це усуває роздвоєні migrations/CRUD/PDF і дає од�
   renderer-ом, але без `public_passports` row. Preview/PDF мають помітне
   `DEMO · INTERNAL PREVIEW` watermark; вони не є документом для передачі.
 - Генератор не приписує demo-звіт, подію чи вкладення реальному адміністратору
-  або експерту. До міграції 156 окремо визначається system-origin для assets і
-  events; UI показує «Synthetic demonstration dataset», а не вигадану людину.
-  Обов'язковий `media_assets.uploaded_by_id` не можна обходити підстановкою
-  поточного admin.
+  або експерту. System-origin для 156 — `NULL` у nullable actor-посиланнях
+  (`report_events.actor_id`, `stone_valuations.created_by_id`,
+  `media_assets.uploaded_by_id`); UI показує «Synthetic demonstration dataset»,
+  а не вигадану людину. Звичайне operational upload API, як і раніше, завжди
+  встановлює `uploaded_by_id` поточного користувача.
 
 ### 3. Дані, медіа і ціна
 

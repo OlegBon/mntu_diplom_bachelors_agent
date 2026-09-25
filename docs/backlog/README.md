@@ -41,7 +41,6 @@
 | Пріоритет | Файл | Тема |
 | --- | --- | --- |
 | P0 | [146-wizard-draft-continuity.md](./146-wizard-draft-continuity.md) | Відновлення незбереженого wizard state без hidden server draft. |
-| P1 | [156-demo-dataset-contract-and-isolation.md](./156-demo-dataset-contract-and-isolation.md) | Admin-only synthetic scope, RBAC, migration plan і money semantics. |
 | P1 | [162-multi-provider-market-references.md](./162-multi-provider-market-references.md) | Незалежні provider valuations, primary display і private presentation. |
 | P1 | [157-synthetic-demo-dataset-generator.md](./157-synthetic-demo-dataset-generator.md) | Детермінований synthetic dataset, provenance, safe assets і demo provider-и. |
 | P1 | [158-admin-demo-report-and-passport-preview.md](./158-admin-demo-report-and-passport-preview.md) | Read-only admin demo detail, PDF і private passport preview. |

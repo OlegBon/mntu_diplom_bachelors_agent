@@ -1,9 +1,10 @@
-from sqlalchemy import and_, asc, case, desc, func
+from sqlalchemy import and_, asc, case, desc, func, select
 from sqlalchemy.orm import Session, joinedload
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 import hashlib
+import json
 import secrets
 import uuid
 from statistics import median
@@ -32,15 +33,61 @@ class ReportDomainError(ValueError):
 
 
 def _next_report_id(db: Session) -> str:
-    last_report = db.query(models.DiamondReport).order_by(models.DiamondReport.report_id.desc()).first()
-    if last_report:
-        try:
-            next_number = int(last_report.report_id.split("-")[1]) + 1
-        except (IndexError, ValueError):
-            next_number = db.query(models.DiamondReport).count() + 1
-    else:
-        next_number = 1
-    return f"DR-{next_number:05d}"
+    """Return the next operational ID without considering demo identifiers."""
+    report_ids = (
+        db.query(models.DiamondReport.report_id)
+        .filter(
+            models.DiamondReport.record_scope == "operational",
+            models.DiamondReport.report_id.like("DR-%"),
+        )
+        .all()
+    )
+    numbers = [int(report_id[3:]) for (report_id,) in report_ids if report_id[3:].isdigit()]
+    return f"DR-{(max(numbers) if numbers else 0) + 1:05d}"
+
+
+def get_demo_dataset(db: Session, dataset_id: str) -> models.DemoDataset | None:
+    return db.get(models.DemoDataset, dataset_id)
+
+
+def get_demo_dataset_response(dataset: models.DemoDataset) -> schemas.DemoDatasetResponse:
+    """Deserialize the immutable, server-controlled scenario allow-list."""
+    try:
+        eligibility = json.loads(dataset.analysis_eligibility)
+    except json.JSONDecodeError as error:
+        raise ReportDomainError("Demo dataset manifest has invalid analysis eligibility") from error
+    if not isinstance(eligibility, list) or not all(isinstance(item, str) for item in eligibility):
+        raise ReportDomainError("Demo dataset manifest has invalid analysis eligibility")
+    return schemas.DemoDatasetResponse(
+        dataset_id=dataset.dataset_id,
+        label=dataset.label,
+        version=dataset.version,
+        generator_version=dataset.generator_version,
+        content_sha256=dataset.content_sha256,
+        provenance=dataset.provenance,
+        scope_note=dataset.scope_note,
+        analysis_eligibility=eligibility,
+        record_count=dataset.record_count,
+        created_at=dataset.created_at,
+    )
+
+
+def require_demo_dataset_analysis_eligibility(
+    db: Session, *, dataset_id: str, scenario: str,
+) -> models.DemoDataset:
+    """Authorize one explicitly declared synthetic-analysis scenario.
+
+    Future demo analytics must call this boundary before selecting any report.
+    It intentionally checks the persisted manifest rather than a report-ID
+    prefix, query parameter, or frontend mode.
+    """
+    dataset = get_demo_dataset(db, dataset_id)
+    if dataset is None or not dataset.provenance.startswith("synthetic-demo-v"):
+        raise ReportDomainError("Demo dataset is not eligible for synthetic analysis")
+    eligibility = get_demo_dataset_response(dataset).analysis_eligibility
+    if scenario not in eligibility:
+        raise ReportDomainError("Demo dataset is not eligible for this analysis scenario")
+    return dataset
 
 
 def _legacy_origin_code(origin: str) -> int:
@@ -155,6 +202,21 @@ def get_report_domain(db: Session, report_id: str) -> models.DiamondReport | Non
     return db.query(models.DiamondReport).filter(models.DiamondReport.report_id == report_id).first()
 
 
+def get_demo_report_domain(
+    db: Session, *, dataset_id: str, report_id: str,
+) -> models.DiamondReport | None:
+    return (
+        db.query(models.DiamondReport)
+        .options(joinedload(models.DiamondReport.stone))
+        .filter(
+            models.DiamondReport.report_id == report_id,
+            models.DiamondReport.record_scope == "demo",
+            models.DiamondReport.demo_dataset_id == dataset_id,
+        )
+        .first()
+    )
+
+
 def get_report_domain_list(
     db: Session,
     *,
@@ -183,6 +245,21 @@ def get_report_domain_list(
         db.query(models.DiamondReport)
         .join(models.Stone, models.DiamondReport.stone_id == models.Stone.stone_id)
         .options(joinedload(models.DiamondReport.stone))
+        .filter(models.DiamondReport.record_scope == "operational")
+    )
+    market_reference_amount = (
+        select(models.StoneValuation.amount)
+        .where(
+            models.StoneValuation.stone_id == models.DiamondReport.stone_id,
+            models.StoneValuation.valuation_kind.in_(("market_reference", "system_market_reference")),
+        )
+        .order_by(
+            case((models.StoneValuation.valuation_kind == "market_reference", 0), else_=1),
+            models.StoneValuation.created_at.desc(),
+            models.StoneValuation.valuation_id.desc(),
+        )
+        .limit(1)
+        .scalar_subquery()
     )
     if current_user.role != "admin":
         query = query.filter(models.DiamondReport.expert_id == current_user.expert_id)
@@ -209,9 +286,9 @@ def get_report_domain_list(
     if carat_max is not None:
         query = query.filter(models.Stone.carat_weight <= carat_max)
     if price_min is not None:
-        query = query.filter(models.DiamondReport.price >= price_min)
+        query = query.filter(market_reference_amount >= price_min)
     if price_max is not None:
-        query = query.filter(models.DiamondReport.price <= price_max)
+        query = query.filter(market_reference_amount <= price_max)
     if date_from is not None:
         query = query.filter(models.DiamondReport.report_date >= datetime.combine(date_from, time.min))
     if date_to is not None:
@@ -234,8 +311,8 @@ def get_report_domain_list(
         "clarity_desc": (desc(models.Stone.clarity_grade), desc(models.DiamondReport.report_id)),
         "cut_asc": (asc(models.DiamondReport.system_cut_grade), asc(models.DiamondReport.report_id)),
         "cut_desc": (desc(models.DiamondReport.system_cut_grade), desc(models.DiamondReport.report_id)),
-        "price_desc": (desc(models.DiamondReport.price), desc(models.DiamondReport.report_id)),
-        "price_asc": (asc(models.DiamondReport.price), asc(models.DiamondReport.report_id)),
+        "price_desc": (desc(market_reference_amount), desc(models.DiamondReport.report_id)),
+        "price_asc": (asc(market_reference_amount), asc(models.DiamondReport.report_id)),
         "report_status_asc": (asc(models.DiamondReport.status), asc(models.DiamondReport.report_id)),
         "report_status_desc": (desc(models.DiamondReport.status), desc(models.DiamondReport.report_id)),
         "market_status_asc": (asc(models.Stone.market_status), asc(models.DiamondReport.report_id)),
@@ -244,6 +321,30 @@ def get_report_domain_list(
     total = query.count()
     reports = (
         query.order_by(*sort_columns[sort])
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    _attach_latest_market_reference_summaries(db, reports)
+    return reports, total
+
+
+def get_demo_report_domain_list(
+    db: Session, *, dataset_id: str, page: int, page_size: int,
+) -> tuple[list[models.DiamondReport], int]:
+    """Return one isolated demonstration dataset; never mix it with operations."""
+    query = (
+        db.query(models.DiamondReport)
+        .join(models.Stone, models.DiamondReport.stone_id == models.Stone.stone_id)
+        .options(joinedload(models.DiamondReport.stone))
+        .filter(
+            models.DiamondReport.record_scope == "demo",
+            models.DiamondReport.demo_dataset_id == dataset_id,
+        )
+    )
+    total = query.count()
+    reports = (
+        query.order_by(desc(models.DiamondReport.report_date), desc(models.DiamondReport.report_id))
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
@@ -467,9 +568,11 @@ def get_active_public_passport(
 ) -> models.PublicPassport | None:
     return (
         db.query(models.PublicPassport)
+        .join(models.DiamondReport, models.PublicPassport.report_id == models.DiamondReport.report_id)
         .filter(
             models.PublicPassport.report_id == report_id,
             models.PublicPassport.is_active.is_(True),
+            models.DiamondReport.record_scope == "operational",
         )
         .order_by(models.PublicPassport.passport_id.desc())
         .first()
@@ -484,6 +587,8 @@ def publish_public_passport(
     reissue: bool = False,
 ) -> models.PublicPassport:
     """Publish or replace an unpredictable token for an issued report."""
+    if report.record_scope != "operational":
+        raise ReportDomainError("Demo reports cannot be published")
     if report.status != "issued":
         raise ReportDomainError("Only issued reports can be published")
     existing = get_active_public_passport(db, report.report_id)
@@ -553,6 +658,7 @@ def get_public_passport_view(
         .filter(
             models.PublicPassport.public_id == public_id,
             models.PublicPassport.is_active.is_(True),
+            models.DiamondReport.record_scope == "operational",
             models.DiamondReport.status == "issued",
             models.DiamondReport.issued_at.is_not(None),
             models.Stone.carat_weight.is_not(None),
@@ -805,7 +911,10 @@ def _work_session_record(session: models.ReportWorkSession) -> schemas.WorkSessi
 def get_expert_stats(db: Session, *, date_from: date | None = None, date_to: date | None = None) -> list[schemas.ExpertStats]:
     """Return admin-only report counts and finished, server-timed work sessions."""
     start, end = _period_bounds(date_from, date_to)
-    report_join = models.DiamondReport.expert_id == models.Expert.expert_id
+    report_join = and_(
+        models.DiamondReport.expert_id == models.Expert.expert_id,
+        models.DiamondReport.record_scope == "operational",
+    )
     if start is not None:
         report_join = and_(report_join, models.DiamondReport.created_at >= start)
     if end is not None:
@@ -836,7 +945,14 @@ def get_expert_stats(db: Session, *, date_from: date | None = None, date_to: dat
     )
     report_rows = report_query.order_by(models.Expert.username.asc()).all()
 
-    sessions_query = db.query(models.ReportWorkSession).filter(models.ReportWorkSession.ended_at.is_not(None))
+    sessions_query = (
+        db.query(models.ReportWorkSession)
+        .join(models.DiamondReport, models.ReportWorkSession.report_id == models.DiamondReport.report_id)
+        .filter(
+            models.ReportWorkSession.ended_at.is_not(None),
+            models.DiamondReport.record_scope == "operational",
+        )
+    )
     if start is not None:
         sessions_query = sessions_query.filter(models.ReportWorkSession.ended_at >= start)
     if end is not None:
@@ -848,7 +964,10 @@ def get_expert_stats(db: Session, *, date_from: date | None = None, date_to: dat
     timings_query = db.query(
         models.DiamondReport.expert_id,
         models.DiamondReport.time_to_first_save_seconds,
-    ).filter(models.DiamondReport.time_to_first_save_seconds.is_not(None))
+    ).filter(
+        models.DiamondReport.time_to_first_save_seconds.is_not(None),
+        models.DiamondReport.record_scope == "operational",
+    )
     if start is not None:
         timings_query = timings_query.filter(models.DiamondReport.created_at >= start)
     if end is not None:
@@ -1057,7 +1176,13 @@ def get_admin_review_stats(db: Session, *, date_from: date | None = None, date_t
     admin_ids = {admin.expert_id for admin in admins}
     review_starts: dict[str, datetime] = {}
     decisions: dict[int, list[schemas.ReviewDurationRecord]] = {admin.expert_id: [] for admin in admins}
-    events = db.query(models.ReportEvent).order_by(models.ReportEvent.report_id, models.ReportEvent.event_id).all()
+    events = (
+        db.query(models.ReportEvent)
+        .join(models.DiamondReport, models.ReportEvent.report_id == models.DiamondReport.report_id)
+        .filter(models.DiamondReport.record_scope == "operational")
+        .order_by(models.ReportEvent.report_id, models.ReportEvent.event_id)
+        .all()
+    )
     for event in events:
         if event.to_status == "review" and event.created_at is not None:
             review_starts[event.report_id] = event.created_at
@@ -1081,7 +1206,10 @@ def get_admin_review_stats(db: Session, *, date_from: date | None = None, date_t
 
     pending_starts = [
         review_starts[report.report_id]
-        for report in db.query(models.DiamondReport).filter(models.DiamondReport.status == "review").all()
+        for report in db.query(models.DiamondReport).filter(
+            models.DiamondReport.status == "review",
+            models.DiamondReport.record_scope == "operational",
+        ).all()
         if report.report_id in review_starts
     ]
     rows: list[schemas.AdminReviewStats] = []

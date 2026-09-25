@@ -105,7 +105,7 @@
 - [ ] [153 — Stone analytics / SOM](./backlog/153-stone-analytics-visualization.md): descriptive admin-only сегменти після 151, без investment verdict.
 - [ ] [154 — Якість експертних текстів](./backlog/154-expert-narrative-quality-analysis.md): explainable form-quality checks; NLP/ML тільки після окремого data/privacy contract.
 - [ ] [155 — Operational і data-quality analytics](./backlog/155-operational-and-data-quality-analytics.md): workflow funnel, completeness і publication readiness без rating/public tracking; provider metrics — 163.
-- [ ] [156 — Demo dataset contract і isolation](./backlog/156-demo-dataset-contract-and-isolation.md): `operational`/`demo` scope, admin-only RBAC, backfill plan 1 000 seed records і незалежна money semantics.
+- [x] [156 — Demo dataset contract і isolation](./decisions/006-demo-dataset-isolation.md): schema-only `operational`/`demo` scope, immutable manifest, admin-only isolated read API, RBAC і read-only inventory; historical classification backfill лишається окремою підтверджуваною операцією.
 - [ ] [162 — Multi-provider market references](./backlog/162-multi-provider-market-references.md): enabled provider set, dashboard primary, independent immutable valuations та private presentation без aggregation/public display.
 - [ ] [157 — Synthetic demo dataset generator](./backlog/157-synthetic-demo-dataset-generator.md): deterministic `DEMO-…`, manifest, filled synthetic fields і safe assets після 156.
 - [ ] [158 — Admin demo report/PDF/passport preview](./backlog/158-admin-demo-report-and-passport-preview.md): immutable private preview без public code/QR після 156–157.

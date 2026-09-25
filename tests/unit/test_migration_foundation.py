@@ -56,11 +56,23 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_market_provider_operations_revision_is_the_only_committed_head():
+def test_alembic_demo_dataset_isolation_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0013_market_provider_operations"]
+    assert script_directory.get_heads() == ["0014_demo_dataset_isolation"]
+
+
+def test_demo_dataset_migration_is_schema_only_until_explicit_backfill_approval():
+    source = (PROJECT_ROOT / "alembic" / "versions" / "0014_demo_dataset_isolation.py").read_text(encoding="utf-8")
+
+    assert "demo_datasets" in source
+    assert "record_scope" in source
+    assert "demo_dataset_id" in source
+    assert '"uploaded_by_id"' in source
+    assert "nullable=True" in source
+    assert "op.execute(" not in source
+    assert "op.bulk_insert(" not in source
 
 
 def test_nbu_fx_migration_does_not_backfill_or_reprice_historical_values():
