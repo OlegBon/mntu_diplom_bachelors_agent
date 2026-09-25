@@ -12,7 +12,7 @@ block content
             p.account-help Налаштування діють лише для майбутніх нових або змінених чернеток. Збережені орієнтири не перераховуються.
             form#market-reference-policy-form(novalidate)
                 fieldset.market-policy-fieldset
-                    legend Провайдер ринкового орієнтиру
+                    legend Провайдери ринкових орієнтирів
                     #market-policy-market-providers.market-policy-options(aria-live="polite")
                 label.market-data-confirmation(for="market-policy-use-fx")
                     input#market-policy-use-fx(type="checkbox")
@@ -37,7 +37,7 @@ block content
             #market-provider-operations.market-data-snapshots(aria-live="polite")
         section.account-surface.account-surface--wide
             h2 Прикріпити орієнтир до звіту
-            p.account-help Звіт не містить даних про GIA-сертифікат. Тому перед прикріпленням адміністратор підтверджує застосовність OpenFacet до конкретного каменя. Конвертацію UAH визначають поточні системні налаштування. Legacy-ціна звіту не змінюється.
+            p.account-help Перед прикріпленням адміністратор підтверджує застосовність обраного провайдера і знімка до конкретного каменя. Конвертацію UAH визначають поточні системні налаштування. Legacy-ціна звіту не змінюється.
             p#market-reference-status.account-status(role="status" aria-live="polite" hidden)
             form#market-reference-attach-form(novalidate)
                 .form-row

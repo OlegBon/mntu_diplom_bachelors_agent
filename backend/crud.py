@@ -128,9 +128,9 @@ def preview_report_calculation(db: Session, stone: schemas.ReportCalculationInpu
         stone.pavilion_angle,
     )
     cut = DiamondCalculator.calculate_final_cut(proportions, stone.polish_grade, stone.symmetry_grade)
-    candidate = None
+    candidates: list[SystemMarketReferenceCandidate] = []
     policy = get_market_reference_policy(db)
-    if policy and policy.market_provider_code and stone.shape and stone.origin:
+    if policy and stone.shape and stone.origin:
         preview_stone = models.Stone(
             shape=stone.shape,
             origin=stone.origin,
@@ -138,16 +138,44 @@ def preview_report_calculation(db: Session, stone: schemas.ReportCalculationInpu
             color_grade=stone.color_grade,
             clarity_grade=stone.clarity_grade,
         )
-        candidate = prepare_system_market_reference_for_stone(
-            db, stone=preview_stone, provider_code=policy.market_provider_code,
-        )
+        for provider_code in get_enabled_market_reference_provider_codes(db, policy_id=policy.policy_id):
+            candidate = prepare_system_market_reference_for_stone(
+                db, stone=preview_stone, provider_code=provider_code,
+            )
+            if candidate is not None:
+                candidates.append(candidate)
+    primary_code = policy.market_provider_code if policy else None
+    primary_candidate = next(
+        (candidate for candidate in candidates if candidate.snapshot.provider_code == primary_code),
+        None,
+    )
+    provider_names = {
+        provider.provider_code: provider.display_name
+        for provider in db.query(models.MarketDataProvider).filter(
+            models.MarketDataProvider.provider_code.in_(
+                [candidate.snapshot.provider_code for candidate in candidates],
+            ),
+        ).all()
+    }
     return schemas.ReportCalculationPreview(
         system_proportions_grade=proportions,
         system_cut_grade=cut,
         calculation_rule_version=REPORT_RULE_VERSION,
-        system_market_reference_usd=candidate.amount if candidate else None,
-        market_reference_provider_code=candidate.snapshot.provider_code if candidate else None,
-        market_reference_snapshot_id=candidate.snapshot.snapshot_id if candidate else None,
+        system_market_reference_usd=primary_candidate.amount if primary_candidate else None,
+        market_reference_provider_code=primary_candidate.snapshot.provider_code if primary_candidate else None,
+        market_reference_snapshot_id=primary_candidate.snapshot.snapshot_id if primary_candidate else None,
+        system_market_references=[
+            schemas.SystemMarketReferencePreview(
+                amount=candidate.amount,
+                currency_code=candidate.snapshot.currency_code,
+                provider_code=candidate.snapshot.provider_code,
+                source_name=provider_names.get(
+                    candidate.snapshot.provider_code, candidate.snapshot.provider_code,
+                ),
+                market_snapshot_id=candidate.snapshot.snapshot_id,
+            )
+            for candidate in candidates
+        ],
     )
 
 
@@ -373,25 +401,48 @@ def _attach_latest_market_reference_summaries(
         )
         .all()
     )
-    by_stone: dict[int, models.StoneValuation] = {}
+    snapshot_provider_codes = {
+        snapshot_id: provider_code
+        for snapshot_id, provider_code in db.query(
+            models.MarketDataSnapshot.snapshot_id, models.MarketDataSnapshot.provider_code,
+        ).filter(models.MarketDataSnapshot.snapshot_id.in_([
+            valuation.market_snapshot_id for valuation in valuations if valuation.market_snapshot_id is not None
+        ])).all()
+    }
+    policy = get_market_reference_policy(db)
+    primary_code = policy.market_provider_code if policy else None
+    by_stone: dict[int, list[models.StoneValuation]] = {}
     for valuation in valuations:
-        by_stone.setdefault(valuation.stone_id, valuation)
+        by_stone.setdefault(valuation.stone_id, []).append(valuation)
     for report in reports:
-        valuation = by_stone.get(report.stone_id)
-        if valuation is None:
-            continue
-        report.market_reference = schemas.MarketReferenceSummary(
-            amount=valuation.amount,
-            currency_code=valuation.currency_code,
-            valuation_kind=valuation.valuation_kind,
-            source_name=valuation.source_name,
-            market_snapshot_id=valuation.market_snapshot_id,
-            observed_at=valuation.observed_at,
-            converted_amount=valuation.converted_amount,
-            converted_currency_code=valuation.converted_currency_code,
-            fx_snapshot_id=valuation.fx_snapshot_id,
-            fx_rate=valuation.fx_rate,
-            fx_rate_date=valuation.fx_rate_date,
+        references = by_stone.get(report.stone_id, [])
+        latest_by_provider: dict[str, models.StoneValuation] = {}
+        for valuation in references:
+            provider_code = snapshot_provider_codes.get(valuation.market_snapshot_id)
+            if provider_code and provider_code not in latest_by_provider:
+                latest_by_provider[provider_code] = valuation
+        summaries = [
+            schemas.MarketReferenceSummary(
+                amount=valuation.amount,
+                currency_code=valuation.currency_code,
+                provider_code=provider_code,
+                valuation_kind=valuation.valuation_kind,
+                source_name=valuation.source_name,
+                market_snapshot_id=valuation.market_snapshot_id,
+                observed_at=valuation.observed_at,
+                converted_amount=valuation.converted_amount,
+                converted_currency_code=valuation.converted_currency_code,
+                fx_snapshot_id=valuation.fx_snapshot_id,
+                fx_rate=valuation.fx_rate,
+                fx_rate_date=valuation.fx_rate_date,
+                available_provider_count=len(latest_by_provider),
+            )
+            for provider_code, valuation in latest_by_provider.items()
+        ]
+        report.market_references = summaries
+        report.market_reference = next(
+            (summary for summary in summaries if summary.provider_code == primary_code),
+            None,
         )
 
 
@@ -1282,6 +1333,39 @@ def get_market_reference_policy(db: Session) -> models.MarketReferencePolicy | N
     return db.get(models.MarketReferencePolicy, 1)
 
 
+def get_enabled_market_reference_provider_codes(db: Session, *, policy_id: int = 1) -> list[str]:
+    """Return only the explicitly enabled future-reference providers."""
+    codes = [
+        provider_code
+        for (provider_code,) in db.query(models.MarketReferencePolicyProvider.provider_code)
+        .filter(models.MarketReferencePolicyProvider.policy_id == policy_id)
+        .order_by(
+            models.MarketReferencePolicyProvider.display_order,
+            models.MarketReferencePolicyProvider.provider_code,
+        )
+        .all()
+    ]
+    if codes:
+        return codes
+    policy = get_market_reference_policy(db)
+    return [policy.market_provider_code] if policy and policy.market_provider_code else []
+
+
+def get_market_reference_policy_response(
+    db: Session, policy: models.MarketReferencePolicy,
+) -> schemas.MarketReferencePolicyResponse:
+    return schemas.MarketReferencePolicyResponse(
+        policy_id=policy.policy_id,
+        enabled_market_provider_codes=get_enabled_market_reference_provider_codes(db, policy_id=policy.policy_id),
+        dashboard_primary_provider_code=policy.market_provider_code,
+        market_provider_code=policy.market_provider_code,
+        use_fx_conversion=policy.use_fx_conversion,
+        fx_provider_code=policy.fx_provider_code,
+        updated_by_id=policy.updated_by_id,
+        updated_at=policy.updated_at,
+    )
+
+
 def update_market_reference_policy(
     db: Session,
     *,
@@ -1289,13 +1373,25 @@ def update_market_reference_policy(
     actor: models.Expert,
 ) -> models.MarketReferencePolicy:
     """Validate selected provider capabilities before replacing the future-only policy."""
-    market_provider = None
-    if payload.market_provider_code is not None:
-        market_provider = db.get(models.MarketDataProvider, payload.market_provider_code)
-        if market_provider is None or not market_provider.is_active:
+    enabled_codes = list(dict.fromkeys(payload.enabled_market_provider_codes))
+    if not enabled_codes and payload.market_provider_code is not None:
+        enabled_codes = [payload.market_provider_code]
+    primary_provider_code = payload.dashboard_primary_provider_code
+    if primary_provider_code is None and payload.market_provider_code is not None:
+        primary_provider_code = payload.market_provider_code
+    enabled_providers = []
+    for provider_code in enabled_codes:
+        provider = db.get(models.MarketDataProvider, provider_code)
+        if provider is None or not provider.is_active:
             raise ReportDomainError("Selected market-data provider is unavailable")
-        if market_provider.provider_type != "market_reference":
+        if provider.provider_type != "market_reference":
             raise ReportDomainError("Selected provider cannot supply a market reference")
+        enabled_providers.append(provider)
+    if (
+        primary_provider_code is not None
+        and primary_provider_code not in enabled_codes
+    ):
+        raise ReportDomainError("Dashboard primary provider must be enabled")
     fx_provider = None
     if payload.use_fx_conversion:
         if payload.fx_provider_code is None:
@@ -1309,10 +1405,24 @@ def update_market_reference_policy(
     if policy is None:
         policy = models.MarketReferencePolicy(policy_id=1)
         db.add(policy)
-    policy.market_provider_code = market_provider.provider_code if market_provider else None
+    # Retain the historical singleton column as a compatibility projection of
+    # the canonical primary selection; the child rows are the source of truth.
+    policy.market_provider_code = primary_provider_code
     policy.use_fx_conversion = payload.use_fx_conversion
     policy.fx_provider_code = fx_provider.provider_code if fx_provider else None
     policy.updated_by_id = actor.expert_id
+    db.query(models.MarketReferencePolicyProvider).filter(
+        models.MarketReferencePolicyProvider.policy_id == policy.policy_id,
+    ).delete(synchronize_session=False)
+    db.add_all(
+        models.MarketReferencePolicyProvider(
+            policy_id=policy.policy_id,
+            provider_code=provider.provider_code,
+            display_order=index,
+            updated_by_id=actor.expert_id,
+        )
+        for index, provider in enumerate(enabled_providers)
+    )
     db.commit()
     db.refresh(policy)
     return policy

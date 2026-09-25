@@ -56,11 +56,20 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_demo_dataset_isolation_revision_is_the_only_committed_head():
+def test_alembic_multi_provider_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0014_demo_dataset_isolation"]
+    assert script_directory.get_heads() == ["0015_multi_provider_market_references"]
+
+
+def test_multi_provider_migration_changes_policy_only_not_historical_valuations():
+    source = (PROJECT_ROOT / "alembic" / "versions" / "0015_multi_provider_market_references.py").read_text(encoding="utf-8")
+
+    assert "market_reference_policy_providers" in source
+    assert "market_provider_code" in source
+    assert "stone_valuations" not in source
+    assert "diamond_reports" not in source
 
 
 def test_demo_dataset_migration_is_schema_only_until_explicit_backfill_approval():

@@ -197,6 +197,7 @@ class MarketDataProviderResponse(BaseModel):
     documentation_url: str
     terms_url: str
     scope_note: str
+    brand_asset_key: Optional[str]
     is_active: bool
 
 
@@ -204,6 +205,9 @@ class MarketReferencePolicyResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     policy_id: int
+    enabled_market_provider_codes: list[str]
+    dashboard_primary_provider_code: Optional[str]
+    # Deprecated compatibility projection; equals dashboard primary.
     market_provider_code: Optional[str]
     use_fx_conversion: bool
     fx_provider_code: Optional[str]
@@ -212,6 +216,9 @@ class MarketReferencePolicyResponse(BaseModel):
 
 
 class MarketReferencePolicyUpdate(BaseModel):
+    enabled_market_provider_codes: list[str] = Field(default_factory=list, max_length=20)
+    dashboard_primary_provider_code: Optional[str] = Field(default=None, max_length=32)
+    # Accepted only to keep existing local clients usable during the transition.
     market_provider_code: Optional[str] = Field(default=None, max_length=32)
     use_fx_conversion: bool
     fx_provider_code: Optional[str] = Field(default=None, max_length=32)
@@ -362,6 +369,7 @@ class MarketReferenceSummary(BaseModel):
 
     amount: Decimal
     currency_code: str
+    provider_code: str
     valuation_kind: str
     source_name: str
     market_snapshot_id: Optional[int]
@@ -371,6 +379,7 @@ class MarketReferenceSummary(BaseModel):
     fx_snapshot_id: Optional[int]
     fx_rate: Optional[Decimal]
     fx_rate_date: Optional[date]
+    available_provider_count: int = 1
 
 
 class ReportResponse(BaseModel):
@@ -396,6 +405,7 @@ class ReportResponse(BaseModel):
     time_to_first_save_seconds: Optional[int]
     price: Optional[Decimal]
     market_reference: Optional[MarketReferenceSummary] = None
+    market_references: list[MarketReferenceSummary] = Field(default_factory=list)
     stone: StoneResponse
 
 
@@ -488,6 +498,16 @@ class ReportIdPreview(BaseModel):
     report_id: str
 
 
+class SystemMarketReferencePreview(BaseModel):
+    """One non-persisted provider calculation shown by the report wizard."""
+
+    amount: Decimal
+    currency_code: str
+    provider_code: str
+    source_name: str
+    market_snapshot_id: int
+
+
 class ReportCalculationPreview(BaseModel):
     system_proportions_grade: int
     system_cut_grade: int
@@ -495,6 +515,7 @@ class ReportCalculationPreview(BaseModel):
     system_market_reference_usd: Optional[Decimal] = None
     market_reference_provider_code: Optional[str] = None
     market_reference_snapshot_id: Optional[int] = None
+    system_market_references: list[SystemMarketReferencePreview] = Field(default_factory=list)
 
 
 class ReportCalculationInput(BaseModel):

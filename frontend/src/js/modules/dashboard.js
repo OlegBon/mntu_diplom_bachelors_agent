@@ -3,7 +3,7 @@ import { logout } from "./auth.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 
 const PAGE_SIZE = 25;
-const DEFAULT_SORT = "report_date_desc";
+const DEFAULT_SORT = "report_id_desc";
 const REPORT_STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
 const SALE_STATUS_LABELS = { false: "Не продано", true: "Продано" };
 
@@ -121,6 +121,7 @@ function formatDateOnly(value) {
 
 function renderMarketReferencePrice(report) {
   const reference = report.market_reference;
+  const references = report.market_references?.length ? report.market_references : [reference];
   const isSystemReference = reference.valuation_kind === "system_market_reference";
   const typeMarker = isSystemReference ? "SYS" : "ADM";
   const referenceType = isSystemReference
@@ -131,10 +132,15 @@ function renderMarketReferencePrice(report) {
   toggle.type = "button";
   toggle.setAttribute("aria-label", `Пояснення ринкового орієнтира звіту ${report.report_id}`);
   toggle.setAttribute("aria-expanded", "false");
-  toggle.append(
-    document.createTextNode(`USD ${formatPrice(reference.amount)} `),
+  const amount = createElement("span", "report-price__amount", `USD ${formatPrice(reference.amount)}`);
+  const metadata = createElement("span", "report-price__metadata");
+  metadata.append(
     createElement("span", "report-price__indicator", `${typeMarker} · ${reference.source_name}`),
+    references.length > 1
+      ? createElement("span", "report-price__indicator", `+${references.length - 1}`)
+      : document.createTextNode(""),
   );
+  toggle.append(amount, metadata);
   const popover = createElement("div", "report-price__popover");
   popover.hidden = true;
   const observed = formatDateTime(reference.observed_at);
@@ -152,6 +158,16 @@ function renderMarketReferencePrice(report) {
     const row = createElement("p", "report-price__detail");
     row.append(createElement("strong", "", `${label}: `), document.createTextNode(value));
     popover.append(row);
+  }
+  if (references.length > 1) {
+    const alternatives = createElement("div", "report-price__alternatives");
+    alternatives.append(createElement("strong", "", "Інші доступні орієнтири:"));
+    const list = document.createElement("ul");
+    for (const item of references.filter((item) => item.provider_code !== reference.provider_code)) {
+      list.append(createElement("li", "", `${item.source_name}: USD ${formatPrice(item.amount)}`));
+    }
+    alternatives.append(list);
+    popover.append(alternatives);
   }
   popover.append(createElement(
     "p",

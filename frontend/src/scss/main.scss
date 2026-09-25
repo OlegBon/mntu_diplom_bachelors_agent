@@ -1347,6 +1347,19 @@ ul {
         margin-left: 0.2rem;
       }
 
+      .calc-reference-list {
+        margin: -0.2rem 0 0.8rem;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid variables.$border-color;
+        border-radius: 4px;
+        background: #f8fbff;
+
+        p {
+          margin: 0.25rem 0;
+          font-size: 0.86rem;
+        }
+      }
+
       .highlight {
         background: #e0f2fe; // Light blue
         padding: 0.8rem;
