@@ -7,6 +7,7 @@ import {
   previewReportCalculation,
   uploadReportMedia,
 } from "./api.js";
+import { logout } from "./auth.js";
 import { createWizardDraftStorage } from "./wizard-draft-storage.js";
 import { createWizardWorkSessionTracker } from "./wizard-work-session.js";
 
@@ -76,7 +77,7 @@ export async function initReportWizard() {
   let suppressDraftPersistence = false;
   let workSessionTracker = null;
   let schedulePreview = () => {};
-  let pendingNavigationUrl = null;
+  let pendingLeaveAction = null;
   let allowBrowserLeave = false;
   const updateClearDraftButton = () => { clearDraftButton.hidden = !hasUnsavedDraft; };
   const persistDraft = () => {
@@ -258,19 +259,23 @@ export async function initReportWizard() {
   document.getElementById("wizard-clear-dialog-close").addEventListener("click", () => clearDialog.close());
   document.getElementById("wizard-clear-cancel").addEventListener("click", () => clearDialog.close());
   document.getElementById("wizard-clear-confirm").addEventListener("click", () => { clearDialog.close(); startNew(); });
-  const cancelLeave = () => { pendingNavigationUrl = null; leaveDialog.close(); };
+  const leaveDescription = document.getElementById("wizard-leave-dialog-description");
+  const leaveConfirm = document.getElementById("wizard-leave-confirm");
+  const cancelLeave = () => { pendingLeaveAction = null; leaveDialog.close(); };
   document.getElementById("wizard-leave-dialog-close").addEventListener("click", cancelLeave);
   document.getElementById("wizard-leave-cancel").addEventListener("click", cancelLeave);
   document.getElementById("wizard-leave-confirm").addEventListener("click", () => {
-    if (!pendingNavigationUrl) return;
+    if (!pendingLeaveAction) return;
     allowBrowserLeave = true;
     leaveDialog.close();
-    window.location.assign(pendingNavigationUrl);
+    if (pendingLeaveAction.type === "logout") logout();
+    else window.location.assign(pendingLeaveAction.url);
   });
   document.addEventListener("click", (event) => {
     const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+    const logoutButton = event.target instanceof Element ? event.target.closest(".header-logout, .mobile-logout") : null;
     if (
-      !anchor
+      (!anchor && !logoutButton)
       || !hasUnsavedDraft
       || event.defaultPrevented
       || event.button !== 0
@@ -278,15 +283,25 @@ export async function initReportWizard() {
       || event.ctrlKey
       || event.shiftKey
       || event.altKey
-      || anchor.target === "_blank"
-      || anchor.hasAttribute("download")
+      || (anchor && (anchor.target === "_blank" || anchor.hasAttribute("download")))
     ) return;
+    if (logoutButton) event.stopPropagation();
+    if (logoutButton) {
+      pendingLeaveAction = { type: "logout" };
+      leaveDescription.textContent = "Введені дані ще не стали чернеткою на сервері. Після виходу вони залишаться лише в цій вкладці та будуть доступні для явного відновлення лише після повторного входу цим самим обліковим записом.";
+      leaveConfirm.textContent = "Вийти";
+      event.preventDefault();
+      leaveDialog.showModal();
+      return;
+    }
     const destination = new URL(anchor.href, window.location.href);
     if (destination.href === window.location.href || !["http:", "https:"].includes(destination.protocol)) return;
     event.preventDefault();
-    pendingNavigationUrl = destination.href;
+    pendingLeaveAction = { type: "navigation", url: destination.href };
+    leaveDescription.textContent = "Введені дані ще не стали чернеткою на сервері. Вони залишаться лише в цій вкладці, і після повернення їх можна буде явно відновити.";
+    leaveConfirm.textContent = "Перейти";
     leaveDialog.showModal();
-  });
+  }, true);
   window.addEventListener("beforeunload", (event) => {
     if (!hasUnsavedDraft || allowBrowserLeave) return;
     event.preventDefault();

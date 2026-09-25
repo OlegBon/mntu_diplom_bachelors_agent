@@ -14,6 +14,8 @@ const mappings = ["color", "clarity", "cut", "polish", "symmetry", "fluorescence
 
 async function mockWizardDependencies(page) {
   await page.addInitScript(() => {
+    if (sessionStorage.getItem("wizard-draft-e2e-auth-initialized")) return;
+    sessionStorage.setItem("wizard-draft-e2e-auth-initialized", "true");
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
   });
@@ -70,6 +72,21 @@ test("wizard uses a project dialog before an in-app navigation", async ({ page }
   await page.locator(".logo").click();
   await page.locator("#wizard-leave-confirm").click();
   await expect(page).toHaveURL(/\/$/);
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem("diamant-id:wizard-draft:v1:user:2"))).not.toBeNull();
+});
+
+test("wizard confirms logout in the project dialog before clearing authentication", async ({ page }) => {
+  await mockWizardDependencies(page);
+  await page.goto("/create-report.html");
+  await page.locator("#carat-weight").fill("1.25");
+
+  await page.getByRole("button", { name: "Вийти" }).click();
+  await expect(page.locator("#wizard-leave-dialog")).toBeVisible();
+  await expect(page.locator("#wizard-leave-dialog")).toContainText("після повторного входу");
+  await page.locator("#wizard-leave-confirm").click();
+
+  await expect(page).toHaveURL(/\/$/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("token"))).toBeNull();
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem("diamant-id:wizard-draft:v1:user:2"))).not.toBeNull();
 });
 
