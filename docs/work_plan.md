@@ -107,7 +107,7 @@
 - [ ] [155 — Operational і data-quality analytics](./backlog/155-operational-and-data-quality-analytics.md): workflow funnel, completeness і publication readiness без rating/public tracking; provider metrics — 163.
 - [x] [156 — Demo dataset contract і isolation](./decisions/006-demo-dataset-isolation.md): `0014` застосована до локальної MariaDB; schema-only `operational`/`demo` scope, immutable manifest, admin-only isolated read API, RBAC і read-only inventory реалізовані. Historical classification backfill лишається окремою підтверджуваною операцією.
 - [x] [162 — Multi-provider market references](./decisions/007-multi-provider-market-references.md): `0015` нормалізує enabled provider set і nullable dashboard primary; кожен provider має незалежний immutable valuation, dashboard не робить hidden fallback, а public passport/PDF не показують provider values чи branding.
-- [ ] [157 — Synthetic demo dataset generator](./backlog/157-synthetic-demo-dataset-generator.md): deterministic `DEMO-…`, manifest, filled synthetic fields і safe assets після 156.
+- [x] 157 — Synthetic demo dataset generator: локально створено deterministic `synthetic-demo-v1` із 1 000 `DEMO-…`, immutable manifest, normalized fields і двома fictional demo provider references; public/operational scopes не зачеплено.
 - [ ] [158 — Admin demo report/PDF/passport preview](./backlog/158-admin-demo-report-and-passport-preview.md): immutable private preview без public code/QR після 156–157.
 - [ ] [159 — Synthetic SOM demo](./backlog/159-synthetic-som-demo.md): reproducible admin-only карта для demo dataset, не заміна 151–153.
 - [ ] [163 — Provider operations and coverage analytics](./backlog/163-provider-operations-and-coverage-analytics.md): admin tab freshness, operation outcome і coverage після 122/162.
@@ -119,9 +119,8 @@
 
 ### Рекомендована черга активних задач
 
-1. `162 → 157 → 158 → 159` — після завершеної demo-ізоляції додати
-   multi-provider foundation, згенерувати повний synthetic dataset, private
-   previews і SOM.
+1. `158 → 159` — після завершених demo-ізоляції, multi-provider foundation та
+   generator-а додати private previews і SOM.
 2. `163` — показати operations/coverage provider-ів на вже реальних і demo
    provider records; `141` може готувати English IDEX mock-up паралельно, але
    не відкриває live IDEX без їхнього письмового approval.

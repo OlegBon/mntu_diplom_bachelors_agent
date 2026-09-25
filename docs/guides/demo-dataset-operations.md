@@ -44,6 +44,38 @@ Synthetic generator не приписує report, event, session або media ч
 вигадану людину. Operational upload API не змінюється: він завжди записує
 поточного автора.
 
+## Генератор `synthetic-demo-v1`
+
+Після застосування `0015_multi_provider_market_references` набір створює
+окрема команда, а не `seed_db.py`. Вона не викликає OpenFacet, НБУ, IDEX,
+публічні маршрути або scheduler.
+
+Попередній перегляд є read-only: він показує ID набору, кількість записів і
+SHA-256 майбутнього content manifest, але не відкриває сесію БД.
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_synthetic_demo_dataset.py
+```
+
+Фактичний запис у локальну БД вимагає окремо погодженого явного параметра:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_synthetic_demo_dataset.py --apply
+```
+
+За замовчуванням generator створює рівно 1 000 `DEMO-00001…DEMO-01000`
+записів за трирічний синтетичний період. Кожен має normalized `Stone`,
+issued lifecycle, system/expert grades, безпечний короткий текст та два
+незалежні `synthetic_demo_reference`: `Demo Market A` і `Demo Market B`.
+Це вигадані джерела тільки в demo scope — вони не є OpenFacet, IDEX або НБУ
+і не потрапляють до operational Market Data.
+
+Повторний запуск із тим самим count/seed перевіряє manifest checksum і число
+report rows та нічого не дублює. Інший count/seed або частковий набір
+generator відхиляє без запису. Поточна реалізація навмисно не створює
+вигадані account-и, work sessions, media або public passports: actor-поля
+лишаються `NULL`, а showcase media належать окремому наступному кроку.
+
 ## Historical `DR-00001…DR-01000`
 
 Діапазон підтверджено як старий synthetic seed. Його не перейменовують у

@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-25 — synthetic-demo-dataset-generator
+
+- **Задача:** виконати 157 — створити детермінований, ізольований synthetic demo dataset для майбутніх private preview та SOM.
+- **Змінені файли:** `scripts/generate_synthetic_demo_dataset.py`, `tests/unit/test_synthetic_demo_generator.py`, `docs/{architecture,progress,work_plan}.md`, `docs/guides/demo-dataset-operations.md`; завершений backlog-файл `157-synthetic-demo-dataset-generator.md` вилучено.
+- **Рішення / Результат:** явний `--apply` loader створив у локальній MariaDB immutable manifest `synthetic-demo-v1` і рівно 1 000 `DEMO-00001…DEMO-01000` issued demo-звітів із normalized `Stone`, IDC system/expert grades, synthetic text metadata та двома незалежними `synthetic_demo_reference` (`Demo Market A/B`). Набір детермінований за seed/checksum; повторний `--apply` повертає `created: false`, без дублів. Усі report/event/valuation actor-поля лишаються `NULL`; `PublicPassport` не створюється. Generator не робить network I/O й не змінює `DR-…`, accounts, operational providers або FX.
+- **Перевірки:** read-only preview checksum `b3f436a1edb3513686b9a5d4db0c62cd7a868064632c783a4a9c1d3030510c2c`; цільові unit/API тести — 8 passed, включно з idempotency, incompatible rerun, opaque RBAC та public isolation; після застосування read-only контроль: 1 manifest, 1 000 demo reports, 2 000 system-origin events, 2 000 demo valuations, 0 public demo passports; повторний loader — `created: false`; `alembic current` — `0015_multi_provider_market_references (head)`; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** demo records ще не мають окремої admin UI/PDF/private preview, showcase media, synthetic work sessions або synthetic actor-моделі; це не маскується під реальні акаунти. Це належить наступним ізольованим зрізам 158–159/аналітики. `Demo Market A/B` не є зовнішніми provider-ами, не мають логотипів і не показуються в operational Market Data. Historical `DR-00001…DR-01000` не змінювалися.
+
 ## 2026-09-25 — multi-provider-market-references
 
 - **Задача:** виконати 162 — підготувати кілька незалежних provider-specific ринкових орієнтирів без агрегації або прихованого fallback.
