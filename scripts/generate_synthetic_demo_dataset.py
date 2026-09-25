@@ -13,7 +13,7 @@ import json
 import random
 import sys
 from dataclasses import asdict, dataclass
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -118,7 +118,7 @@ def apply_dataset(db: Session, records: list[DemoRecord]) -> bool:
         cut = DiamondCalculator.calculate_final_cut(proportions, record.polish_grade, record.symmetry_grade)
         diameter = (Decimal(record.carat_weight) ** Decimal("0.333333")).quantize(Decimal("0.01")) * Decimal("6.40")
         stone = models.Stone(
-            legacy_source_report_id=record.report_id, shape=record.shape, carat_weight=Decimal(record.carat_weight),
+            shape=record.shape, carat_weight=Decimal(record.carat_weight),
             color_grade=record.color_grade, clarity_grade=record.clarity_grade,
             measurements_length=diameter, measurements_width=diameter, measurements_depth=(diameter * Decimal(record.depth_percent) / 100).quantize(Decimal("0.01")),
             table_percent=Decimal(record.table_percent), depth_percent=Decimal(record.depth_percent), crown_angle=Decimal(record.crown_angle), pavilion_angle=Decimal(record.pavilion_angle),
@@ -139,6 +139,8 @@ def apply_dataset(db: Session, records: list[DemoRecord]) -> bool:
             clarity_grade=record.clarity_grade, cut_grade=cut, polish_grade=record.polish_grade,
             symmetry_grade=record.symmetry_grade, proportions_grade=proportions, fluorescence_grade=0,
             expert_comment="Synthetic demonstration record. No real expert, customer, or transaction data.",
+            report_notes_length=10,
+            report_sentiment=0,
         )
         db.add(report)
         db.add(models.ReportEvent(report_id=record.report_id, action="created", to_status="draft", reason="Synthetic demonstration dataset", created_at=report_date))
