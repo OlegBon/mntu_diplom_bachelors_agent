@@ -51,10 +51,26 @@ test("wizard restores an unsaved tab draft only after the expert confirms it", a
   await expect(page.locator("#wizard-clear-dialog")).toBeVisible();
   await page.locator("#wizard-clear-confirm").click();
 
-  await expect(page.locator("#shape")).toHaveValue("");
+  await expect(page.locator("#shape")).toHaveValue("Round");
   await expect(page.locator("#carat-weight")).toHaveValue("");
   await expect(page.locator("#clear-wizard-draft")).toBeHidden();
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem("diamant-id:wizard-draft:v1:user:2"))).toBeNull();
+});
+
+test("wizard uses a project dialog before an in-app navigation", async ({ page }) => {
+  await mockWizardDependencies(page);
+  await page.goto("/create-report.html");
+  await page.locator("#carat-weight").fill("1.25");
+
+  await page.locator(".logo").click();
+  await expect(page.locator("#wizard-leave-dialog")).toBeVisible();
+  await page.locator("#wizard-leave-cancel").click();
+  await expect(page).toHaveURL(/create-report\.html/);
+
+  await page.locator(".logo").click();
+  await page.locator("#wizard-leave-confirm").click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem("diamant-id:wizard-draft:v1:user:2"))).not.toBeNull();
 });
 
 test("wizard removes its local draft only after the report is created", async ({ page }) => {

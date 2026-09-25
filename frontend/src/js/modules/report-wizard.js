@@ -70,11 +70,14 @@ export async function initReportWizard() {
   const clearDraftButton = document.getElementById("clear-wizard-draft");
   const restoreDialog = document.getElementById("wizard-restore-dialog");
   const clearDialog = document.getElementById("wizard-clear-dialog");
+  const leaveDialog = document.getElementById("wizard-leave-dialog");
   let draftStorage = null;
   let hasUnsavedDraft = false;
   let suppressDraftPersistence = false;
   let workSessionTracker = null;
   let schedulePreview = () => {};
+  let pendingNavigationUrl = null;
+  let allowBrowserLeave = false;
   const updateClearDraftButton = () => { clearDraftButton.hidden = !hasUnsavedDraft; };
   const persistDraft = () => {
     if (!draftStorage || suppressDraftPersistence) return;
@@ -211,7 +214,7 @@ export async function initReportWizard() {
       if (!field.name || field.disabled) continue;
       if (field.type === "file") { field.value = ""; continue; }
       if (field.type === "checkbox" || field.type === "radio") field.checked = false;
-      else if (field.tagName === "SELECT") field.selectedIndex = -1;
+      else if (field.tagName === "SELECT") field.selectedIndex = 0;
       else field.value = "";
     }
     document.getElementById("examination-date").valueAsDate = new Date();
@@ -255,8 +258,37 @@ export async function initReportWizard() {
   document.getElementById("wizard-clear-dialog-close").addEventListener("click", () => clearDialog.close());
   document.getElementById("wizard-clear-cancel").addEventListener("click", () => clearDialog.close());
   document.getElementById("wizard-clear-confirm").addEventListener("click", () => { clearDialog.close(); startNew(); });
+  const cancelLeave = () => { pendingNavigationUrl = null; leaveDialog.close(); };
+  document.getElementById("wizard-leave-dialog-close").addEventListener("click", cancelLeave);
+  document.getElementById("wizard-leave-cancel").addEventListener("click", cancelLeave);
+  document.getElementById("wizard-leave-confirm").addEventListener("click", () => {
+    if (!pendingNavigationUrl) return;
+    allowBrowserLeave = true;
+    leaveDialog.close();
+    window.location.assign(pendingNavigationUrl);
+  });
+  document.addEventListener("click", (event) => {
+    const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+    if (
+      !anchor
+      || !hasUnsavedDraft
+      || event.defaultPrevented
+      || event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || event.altKey
+      || anchor.target === "_blank"
+      || anchor.hasAttribute("download")
+    ) return;
+    const destination = new URL(anchor.href, window.location.href);
+    if (destination.href === window.location.href || !["http:", "https:"].includes(destination.protocol)) return;
+    event.preventDefault();
+    pendingNavigationUrl = destination.href;
+    leaveDialog.showModal();
+  });
   window.addEventListener("beforeunload", (event) => {
-    if (!hasUnsavedDraft) return;
+    if (!hasUnsavedDraft || allowBrowserLeave) return;
     event.preventDefault();
     event.returnValue = "";
   });

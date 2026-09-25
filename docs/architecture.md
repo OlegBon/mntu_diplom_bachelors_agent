@@ -190,7 +190,9 @@ Active-time не береться з `created_at`, `updated_at`, legacy
 До першого явного save wizard зберігає лише serializable поля й активний крок у
 versioned `sessionStorage` ключі поточного user ID. Відновлення завжди потребує
 вибору користувача; file inputs, JWT і будь-які credentials не серіалізуються,
-а browser не створює приховану server-side чернетку.
+а browser не створює приховану server-side чернетку. Внутрішня навігація з
+таким станом проходить через project dialog; refresh і закриття вкладки
+використовують невласний `beforeunload` browser warning.
 
 Gulp перетворює Pug на HTML, SCSS на CSS, копіює JavaScript та зображення у `frontend/dist`. BrowserSync віддає `dist` як статичний сайт і стежить за файлами `frontend/src`. `ghostMode: false` навмисно вимикає дзеркалення кліків і вводу між кількома локальними вікнами, щоб action виконувався лише там, де його натиснули. Спискові та read-only екрани синхронізують дані з API після повернення вкладки у фокус і кожні 30 секунд, коли вкладка видима: dashboard, private detail поза режимом редагування, admin directory, довідники та public passport. Форми з незбереженим вводом (wizard, profile, detail edit) автоматично не перезаписуються.
 

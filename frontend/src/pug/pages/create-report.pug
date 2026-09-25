@@ -205,3 +205,13 @@ block content
                 .account-dialog__actions
                     button#wizard-clear-cancel.btn.btn-outline(type="button") Скасувати
                     button#wizard-clear-confirm.btn.btn-primary(type="button") Очистити введення
+
+        dialog#wizard-leave-dialog.account-dialog(aria-labelledby="wizard-leave-dialog-title")
+            form(method="dialog")
+                .account-dialog__header
+                    h2#wizard-leave-dialog-title Залишити майстер?
+                    button#wizard-leave-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
+                p.account-help Введені дані ще не стали чернеткою на сервері. Вони залишаться лише в цій вкладці, і після повернення їх можна буде явно відновити.
+                .account-dialog__actions
+                    button#wizard-leave-cancel.btn.btn-outline(type="button") Залишитися
+                    button#wizard-leave-confirm.btn.btn-primary(type="button") Перейти
