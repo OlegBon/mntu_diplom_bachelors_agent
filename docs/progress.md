@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-25 — multi-provider-market-reference-roadmap
+
+- **Задача:** погодити модель кількох provider-ів, їх private presentation, demo-перевірку, provider analytics та зрозумілу пріоритетність active backlog.
+- **Змінені файли:** `docs/decisions/007-multi-provider-market-references.md`, `docs/backlog/{README,155-operational-and-data-quality-analytics,162-multi-provider-market-references,163-provider-operations-and-coverage-analytics}.md`, `docs/work_plan.md`, `docs/progress.md`.
+- **Рішення / Результат:** provider-и створюють незалежні immutable valuations, не одну aggregate price. Policy матиме enabled provider set і один nullable dashboard primary; dashboard показує primary amount + source + `+N`, без hidden fallback. Wizard/private detail показують окремі cards. Логотипи — локальні vetted assets із documented permission; два fictional demo provider-и доступні лише demo scope. Public passport/PDF не показують provider values/logos без окремого provider disclosure/license рішення. 162 реалізує foundation, 163 — admin tab operations/coverage; README отримав P0–P3 і work plan — рекомендований порядок.
+- **Перевірки:** документаційні links і diff перевіряються перед commit. Код, migration, policy, snapshots, UI та зовнішні запити не змінювалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це лише planning ADR/backlog. IDEX logo/live access, multi-provider schema/API/UI, demo assets і provider analytics ще не реалізовані; міграція вимагатиме окремого підтвердження.
+
 ## 2026-09-24 — openfacet-descriptive-analytics-boundary
 
 - **Задача:** зафіксувати межу між допустимою internal descriptive OpenFacet-аналітикою та verified ML/public distribution.
