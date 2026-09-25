@@ -16,7 +16,7 @@ from . import crud, database, media_storage, models, schemas, security
 from .fx import FxProviderError, fetch_nbu_usd_uah
 from .market_operations import freshness_status, run_provider_operation
 from .market_providers import get_market_provider
-from .passport_pdf import PublicPassportPdfMedia, build_public_passport_pdf
+from .passport_pdf import PublicPassportPdfMedia, build_demo_passport_preview_pdf, build_public_passport_pdf
 
 app = FastAPI(title="Diamond ID System API")
 
@@ -447,6 +447,29 @@ def read_demo_dataset_report(
     if report is None or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Demo report not found")
     return report
+
+
+@app.get("/demo/datasets/{dataset_id}/reports/{report_id}/passport-preview/pdf", response_class=Response)
+def download_demo_report_passport_preview_pdf(
+    dataset_id: str,
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Download an admin-only synthetic preview; it never creates public state."""
+    require_demo_admin(current_user)
+    if crud.get_demo_dataset(db, dataset_id) is None:
+        raise HTTPException(status_code=404, detail="Demo dataset not found")
+    report = crud.get_demo_report_domain(db, dataset_id=dataset_id, report_id=report_id)
+    if report is None or report.stone is None:
+        raise HTTPException(status_code=404, detail="Demo report not found")
+    grade_labels = {(mapping.category, mapping.grade_value): mapping.grade_label for mapping in crud.get_mappings(db)}
+    document = build_demo_passport_preview_pdf(report, report.stone, grade_labels)
+    return Response(
+        content=document,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="demo-preview-{report_id}.pdf"'},
+    )
 
 
 @app.post("/reports", response_model=schemas.ReportResponse)

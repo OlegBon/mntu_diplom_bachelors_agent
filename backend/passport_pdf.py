@@ -219,3 +219,54 @@ def build_public_passport_pdf(
         _draw_media_page(document, media)
     document.save()
     return output.getvalue()
+
+
+def build_demo_passport_preview_pdf(report, stone, grade_labels: Mapping[tuple[str, int], str]) -> bytes:
+    """Render one private synthetic preview without a public token, URL or QR."""
+    _register_fonts()
+    output = BytesIO()
+    document = canvas.Canvas(output, pagesize=A4, pageCompression=1)
+    document.setTitle(f"DEMO internal preview {report.report_id}")
+    document.setAuthor("Diamant ID")
+    document.setSubject("Synthetic internal demonstration preview")
+    document.saveState()
+    document.setFillColor(colors.HexColor("#cbd5e1"))
+    document.setFont(FONT_BOLD, 26)
+    document.translate(PAGE_WIDTH / 2, PAGE_HEIGHT / 2)
+    document.rotate(35)
+    document.drawCentredString(0, 0, "DEMO · INTERNAL PREVIEW")
+    document.restoreState()
+    document.setFillColor(colors.HexColor("#2563eb"))
+    document.rect(0, PAGE_HEIGHT - 12, PAGE_WIDTH, 12, fill=1, stroke=0)
+    document.setFillColor(colors.HexColor("#0f172a"))
+    document.setFont(FONT_BOLD, 22)
+    document.drawString(MARGIN, PAGE_HEIGHT - 58, "Демонстраційний паспорт")
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.setFont(FONT_REGULAR, 10)
+    document.drawString(MARGIN, PAGE_HEIGHT - 76, "DEMO · SYNTHETIC DATA · лише внутрішній перегляд")
+    y = PAGE_HEIGHT - 120
+    _draw_label_value(document, MARGIN, y, "Номер demo-звіту", report.report_id)
+    _draw_label_value(document, PAGE_WIDTH / 2 + 12, y, "Дата видачі", _format_date(report.issued_at))
+    y -= 72
+    document.setFont(FONT_BOLD, 13)
+    document.setFillColor(colors.HexColor("#0f172a"))
+    document.drawString(MARGIN, y, "Характеристики каменю")
+    y -= 24
+    _draw_label_value(document, MARGIN, y, "Форма", stone.shape)
+    _draw_label_value(document, PAGE_WIDTH / 2 + 12, y, "Вага", f"{stone.carat_weight} ct")
+    y -= 42
+    _draw_label_value(document, MARGIN, y, "Колір", _grade_label(grade_labels, "color", stone.color_grade))
+    _draw_label_value(document, PAGE_WIDTH / 2 + 12, y, "Чистота", _grade_label(grade_labels, "clarity", stone.clarity_grade))
+    y -= 60
+    document.setFont(FONT_BOLD, 13)
+    document.setFillColor(colors.HexColor("#0f172a"))
+    document.drawString(MARGIN, y, "Системні оцінки")
+    y -= 24
+    _draw_label_value(document, MARGIN, y, "Proportions", _grade_label(grade_labels, "proportions", report.system_proportions_grade))
+    _draw_label_value(document, PAGE_WIDTH / 2 + 12, y, "Final Cut", _grade_label(grade_labels, "cut", report.system_cut_grade))
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.setFont(FONT_REGULAR, 8)
+    document.drawString(MARGIN, 52, "Synthetic dataset: not an appraisal, market reference, sale offer, transaction or public passport.")
+    document.showPage()
+    document.save()
+    return output.getvalue()

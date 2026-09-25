@@ -136,3 +136,25 @@ def test_synthetic_analysis_requires_manifest_allow_list(db_session, experts) ->
         crud.require_demo_dataset_analysis_eligibility(
             db_session, dataset_id=DATASET_ID, scenario="verified_ml",
         )
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_admin_can_download_private_demo_preview_without_public_passport(client, db_session, experts) -> None:
+    create_demo_report(db_session, experts)
+    admin_headers = auth_headers(client, experts["admin"].username)
+    owner_headers = auth_headers(client, experts["owner"].username)
+
+    response = client.get(
+        f"/demo/datasets/{DATASET_ID}/reports/DEMO-00001/passport-preview/pdf",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.content.startswith(b"%PDF-")
+    assert 'filename="demo-preview-DEMO-00001.pdf"' in response.headers["content-disposition"]
+    assert client.get(
+        f"/demo/datasets/{DATASET_ID}/reports/DEMO-00001/passport-preview/pdf",
+        headers=owner_headers,
+    ).status_code == 404
+    assert db_session.query(models.PublicPassport).filter_by(report_id="DEMO-00001").count() == 0
