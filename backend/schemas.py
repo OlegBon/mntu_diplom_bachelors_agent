@@ -369,6 +369,7 @@ class MarketReferenceSummary(BaseModel):
 
     amount: Decimal
     currency_code: str
+    provider_code: str
     valuation_kind: str
     source_name: str
     market_snapshot_id: Optional[int]
@@ -378,6 +379,7 @@ class MarketReferenceSummary(BaseModel):
     fx_snapshot_id: Optional[int]
     fx_rate: Optional[Decimal]
     fx_rate_date: Optional[date]
+    available_provider_count: int = 1
 
 
 class ReportResponse(BaseModel):
@@ -403,6 +405,7 @@ class ReportResponse(BaseModel):
     time_to_first_save_seconds: Optional[int]
     price: Optional[Decimal]
     market_reference: Optional[MarketReferenceSummary] = None
+    market_references: list[MarketReferenceSummary] = Field(default_factory=list)
     stone: StoneResponse
 
 
@@ -495,6 +498,16 @@ class ReportIdPreview(BaseModel):
     report_id: str
 
 
+class SystemMarketReferencePreview(BaseModel):
+    """One non-persisted provider calculation shown by the report wizard."""
+
+    amount: Decimal
+    currency_code: str
+    provider_code: str
+    source_name: str
+    market_snapshot_id: int
+
+
 class ReportCalculationPreview(BaseModel):
     system_proportions_grade: int
     system_cut_grade: int
@@ -502,6 +515,7 @@ class ReportCalculationPreview(BaseModel):
     system_market_reference_usd: Optional[Decimal] = None
     market_reference_provider_code: Optional[str] = None
     market_reference_snapshot_id: Optional[int] = None
+    system_market_references: list[SystemMarketReferencePreview] = Field(default_factory=list)
 
 
 class ReportCalculationInput(BaseModel):

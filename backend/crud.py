@@ -128,9 +128,9 @@ def preview_report_calculation(db: Session, stone: schemas.ReportCalculationInpu
         stone.pavilion_angle,
     )
     cut = DiamondCalculator.calculate_final_cut(proportions, stone.polish_grade, stone.symmetry_grade)
-    candidate = None
+    candidates: list[SystemMarketReferenceCandidate] = []
     policy = get_market_reference_policy(db)
-    if policy and policy.market_provider_code and stone.shape and stone.origin:
+    if policy and stone.shape and stone.origin:
         preview_stone = models.Stone(
             shape=stone.shape,
             origin=stone.origin,
@@ -138,16 +138,44 @@ def preview_report_calculation(db: Session, stone: schemas.ReportCalculationInpu
             color_grade=stone.color_grade,
             clarity_grade=stone.clarity_grade,
         )
-        candidate = prepare_system_market_reference_for_stone(
-            db, stone=preview_stone, provider_code=policy.market_provider_code,
-        )
+        for provider_code in get_enabled_market_reference_provider_codes(db, policy_id=policy.policy_id):
+            candidate = prepare_system_market_reference_for_stone(
+                db, stone=preview_stone, provider_code=provider_code,
+            )
+            if candidate is not None:
+                candidates.append(candidate)
+    primary_code = policy.market_provider_code if policy else None
+    primary_candidate = next(
+        (candidate for candidate in candidates if candidate.snapshot.provider_code == primary_code),
+        None,
+    )
+    provider_names = {
+        provider.provider_code: provider.display_name
+        for provider in db.query(models.MarketDataProvider).filter(
+            models.MarketDataProvider.provider_code.in_(
+                [candidate.snapshot.provider_code for candidate in candidates],
+            ),
+        ).all()
+    }
     return schemas.ReportCalculationPreview(
         system_proportions_grade=proportions,
         system_cut_grade=cut,
         calculation_rule_version=REPORT_RULE_VERSION,
-        system_market_reference_usd=candidate.amount if candidate else None,
-        market_reference_provider_code=candidate.snapshot.provider_code if candidate else None,
-        market_reference_snapshot_id=candidate.snapshot.snapshot_id if candidate else None,
+        system_market_reference_usd=primary_candidate.amount if primary_candidate else None,
+        market_reference_provider_code=primary_candidate.snapshot.provider_code if primary_candidate else None,
+        market_reference_snapshot_id=primary_candidate.snapshot.snapshot_id if primary_candidate else None,
+        system_market_references=[
+            schemas.SystemMarketReferencePreview(
+                amount=candidate.amount,
+                currency_code=candidate.snapshot.currency_code,
+                provider_code=candidate.snapshot.provider_code,
+                source_name=provider_names.get(
+                    candidate.snapshot.provider_code, candidate.snapshot.provider_code,
+                ),
+                market_snapshot_id=candidate.snapshot.snapshot_id,
+            )
+            for candidate in candidates
+        ],
     )
 
 
@@ -373,25 +401,48 @@ def _attach_latest_market_reference_summaries(
         )
         .all()
     )
-    by_stone: dict[int, models.StoneValuation] = {}
+    snapshot_provider_codes = {
+        snapshot_id: provider_code
+        for snapshot_id, provider_code in db.query(
+            models.MarketDataSnapshot.snapshot_id, models.MarketDataSnapshot.provider_code,
+        ).filter(models.MarketDataSnapshot.snapshot_id.in_([
+            valuation.market_snapshot_id for valuation in valuations if valuation.market_snapshot_id is not None
+        ])).all()
+    }
+    policy = get_market_reference_policy(db)
+    primary_code = policy.market_provider_code if policy else None
+    by_stone: dict[int, list[models.StoneValuation]] = {}
     for valuation in valuations:
-        by_stone.setdefault(valuation.stone_id, valuation)
+        by_stone.setdefault(valuation.stone_id, []).append(valuation)
     for report in reports:
-        valuation = by_stone.get(report.stone_id)
-        if valuation is None:
-            continue
-        report.market_reference = schemas.MarketReferenceSummary(
-            amount=valuation.amount,
-            currency_code=valuation.currency_code,
-            valuation_kind=valuation.valuation_kind,
-            source_name=valuation.source_name,
-            market_snapshot_id=valuation.market_snapshot_id,
-            observed_at=valuation.observed_at,
-            converted_amount=valuation.converted_amount,
-            converted_currency_code=valuation.converted_currency_code,
-            fx_snapshot_id=valuation.fx_snapshot_id,
-            fx_rate=valuation.fx_rate,
-            fx_rate_date=valuation.fx_rate_date,
+        references = by_stone.get(report.stone_id, [])
+        latest_by_provider: dict[str, models.StoneValuation] = {}
+        for valuation in references:
+            provider_code = snapshot_provider_codes.get(valuation.market_snapshot_id)
+            if provider_code and provider_code not in latest_by_provider:
+                latest_by_provider[provider_code] = valuation
+        summaries = [
+            schemas.MarketReferenceSummary(
+                amount=valuation.amount,
+                currency_code=valuation.currency_code,
+                provider_code=provider_code,
+                valuation_kind=valuation.valuation_kind,
+                source_name=valuation.source_name,
+                market_snapshot_id=valuation.market_snapshot_id,
+                observed_at=valuation.observed_at,
+                converted_amount=valuation.converted_amount,
+                converted_currency_code=valuation.converted_currency_code,
+                fx_snapshot_id=valuation.fx_snapshot_id,
+                fx_rate=valuation.fx_rate,
+                fx_rate_date=valuation.fx_rate_date,
+                available_provider_count=len(latest_by_provider),
+            )
+            for provider_code, valuation in latest_by_provider.items()
+        ]
+        report.market_references = summaries
+        report.market_reference = next(
+            (summary for summary in summaries if summary.provider_code == primary_code),
+            None,
         )
 
 

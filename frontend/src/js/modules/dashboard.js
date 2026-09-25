@@ -121,6 +121,7 @@ function formatDateOnly(value) {
 
 function renderMarketReferencePrice(report) {
   const reference = report.market_reference;
+  const references = report.market_references?.length ? report.market_references : [reference];
   const isSystemReference = reference.valuation_kind === "system_market_reference";
   const typeMarker = isSystemReference ? "SYS" : "ADM";
   const referenceType = isSystemReference
@@ -134,6 +135,9 @@ function renderMarketReferencePrice(report) {
   toggle.append(
     document.createTextNode(`USD ${formatPrice(reference.amount)} `),
     createElement("span", "report-price__indicator", `${typeMarker} · ${reference.source_name}`),
+    references.length > 1
+      ? createElement("span", "report-price__indicator", ` +${references.length - 1}`)
+      : document.createTextNode(""),
   );
   const popover = createElement("div", "report-price__popover");
   popover.hidden = true;
@@ -152,6 +156,16 @@ function renderMarketReferencePrice(report) {
     const row = createElement("p", "report-price__detail");
     row.append(createElement("strong", "", `${label}: `), document.createTextNode(value));
     popover.append(row);
+  }
+  if (references.length > 1) {
+    const alternatives = createElement("div", "report-price__alternatives");
+    alternatives.append(createElement("strong", "", "Інші доступні орієнтири:"));
+    const list = document.createElement("ul");
+    for (const item of references.filter((item) => item.provider_code !== reference.provider_code)) {
+      list.append(createElement("li", "", `${item.source_name}: USD ${formatPrice(item.amount)}`));
+    }
+    alternatives.append(list);
+    popover.append(alternatives);
   }
   popover.append(createElement(
     "p",

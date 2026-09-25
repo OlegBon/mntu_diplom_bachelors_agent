@@ -190,6 +190,7 @@ export async function initReportWizard() {
         const price = document.getElementById("res-price");
         const priceMarker = document.getElementById("price-provider-marker");
         const priceSource = document.getElementById("market-reference-preview-source");
+        const referenceList = document.getElementById("market-reference-preview-list");
         const providerNames = { openfacet: "OpenFacet" };
         const providerMarkers = { openfacet: "of" };
         price.textContent = preview.system_market_reference_usd === null
@@ -200,6 +201,21 @@ export async function initReportWizard() {
         priceSource.textContent = preview.system_market_reference_usd === null
           ? "Немає доступного системного орієнтиру для введених характеристик."
           : `${providerNames[preview.market_reference_provider_code] || preview.market_reference_provider_code} · знімок #${preview.market_reference_snapshot_id}. Значення буде зафіксовано під час збереження чернетки.`;
+        const references = preview.system_market_references || [];
+        referenceList.replaceChildren();
+        referenceList.hidden = references.length < 2;
+        for (const reference of references) {
+          const item = document.createElement("p");
+          const name = document.createElement("strong");
+          name.textContent = `${reference.source_name}: `;
+          item.append(
+            name,
+            document.createTextNode(
+              `${reference.currency_code} ${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(reference.amount)} · знімок #${reference.market_snapshot_id}`,
+            ),
+          );
+          referenceList.append(item);
+        }
       } catch { /* invalid values are handled by native fields */ }
     }, 300);
   };
