@@ -40,8 +40,6 @@
 
 | Пріоритет | Файл | Тема |
 | --- | --- | --- |
-| P0 | [146-wizard-draft-continuity.md](./146-wizard-draft-continuity.md) | Відновлення незбереженого wizard state без hidden server draft. |
-| P1 | [157-synthetic-demo-dataset-generator.md](./157-synthetic-demo-dataset-generator.md) | Детермінований synthetic dataset, provenance, safe assets і demo provider-и. |
 | P1 | [158-admin-demo-report-and-passport-preview.md](./158-admin-demo-report-and-passport-preview.md) | Read-only admin demo detail, PDF і private passport preview. |
 | P1 | [159-synthetic-som-demo.md](./159-synthetic-som-demo.md) | Isolated reproducible SOM technical demo для admin. |
 | P2 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
