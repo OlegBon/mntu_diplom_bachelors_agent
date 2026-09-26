@@ -94,8 +94,10 @@ export async function initDemoReportDetail() {
     const isShowcase = report.report_id === SHOWCASE_REPORT_ID;
     document.getElementById("demo-showcase-media-event").hidden = !isShowcase;
     const statusBadge = document.getElementById("demo-status-badge");
-    statusBadge.textContent = REPORT_STATUS_LABELS[report.status] || report.status;
+    const statusLabel = REPORT_STATUS_LABELS[report.status] || report.status;
+    statusBadge.textContent = statusLabel;
     statusBadge.dataset.status = report.status;
+    document.getElementById("demo-status-event").textContent = `Чернетка → ${statusLabel} · змодельована системна подія`;
     document.getElementById("demo-system-summary").textContent = `Системний IDC: Proportions ${label("proportions", report.system_proportions_grade)}, Final Cut ${label("cut", report.system_cut_grade)}.`;
     const values = {
       "demo-date": report.examination_date,
