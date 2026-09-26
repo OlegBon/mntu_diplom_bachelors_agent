@@ -253,6 +253,9 @@ def replace_legacy_v1(db: Session, records: list[DemoRecord]) -> None:
         db.query(models.Stone).filter(models.Stone.stone_id.in_(stone_ids)).delete(synchronize_session=False)
         db.query(models.DemoDataset).filter(models.DemoDataset.dataset_id == LEGACY_DATASET_ID).delete(synchronize_session=False)
         db.flush()
+        # The replacement intentionally reuses global DEMO IDs.  Remove stale
+        # deleted ORM identities before inserting their v2 counterparts.
+        db.expunge_all()
         apply_dataset(db, records, commit=False)
         db.commit()
     except Exception:
