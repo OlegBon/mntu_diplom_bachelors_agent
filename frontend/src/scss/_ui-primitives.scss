@@ -892,6 +892,16 @@ input[type="number"]::-webkit-outer-spin-button {
   }
   .report-detail__list,
   .report-detail__timeline { display: grid; gap: 0.75rem; list-style: none; }
+  .demo-media-list > li { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: 0.75rem; align-items: start; }
+  .demo-media-list__image { width: 5rem; height: 5rem; border: 1px solid variables.$border-color; object-fit: cover; }
+  .demo-media-list strong,
+  .demo-media-list span { display: block; overflow-wrap: anywhere; }
+  .demo-media-list span { margin-top: 0.2rem; color: variables.$secondary-color; font-size: 0.8rem; }
+  .demo-media-list .btn { margin-top: 0.55rem; }
+  .demo-passport-placeholder { display: flex; align-items: center; gap: 0.75rem; margin: 0.75rem 0; }
+  .demo-passport-placeholder__qr { display: grid; width: 4.5rem; height: 4.5rem; place-items: center; border: 1px dashed variables.$border-color; color: variables.$secondary-color; font-size: 0.75rem; font-weight: 700; }
+  .demo-passport-placeholder p { margin: 0; color: variables.$secondary-color; font-size: 0.85rem; }
+  .demo-passport-placeholder strong { display: block; color: variables.$text-strong; }
   .report-detail__list a { color: variables.$primary-color; font-weight: 600; }
   #detail-media .btn--compact { display: block; width: fit-content; margin-top: 0.5rem; }
   .account-dialog { width: min(34rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; border: 1px solid variables.$border-color; padding: 1.5rem; background: variables.$white; overflow-y: auto; }

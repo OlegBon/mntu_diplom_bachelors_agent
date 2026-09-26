@@ -151,7 +151,8 @@ export function renderMarketReferencePrice(report) {
     ["Тип", referenceType],
     ["Провайдер", reference.source_name],
   ];
-  if (!isDemoReference) details.push(["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`]);
+  if (isDemoReference) details.push(["Набір", "synthetic-demo-v1"]);
+  else details.push(["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`]);
   details.push(["Отримано", observed.date]);
   if (reference.converted_amount && reference.converted_currency_code) {
     details.push(["Еквівалент", `${reference.converted_currency_code} ${formatPrice(reference.converted_amount)}`]);

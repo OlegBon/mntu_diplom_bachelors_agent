@@ -98,16 +98,44 @@ block content
                     p#demo-demo-status-help.report-detail__help DEMO · SYNTHETIC DATA. Звіт незмінний і не має публічного паспорта.
                 section.report-detail__surface
                     h2 Довідкові demo-орієнтири
+                    p#demo-valuations-help.report-detail__help Кожен орієнтир належить окремому fictional demo-провайдеру. Значення ізольовані від ринкових даних і не є експертною, продажною чи транзакційною ціною.
                     ul#demo-valuations.report-detail__list
                         li Завантаження…
                 section.report-detail__surface
                     h2 Вкладення
-                    p.report-detail__help Demo-набір не містить private або public media.
+                    ul.report-detail__list.demo-media-list
+                        li
+                            img.demo-media-list__image(src="/img/demo-stone-photo.png" alt="Синтетичне демонстраційне фото каменю" loading="lazy" width="160" height="160")
+                            div
+                                strong demo-stone-photo.png
+                                span Фото каменю · synthetic asset
+                                button.btn.btn-outline.btn--compact(type="button" disabled title="Demo assets не публікуються") Опублікувати в паспорті
+                        li
+                            img.demo-media-list__image(src="/img/demo-plotting.svg" alt="Синтетична демонстраційна plotting-схема" loading="lazy" width="160" height="105")
+                            div
+                                strong demo-plotting.svg
+                                span Plotting diagram · synthetic asset
+                                button.btn.btn-outline.btn--compact(type="button" disabled title="Demo assets не публікуються") Опублікувати в паспорті
+                section.report-detail__surface
+                    h2 Публічний паспорт
+                    p.report-detail__help DEMO · INTERNAL ONLY. Для synthetic-звіту не створюються public ID, URL, QR-код або anonymous endpoint.
+                    .demo-passport-placeholder
+                        div.demo-passport-placeholder__qr(aria-label="QR-код недоступний для demo-звіту") QR
+                        p
+                            strong Код паспорта
+                            |  — не створюється
+                    .report-detail__transition-actions
+                        button.btn.btn-primary(type="button" disabled) Опублікувати паспорт
+                        button.btn.btn-outline(type="button" disabled) Відкрити публічний паспорт
+                        button.btn.btn-outline(type="button" disabled) Скопіювати посилання
+                        button#demo-preview-pdf.btn.btn-primary(type="button") Завантажити demo PDF
+                    p#demo-report-status.form-status(role="status" aria-live="polite" hidden)
                 section.report-detail__surface
                     h2 Історія змін
-                    p.report-detail__help Demo workflow events буде показано в окремому зрізі після додавання synthetic actors.
-                section.report-detail__surface
-                    h2 Private preview
-                    p.report-detail__help PDF не має public ID, QR-коду чи посилання. Це окремий internal preview, а не виданий клієнтський документ.
-                    button#demo-preview-pdf.btn.btn-primary(type="button") Завантажити demo PDF
-                    p#demo-report-status.form-status(role="status" aria-live="polite" hidden)
+                    ol#demo-events.report-detail__timeline
+                        li
+                            strong Створено
+                            span Synthetic event · system actor
+                        li
+                            strong Статус змінено
+                            span Чернетка → Видано · synthetic event
