@@ -7,9 +7,9 @@ block content
                 h1.page-title Демо
                 p.page-subtitle Ізольований synthetic dataset для внутрішньої демонстрації інтерфейсу та технічних моделей.
         .analytics-tabs(role="tablist" aria-label="Розділи demo dataset")
-            button.analytics-tabs__tab.is-active(type="button" role="tab" aria-selected="true" aria-controls="demo-reports-panel" id="demo-tab-reports") Демо-звіти
-            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 164") Експерти
-            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 164") Адміністратори
+            button.analytics-tabs__tab.is-active(type="button" role="tab" aria-selected="true" aria-controls="demo-reports-panel" id="demo-tab-reports" data-demo-tab="reports") Демо-звіти
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-experts-panel" id="demo-tab-experts" data-demo-tab="experts") Експерти
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-administrators-panel" id="demo-tab-administrators" data-demo-tab="administrators") Адміністратори
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 159") Камені
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 165") Провайдери
         #demo-reports-panel(role="tabpanel" aria-labelledby="demo-tab-reports")
@@ -108,3 +108,41 @@ block content
                     tbody#demo-reports-body
                         tr: td(colspan="11") Завантаження…
             nav#demo-pagination.pagination(aria-label="Пагінація demo-звітів")
+        section#demo-experts-panel.demo-workflow-panel(hidden role="tabpanel" aria-labelledby="demo-tab-experts")
+            .filters-container.demo-workflow-panel__filters
+                form#demo-workflow-slice.filters-bar
+                    .filter-control
+                        label(for="demo-workflow-date-from") Події від
+                        input#demo-workflow-date-from.form-control(type="date" name="date_from")
+                    .filter-control
+                        label(for="demo-workflow-date-to") Події до
+                        input#demo-workflow-date-to.form-control(type="date" name="date_to")
+                    button.btn.btn-primary(type="submit") Застосувати
+                    button.btn.btn-outline(type="reset") За весь час
+            p.demo-scope__notice(role="note")
+                strong DEMO · SYNTHETIC WORKFLOW
+                |  Це лише технічний зріз вигаданих ролей і відтворюваних інтервалів. Він не вимірює продуктивність, якість, SLA або рейтинг реальних людей.
+            #demo-experts-status.dashboard-status(role="status" aria-live="polite")
+            .table-container(tabindex="0")
+                table.data-table
+                    thead: tr
+                        th Експерт
+                        th Звітів у workflow
+                        th Завершених інтервалів
+                        th Сумарний synthetic час
+                        th Середній інтервал
+                    tbody#demo-experts-body
+        section#demo-administrators-panel.demo-workflow-panel(hidden role="tabpanel" aria-labelledby="demo-tab-administrators")
+            p.demo-scope__notice(role="note")
+                strong DEMO · SYNTHETIC WORKFLOW
+                |  Використовується той самий зріз дат, що й для synthetic експертів; дані не пов’язані з обліковими записами адміністратора.
+            #demo-administrators-status.dashboard-status(role="status" aria-live="polite")
+            .table-container(tabindex="0")
+                table.data-table
+                    thead: tr
+                        th Адміністратор
+                        th Звітів у workflow
+                        th Завершених інтервалів
+                        th Сумарний synthetic час
+                        th Середній інтервал
+                    tbody#demo-administrators-body

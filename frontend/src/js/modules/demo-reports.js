@@ -1,8 +1,8 @@
-import { getDemoDataset, getDemoReports, getGradeMappings } from "./api.js";
+import { getDemoDataset, getDemoReports, getDemoWorkflowAnalytics, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 
-const PREFERRED_DATASET_ID = "synthetic-demo-v2";
-const FALLBACK_DATASET_ID = "synthetic-demo-v1";
+const PREFERRED_DATASET_ID = "synthetic-demo-v3";
+const FALLBACK_DATASET_IDS = ["synthetic-demo-v2", "synthetic-demo-v1"];
 const PAGE_SIZE = 25;
 const REPORT_STATUS_LABELS = { issued: "Видано" };
 const SALE_STATUS_LABELS = { not_for_sale: "Не продається" };
@@ -171,6 +171,79 @@ function populateGradeFilter(select, category, mappings) {
   }
 }
 
+function formatDuration(totalSeconds) {
+  if (!totalSeconds) return "—";
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.round((totalSeconds % 3600) / 60);
+  return hours ? `${hours} год ${minutes} хв` : `${minutes} хв`;
+}
+
+function renderWorkflowRows(tbody, actors) {
+  tbody.replaceChildren();
+  if (!actors.length) {
+    const row = document.createElement("tr");
+    const cell = createElement("td", "", "За обраний період synthetic-подій немає.");
+    cell.colSpan = 5;
+    row.append(cell);
+    tbody.append(row);
+    return;
+  }
+  for (const actor of actors) {
+    const row = document.createElement("tr");
+    row.append(
+      createElement("td", "", actor.display_name),
+      createElement("td", "", String(actor.reports_touched)),
+      createElement("td", "", String(actor.completed_intervals)),
+      createElement("td", "", formatDuration(actor.total_duration_seconds)),
+      createElement("td", "", formatDuration(actor.avg_duration_seconds)),
+    );
+    tbody.append(row);
+  }
+}
+
+function initDemoWorkflowTabs(root, datasetId, token) {
+  const tabButtons = [...root.querySelectorAll("[data-demo-tab]")];
+  const panels = {
+    reports: root.querySelector("#demo-reports-panel"),
+    experts: root.querySelector("#demo-experts-panel"),
+    administrators: root.querySelector("#demo-administrators-panel"),
+  };
+  const form = root.querySelector("#demo-workflow-slice");
+  const expertBody = root.querySelector("#demo-experts-body");
+  const administratorBody = root.querySelector("#demo-administrators-body");
+  const expertStatus = root.querySelector("#demo-experts-status");
+  const administratorStatus = root.querySelector("#demo-administrators-status");
+  if (!form || !expertBody || !administratorBody || !expertStatus || !administratorStatus) return;
+
+  const activate = (tab) => {
+    for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
+    for (const button of tabButtons) {
+      const active = button.dataset.demoTab === tab;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-selected", String(active));
+    }
+  };
+  const load = async () => {
+    const filters = Object.fromEntries(new FormData(form).entries());
+    setStatus(expertStatus, "Завантаження synthetic workflow…");
+    setStatus(administratorStatus, "Завантаження synthetic workflow…");
+    try {
+      const data = await getDemoWorkflowAnalytics(datasetId, token, filters);
+      expertStatus.replaceChildren();
+      administratorStatus.replaceChildren();
+      renderWorkflowRows(expertBody, data.experts);
+      renderWorkflowRows(administratorBody, data.administrators);
+    } catch {
+      setStatus(expertStatus, "Не вдалося завантажити synthetic workflow.", "error");
+      setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
+    }
+  };
+  for (const button of tabButtons) button.addEventListener("click", () => activate(button.dataset.demoTab));
+  form.addEventListener("submit", (event) => { event.preventDefault(); void load(); });
+  form.addEventListener("reset", () => window.setTimeout(() => void load(), 0));
+  void load();
+}
+
 export async function initDemoReports() {
   const root = document.querySelector("[data-demo-reports]");
   if (!root || localStorage.getItem("role") !== "admin") return;
@@ -196,12 +269,16 @@ export async function initDemoReports() {
 
   try {
     let dataset;
-    try {
-      dataset = await getDemoDataset(datasetId, token);
-    } catch {
-      datasetId = FALLBACK_DATASET_ID;
-      dataset = await getDemoDataset(datasetId, token);
+    for (const candidate of [PREFERRED_DATASET_ID, ...FALLBACK_DATASET_IDS]) {
+      try {
+        dataset = await getDemoDataset(candidate, token);
+        datasetId = candidate;
+        break;
+      } catch {
+        // A local environment can intentionally retain an earlier immutable dataset.
+      }
     }
+    if (!dataset) throw new Error("Demo dataset is unavailable");
     const mappings = await getGradeMappings(token);
     root.querySelector("#demo-dataset-meta").textContent = `${dataset.label} · ${dataset.record_count} записів · ${dataset.version}`;
     labelFor = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
@@ -259,5 +336,6 @@ export async function initDemoReports() {
   }
   document.addEventListener("click", closeReportOverlays);
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeReportOverlays(); });
+  initDemoWorkflowTabs(root, datasetId, token);
   await load(state);
 }
