@@ -31,6 +31,9 @@ from backend.database import SessionLocal
 DATASET_ID = "synthetic-demo-v2"
 LEGACY_DATASET_ID = "synthetic-demo-v1"
 GENERATOR_VERSION = "167-v2"
+WORKFLOW_DATASET_ID = "synthetic-demo-v3"
+WORKFLOW_LEGACY_DATASET_ID = DATASET_ID
+WORKFLOW_GENERATOR_VERSION = "164-v3"
 DEFAULT_COUNT = 1_000
 DEFAULT_SEED = 15_700
 PROVENANCE = "synthetic-demo-v2; deterministic development-only records"
@@ -56,6 +59,27 @@ class DemoRecord:
     symmetry_grade: int
     provider_a_usd: str
     provider_b_usd: str
+
+
+@dataclass(frozen=True)
+class SyntheticActorRecord:
+    """A non-account identity used only by the v3 workflow demonstration."""
+
+    actor_key: str
+    display_name: str
+    role: str
+    sort_order: int
+
+
+@dataclass(frozen=True)
+class SyntheticWorkflowRecord:
+    """A reproducible workflow interval, not an operational user event."""
+
+    report_id: str
+    actor_key: str
+    action: str
+    occurred_at: str
+    duration_seconds: int | None
 
 
 @dataclass(frozen=True)
@@ -121,12 +145,61 @@ def checksum(records: list[DemoRecord]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def apply_dataset(db: Session, records: list[DemoRecord], *, commit: bool = True) -> bool:
+def build_synthetic_actors() -> list[SyntheticActorRecord]:
+    """Return stable fictional actors; these names never map to accounts."""
+    return [
+        SyntheticActorRecord("gemologist-01", "Synthetic Gemologist A", "gemologist", 1),
+        SyntheticActorRecord("gemologist-02", "Synthetic Gemologist B", "gemologist", 2),
+        SyntheticActorRecord("gemologist-03", "Synthetic Gemologist C", "gemologist", 3),
+        SyntheticActorRecord("gemologist-04", "Synthetic Gemologist D", "gemologist", 4),
+        SyntheticActorRecord("admin-01", "Synthetic Administrator A", "admin", 1),
+        SyntheticActorRecord("admin-02", "Synthetic Administrator B", "admin", 2),
+    ]
+
+
+def build_synthetic_workflow(records: list[DemoRecord]) -> list[SyntheticWorkflowRecord]:
+    """Assign deterministic synthetic intervals to every demo report."""
+    events: list[SyntheticWorkflowRecord] = []
+    for position, record in enumerate(records, start=1):
+        created = datetime.fromisoformat(record.report_date)
+        gemologist_key = f"gemologist-{((position - 1) % 4) + 1:02d}"
+        admin_key = f"admin-{((position - 1) % 2) + 1:02d}"
+        draft_seconds = 900 + (position * 37) % 2400
+        review_seconds = 300 + (position * 19) % 1200
+        events.extend((
+            SyntheticWorkflowRecord(record.report_id, gemologist_key, "draft_completed", (created + timedelta(minutes=30)).isoformat(), draft_seconds),
+            SyntheticWorkflowRecord(record.report_id, admin_key, "review_completed", (created + timedelta(minutes=90)).isoformat(), review_seconds),
+            SyntheticWorkflowRecord(record.report_id, gemologist_key, "issued", (created + timedelta(hours=2)).isoformat(), None),
+        ))
+    return events
+
+
+def workflow_checksum(
+    records: list[DemoRecord], actors: list[SyntheticActorRecord], workflow: list[SyntheticWorkflowRecord],
+) -> str:
+    payload = json.dumps(
+        {"reports": [asdict(record) for record in records], "actors": [asdict(actor) for actor in actors], "workflow": [asdict(event) for event in workflow]},
+        ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def apply_dataset(
+    db: Session,
+    records: list[DemoRecord],
+    *,
+    commit: bool = True,
+    dataset_id: str = DATASET_ID,
+    version: str = "v2",
+    generator_version: str = GENERATOR_VERSION,
+    provenance: str = PROVENANCE,
+    content_sha256: str | None = None,
+) -> bool:
     """Insert one whole dataset once; refuse partial or incompatible reruns."""
-    digest = checksum(records)
-    existing = db.get(models.DemoDataset, DATASET_ID)
+    digest = content_sha256 or checksum(records)
+    existing = db.get(models.DemoDataset, dataset_id)
     existing_count = db.query(models.DiamondReport).filter(
-        models.DiamondReport.record_scope == "demo", models.DiamondReport.demo_dataset_id == DATASET_ID,
+        models.DiamondReport.record_scope == "demo", models.DiamondReport.demo_dataset_id == dataset_id,
     ).count()
     if existing is not None:
         if existing.content_sha256 != digest or existing.record_count != len(records) or existing_count != len(records):
@@ -135,8 +208,8 @@ def apply_dataset(db: Session, records: list[DemoRecord], *, commit: bool = True
     if existing_count:
         raise RuntimeError("Demo rows exist without a manifest; no changes were made")
     manifest = models.DemoDataset(
-        dataset_id=DATASET_ID, label="Synthetic demonstration dataset", version="v2",
-        generator_version=GENERATOR_VERSION, content_sha256=digest, provenance=PROVENANCE,
+        dataset_id=dataset_id, label="Synthetic demonstration dataset", version=version,
+        generator_version=generator_version, content_sha256=digest, provenance=provenance,
         scope_note="Internal synthetic development demo; not market, training, sale, or investment data.",
         analysis_eligibility=json.dumps(ELIGIBILITY), record_count=len(records),
     )
@@ -159,7 +232,7 @@ def apply_dataset(db: Session, records: list[DemoRecord], *, commit: bool = True
         )
         db.add(stone); db.flush()
         report = models.DiamondReport(
-            report_id=record.report_id, record_scope="demo", demo_dataset_id=DATASET_ID,
+            report_id=record.report_id, record_scope="demo", demo_dataset_id=dataset_id,
             report_date=report_date, examination_date=report_date.date(), stone_id=stone.stone_id,
             status="issued", created_at=report_date, updated_at=report_date, issued_at=report_date + timedelta(hours=2),
             system_proportions_grade=proportions, system_cut_grade=cut, calculation_rule_version="idc-demo-v1",
@@ -179,7 +252,60 @@ def apply_dataset(db: Session, records: list[DemoRecord], *, commit: bool = True
         db.add(models.ReportEvent(report_id=record.report_id, action="created", to_status="draft", reason="Synthetic demonstration dataset", created_at=report_date))
         db.add(models.ReportEvent(report_id=record.report_id, action="status_changed", from_status="draft", to_status="issued", reason="Synthetic internal demonstration state", created_at=report_date + timedelta(hours=2)))
         for source_name, amount in (("Demo Market A", record.provider_a_usd), ("Demo Market B", record.provider_b_usd)):
-            db.add(models.StoneValuation(stone_id=stone.stone_id, valuation_kind="synthetic_demo_reference", amount=Decimal(amount), currency_code="USD", unit="TOTAL_STONE", source_name=source_name, source_reference=f"{DATASET_ID}/{source_name.replace(' ', '-').lower()}/v2", applicability_note="Synthetic demonstration reference only.", observed_at=report_date))
+            db.add(models.StoneValuation(stone_id=stone.stone_id, valuation_kind="synthetic_demo_reference", amount=Decimal(amount), currency_code="USD", unit="TOTAL_STONE", source_name=source_name, source_reference=f"{dataset_id}/{source_name.replace(' ', '-').lower()}/{version}", applicability_note="Synthetic demonstration reference only.", observed_at=report_date))
+    if commit:
+        db.commit()
+    return True
+
+
+def apply_workflow_dataset(
+    db: Session,
+    records: list[DemoRecord],
+    actors: list[SyntheticActorRecord],
+    workflow: list[SyntheticWorkflowRecord],
+    *,
+    commit: bool = True,
+) -> bool:
+    """Create v3 only as one manifest-authorized, deterministic dataset."""
+    digest = workflow_checksum(records, actors, workflow)
+    existing = db.get(models.DemoDataset, WORKFLOW_DATASET_ID)
+    if existing is not None:
+        actual = {
+            "reports": db.query(models.DiamondReport).filter(models.DiamondReport.demo_dataset_id == WORKFLOW_DATASET_ID).count(),
+            "actors": db.query(models.DemoSyntheticActor).filter(models.DemoSyntheticActor.dataset_id == WORKFLOW_DATASET_ID).count(),
+            "workflow": db.query(models.DemoWorkflowEvent).filter(models.DemoWorkflowEvent.dataset_id == WORKFLOW_DATASET_ID).count(),
+        }
+        expected = {"reports": len(records), "actors": len(actors), "workflow": len(workflow)}
+        if existing.content_sha256 != digest or actual != expected:
+            raise RuntimeError("Existing demo workflow dataset does not match this generator; no changes were made")
+        return False
+
+    created = apply_dataset(
+        db, records, commit=False, dataset_id=WORKFLOW_DATASET_ID, version="v3",
+        generator_version=WORKFLOW_GENERATOR_VERSION,
+        provenance="synthetic-demo-v3; deterministic development-only workflow records",
+        content_sha256=digest,
+    )
+    if not created:
+        return False
+    for actor in actors:
+        db.add(models.DemoSyntheticActor(
+            dataset_id=WORKFLOW_DATASET_ID, actor_key=actor.actor_key,
+            display_name=actor.display_name, role=actor.role, sort_order=actor.sort_order,
+        ))
+    db.flush()
+    actor_ids = {
+        actor.actor_key: actor.actor_id
+        for actor in db.query(models.DemoSyntheticActor).filter(
+            models.DemoSyntheticActor.dataset_id == WORKFLOW_DATASET_ID,
+        )
+    }
+    for event in workflow:
+        db.add(models.DemoWorkflowEvent(
+            dataset_id=WORKFLOW_DATASET_ID, report_id=event.report_id,
+            actor_id=actor_ids[event.actor_key], action=event.action,
+            occurred_at=datetime.fromisoformat(event.occurred_at), duration_seconds=event.duration_seconds,
+        ))
     if commit:
         db.commit()
     return True
@@ -230,6 +356,22 @@ def replacement_preview(records: list[DemoRecord], inventory: ReplacementInvento
         result["v1_inventory"] = asdict(inventory)
         result["ready_for_replace"] = inventory.safe_to_replace
     return result
+
+
+def workflow_replacement_preview(
+    records: list[DemoRecord], actors: list[SyntheticActorRecord], workflow: list[SyntheticWorkflowRecord],
+) -> dict[str, object]:
+    """Describe v3 creation without reading or changing the database."""
+    return {
+        "dataset_id": WORKFLOW_DATASET_ID,
+        "replaces_dataset_id": WORKFLOW_LEGACY_DATASET_ID,
+        "record_count": len(records),
+        "actor_count": len(actors),
+        "workflow_event_count": len(workflow),
+        "content_sha256": workflow_checksum(records, actors, workflow),
+        "read_only": True,
+        "requires_backup_and_explicit_replace_confirmation": True,
+    }
 
 
 def replace_legacy_v1(db: Session, records: list[DemoRecord]) -> None:
