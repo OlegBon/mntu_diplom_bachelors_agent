@@ -60,6 +60,7 @@ def create_expert(
     username: str,
     password: str = "test-password",
     role: str = "gemologist",
+    demo_access_enabled: bool = False,
 ) -> models.Expert:
     expert = models.Expert(
         username=username,
@@ -67,6 +68,7 @@ def create_expert(
         last_name="User",
         password_hash=get_password_hash(password),
         role=role,
+        demo_access_enabled=demo_access_enabled,
     )
     db_session.add(expert)
     db_session.commit()
@@ -77,7 +79,7 @@ def create_expert(
 @pytest.fixture
 def experts(db_session: Session) -> dict[str, models.Expert]:
     return {
-        "admin": create_expert(db_session, username="test-admin", role="admin"),
+        "admin": create_expert(db_session, username="test-admin", role="admin", demo_access_enabled=True),
         "owner": create_expert(db_session, username="test-owner"),
         "other": create_expert(db_session, username="test-other"),
     }

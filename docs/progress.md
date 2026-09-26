@@ -5,14 +5,23 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
-## 2026-09-26 — demo-access-opt-in-planning
+## 2026-09-26 — ui-spacing-layout-planning
+
+- **Задача:** зафіксувати 169 — системний UX/UI audit відступів і layout consistency.
+- **Змінені файли:** `docs/{progress,work_plan}.md`, `docs/backlog/{README,169-ui-spacing-and-layout-consistency}.md`.
+- **Рішення / Результат:** 169 відокремлює повторюваний spacing polish від функціональних задач: використовує наявні SCSS tokens, охоплює desktop/mobile і не змінює API, domain flows або дизайн-систему без окремого рішення.
+- **Перевірки:** scope, межі та regression checks зафіксовані; код і тести на етапі планування не змінювалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це не повний redesign і не заміна component library.
+
+## 2026-09-26 — admin-demo-access-opt-in
 
 - **Задача:** зафіксувати 168 — явний доступ конкретного адміністратора до ізольованого «Демо».
-- **Змінені файли:** `docs/{progress,work_plan}.md`, `docs/backlog/{README,168-admin-opt-in-demo-access}.md`.
-- **Рішення / Результат:** доступ не буде автоматичним для ролі `admin`: persisted server-side `demo_access_enabled` матиме default `false`, self-service toggle належить лише власному профілю, а всі `/demo/*` routes використовуватимуть один opaque `404` gate. Header чекатиме resolved current-user state, щоб не показувати короткочасно anonymous navigation або «Демо» неавторизованому адміністратору.
-- **Перевірки:** backlog, залежності та acceptance criteria звірені з 156/158/164; код, API-контракти, міграції й тести на цьому кроці не змінювалися.
+- **Змінені файли:** `alembic/versions/0018_admin_demo_access_opt_in.py`, `backend/{models,schemas,crud,main}.py`, `frontend/src/{pug/pages/profile.pug,scss/_ui-primitives.scss,js/{main,modules/{api,profile}.js}}`, `tests/{conftest.py,api/test_demo_access_opt_in.py}`, `docs/{architecture,progress,work_plan}.md`, `docs/backlog/{README,168-admin-opt-in-demo-access}.md`.
+- **Рішення / Результат:** доступ не є автоматичним для ролі `admin`: persisted server-side `demo_access_enabled` має default `false`, self-service toggle належить лише власному профілю, а всі `/demo/*` routes використовують один opaque `404` gate. Header і protected demo-pages чекають resolved current-user state, тому не показують короткочасно anonymous navigation або demo-вміст неавторизованому адміністратору. Checkbox/action spacing уточнено в межах profile UI.
+- **Перевірки:** `0018` застосовано до local MariaDB; `alembic current` — `0018_admin_demo_access_opt_in (head)`; `alembic check` — без diff; `pytest tests/api/test_demo_dataset_isolation.py tests/api/test_demo_workflow_analytics.py tests/api/test_demo_workflow_analytics_details.py tests/api/test_demo_access_opt_in.py` — 9 passed; `npm test` — 25 passed; ручна перевірка opt-in/menu/direct demo URL виконана.
 - **Нові змінні середовища:** немає.
-- **Обмеження:** реалізація потребує окремої Alembic-міграції та явного підтвердження її застосування; не вводить керування opt-in інших адміністраторів.
+- **Обмеження:** не вводить керування opt-in інших адміністраторів; synthetic dataset і public/operational scopes не змінювалися.
 
 ## 2026-09-26 — synthetic-demo-workflow-v3
 

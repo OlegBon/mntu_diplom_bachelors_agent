@@ -28,6 +28,7 @@ async function requestApi(path, { method = "GET", token, body } = {}) {
 export const getCurrentUser = (token) => requestApi("/users/me", { token });
 
 export const updateMyProfile = (profile, token) => requestApi("/users/me/profile", { method: "PUT", token, body: profile });
+export const updateMyDemoAccess = (enabled, token) => requestApi("/users/me/demo-access", { method: "PUT", token, body: { enabled } });
 
 export const updateMyPassword = (passwords, token) => requestApi("/users/me/password", { method: "PUT", token, body: passwords });
 

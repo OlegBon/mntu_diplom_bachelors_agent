@@ -15,6 +15,7 @@ class Expert(Base):
     password_hash = Column(String(255), nullable=False)
     role = Column(Enum('admin', 'gemologist'), default='gemologist')
     is_active = Column(Boolean, nullable=False, default=True, server_default="1")
+    demo_access_enabled = Column(Boolean, nullable=False, default=False, server_default="0")
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 class DiamondReport(Base):

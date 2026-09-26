@@ -29,6 +29,14 @@ block content
                         label(for="profile-middle-name") По батькові
                         input#profile-middle-name.form-control(type="text" name="middle_name" maxlength="50")
                     button.btn.btn-primary(type="submit") Зберегти дані
+            section#demo-access-surface.account-surface(hidden)
+                h2 Доступ до «Демо»
+                p.account-help Ізольований synthetic dataset для внутрішньої демонстрації. Він не містить реальних звітів, ринкових даних або публічних паспортів.
+                form#demo-access-form
+                    label.checkbox-field(for="profile-demo-access")
+                        input#profile-demo-access(type="checkbox" name="demo_access_enabled")
+                        span Увімкнути доступ до «Демо» для мого облікового запису
+                    button.btn.btn-primary(type="submit") Зберегти доступ
             section.account-surface
                 h2 Змінити пароль
                 form#password-form
