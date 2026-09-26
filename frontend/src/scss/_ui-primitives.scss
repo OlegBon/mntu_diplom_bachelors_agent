@@ -564,6 +564,16 @@ input[type="number"]::-webkit-outer-spin-button {
   .status-badge--review { background: variables.$surface-subtle; color: variables.$primary-hover; }
   .status-badge--issued { background: variables.$success-surface; color: variables.$success-text; }
   .status-badge--void { background: variables.$error-surface; color: variables.$error-color; }
+
+  .checkbox-field {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .checkbox-field input[type="checkbox"] {
+    margin-top: 0.2rem;
+  }
   .status-badge--sale-not-sold { background: variables.$surface-muted; color: variables.$secondary-color; }
   .status-badge--sale-sold { background: variables.$success-surface; color: variables.$success-text; }
 

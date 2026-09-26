@@ -120,10 +120,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const protectedPage = document.querySelector("[data-protected-page]");
-  if (protectedPage) protectedPage.hidden = false;
   const homeLoginCta = document.getElementById("home-login-cta");
-  if (homeLoginCta) homeLoginCta.hidden = isAuthenticated;
-  if (!isAuthenticated) applyApprovedNavigation(false);
+  if (!isAuthenticated) {
+    if (protectedPage) protectedPage.hidden = false;
+    if (homeLoginCta) homeLoginCta.hidden = false;
+    applyApprovedNavigation(false);
+  }
 
   if (isAuthenticated) {
     void getCurrentUser(localStorage.getItem("token")).then((user) => {
@@ -134,6 +136,8 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.replace("/dashboard.html");
         return;
       }
+      if (protectedPage) protectedPage.hidden = false;
+      if (homeLoginCta) homeLoginCta.hidden = true;
       applyApprovedNavigation(true, user);
     }).catch(() => {
       localStorage.removeItem("token");
