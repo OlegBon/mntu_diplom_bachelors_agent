@@ -12,6 +12,50 @@ function download(blob, filename) {
   link.click();
   URL.revokeObjectURL(url);
 }
+
+function formatAmount(value, currency = "USD") {
+  return `${currency} ${new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 2 }).format(Number(value))}`;
+}
+
+function formatDate(value) {
+  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+}
+
+function renderDemoValuations(container, valuations) {
+  container.replaceChildren();
+  if (!valuations.length) {
+    container.append(createElement("li", "", "Демонстраційних орієнтирів немає."));
+    return;
+  }
+  for (const [index, valuation] of valuations.entries()) {
+    const item = createElement("li", "market-reference-card");
+    const disclosure = document.createElement("details");
+    disclosure.className = "market-reference-card__disclosure";
+    disclosure.open = index === 0;
+    const summary = createElement("summary", "market-reference-card__summary");
+    summary.append(
+      createElement("strong", "", formatAmount(valuation.amount, valuation.currency_code)),
+      createElement("span", "", "DEMO · демонстраційний орієнтир"),
+    );
+    const details = createElement("dl", "market-reference-card__details");
+    for (const [term, value] of [["Провайдер", valuation.source_name], ["Отримано", formatDate(valuation.observed_at)]]) {
+      const row = document.createElement("div");
+      row.append(createElement("dt", "", term), createElement("dd", "", value));
+      details.append(row);
+    }
+    const note = createElement("p", "market-reference-card__note", "Synthetic demonstration reference only. Не є ринковою, експертною, продажною чи транзакційною ціною.");
+    disclosure.append(summary, details, note);
+    item.append(disclosure);
+    container.append(item);
+  }
+}
+
+function createElement(tagName, className, textContent) {
+  const element = document.createElement(tagName);
+  if (className) element.className = className;
+  if (textContent !== undefined) element.textContent = textContent;
+  return element;
+}
 export async function initDemoReportDetail() {
   const root = document.querySelector("[data-demo-report-detail]"); if (!root || localStorage.getItem("role") !== "admin") return;
   const params = new URLSearchParams(window.location.search); const dataset = params.get("dataset") || "synthetic-demo-v1"; const reportId = params.get("id"); const token = localStorage.getItem("token");
@@ -21,6 +65,10 @@ export async function initDemoReportDetail() {
     const [report, mappings] = await Promise.all([getDemoReport(dataset, reportId, token), getGradeMappings(token)]);
     const label = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
     document.getElementById("demo-report-id").textContent = report.report_id;
+    const statusBadge = document.getElementById("demo-status-badge");
+    statusBadge.textContent = "Видано";
+    statusBadge.dataset.status = report.status;
+    document.getElementById("demo-system-summary").textContent = `Системний IDC: Proportions ${label("proportions", report.system_proportions_grade)}, Final Cut ${label("cut", report.system_cut_grade)}.`;
     const values = {
       "demo-date": report.examination_date,
       "demo-shape": report.stone.shape,
@@ -46,8 +94,7 @@ export async function initDemoReportDetail() {
       "demo-cut": label("cut", report.system_cut_grade),
     };
     for (const [id, value] of Object.entries(values)) document.getElementById(id).value = value ?? "—";
-    const valuations = document.getElementById("demo-valuations");
-    valuations.replaceChildren(...(report.market_references || []).map((item) => Object.assign(document.createElement("li"), { textContent: `USD ${item.amount} · DEMO · ${item.source_name}` })));
+    renderDemoValuations(document.getElementById("demo-valuations"), report.market_references || []);
     document.getElementById("demo-preview-pdf").addEventListener("click", async () => {
       try {
         download(await getDemoPassportPreviewPdf(dataset, reportId, token), `demo-preview-${reportId}.pdf`);

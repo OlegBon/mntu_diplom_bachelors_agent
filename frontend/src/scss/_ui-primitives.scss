@@ -613,6 +613,16 @@ input[type="number"]::-webkit-outer-spin-button {
   .report-price__detail,
   .report-price__warning { margin: 0; font-size: 0.8rem; line-height: 1.45; }
   .report-price__warning { margin-top: 0.5rem; color: variables.$secondary-color; }
+  .report-price__alternatives {
+    margin-top: 0.6rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid variables.$border-color;
+    color: variables.$secondary-color;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+  .report-price__alternatives strong { color: variables.$text-strong; font-size: inherit; }
+  .report-price__alternatives ul { margin: 0.25rem 0 0; padding-left: 1.1rem; }
   .report-price__missing { color: variables.$secondary-color; }
   .dashboard-demo-note {
     margin: 0.75rem 0 0.5rem;

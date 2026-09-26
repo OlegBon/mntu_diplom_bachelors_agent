@@ -426,7 +426,7 @@ def read_demo_dataset_reports(
     date_from: Optional[date] = None,
     date_to: Optional[date] = None,
     search: Optional[str] = Query(default=None, min_length=1, max_length=50),
-    sort: schemas.ReportListSort = "report_date_desc",
+    sort: schemas.ReportListSort = "report_id_desc",
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):

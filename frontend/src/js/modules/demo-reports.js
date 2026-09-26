@@ -34,7 +34,7 @@ function getUrlState() {
     price_max: params.get("price_max") || "",
     date_from: params.get("date_from") || "",
     date_to: params.get("date_to") || "",
-    sort: params.get("sort") || "report_date_desc",
+    sort: params.get("sort") || "report_id_desc",
   };
 }
 
@@ -110,7 +110,11 @@ function renderRows(tbody, reports, labelFor) {
     idCell.append(id);
     row.append(idCell);
     const dateCell = document.createElement("td");
-    dateCell.append(createElement("strong", "date-primary", formatDateTime(report.report_date).date));
+    const date = formatDateTime(report.report_date);
+    dateCell.append(
+      createElement("strong", "date-primary", date.date),
+      createElement("span", "date-secondary", date.time),
+    );
     row.append(dateCell);
     row.append(createElement("td", "", report.stone.shape));
     row.append(createElement("td", "", report.stone.carat_weight));

@@ -94,7 +94,8 @@ block content
                 section.report-detail__surface
                     h2 Стан звіту
                     p#demo-status-badge.report-detail__status-badge Видано
-                    p.report-detail__help DEMO · SYNTHETIC DATA. Звіт незмінний і не має публічного паспорта.
+                    p#demo-system-summary.report-detail__help Системний IDC: —
+                    p#demo-demo-status-help.report-detail__help DEMO · SYNTHETIC DATA. Звіт незмінний і не має публічного паспорта.
                 section.report-detail__surface
                     h2 Довідкові demo-орієнтири
                     ul#demo-valuations.report-detail__list
@@ -107,6 +108,6 @@ block content
                     p.report-detail__help Demo workflow events буде показано в окремому зрізі після додавання synthetic actors.
                 section.report-detail__surface
                     h2 Private preview
-                    p.report-detail__help PDF не має public ID, QR-коду чи посилання і не створює публічний паспорт.
+                    p.report-detail__help PDF не має public ID, QR-коду чи посилання. Це окремий internal preview, а не виданий клієнтський документ.
                     button#demo-preview-pdf.btn.btn-primary(type="button") Завантажити demo PDF
                     p#demo-report-status.form-status(role="status" aria-live="polite" hidden)
