@@ -109,6 +109,7 @@
 - [x] [162 — Multi-provider market references](./decisions/007-multi-provider-market-references.md): `0015` нормалізує enabled provider set і nullable dashboard primary; кожен provider має незалежний immutable valuation, dashboard не робить hidden fallback, а public passport/PDF не показують provider values чи branding.
 - [x] 157 — Synthetic demo dataset generator: локально створено deterministic `synthetic-demo-v1` із 1 000 `DEMO-…`, immutable manifest, normalized fields і двома fictional demo provider references; public/operational scopes не зачеплено.
 - [x] 158 — Admin demo report/PDF/passport preview: immutable private preview без public code/URL/QR, із read-only dashboard/detail, bundled synthetic assets і watermark; historical `DR-*` не змінено.
+- [ ] [167 — Synthetic demo dataset date-boundary renewal](./backlog/167-synthetic-demo-dataset-date-boundary-renewal.md): backup-gated replacement `v1 → v2` з тим самим `DEMO-…` range і останньою датою 31.12.2025; не зачіпає historical `DR-*`.
 - [ ] [164 — Synthetic demo actors і workflow analytics](./backlog/164-synthetic-demo-actors-and-workflow-analytics.md): virtual actors без real accounts, isolated workflow statistics і спільний demo date slice.
 - [ ] [159 — Synthetic SOM demo](./backlog/159-synthetic-som-demo.md): reproducible admin-only карта у вкладці «Камені» для demo dataset, не заміна 151–153.
 - [ ] [165 — Synthetic demo provider analytics](./backlog/165-synthetic-demo-provider-analytics.md): `Demo Market A/B` coverage/provenance у відокремленій вкладці без real provider data.
@@ -122,7 +123,7 @@
 
 ### Рекомендована черга активних задач
 
-1. `164 → 159 → 165` — після завершеного read-only demo shell додати virtual actors, SOM для каменів і
+1. `167 → 164 → 159 → 165` — спершу контрольовано перевипустити demo v2 з правильним часовим діапазоном, потім додати virtual actors, SOM для каменів і
    fictional provider analytics без змішування з operational даними.
    `166` — незалежний P2 safety gate перед будь-якою реальною класифікацією
    historical `DR-*`; його не запускають як неявну частину demo-аналітики.
