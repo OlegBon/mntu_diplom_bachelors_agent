@@ -426,6 +426,14 @@ class DemoDatasetResponse(BaseModel):
     created_at: datetime
 
 
+class DemoWorkflowDurationRecord(BaseModel):
+    """One immutable synthetic workflow interval, never an operational session."""
+
+    report_id: str
+    duration_seconds: int
+    occurred_at: datetime
+
+
 class DemoWorkflowActorStats(BaseModel):
     actor_key: str
     display_name: str
@@ -434,6 +442,9 @@ class DemoWorkflowActorStats(BaseModel):
     completed_intervals: int
     total_duration_seconds: int
     avg_duration_seconds: Optional[int]
+    median_duration_seconds: Optional[int]
+    shortest_intervals: list[DemoWorkflowDurationRecord] = Field(default_factory=list)
+    longest_intervals: list[DemoWorkflowDurationRecord] = Field(default_factory=list)
 
 
 class DemoWorkflowAnalyticsResponse(BaseModel):

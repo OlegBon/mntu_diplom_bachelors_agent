@@ -175,29 +175,57 @@ function openSyntheticActorDialog(dialog, content, actor) {
     ["На перевірці", "Не моделюються"],
     ["Видано", actor.role === "gemologist" ? actor.reports_touched : "Не застосовується"],
     ["Анульовано", "Не моделюються"],
-    ["Завершених інтервалів", actor.completed_intervals],
-    ["Сумарний synthetic час", formatDuration(actor.total_duration_seconds)],
-    ["Середній інтервал", formatDuration(actor.avg_duration_seconds)],
+    ["Завершені робочі сесії", actor.completed_intervals],
+    ["Активний час", formatDuration(actor.total_duration_seconds)],
+    ["Середня активна сесія", formatDuration(actor.avg_duration_seconds)],
+    ["Медіанна активна сесія", formatDuration(actor.median_duration_seconds)],
+    ["Збережень із виміром підготовки", "Не моделюються"],
+    ["Час до першого збереження", "Не моделюється"],
+    ["Середній час до першого збереження", "Не моделюється"],
+    ["Медіанний час до першого збереження", "Не моделюється"],
   ];
   for (const [label, value] of rows) metrics.append(createElement("dt", "", label), createElement("dd", "", String(value)));
   content.replaceChildren(
     createElement("h3", "analytics-dialog-name", actor.display_name),
     metrics,
-    createElement("p", "account-help", "Це вигаданий, детермінований actor demo-набору. Він не є обліковим записом, не має профілю та не представляє реальну людину."),
+    createElement("p", "account-help", "Активний час — лише детермінований synthetic інтервал demo workflow, а не server-timed сесія чи вимір продуктивності людини."),
+    createElement("p", "account-help", "Час до першого збереження для demo-набору не моделюється. Actor є вигаданим, не має профілю та не представляє реальну людину."),
+    renderDemoIntervalList("Три найкоротші synthetic активні інтервали", actor.shortest_intervals, actor.dataset_id),
+    renderDemoIntervalList("Три найдовші synthetic активні інтервали", actor.longest_intervals, actor.dataset_id),
   );
   dialog.showModal();
 }
 
-function renderWorkflowRows(container, actors, dialog, dialogContent) {
-  renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано", "Synthetic час"], actors.map((actor) => {
+function renderDemoIntervalList(title, items = [], datasetId) {
+  const section = createElement("section", "analytics-review-list");
+  section.append(createElement("h3", "", title));
+  if (!items.length) {
+    section.append(createElement("p", "account-help", "Завершених synthetic інтервалів у цьому періоді немає."));
+    return section;
+  }
+  const list = document.createElement("ol");
+  for (const item of items) {
+    const row = document.createElement("li");
+    const reportLink = createElement("a", "", item.report_id);
+    reportLink.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(item.report_id)}`;
+    const occurredAt = new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.occurred_at));
+    row.append(reportLink, document.createTextNode(`: ${formatDuration(item.duration_seconds)} · ${occurredAt}`));
+    list.append(row);
+  }
+  section.append(list);
+  return section;
+}
+
+function renderWorkflowRows(container, actors, dialog, dialogContent, datasetId) {
+  renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано", "Активний час"], actors.map((actor) => {
     const actorButton = createElement("button", "analytics-expert-button", actor.display_name);
     actorButton.type = "button";
-    actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, actor));
+    actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, { ...actor, dataset_id: datasetId }));
     return [actorButton, "Synthetic", String(actor.reports_touched), "—", "—", String(actor.reports_touched), "—", formatDuration(actor.total_duration_seconds)];
   }), "За обраний період synthetic-подій немає.");
 }
 
-function renderSyntheticAdministrators(container, actors) {
+function renderSyntheticAdministrators(container, actors, datasetId) {
   const fragment = document.createDocumentFragment();
   const cards = createElement("div", "analytics-admin-list");
   for (const actor of actors) {
@@ -205,15 +233,20 @@ function renderSyntheticAdministrators(container, actors) {
     const heading = createElement("h3", "", actor.display_name);
     const metrics = createElement("dl", "analytics-metrics");
     [
-      ["Завершено synthetic перевірок", actor.completed_intervals],
+      ["Завершено перевірок", actor.completed_intervals],
       ["Видано", actor.reports_touched],
       ["Повернуто", "Не моделюється"],
       ["Анульовано", "Не моделюється"],
       ["Середня тривалість", formatDuration(actor.avg_duration_seconds)],
       ["Медіанна тривалість", "Не моделюється"],
-      ["Звітів у workflow", actor.reports_touched],
     ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
-    card.append(heading, metrics, createElement("p", "account-help", "Synthetic administrator · non-account. Дані сформовано детермінованим demo workflow."));
+    card.append(
+      heading,
+      metrics,
+      renderDemoIntervalList("Найкоротші synthetic перевірки", actor.shortest_intervals, datasetId),
+      renderDemoIntervalList("Найдовші synthetic перевірки", actor.longest_intervals, datasetId),
+      createElement("p", "account-help", "Synthetic administrator · non-account. Дані сформовано детермінованим demo workflow."),
+    );
     cards.append(card);
   }
   if (actors.length) fragment.append(cards);
@@ -262,8 +295,8 @@ function initDemoWorkflowTabs(root, datasetId, token) {
       expertStatus.replaceChildren();
       administratorStatus.replaceChildren();
       periodSummaryNode.textContent = periodSummary(filters);
-      renderWorkflowRows(expertResults, data.experts, dialog, dialogContent);
-      renderSyntheticAdministrators(administratorResults, data.administrators);
+      renderWorkflowRows(expertResults, data.experts, dialog, dialogContent, data.dataset_id);
+      renderSyntheticAdministrators(administratorResults, data.administrators, data.dataset_id);
     } catch {
       setStatus(expertStatus, "Не вдалося завантажити synthetic workflow.", "error");
       setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");

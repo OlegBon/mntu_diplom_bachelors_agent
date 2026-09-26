@@ -108,11 +108,12 @@ def get_demo_workflow_analytics(
     end = datetime.combine(date_to + timedelta(days=1), time.min) if date_to is not None else None
     grouped: dict[str, dict[str, object]] = {}
     for actor, event in query.all():
-        row = grouped.setdefault(actor.actor_key, {"actor": actor, "reports": set(), "durations": []})
+        row = grouped.setdefault(actor.actor_key, {"actor": actor, "reports": set(), "durations": [], "intervals": []})
         if event is not None and (start is None or event.occurred_at >= start) and (end is None or event.occurred_at < end):
             row["reports"].add(event.report_id)
             if event.duration_seconds is not None:
                 row["durations"].append(event.duration_seconds)
+                row["intervals"].append(event)
     def serialize(role: str) -> list[schemas.DemoWorkflowActorStats]:
         rows = []
         for item in grouped.values():
@@ -120,11 +121,23 @@ def get_demo_workflow_analytics(
             if actor.role != role:
                 continue
             durations = item["durations"]
+            intervals = sorted(item["intervals"], key=lambda event: (event.duration_seconds, event.occurred_at, event.workflow_event_id))
+
+            def interval_records(source: list[models.DemoWorkflowEvent]) -> list[schemas.DemoWorkflowDurationRecord]:
+                return [schemas.DemoWorkflowDurationRecord(
+                    report_id=event.report_id,
+                    duration_seconds=event.duration_seconds,
+                    occurred_at=event.occurred_at,
+                ) for event in source]
+
             rows.append(schemas.DemoWorkflowActorStats(
                 actor_key=actor.actor_key, display_name=actor.display_name, role=actor.role,
                 reports_touched=len(item["reports"]), completed_intervals=len(durations),
                 total_duration_seconds=sum(durations),
                 avg_duration_seconds=round(sum(durations) / len(durations)) if durations else None,
+                median_duration_seconds=round(median(durations)) if durations else None,
+                shortest_intervals=interval_records(intervals[:3]),
+                longest_intervals=interval_records(list(reversed(intervals[-3:]))),
             ))
         return sorted(rows, key=lambda row: row.actor_key)
     return schemas.DemoWorkflowAnalyticsResponse(
