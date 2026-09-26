@@ -4,6 +4,7 @@ const ORIGIN_LABELS = { natural: "Природний", lab_grown: "Лабора�
 const TREATMENT_LABELS = { not_assessed: "Не оцінено", none_detected: "Не виявлено", disclosed: "Заявлено", confirmed: "Підтверджено" };
 const IDENTIFICATION_LABELS = { preliminary: "Попередній", confirmed: "Підтверджено", inconclusive: "Невизначено" };
 const SHOWCASE_REPORT_ID = "DEMO-00999";
+const REPORT_STATUS_LABELS = { issued: "Видано", void: "Анульовано" };
 
 function download(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -65,7 +66,7 @@ function createElement(tagName, className, textContent) {
 }
 export async function initDemoReportDetail() {
   const root = document.querySelector("[data-demo-report-detail]"); if (!root || localStorage.getItem("role") !== "admin") return;
-  const params = new URLSearchParams(window.location.search); const requestedDataset = params.get("dataset"); let dataset = requestedDataset || "synthetic-demo-v2"; const reportId = params.get("id"); const token = localStorage.getItem("token");
+  const params = new URLSearchParams(window.location.search); const requestedDataset = params.get("dataset"); let dataset = requestedDataset || "synthetic-demo-v4"; const reportId = params.get("id"); const token = localStorage.getItem("token");
   if (!reportId) return;
   const status = document.getElementById("demo-report-status");
   try {
@@ -74,18 +75,29 @@ export async function initDemoReportDetail() {
       report = await getDemoReport(dataset, reportId, token);
     } catch (error) {
       if (requestedDataset) throw error;
-      dataset = "synthetic-demo-v1";
-      report = await getDemoReport(dataset, reportId, token);
+      dataset = "synthetic-demo-v3";
+      try {
+        report = await getDemoReport(dataset, reportId, token);
+      } catch {
+        dataset = "synthetic-demo-v2";
+        try {
+          report = await getDemoReport(dataset, reportId, token);
+        } catch {
+          dataset = "synthetic-demo-v1";
+          report = await getDemoReport(dataset, reportId, token);
+        }
+      }
     }
     const mappings = await getGradeMappings(token);
     const label = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
     document.getElementById("demo-report-id").textContent = report.report_id;
     const isShowcase = report.report_id === SHOWCASE_REPORT_ID;
-    document.getElementById("demo-showcase-media").hidden = !isShowcase;
     document.getElementById("demo-showcase-media-event").hidden = !isShowcase;
     const statusBadge = document.getElementById("demo-status-badge");
-    statusBadge.textContent = "Видано";
+    const statusLabel = REPORT_STATUS_LABELS[report.status] || report.status;
+    statusBadge.textContent = statusLabel;
     statusBadge.dataset.status = report.status;
+    document.getElementById("demo-status-event").textContent = `Чернетка → ${statusLabel} · змодельована системна подія`;
     document.getElementById("demo-system-summary").textContent = `Системний IDC: Proportions ${label("proportions", report.system_proportions_grade)}, Final Cut ${label("cut", report.system_cut_grade)}.`;
     const values = {
       "demo-date": report.examination_date,

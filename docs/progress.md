@@ -5,6 +5,24 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-26 — demo-access-opt-in-planning
+
+- **Задача:** зафіксувати 168 — явний доступ конкретного адміністратора до ізольованого «Демо».
+- **Змінені файли:** `docs/{progress,work_plan}.md`, `docs/backlog/{README,168-admin-opt-in-demo-access}.md`.
+- **Рішення / Результат:** доступ не буде автоматичним для ролі `admin`: persisted server-side `demo_access_enabled` матиме default `false`, self-service toggle належить лише власному профілю, а всі `/demo/*` routes використовуватимуть один opaque `404` gate. Header чекатиме resolved current-user state, щоб не показувати короткочасно anonymous navigation або «Демо» неавторизованому адміністратору.
+- **Перевірки:** backlog, залежності та acceptance criteria звірені з 156/158/164; код, API-контракти, міграції й тести на цьому кроці не змінювалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** реалізація потребує окремої Alembic-міграції та явного підтвердження її застосування; не вводить керування opt-in інших адміністраторів.
+
+## 2026-09-26 — synthetic-demo-workflow-v3
+
+- **Задача:** виконати 164 — isolated synthetic actors і workflow analytics.
+- **Змінені файли:** `backend/{models,schemas,crud,main}.py`, `alembic/versions/{0016_demo_synthetic_workflow,0017_demo_workflow_index_convergence}.py`, `scripts/generate_synthetic_demo_dataset.py`, `frontend/src/{pug/pages/demo-reports.pug,js/modules/{api,demo-reports}.js}`, `tests/{api/test_demo_workflow_analytics.py,unit/test_synthetic_demo_workflow_v3.py}`, `docs/{architecture,progress,work_plan}.md`.
+- **Рішення / Результат:** `synthetic-demo-v4` контрольовано замінив лише verified v3 demo graph: 1 000 `DEMO-*` reports, вісім non-account synthetic actors (5 gemologists, 3 administrators) та 3 220 isolated workflow events. Детерміновані, але нерівні quotas і профілі тривалостей дають 950 issued та 50 void reports, а synthetic `returned` outcomes показують повторний workflow без тверджень про реальних людей. Endpoint `/demo/datasets/{dataset_id}/workflow-analytics` доступний лише admin і перевіряє manifest allow-list; gemologist отримує opaque `404`. На «Демо» вкладки «Експерти» й «Адміністратори» мають спільний date slice та presentation-структуру, спільну з operational «Аналітикою»: таблицю експертів із деталями й картки перевірок адміністраторів. Контракт повертає медіану та до трьох найкоротших/найдовших synthetic інтервалів, тому UI веде лише до `DEMO-*` detail. Непідтримувані demo-властивості позначені як такі, що не моделюються; synthetic duration не видається за active-time, review-cycle, SLA, рейтинг чи оцінку реальних людей.
+- **Перевірки:** `alembic current` — `0017_demo_workflow_index_convergence (head)`; `alembic check` — без diff; `pytest tests/api/test_demo_workflow_analytics.py tests/unit/test_synthetic_demo_v2_renewal.py tests/unit/test_synthetic_demo_workflow_v3.py` — 5 passed; `pytest tests/api/test_demo_workflow_analytics.py tests/api/test_demo_workflow_analytics_details.py tests/unit/test_synthetic_demo_workflow_v4.py` — 5 passed; `cmd /c "cd frontend && npm test"` — 25 passed; `cmd /c "cd frontend && npm run build"` — passed. Read-only v2→v3 dry-run підтвердив ownership inventory; після явного підтвердження виконано транзакційну заміну, operational reports = 1 009. Перед v3→v4 створено backup `D:\DevTools\Backups\diamant-id-before-demo-v4-20260926-203352.sql` (2 846 028 bytes, SHA-256 `D9F3A0B82E3EA0F492C80A5E6BBEF7A8D3C8848AE1439083A1AC261F786E1997`) і успішно відновлено у disposable MariaDB `127.0.0.1:3307`: три бази, Alembic `0017_demo_workflow_index_convergence`, v3 = 1 000 reports, 6 actors, 3 000 workflow events; temporary server/data directory вилучено. Після явного підтвердження v3→v4 inventory: v4 = 1 000 reports, 950 issued, 50 void, 5 gemologists, 3 administrators, 3 220 workflow events; v3 rows = 0.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** rollback v4 можливий лише через зафіксований SQL-backup і потребує окремого погодження. SOM, demo stones і demo provider tabs залишаються задачами 159 і 165.
+
 ## 2026-09-26 — synthetic-demo-v2-renewal
 
 - **Задача:** виконати 167 — контрольоване оновлення межі дат synthetic demo dataset.

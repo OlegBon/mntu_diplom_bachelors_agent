@@ -40,7 +40,7 @@
 
 | Пріоритет | Файл | Тема |
 | --- | --- | --- |
-| P1 | [164-synthetic-demo-actors-and-workflow-analytics.md](./164-synthetic-demo-actors-and-workflow-analytics.md) | Isolated synthetic experts/admins і workflow analytics. |
+| P1 | [168-admin-opt-in-demo-access.md](./168-admin-opt-in-demo-access.md) | Per-admin server-side opt-in до «Демо» без header flash і з opaque API-gate. |
 | P1 | [159-synthetic-som-demo.md](./159-synthetic-som-demo.md) | Isolated reproducible SOM technical demo у вкладці «Камені». |
 | P1 | [165-synthetic-demo-provider-analytics.md](./165-synthetic-demo-provider-analytics.md) | Fictional demo-provider analytics без real market data. |
 | P2 | [166-synthetic-demo-backup-and-historical-reclassification.md](./166-synthetic-demo-backup-and-historical-reclassification.md) | Backup, restore verification і контрольована класифікація historical synthetic `DR-*`. |

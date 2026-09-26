@@ -90,6 +90,99 @@ def require_demo_dataset_analysis_eligibility(
     return dataset
 
 
+def get_demo_workflow_analytics(
+    db: Session, *, dataset_id: str, date_from: date | None, date_to: date | None,
+) -> schemas.DemoWorkflowAnalyticsResponse:
+    """Return only synthetic workflow aggregates for one manifest-authorized dataset."""
+    require_demo_dataset_analysis_eligibility(db, dataset_id=dataset_id, scenario="demo_operations")
+    actors = (
+        db.query(models.DemoSyntheticActor)
+        .filter(models.DemoSyntheticActor.dataset_id == dataset_id)
+        .order_by(models.DemoSyntheticActor.sort_order)
+        .all()
+    )
+    actors_by_id = {actor.actor_id: actor for actor in actors}
+    grouped: dict[str, dict[str, object]] = {
+        actor.actor_key: {
+            "actor": actor,
+            "reports": set(),
+            "durations": [],
+            "intervals": [],
+            "issued": 0,
+            "returned": 0,
+            "void": 0,
+        }
+        for actor in actors
+    }
+    events = (
+        db.query(models.DemoWorkflowEvent)
+        .filter(models.DemoWorkflowEvent.dataset_id == dataset_id)
+        .order_by(models.DemoWorkflowEvent.workflow_event_id)
+        .all()
+    )
+    report_authors = {
+        event.report_id: event.actor_id
+        for event in events
+        if event.action == "draft_completed"
+    }
+    start = datetime.combine(date_from, time.min) if date_from is not None else None
+    end = datetime.combine(date_to + timedelta(days=1), time.min) if date_to is not None else None
+    for event in events:
+        if (start is None or event.occurred_at >= start) and (end is None or event.occurred_at < end):
+            actor = actors_by_id[event.actor_id]
+            row = grouped[actor.actor_key]
+            row["reports"].add(event.report_id)
+            if event.action == "issued":
+                row["issued"] += 1
+            elif event.action == "review_returned":
+                row["returned"] += 1
+            elif event.action == "review_voided":
+                row["void"] += 1
+                author_id = report_authors.get(event.report_id)
+                author = actors_by_id.get(author_id)
+                if author is not None and author.role == "gemologist":
+                    grouped[author.actor_key]["void"] += 1
+            elif event.action == "review_completed":
+                row["issued"] += 1
+            if event.duration_seconds is not None:
+                row["durations"].append(event.duration_seconds)
+                row["intervals"].append(event)
+    def serialize(role: str) -> list[schemas.DemoWorkflowActorStats]:
+        rows = []
+        for item in grouped.values():
+            actor = item["actor"]
+            if actor.role != role:
+                continue
+            durations = item["durations"]
+            intervals = sorted(item["intervals"], key=lambda event: (event.duration_seconds, event.occurred_at, event.workflow_event_id))
+
+            def interval_records(source: list[models.DemoWorkflowEvent]) -> list[schemas.DemoWorkflowDurationRecord]:
+                return [schemas.DemoWorkflowDurationRecord(
+                    report_id=event.report_id,
+                    duration_seconds=event.duration_seconds,
+                    occurred_at=event.occurred_at,
+                    action=event.action,
+                ) for event in source]
+
+            rows.append(schemas.DemoWorkflowActorStats(
+                actor_key=actor.actor_key, display_name=actor.display_name, role=actor.role,
+                reports_touched=len(item["reports"]), completed_intervals=len(durations),
+                total_duration_seconds=sum(durations),
+                avg_duration_seconds=round(sum(durations) / len(durations)) if durations else None,
+                median_duration_seconds=round(median(durations)) if durations else None,
+                issued_reports=item["issued"],
+                returned_to_draft=item["returned"],
+                void_reports=item["void"],
+                shortest_intervals=interval_records(intervals[:3]),
+                longest_intervals=interval_records(list(reversed(intervals[-3:]))),
+            ))
+        return sorted(rows, key=lambda row: row.actor_key)
+    return schemas.DemoWorkflowAnalyticsResponse(
+        dataset_id=dataset_id, date_from=date_from, date_to=date_to,
+        experts=serialize("gemologist"), administrators=serialize("admin"),
+    )
+
+
 def _legacy_origin_code(origin: str) -> int:
     return {"natural": 0, "lab_grown": 1, "unknown": 2, "other": 3}[origin]
 

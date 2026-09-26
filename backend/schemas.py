@@ -426,6 +426,39 @@ class DemoDatasetResponse(BaseModel):
     created_at: datetime
 
 
+class DemoWorkflowDurationRecord(BaseModel):
+    """One immutable synthetic workflow interval, never an operational session."""
+
+    report_id: str
+    duration_seconds: int
+    occurred_at: datetime
+    action: str
+
+
+class DemoWorkflowActorStats(BaseModel):
+    actor_key: str
+    display_name: str
+    role: Literal["gemologist", "admin"]
+    reports_touched: int
+    completed_intervals: int
+    total_duration_seconds: int
+    avg_duration_seconds: Optional[int]
+    median_duration_seconds: Optional[int]
+    issued_reports: int = 0
+    returned_to_draft: int = 0
+    void_reports: int = 0
+    shortest_intervals: list[DemoWorkflowDurationRecord] = Field(default_factory=list)
+    longest_intervals: list[DemoWorkflowDurationRecord] = Field(default_factory=list)
+
+
+class DemoWorkflowAnalyticsResponse(BaseModel):
+    dataset_id: str
+    date_from: Optional[date]
+    date_to: Optional[date]
+    experts: list[DemoWorkflowActorStats]
+    administrators: list[DemoWorkflowActorStats]
+
+
 class FxDataSnapshotResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

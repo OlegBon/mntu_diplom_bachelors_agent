@@ -1,18 +1,12 @@
-import { getDemoDataset, getDemoReports, getGradeMappings } from "./api.js";
+import { getDemoDataset, getDemoReports, getDemoWorkflowAnalytics, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
+import { duration as formatDuration, element as createElement, periodSummary, renderTable } from "./analytics-ui.js";
 
-const PREFERRED_DATASET_ID = "synthetic-demo-v2";
-const FALLBACK_DATASET_ID = "synthetic-demo-v1";
+const PREFERRED_DATASET_ID = "synthetic-demo-v4";
+const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
 const PAGE_SIZE = 25;
-const REPORT_STATUS_LABELS = { issued: "Видано" };
+const REPORT_STATUS_LABELS = { issued: "Видано", void: "Анульовано" };
 const SALE_STATUS_LABELS = { not_for_sale: "Не продається" };
-
-function createElement(tagName, className, textContent) {
-  const element = document.createElement(tagName);
-  if (className) element.className = className;
-  if (textContent !== undefined) element.textContent = textContent;
-  return element;
-}
 
 function createBadge(value, kind) {
   return createElement("span", `status-badge status-badge--${kind}`, value);
@@ -171,6 +165,155 @@ function populateGradeFilter(select, category, mappings) {
   }
 }
 
+function openSyntheticActorDialog(dialog, content, actor) {
+  const metrics = document.createElement("dl");
+  metrics.className = "analytics-metrics";
+  const rows = [
+    ["Стан actor", "Synthetic · non-account"],
+    ["Усього demo-звітів", actor.reports_touched],
+    ["Чернетки", "Не моделюються"],
+    ["На перевірці", "Не моделюються"],
+    ["Видано", actor.issued_reports],
+    ["Анульовано", actor.void_reports],
+    ["Завершені робочі сесії", actor.completed_intervals],
+    ["Активний час", formatDuration(actor.total_duration_seconds)],
+    ["Середня активна сесія", formatDuration(actor.avg_duration_seconds)],
+    ["Медіанна активна сесія", formatDuration(actor.median_duration_seconds)],
+    ["Збережень із виміром підготовки", "Не моделюються"],
+    ["Час до першого збереження", "Не моделюється"],
+    ["Середній час до першого збереження", "Не моделюється"],
+    ["Медіанний час до першого збереження", "Не моделюється"],
+  ];
+  for (const [label, value] of rows) metrics.append(createElement("dt", "", label), createElement("dd", "", String(value)));
+  content.replaceChildren(
+    createElement("h3", "analytics-dialog-name", actor.display_name),
+    metrics,
+    createElement("p", "account-help", "Активний час — лише детермінований synthetic інтервал demo workflow, а не server-timed сесія чи вимір продуктивності людини."),
+    createElement("p", "account-help", "Час до першого збереження для demo-набору не моделюється. Actor є вигаданим, не має профілю та не представляє реальну людину."),
+    renderDemoIntervalList("Три найкоротші synthetic активні інтервали", actor.shortest_intervals, actor.dataset_id),
+    renderDemoIntervalList("Три найдовші synthetic активні інтервали", actor.longest_intervals, actor.dataset_id),
+  );
+  dialog.showModal();
+}
+
+function renderDemoIntervalList(title, items = [], datasetId) {
+  const section = createElement("section", "analytics-review-list");
+  section.append(createElement("h3", "", title));
+  if (!items.length) {
+    section.append(createElement("p", "account-help", "Завершених synthetic інтервалів у цьому періоді немає."));
+    return section;
+  }
+  const list = document.createElement("ol");
+  for (const item of items) {
+    const row = document.createElement("li");
+    const reportLink = createElement("a", "", item.report_id);
+    reportLink.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(item.report_id)}`;
+    const occurredAt = new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.occurred_at));
+    const decision = {
+      review_completed: "Видано",
+      review_returned: "Повернено у чернетку",
+      review_voided: "Анульовано",
+    }[item.action];
+    row.append(reportLink, document.createTextNode(`: ${formatDuration(item.duration_seconds)} · ${decision ? `${decision} · ` : ""}${occurredAt}`));
+    list.append(row);
+  }
+  section.append(list);
+  return section;
+}
+
+function renderWorkflowRows(container, actors, dialog, dialogContent, datasetId) {
+  renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано", "Активний час"], actors.map((actor) => {
+    const actorButton = createElement("button", "analytics-expert-button", actor.display_name);
+    actorButton.type = "button";
+    actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, { ...actor, dataset_id: datasetId }));
+    return [actorButton, "Synthetic", String(actor.reports_touched), "—", "—", String(actor.issued_reports), String(actor.void_reports), formatDuration(actor.total_duration_seconds)];
+  }), "За обраний період synthetic-подій немає.");
+}
+
+function renderSyntheticAdministrators(container, actors, datasetId) {
+  const fragment = document.createDocumentFragment();
+  const cards = createElement("div", "analytics-admin-list");
+  for (const actor of actors) {
+    const card = createElement("article", "analytics-admin-card");
+    const heading = createElement("h3", "", actor.display_name);
+    const metrics = createElement("dl", "analytics-metrics");
+    [
+      ["Завершено перевірок", actor.completed_intervals],
+      ["Видано", actor.issued_reports],
+      ["Повернуто", actor.returned_to_draft],
+      ["Анульовано", actor.void_reports],
+      ["Середня тривалість", formatDuration(actor.avg_duration_seconds)],
+      ["Медіанна тривалість", formatDuration(actor.median_duration_seconds)],
+    ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
+    card.append(
+      heading,
+      metrics,
+      renderDemoIntervalList("Найкоротші synthetic перевірки", actor.shortest_intervals, datasetId),
+      renderDemoIntervalList("Найдовші synthetic перевірки", actor.longest_intervals, datasetId),
+      createElement("p", "account-help", "Synthetic administrator · non-account. Дані сформовано детермінованим demo workflow."),
+    );
+    cards.append(card);
+  }
+  if (actors.length) fragment.append(cards);
+  else fragment.append(createElement("p", "account-help", "Synthetic адміністраторів для цього зрізу немає."));
+  container.replaceChildren(fragment);
+}
+
+function initDemoWorkflowTabs(root, datasetId, token) {
+  const tabButtons = [...root.querySelectorAll("[data-demo-tab]")];
+  const panels = {
+    reports: root.querySelector("#demo-reports-panel"),
+    experts: root.querySelector("#demo-experts-panel"),
+    administrators: root.querySelector("#demo-administrators-panel"),
+  };
+  const form = root.querySelector("#demo-workflow-slice");
+  const controls = root.querySelector("#demo-workflow-controls");
+  const periodSummaryNode = root.querySelector("#demo-workflow-period-summary");
+  const expertResults = root.querySelector("#demo-experts-results");
+  const administratorResults = root.querySelector("#demo-administrators-results");
+  const expertStatus = root.querySelector("#demo-experts-status");
+  const administratorStatus = root.querySelector("#demo-administrators-status");
+  const dialog = root.querySelector("#demo-workflow-actor-dialog");
+  const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
+  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !dialog || !dialogContent) return;
+
+  const activate = (tab) => {
+    for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
+    controls.hidden = tab === "reports";
+    for (const button of tabButtons) {
+      const active = button.dataset.demoTab === tab;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-selected", String(active));
+    }
+  };
+  const load = async () => {
+    const filters = Object.fromEntries(new FormData(form).entries());
+    if (filters.date_from && filters.date_to && filters.date_from > filters.date_to) {
+      setStatus(expertStatus, "Дата «Від» не може бути пізнішою за дату «До».", "error");
+      setStatus(administratorStatus, "Дата «Від» не може бути пізнішою за дату «До».", "error");
+      return;
+    }
+    setStatus(expertStatus, "Завантаження synthetic workflow…");
+    setStatus(administratorStatus, "Завантаження synthetic workflow…");
+    try {
+      const data = await getDemoWorkflowAnalytics(datasetId, token, filters);
+      expertStatus.replaceChildren();
+      administratorStatus.replaceChildren();
+      periodSummaryNode.textContent = periodSummary(filters);
+      renderWorkflowRows(expertResults, data.experts, dialog, dialogContent, data.dataset_id);
+      renderSyntheticAdministrators(administratorResults, data.administrators, data.dataset_id);
+    } catch {
+      setStatus(expertStatus, "Не вдалося завантажити synthetic workflow.", "error");
+      setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
+    }
+  };
+  for (const button of tabButtons) button.addEventListener("click", () => activate(button.dataset.demoTab));
+  form.addEventListener("submit", (event) => { event.preventDefault(); void load(); });
+  form.addEventListener("reset", () => window.setTimeout(() => void load(), 0));
+  dialog.addEventListener("close", () => dialogContent.replaceChildren());
+  void load();
+}
+
 export async function initDemoReports() {
   const root = document.querySelector("[data-demo-reports]");
   if (!root || localStorage.getItem("role") !== "admin") return;
@@ -196,12 +339,16 @@ export async function initDemoReports() {
 
   try {
     let dataset;
-    try {
-      dataset = await getDemoDataset(datasetId, token);
-    } catch {
-      datasetId = FALLBACK_DATASET_ID;
-      dataset = await getDemoDataset(datasetId, token);
+    for (const candidate of [PREFERRED_DATASET_ID, ...FALLBACK_DATASET_IDS]) {
+      try {
+        dataset = await getDemoDataset(candidate, token);
+        datasetId = candidate;
+        break;
+      } catch {
+        // A local environment can intentionally retain an earlier immutable dataset.
+      }
     }
+    if (!dataset) throw new Error("Demo dataset is unavailable");
     const mappings = await getGradeMappings(token);
     root.querySelector("#demo-dataset-meta").textContent = `${dataset.label} · ${dataset.record_count} записів · ${dataset.version}`;
     labelFor = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
@@ -259,5 +406,6 @@ export async function initDemoReports() {
   }
   document.addEventListener("click", closeReportOverlays);
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeReportOverlays(); });
+  initDemoWorkflowTabs(root, datasetId, token);
   await load(state);
 }

@@ -135,6 +135,12 @@ export const getDomainReport = (reportId, token) => requestApi(`/reports/${encod
 export const getDemoDataset = (datasetId, token) => requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}`, { token });
 export const getDemoReports = (datasetId, token, page = 1, filters = {}) => { const query = new URLSearchParams({ page }); for (const [key, value] of Object.entries(filters)) if (value) query.set(key, value); return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/reports?${query}`, { token }); };
 export const getDemoReport = (datasetId, reportId, token) => requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/reports/${encodeURIComponent(reportId)}`, { token });
+export const getDemoWorkflowAnalytics = (datasetId, token, filters = {}) => {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) if (value) query.set(key, value);
+  const suffix = query.toString();
+  return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/workflow-analytics${suffix ? `?${suffix}` : ""}`, { token });
+};
 export const getDemoPassportPreviewPdf = async (datasetId, reportId, token) => {
   const response = await fetch(`${BASE_URL}/demo/datasets/${encodeURIComponent(datasetId)}/reports/${encodeURIComponent(reportId)}/passport-preview/pdf`, { headers: { Authorization: `Bearer ${token}` } });
   if (!response.ok) throw new ApiRequestError("Не вдалося сформувати demo PDF preview", response.status);
