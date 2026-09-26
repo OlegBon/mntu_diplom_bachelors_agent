@@ -1,0 +1,112 @@
+extends ../layout/main
+
+block content
+    main.report-detail-page(hidden data-protected-page="true" data-demo-report-detail)
+        .page-header
+            div
+                p.report-detail__eyebrow DEMO · SYNTHETIC DATA
+                h1#demo-report-id Завантаження звіту…
+                p#demo-report-subtitle.page-subtitle Ізольований read-only демонстраційний звіт.
+            a.btn.btn-outline(href="/demo-reports.html") До demo-звітів
+        .report-detail__grid
+            form.report-detail__surface
+                .report-detail__section
+                    h2 Ідентифікація та 4C
+                    .form-row
+                        .form-group.half
+                            label(for="demo-date") Дата дослідження / оцінки
+                            input#demo-date.form-control(type="date" readonly)
+                        .form-group.half
+                            label(for="demo-shape") Форма (Shape)
+                            input#demo-shape.form-control(type="text" readonly)
+                    .form-row.three-cols
+                        .form-group
+                            label(for="demo-carat") Вага (ct)
+                            input#demo-carat.form-control(type="text" readonly)
+                        .form-group
+                            label(for="demo-color") Колір
+                            input#demo-color.form-control(type="text" readonly)
+                        .form-group
+                            label(for="demo-clarity") Чистота
+                            input#demo-clarity.form-control(type="text" readonly)
+                        .form-group
+                            label(for="demo-fluorescence") Fluorescence
+                            input#demo-fluorescence.form-control(type="text" readonly)
+                .report-detail__section
+                    h2 Геометрія та IDC
+                    .form-row.three-cols
+                        .form-group
+                            label(for="demo-length") Довжина (mm)
+                            input#demo-length.form-control(type="text" readonly)
+                        .form-group
+                            label(for="demo-width") Ширина (mm)
+                            input#demo-width.form-control(type="text" readonly)
+                        .form-group
+                            label(for="demo-depth-mm") Висота (mm)
+                            input#demo-depth-mm.form-control(type="text" readonly)
+                    .form-row
+                        .form-group.half
+                            label(for="demo-table") Table (%)
+                            input#demo-table.form-control(type="text" readonly)
+                        .form-group.half
+                            label(for="demo-depth") Total Depth (%)
+                            input#demo-depth.form-control(type="text" readonly)
+                    .form-row
+                        .form-group.half
+                            label(for="demo-crown") Crown Angle (°)
+                            input#demo-crown.form-control(type="text" readonly)
+                        .form-group.half
+                            label(for="demo-pavilion") Pavilion Angle (°)
+                            input#demo-pavilion.form-control(type="text" readonly)
+                    .form-row
+                        .form-group.half
+                            label(for="demo-girdle") Girdle Thickness
+                            input#demo-girdle.form-control(type="text" readonly)
+                        .form-group.half
+                            label(for="demo-culet") Culet Size
+                            input#demo-culet.form-control(type="text" readonly)
+                .report-detail__section
+                    h2 Висновок та підтвердження
+                    .form-row
+                        .form-group.half
+                            label(for="demo-origin") Походження
+                            input#demo-origin.form-control(type="text" readonly)
+                        .form-group.half
+                            label(for="demo-treatment") Ознаки обробки
+                            input#demo-treatment.form-control(type="text" readonly)
+                    .form-row
+                        .form-group.half
+                            label(for="demo-identification-status") Рівень підтвердження
+                            input#demo-identification-status.form-control(type="text" readonly)
+                        .form-group.half
+                            label(for="demo-cut") Системний Final Cut
+                            input#demo-cut.form-control(type="text" readonly)
+                    .form-group
+                        label(for="demo-method") Метод ідентифікації
+                        input#demo-method.form-control(type="text" readonly)
+                    .form-group
+                        label(for="demo-conclusion") Висновок щодо ідентифікації
+                        textarea#demo-conclusion.form-control(rows="3" readonly)
+                    .form-group
+                        label(for="demo-comment") Коментар експерта
+                        textarea#demo-comment.form-control(rows="3" readonly)
+            aside.report-detail__side
+                section.report-detail__surface
+                    h2 Стан звіту
+                    p#demo-status-badge.report-detail__status-badge Видано
+                    p.report-detail__help DEMO · SYNTHETIC DATA. Звіт незмінний і не має публічного паспорта.
+                section.report-detail__surface
+                    h2 Довідкові demo-орієнтири
+                    ul#demo-valuations.report-detail__list
+                        li Завантаження…
+                section.report-detail__surface
+                    h2 Вкладення
+                    p.report-detail__help Demo-набір не містить private або public media.
+                section.report-detail__surface
+                    h2 Історія змін
+                    p.report-detail__help Demo workflow events буде показано в окремому зрізі після додавання synthetic actors.
+                section.report-detail__surface
+                    h2 Private preview
+                    p.report-detail__help PDF не має public ID, QR-коду чи посилання і не створює публічний паспорт.
+                    button#demo-preview-pdf.btn.btn-primary(type="button") Завантажити demo PDF
+                    p#demo-report-status.form-status(role="status" aria-live="polite" hidden)

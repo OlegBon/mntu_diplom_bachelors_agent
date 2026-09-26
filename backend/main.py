@@ -413,6 +413,19 @@ def read_demo_dataset_reports(
     dataset_id: str,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=100),
+    report_status: Optional[schemas.ReportStatus] = None,
+    market_status: Optional[schemas.MarketStatus] = None,
+    shape: Optional[str] = Query(default=None, min_length=1, max_length=50),
+    color_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    clarity_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    cut_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    carat_min: Optional[Decimal] = Query(default=None, ge=0),
+    carat_max: Optional[Decimal] = Query(default=None, ge=0),
+    price_min: Optional[Decimal] = Query(default=None, ge=0),
+    price_max: Optional[Decimal] = Query(default=None, ge=0),
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
+    search: Optional[str] = Query(default=None, min_length=1, max_length=50),
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
@@ -422,6 +435,10 @@ def read_demo_dataset_reports(
         raise HTTPException(status_code=404, detail="Demo dataset not found")
     reports, total = crud.get_demo_report_domain_list(
         db, dataset_id=dataset_id, page=page, page_size=page_size,
+        status=report_status, market_status=market_status, shape=shape,
+        color_grade=color_grade, clarity_grade=clarity_grade, cut_grade=cut_grade,
+        carat_min=carat_min, carat_max=carat_max, price_min=price_min,
+        price_max=price_max, date_from=date_from, date_to=date_to, search=search,
     )
     return schemas.ReportListResponse(
         items=reports,

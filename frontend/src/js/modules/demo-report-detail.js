@@ -1,0 +1,62 @@
+import { getDemoPassportPreviewPdf, getDemoReport, getGradeMappings } from "./api.js";
+
+const ORIGIN_LABELS = { natural: "Природний", lab_grown: "Лабораторно вирощений", other: "Інше", unknown: "Не визначено" };
+const TREATMENT_LABELS = { not_assessed: "Не оцінено", none_detected: "Не виявлено", disclosed: "Заявлено", confirmed: "Підтверджено" };
+const IDENTIFICATION_LABELS = { preliminary: "Попередній", confirmed: "Підтверджено", inconclusive: "Невизначено" };
+
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+export async function initDemoReportDetail() {
+  const root = document.querySelector("[data-demo-report-detail]"); if (!root || localStorage.getItem("role") !== "admin") return;
+  const params = new URLSearchParams(window.location.search); const dataset = params.get("dataset") || "synthetic-demo-v1"; const reportId = params.get("id"); const token = localStorage.getItem("token");
+  if (!reportId) return;
+  const status = document.getElementById("demo-report-status");
+  try {
+    const [report, mappings] = await Promise.all([getDemoReport(dataset, reportId, token), getGradeMappings(token)]);
+    const label = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
+    document.getElementById("demo-report-id").textContent = report.report_id;
+    const values = {
+      "demo-date": report.examination_date,
+      "demo-shape": report.stone.shape,
+      "demo-carat": report.stone.carat_weight,
+      "demo-color": label("color", report.stone.color_grade),
+      "demo-clarity": label("clarity", report.stone.clarity_grade),
+      "demo-fluorescence": label("fluorescence", report.stone.fluorescence_grade),
+      "demo-length": report.stone.measurements_length,
+      "demo-width": report.stone.measurements_width,
+      "demo-depth-mm": report.stone.measurements_depth,
+      "demo-table": report.stone.table_percent,
+      "demo-depth": report.stone.depth_percent,
+      "demo-crown": report.stone.crown_angle,
+      "demo-pavilion": report.stone.pavilion_angle,
+      "demo-girdle": report.stone.girdle_thickness,
+      "demo-culet": report.stone.culet_size,
+      "demo-origin": ORIGIN_LABELS[report.stone.origin] || "—",
+      "demo-treatment": TREATMENT_LABELS[report.stone.treatment_status] || "—",
+      "demo-identification-status": IDENTIFICATION_LABELS[report.stone.identification_status] || "—",
+      "demo-method": report.stone.identification_method,
+      "demo-conclusion": report.stone.identification_conclusion,
+      "demo-comment": report.expert_comment,
+      "demo-cut": label("cut", report.system_cut_grade),
+    };
+    for (const [id, value] of Object.entries(values)) document.getElementById(id).value = value ?? "—";
+    const valuations = document.getElementById("demo-valuations");
+    valuations.replaceChildren(...(report.market_references || []).map((item) => Object.assign(document.createElement("li"), { textContent: `USD ${item.amount} · DEMO · ${item.source_name}` })));
+    document.getElementById("demo-preview-pdf").addEventListener("click", async () => {
+      try {
+        download(await getDemoPassportPreviewPdf(dataset, reportId, token), `demo-preview-${reportId}.pdf`);
+      } catch {
+        status.hidden = false;
+        status.textContent = "Не вдалося сформувати demo PDF.";
+      }
+    });
+  } catch {
+    document.getElementById("demo-report-id").textContent = "Demo-звіт недоступний.";
+  }
+}

@@ -10,12 +10,18 @@ import { initReferenceCatalog } from "./modules/reference-catalog.js";
 import { initAnalytics } from "./modules/analytics.js";
 import { initMarketData } from "./modules/market-data.js";
 import { initPasswordVisibility } from "./modules/password-visibility.js";
+import { initDemoReports } from "./modules/demo-reports.js";
+import { initDemoReportDetail } from "./modules/demo-report-detail.js";
 
 function createNavigationLink(href, label, className = "") {
   const item = document.createElement("li");
   if (className) item.className = className;
   const link = document.createElement("a");
   link.href = href;
+  if (window.location.pathname === href) {
+    link.classList.add("is-active");
+    link.setAttribute("aria-current", "page");
+  }
   link.textContent = label;
   item.append(link);
   return item;
@@ -37,6 +43,8 @@ function applyApprovedNavigation(isAuthenticated) {
 
   navList.replaceChildren();
   authBlock.replaceChildren();
+  navList.hidden = false;
+  authBlock.hidden = false;
   if (!isAuthenticated) {
     navList.append(createNavigationLink("/#public-passport", "Перевірити паспорт"));
     navList.append(createNavigationLink("/login.html", "Увійти", "mobile-login"));
@@ -65,7 +73,7 @@ function applyApprovedNavigation(isAuthenticated) {
   sessionName.hidden = false;
 
   const links = isAdmin
-    ? [["/dashboard.html", "Всі звіти"], ["/experts.html", "Експерти"], ["/references.html", "Довідники"], ["/market-data.html", "Ринкові дані"], ["/ml-analysis.html", "Аналітика"], ["/profile.html", "Профіль"]]
+    ? [["/dashboard.html", "Всі звіти"], ["/demo-reports.html", "Демо"], ["/experts.html", "Експерти"], ["/references.html", "Довідники"], ["/market-data.html", "Ринкові дані"], ["/ml-analysis.html", "Аналітика"], ["/profile.html", "Профіль"]]
     : [["/dashboard.html", "Всі звіти"], ["/create-report.html", "Новий звіт"], ["/profile.html", "Профіль"]];
   for (const [href, label] of links) navList.append(createNavigationLink(href, label));
 
@@ -98,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const isAuthenticated = checkAuth();
   const isAdmin = localStorage.getItem("role") === "admin";
   const currentPath = window.location.pathname;
-  const isProtectedPage = ["/dashboard.html", "/create-report.html", "/report-detail.html", "/profile.html", "/experts.html", "/references.html", "/market-data.html", "/ml-analysis.html"].includes(currentPath);
+  const isProtectedPage = ["/dashboard.html", "/create-report.html", "/report-detail.html", "/demo-reports.html", "/demo-report-detail.html", "/profile.html", "/experts.html", "/references.html", "/market-data.html", "/ml-analysis.html"].includes(currentPath);
   const isCreateReportPage = currentPath.endsWith("/create-report.html");
 
   if (!isAuthenticated && isProtectedPage) {
@@ -137,6 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (isAuthenticated && currentPath.endsWith("/references.html")) void initReferenceCatalog();
   if (isAuthenticated && currentPath.endsWith("/market-data.html")) void initMarketData();
   if (isAuthenticated && currentPath.endsWith("/ml-analysis.html")) void initAnalytics();
+  if (isAuthenticated && currentPath.endsWith("/demo-reports.html")) void initDemoReports();
+  if (isAuthenticated && currentPath.endsWith("/demo-report-detail.html")) void initDemoReportDetail();
   if (currentPath.endsWith("/passport.html")) void initPublicPassport();
 
   const burgerBtn = document.getElementById("burger-btn");

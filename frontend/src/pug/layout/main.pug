@@ -21,13 +21,13 @@ html(lang="uk")
                         span.logo-text Diamant ID
 
                     nav#main-nav.main-nav(aria-label="Основна навігація")
-                        ul#nav-list
+                        ul#nav-list(hidden)
                             li: a(href="/#public-passport") Перевірити паспорт
                             li.mobile-login: a(href="/login.html") Увійти
 
                     .header-right
                         span#header-session-name.header-session-name(hidden)
-                        .header-auth#auth-block
+                        .header-auth#auth-block(hidden)
                             a.header-session-action.header-login(href="/login.html") Увійти
                         button#burger-btn.burger-btn(type="button" aria-label="Відкрити меню" aria-expanded="false")
                             span
