@@ -178,7 +178,33 @@ function formatDuration(totalSeconds) {
   return hours ? `${hours} год ${minutes} хв` : `${minutes} хв`;
 }
 
-function renderWorkflowRows(tbody, actors) {
+function workflowPeriodSummary(filters) {
+  if (filters.date_from && filters.date_to) return `Поточний зріз: з ${filters.date_from} до ${filters.date_to}.`;
+  if (filters.date_from) return `Поточний зріз: від ${filters.date_from}.`;
+  if (filters.date_to) return `Поточний зріз: до ${filters.date_to}.`;
+  return "Поточний зріз: за весь доступний час.";
+}
+
+function openSyntheticActorDialog(dialog, content, actor) {
+  const metrics = document.createElement("dl");
+  metrics.className = "analytics-metrics";
+  const rows = [
+    ["Роль", actor.role === "admin" ? "Synthetic administrator" : "Synthetic gemologist"],
+    ["Звітів у workflow", actor.reports_touched],
+    ["Завершених інтервалів", actor.completed_intervals],
+    ["Сумарний synthetic час", formatDuration(actor.total_duration_seconds)],
+    ["Середній інтервал", formatDuration(actor.avg_duration_seconds)],
+  ];
+  for (const [label, value] of rows) metrics.append(createElement("dt", "", label), createElement("dd", "", String(value)));
+  content.replaceChildren(
+    createElement("h3", "analytics-dialog-name", actor.display_name),
+    metrics,
+    createElement("p", "account-help", "Це вигаданий, детермінований actor demo-набору. Він не є обліковим записом, не має профілю та не представляє реальну людину."),
+  );
+  dialog.showModal();
+}
+
+function renderWorkflowRows(tbody, actors, dialog, dialogContent) {
   tbody.replaceChildren();
   if (!actors.length) {
     const row = document.createElement("tr");
@@ -190,8 +216,13 @@ function renderWorkflowRows(tbody, actors) {
   }
   for (const actor of actors) {
     const row = document.createElement("tr");
+    const actorButton = createElement("button", "analytics-expert-button", actor.display_name);
+    actorButton.type = "button";
+    actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, actor));
+    const actorCell = document.createElement("td");
+    actorCell.append(actorButton);
     row.append(
-      createElement("td", "", actor.display_name),
+      actorCell,
       createElement("td", "", String(actor.reports_touched)),
       createElement("td", "", String(actor.completed_intervals)),
       createElement("td", "", formatDuration(actor.total_duration_seconds)),
@@ -209,14 +240,19 @@ function initDemoWorkflowTabs(root, datasetId, token) {
     administrators: root.querySelector("#demo-administrators-panel"),
   };
   const form = root.querySelector("#demo-workflow-slice");
+  const controls = root.querySelector("#demo-workflow-controls");
+  const periodSummary = root.querySelector("#demo-workflow-period-summary");
   const expertBody = root.querySelector("#demo-experts-body");
   const administratorBody = root.querySelector("#demo-administrators-body");
   const expertStatus = root.querySelector("#demo-experts-status");
   const administratorStatus = root.querySelector("#demo-administrators-status");
-  if (!form || !expertBody || !administratorBody || !expertStatus || !administratorStatus) return;
+  const dialog = root.querySelector("#demo-workflow-actor-dialog");
+  const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
+  if (!form || !controls || !periodSummary || !expertBody || !administratorBody || !expertStatus || !administratorStatus || !dialog || !dialogContent) return;
 
   const activate = (tab) => {
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
+    controls.hidden = tab === "reports";
     for (const button of tabButtons) {
       const active = button.dataset.demoTab === tab;
       button.classList.toggle("is-active", active);
@@ -225,14 +261,20 @@ function initDemoWorkflowTabs(root, datasetId, token) {
   };
   const load = async () => {
     const filters = Object.fromEntries(new FormData(form).entries());
+    if (filters.date_from && filters.date_to && filters.date_from > filters.date_to) {
+      setStatus(expertStatus, "Дата «Від» не може бути пізнішою за дату «До».", "error");
+      setStatus(administratorStatus, "Дата «Від» не може бути пізнішою за дату «До».", "error");
+      return;
+    }
     setStatus(expertStatus, "Завантаження synthetic workflow…");
     setStatus(administratorStatus, "Завантаження synthetic workflow…");
     try {
       const data = await getDemoWorkflowAnalytics(datasetId, token, filters);
       expertStatus.replaceChildren();
       administratorStatus.replaceChildren();
-      renderWorkflowRows(expertBody, data.experts);
-      renderWorkflowRows(administratorBody, data.administrators);
+      periodSummary.textContent = workflowPeriodSummary(filters);
+      renderWorkflowRows(expertBody, data.experts, dialog, dialogContent);
+      renderWorkflowRows(administratorBody, data.administrators, dialog, dialogContent);
     } catch {
       setStatus(expertStatus, "Не вдалося завантажити synthetic workflow.", "error");
       setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
@@ -241,6 +283,7 @@ function initDemoWorkflowTabs(root, datasetId, token) {
   for (const button of tabButtons) button.addEventListener("click", () => activate(button.dataset.demoTab));
   form.addEventListener("submit", (event) => { event.preventDefault(); void load(); });
   form.addEventListener("reset", () => window.setTimeout(() => void load(), 0));
+  dialog.addEventListener("close", () => dialogContent.replaceChildren());
   void load();
 }
 
