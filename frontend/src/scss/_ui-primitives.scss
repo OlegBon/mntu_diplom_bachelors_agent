@@ -316,6 +316,12 @@ input[type="number"]::-webkit-outer-spin-button {
   }
   .account-surface--wide { grid-column: 1 / -1; }
   h2 { margin: 0 0 1rem; color: variables.$text-strong; font-size: 1.15rem; }
+  .checkbox-field {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .checkbox-field input[type="checkbox"] { margin-top: 0.2rem; }
   .form-group { margin-bottom: 1rem; }
   .form-row { display: flex; flex-wrap: wrap; gap: 1rem; }
   .form-group.half { flex: 1 1 14rem; }
@@ -565,15 +571,6 @@ input[type="number"]::-webkit-outer-spin-button {
   .status-badge--issued { background: variables.$success-surface; color: variables.$success-text; }
   .status-badge--void { background: variables.$error-surface; color: variables.$error-color; }
 
-  .checkbox-field {
-    display: inline-flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .checkbox-field input[type="checkbox"] {
-    margin-top: 0.2rem;
-  }
   .status-badge--sale-not-sold { background: variables.$surface-muted; color: variables.$secondary-color; }
   .status-badge--sale-sold { background: variables.$success-surface; color: variables.$success-text; }
 
