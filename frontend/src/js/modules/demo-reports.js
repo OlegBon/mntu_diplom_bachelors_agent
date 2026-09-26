@@ -169,8 +169,12 @@ function openSyntheticActorDialog(dialog, content, actor) {
   const metrics = document.createElement("dl");
   metrics.className = "analytics-metrics";
   const rows = [
-    ["Роль", actor.role === "admin" ? "Synthetic administrator" : "Synthetic gemologist"],
-    ["Звітів у workflow", actor.reports_touched],
+    ["Стан actor", "Synthetic · non-account"],
+    ["Усього demo-звітів", actor.reports_touched],
+    ["Чернетки", "Не моделюються"],
+    ["На перевірці", "Не моделюються"],
+    ["Видано", actor.role === "gemologist" ? actor.reports_touched : "Не застосовується"],
+    ["Анульовано", "Не моделюються"],
     ["Завершених інтервалів", actor.completed_intervals],
     ["Сумарний synthetic час", formatDuration(actor.total_duration_seconds)],
     ["Середній інтервал", formatDuration(actor.avg_duration_seconds)],
@@ -184,13 +188,37 @@ function openSyntheticActorDialog(dialog, content, actor) {
   dialog.showModal();
 }
 
-function renderWorkflowRows(container, actors, roleLabel, dialog, dialogContent) {
-  renderTable(container, [roleLabel, "Звітів у workflow", "Завершених інтервалів", "Сумарний synthetic час", "Середній інтервал"], actors.map((actor) => {
+function renderWorkflowRows(container, actors, dialog, dialogContent) {
+  renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано", "Synthetic час"], actors.map((actor) => {
     const actorButton = createElement("button", "analytics-expert-button", actor.display_name);
     actorButton.type = "button";
     actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, actor));
-    return [actorButton, String(actor.reports_touched), String(actor.completed_intervals), formatDuration(actor.total_duration_seconds), formatDuration(actor.avg_duration_seconds)];
+    return [actorButton, "Synthetic", String(actor.reports_touched), "—", "—", String(actor.reports_touched), "—", formatDuration(actor.total_duration_seconds)];
   }), "За обраний період synthetic-подій немає.");
+}
+
+function renderSyntheticAdministrators(container, actors) {
+  const fragment = document.createDocumentFragment();
+  const cards = createElement("div", "analytics-admin-list");
+  for (const actor of actors) {
+    const card = createElement("article", "analytics-admin-card");
+    const heading = createElement("h3", "", actor.display_name);
+    const metrics = createElement("dl", "analytics-metrics");
+    [
+      ["Завершено synthetic перевірок", actor.completed_intervals],
+      ["Видано", actor.reports_touched],
+      ["Повернуто", "Не моделюється"],
+      ["Анульовано", "Не моделюється"],
+      ["Середня тривалість", formatDuration(actor.avg_duration_seconds)],
+      ["Медіанна тривалість", "Не моделюється"],
+      ["Звітів у workflow", actor.reports_touched],
+    ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
+    card.append(heading, metrics, createElement("p", "account-help", "Synthetic administrator · non-account. Дані сформовано детермінованим demo workflow."));
+    cards.append(card);
+  }
+  if (actors.length) fragment.append(cards);
+  else fragment.append(createElement("p", "account-help", "Synthetic адміністраторів для цього зрізу немає."));
+  container.replaceChildren(fragment);
 }
 
 function initDemoWorkflowTabs(root, datasetId, token) {
@@ -234,8 +262,8 @@ function initDemoWorkflowTabs(root, datasetId, token) {
       expertStatus.replaceChildren();
       administratorStatus.replaceChildren();
       periodSummaryNode.textContent = periodSummary(filters);
-      renderWorkflowRows(expertResults, data.experts, "Експерт", dialog, dialogContent);
-      renderWorkflowRows(administratorResults, data.administrators, "Адміністратор", dialog, dialogContent);
+      renderWorkflowRows(expertResults, data.experts, dialog, dialogContent);
+      renderSyntheticAdministrators(administratorResults, data.administrators);
     } catch {
       setStatus(expertStatus, "Не вдалося завантажити synthetic workflow.", "error");
       setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");

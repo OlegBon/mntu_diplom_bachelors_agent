@@ -120,13 +120,18 @@ block content
                     button.btn.btn-primary(type="submit") Застосувати період
                     button.btn.btn-outline(type="reset") За весь час
             p#demo-workflow-period-summary.analytics-period-summary(role="status" aria-live="polite") Поточний зріз: за весь доступний час.
+            p#demo-workflow-period-help.account-help Дані за весь доступний період. У demo зрізі події та тривалості формуються детерміновано; вони не є active-time, review-cycle, SLA чи оцінкою реальних людей.
         section#demo-experts-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-experts")
+            h2 Synthetic експерти та звіти
+            p.account-help Показано synthetic workflow за вибраний період. Actors не є обліковими записами, а всі demo-звіти мають виданий synthetic lifecycle.
             p.demo-scope__notice(role="note")
                 strong DEMO · SYNTHETIC WORKFLOW
                 |  Це лише технічний зріз вигаданих ролей і відтворюваних інтервалів. Він не вимірює продуктивність, якість, SLA або рейтинг реальних людей.
             #demo-experts-status.dashboard-status(role="status" aria-live="polite")
             #demo-experts-results(aria-live="polite")
         section#demo-administrators-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-administrators")
+            h2 Synthetic перевірки адміністраторів
+            p.account-help Тривалість — відтворюваний synthetic інтервал перевірки, а не вимір фактичного активного часу людини.
             p.demo-scope__notice(role="note")
                 strong DEMO · SYNTHETIC WORKFLOW
                 |  Використовується той самий зріз дат, що й для synthetic експертів; дані не пов’язані з обліковими записами адміністратора.
