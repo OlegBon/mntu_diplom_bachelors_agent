@@ -1,7 +1,8 @@
 import { getDemoDataset, getDemoReports, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 
-const DATASET_ID = "synthetic-demo-v1";
+const PREFERRED_DATASET_ID = "synthetic-demo-v2";
+const FALLBACK_DATASET_ID = "synthetic-demo-v1";
 const PAGE_SIZE = 25;
 const REPORT_STATUS_LABELS = { issued: "Видано" };
 const SALE_STATUS_LABELS = { not_for_sale: "Не продається" };
@@ -67,8 +68,8 @@ function updateSortIndicators(root, sort) {
   }
 }
 
-function renderActions(report) {
-  const detailUrl = `/demo-report-detail.html?dataset=${DATASET_ID}&id=${encodeURIComponent(report.report_id)}`;
+function renderActions(report, datasetId) {
+  const detailUrl = `/demo-report-detail.html?dataset=${datasetId}&id=${encodeURIComponent(report.report_id)}`;
   const wrapper = createElement("div", "report-actions");
   const toggle = createElement("button", "report-actions__toggle", "⋮");
   toggle.type = "button";
@@ -98,11 +99,11 @@ function renderActions(report) {
   return wrapper;
 }
 
-function renderRows(tbody, reports, labelFor) {
+function renderRows(tbody, reports, labelFor, datasetId) {
   tbody.replaceChildren();
   for (const report of reports) {
     const row = document.createElement("tr");
-    const detailUrl = `/demo-report-detail.html?dataset=${DATASET_ID}&id=${encodeURIComponent(report.report_id)}`;
+    const detailUrl = `/demo-report-detail.html?dataset=${datasetId}&id=${encodeURIComponent(report.report_id)}`;
     const idCell = document.createElement("td");
     const id = createElement("a", "id-link", report.report_id);
     id.href = detailUrl;
@@ -133,7 +134,7 @@ function renderRows(tbody, reports, labelFor) {
     saleStatus.append(createBadge(SALE_STATUS_LABELS[report.stone.market_status] || report.stone.market_status, "sale-not-sold"));
     row.append(saleStatus);
     const actions = document.createElement("td");
-    actions.append(renderActions(report));
+    actions.append(renderActions(report, datasetId));
     row.append(actions);
     tbody.append(row);
   }
@@ -186,6 +187,7 @@ export async function initDemoReports() {
   if (!token || !tbody || !pagination || !stateNode || !form || !search || !status || !marketStatus) return;
 
   let state = getUrlState();
+  let datasetId = PREFERRED_DATASET_ID;
   let labelFor = (_category, value) => String(value ?? "—");
   search.value = state.search;
   status.value = state.report_status;
@@ -193,7 +195,14 @@ export async function initDemoReports() {
   for (const control of [...form.elements].filter((element) => element.name)) control.value = state[control.name] || "";
 
   try {
-    const [dataset, mappings] = await Promise.all([getDemoDataset(DATASET_ID, token), getGradeMappings(token)]);
+    let dataset;
+    try {
+      dataset = await getDemoDataset(datasetId, token);
+    } catch {
+      datasetId = FALLBACK_DATASET_ID;
+      dataset = await getDemoDataset(datasetId, token);
+    }
+    const mappings = await getGradeMappings(token);
     root.querySelector("#demo-dataset-meta").textContent = `${dataset.label} · ${dataset.record_count} записів · ${dataset.version}`;
     labelFor = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
     populateGradeFilter(root.querySelector("#demo-color-filter"), "color", mappings);
@@ -213,13 +222,13 @@ export async function initDemoReports() {
     tbody.replaceChildren();
     pagination.replaceChildren();
     try {
-      const result = await getDemoReports(DATASET_ID, token, state.page, { ...state, page_size: PAGE_SIZE });
+      const result = await getDemoReports(datasetId, token, state.page, { ...state, page_size: PAGE_SIZE });
       if (!result.items.length) {
         setStatus(stateNode, "Demo-звітів за поточними умовами не знайдено.");
         return;
       }
       stateNode.replaceChildren();
-      renderRows(tbody, result.items, labelFor);
+      renderRows(tbody, result.items, labelFor, datasetId);
       renderPagination(pagination, result.page, result.total_pages, (page) => load({ ...state, page }));
     } catch {
       setStatus(stateNode, "Не вдалося завантажити demo-звіти. Спробуйте пізніше.", "error");

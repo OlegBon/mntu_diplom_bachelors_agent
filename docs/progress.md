@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-26 — synthetic-demo-v2-renewal
+
+- **Задача:** виконати 167 — контрольоване оновлення межі дат synthetic demo dataset.
+- **Змінені файли:** `scripts/generate_synthetic_demo_dataset.py`, `frontend/src/js/modules/{demo-reports,demo-report-detail}.js`, `tests/unit/test_synthetic_demo_v2_renewal.py`, `docs/{architecture,progress,work_plan}.md`, `docs/guides/demo-dataset-operations.md`.
+- **Рішення / Результат:** генератор створив immutable `synthetic-demo-v2` з inclusive діапазоном `03.01.2023 09:00` … `31.12.2025 09:00`. Після backup/restore verification та явної згоди виконано транзакційну заміну v1: рівно 1 000 reports, 2 000 events, 2 000 valuations, нуль public passports; `DEMO-00999` збережено як showcase. Операційні `DR-*`, акаунти, provider/FX data не входили до контуру.
+- **Перевірки:** `python -m pytest tests/unit/test_synthetic_demo_generator.py tests/unit/test_synthetic_demo_v2_renewal.py tests/api/test_demo_dataset_isolation.py tests/api/test_demo_preview_media.py` — 12 passed; `cmd /c "cd frontend && npm test"` — 25 passed. Read-only dry-run: 1 000 v1 reports/stones, 2 000 events/valuations, 0 media/passports/sessions, `ready_for_replace: true`. Backup `D:\DevTools\Backups\diamant-id-before-demo-v2-20260926-153257.sql` (2.56 MB) успішно відновлено у disposable MariaDB на `127.0.0.1:3307`, перевірено inventory; сервер і тимчасовий data directory зупинені та вилучені.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** v1 manifest і його rows навмисно замінені та більше не доступні; rollback можливий лише через зафіксований SQL-backup і потребуватиме окремого погодження. Frontend тепер обирає v2; compatibility fallback залишається лише для безпечного переходу в іншому локальному середовищі, де renewal ще не застосовано.
+
 ## 2026-09-26 — synthetic-demo-date-boundary-plan
 
 - **Задача:** зафіксувати окремий контрольований шлях виправлення граничної дати synthetic demo dataset.
