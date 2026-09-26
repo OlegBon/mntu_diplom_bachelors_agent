@@ -664,6 +664,8 @@ input[type="number"]::-webkit-outer-spin-button {
 .demo-scope__showcase p { margin: 0.25rem 0 0; color: variables.$secondary-color; font-size: 0.875rem; }
 
 .demo-som-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.8fr); gap: 1.25rem; }
+.demo-som-search { display: flex; align-items: end; flex-wrap: wrap; gap: 0.75rem; margin: 1rem 0; }
+.demo-som-search label { font-weight: 600; }.demo-som-search input { min-width: min(100%, 18rem); padding: 0.65rem; border: 1px solid variables.$border-color; border-radius: 4px; }
 .demo-som-map, .demo-som-profile { border: 1px solid variables.$border-color; background: variables.$white; padding: 1.25rem; }
 .demo-som-map h3, .demo-som-profile h3 { margin-bottom: 1rem; }
 .demo-som-grid { display: grid; grid-template-columns: repeat(var(--som-size), minmax(1.8rem, 1fr)); gap: 2px; aspect-ratio: 1; max-width: 34rem; }

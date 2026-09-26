@@ -338,9 +338,11 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const administratorStatus = root.querySelector("#demo-administrators-status");
   const somStatus = root.querySelector("#demo-som-status");
   const somResults = root.querySelector("#demo-som-results");
+  const somSearchForm = root.querySelector("#demo-som-report-search");
+  const somSearchInput = root.querySelector("#demo-som-report-id");
   const dialog = root.querySelector("#demo-workflow-actor-dialog");
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
-  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !somStatus || !somResults || !dialog || !dialogContent) return;
+  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent) return;
 
   const activate = (tab) => {
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
@@ -372,19 +374,30 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
     }
   };
-  const loadSom = async () => {
+  const loadSom = async (requestedId = new URLSearchParams(window.location.search).get("som_report") || "DEMO-00999") => {
     setStatus(somStatus, "Завантаження synthetic SOM…");
     try {
-      const selectedId = new URLSearchParams(window.location.search).get("som_report") || "DEMO-00999";
+      const selectedId = requestedId.trim().toUpperCase();
       const data = await getDemoSom(datasetId, token, selectedId);
+      somSearchInput.value = selectedId;
       somStatus.replaceChildren();
       renderSom(somResults, data, labelFor);
     } catch {
-      setStatus(somStatus, "SOM artifact ще не згенеровано для цього demo-набору.", "error");
+      setStatus(somStatus, "Для цього номера немає доступного synthetic SOM-профілю. Перевірте DEMO-ідентифікатор.", "error");
     }
   };
   for (const button of tabButtons) button.addEventListener("click", () => { activate(button.dataset.demoTab); if (button.dataset.demoTab === "stones") void loadSom(); });
   form.addEventListener("submit", (event) => { event.preventDefault(); void load(); });
+  somSearchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const reportId = somSearchInput.value.trim().toUpperCase();
+    if (!reportId) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", "stones");
+    params.set("som_report", reportId);
+    window.history.replaceState({}, "", `${window.location.pathname}?${params}`);
+    void loadSom(reportId);
+  });
   form.addEventListener("reset", () => window.setTimeout(() => void load(), 0));
   dialog.addEventListener("close", () => dialogContent.replaceChildren());
   void load();

@@ -143,6 +143,10 @@ block content
             p.demo-scope__notice(role="note")
                 strong DEMO · SYNTHETIC SOM
                 |  Провайдерні значення проходять демонстраційний policy scenario на рівні окремої ознаки. Заборонені значення не входять до вектора.
+            form#demo-som-report-search.demo-som-search(role="search")
+                label(for="demo-som-report-id") Звіт для аналізу
+                input#demo-som-report-id.form-control(type="search" placeholder="Наприклад, DEMO-00999" autocomplete="off")
+                button.btn.btn-primary(type="submit") Показати на карті
             #demo-som-status.dashboard-status(role="status" aria-live="polite")
             #demo-som-results(aria-live="polite")
         dialog#demo-workflow-actor-dialog.account-dialog(aria-labelledby="demo-workflow-actor-dialog-title")
