@@ -276,6 +276,31 @@ input[type="number"]::-webkit-outer-spin-button {
   min-height: var(--control-height, 2.75rem);
 }
 
+.dashboard-page .analytics-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid variables.$border-color;
+}
+
+.dashboard-page .analytics-tabs__tab {
+  flex: 0 0 auto;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  color: variables.$secondary-color;
+  font: 600 0.95rem/1.35 variables.$font-main;
+  cursor: pointer;
+}
+
+.dashboard-page .analytics-tabs__tab:hover,
+.dashboard-page .analytics-tabs__tab:focus-visible { color: variables.$primary-color; }
+.dashboard-page .analytics-tabs__tab.is-active { border-bottom-color: variables.$primary-color; color: variables.$primary-color; }
+.dashboard-page .analytics-tabs__tab:disabled { cursor: not-allowed; opacity: 0.52; }
+.dashboard-page .analytics-tabs__tab:disabled:hover { color: variables.$secondary-color; }
+
 .account-page {
   padding: clamp(2rem, 5vw, 4.5rem) 0 clamp(3rem, 6vw, 5rem);
 
