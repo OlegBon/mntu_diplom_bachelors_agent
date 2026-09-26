@@ -41,7 +41,9 @@
 | Пріоритет | Файл | Тема |
 | --- | --- | --- |
 | P1 | [158-admin-demo-report-and-passport-preview.md](./158-admin-demo-report-and-passport-preview.md) | Read-only admin demo detail, PDF і private passport preview. |
-| P1 | [159-synthetic-som-demo.md](./159-synthetic-som-demo.md) | Isolated reproducible SOM technical demo для admin. |
+| P1 | [164-synthetic-demo-actors-and-workflow-analytics.md](./164-synthetic-demo-actors-and-workflow-analytics.md) | Isolated synthetic experts/admins і workflow analytics. |
+| P1 | [159-synthetic-som-demo.md](./159-synthetic-som-demo.md) | Isolated reproducible SOM technical demo у вкладці «Камені». |
+| P1 | [165-synthetic-demo-provider-analytics.md](./165-synthetic-demo-provider-analytics.md) | Fictional demo-provider analytics без real market data. |
 | P2 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
 | P2 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
 | P2 | [163-provider-operations-and-coverage-analytics.md](./163-provider-operations-and-coverage-analytics.md) | Admin tab operations, freshness і coverage provider-ів. |

@@ -109,7 +109,9 @@
 - [x] [162 — Multi-provider market references](./decisions/007-multi-provider-market-references.md): `0015` нормалізує enabled provider set і nullable dashboard primary; кожен provider має незалежний immutable valuation, dashboard не робить hidden fallback, а public passport/PDF не показують provider values чи branding.
 - [x] 157 — Synthetic demo dataset generator: локально створено deterministic `synthetic-demo-v1` із 1 000 `DEMO-…`, immutable manifest, normalized fields і двома fictional demo provider references; public/operational scopes не зачеплено.
 - [ ] [158 — Admin demo report/PDF/passport preview](./backlog/158-admin-demo-report-and-passport-preview.md): immutable private preview без public code/QR після 156–157.
-- [ ] [159 — Synthetic SOM demo](./backlog/159-synthetic-som-demo.md): reproducible admin-only карта для demo dataset, не заміна 151–153.
+- [ ] [164 — Synthetic demo actors і workflow analytics](./backlog/164-synthetic-demo-actors-and-workflow-analytics.md): virtual actors без real accounts, isolated workflow statistics і спільний demo date slice.
+- [ ] [159 — Synthetic SOM demo](./backlog/159-synthetic-som-demo.md): reproducible admin-only карта у вкладці «Камені» для demo dataset, не заміна 151–153.
+- [ ] [165 — Synthetic demo provider analytics](./backlog/165-synthetic-demo-provider-analytics.md): `Demo Market A/B` coverage/provenance у відокремленій вкладці без real provider data.
 - [ ] [163 — Provider operations and coverage analytics](./backlog/163-provider-operations-and-coverage-analytics.md): admin tab freshness, operation outcome і coverage після 122/162.
 - [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локального verified experiment 152 підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
 - [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 152, рішення 160 і CI gate 137 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
@@ -119,8 +121,9 @@
 
 ### Рекомендована черга активних задач
 
-1. `158 → 159` — після завершених demo-ізоляції, multi-provider foundation та
-   generator-а додати private previews і SOM.
+1. `158 → 164 → 159 → 165` — завершити спільний demo shell і read-only
+   reports/detail/PDF, потім додати virtual actors, SOM для каменів і
+   fictional provider analytics без змішування з operational даними.
 2. `163` — показати operations/coverage provider-ів на вже реальних і demo
    provider records; `141` може готувати English IDEX mock-up паралельно, але
    не відкриває live IDEX без їхнього письмового approval.

@@ -7,8 +7,17 @@
 
 ## Scope
 
-- Окремий admin-only demo list/detail mode та read-only actions; чіткий badge
-  `DEMO · SYNTHETIC DATA` у report, вкладеннях і money provenance.
+- Окремий admin-only розділ «Демо» з вкладками. У цій задачі повністю
+  реалізується лише «Демо-звіти»; вкладки майбутніх зрізів не показують
+  вигаданих чисел і ведуть на чесний стан «заплановано».
+- «Демо-звіти» повторює dashboard звичайних звітів: пошук, ті самі базові й
+  розгорнуті фільтри, пагінація, badges, дворядковий money provenance та меню
+  дій. Усі дії, крім перегляду й private PDF preview, read-only.
+- Detail використовує той самий information architecture і visual primitives,
+  що private report detail, але чітко позначений `DEMO · SYNTHETIC DATA` і не
+  пропонує редагування, lifecycle transition або публікацію.
+- Єдиний зріз дат для майбутніх demo-аналітичних вкладок визначатиметься їх
+  окремими задачами; він не змішується з фільтрами списку demo-звітів.
 - Private passport preview використовує спільну allow-listed projection і
   PDF renderer, але не створює `public_passports`, public ID, QR, anonymous
   endpoint або cacheable media URL.
@@ -26,4 +35,5 @@ public URL/QR не існують.
 ## Поза межами
 
 Публічне поширення demo, QR sharing, використання реальних report/media або
-зміна public passport contract.
+зміна public passport contract; synthetic experts/admins, stone/SOM та
+provider analytics (задачі 164, 159 і 165).
