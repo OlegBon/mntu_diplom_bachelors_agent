@@ -94,7 +94,7 @@ block content
                         label(for="demo-comment") Коментар експерта
                         textarea#demo-comment.form-control(rows="3" readonly)
             aside.report-detail__side
-                section.report-detail__surface
+                section#demo-showcase-media.report-detail__surface(hidden)
                     h2 Стан звіту
                     p#demo-status-badge.report-detail__status-badge Видано
                     p#demo-system-summary.report-detail__help Системний IDC: —
@@ -142,6 +142,6 @@ block content
                         li
                             strong Статус змінено
                             span Чернетка → Видано · synthetic event
-                        li
-                            strong Вкладення додано до internal preview
+                        li#demo-showcase-media-event(hidden)
+                            strong Синтетичні вкладення додано до демонстраційного перегляду
                             span Фото каменю та схема огранювання · synthetic assets

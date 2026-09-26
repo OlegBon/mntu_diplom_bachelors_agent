@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-26 — demo-showcase-scope
+
+- **Задача:** обмежити synthetic media showcase одним демонстраційним звітом після уточнення 158.
+- **Змінені файли:** `backend/passport_pdf.py`, `frontend/src/{pug/pages/demo-report-detail.pug,js/modules/demo-report-detail.js}`, `tests/api/test_demo_preview_media.py`, `docs/{progress.md,guides/demo-dataset-operations.md}`.
+- **Рішення / Результат:** `DEMO-00999` — єдиний showcase: лише він показує sidebar-вкладення, подію «Синтетичні вкладення додано до демонстраційного перегляду» та два asset-аркуші у private demo PDF. Інші synthetic reports зберігають базову timeline і односторінковий internal PDF.
+- **Перевірки:** `python -m pytest tests/api/test_demo_dataset_isolation.py tests/api/test_demo_preview_media.py` — 7 passed; `cmd /c "cd frontend && npm test"` — 25 passed.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це presentation/payload rule, не DB-метадані; `DEMO-01000` ще має граничну дату 01.01.2026 до окремого контрольованого перевипускання набору.
+
 ## 2026-09-26 — demo-preview-attachment-clarity
 
 - **Задача:** уточнити presentation-layer завершеної 158 для synthetic вкладень у detail.

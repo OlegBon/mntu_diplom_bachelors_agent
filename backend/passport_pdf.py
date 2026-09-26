@@ -29,6 +29,7 @@ _DEMO_PDF_MEDIA = (
     ("stone_photo", "demo-stone-photo.png"),
     ("plotting_diagram", "demo-plotting.png"),
 )
+_DEMO_SHOWCASE_REPORT_ID = "DEMO-00999"
 
 ORIGIN_LABELS = {
     "natural": "Природний",
@@ -316,7 +317,8 @@ def build_demo_passport_preview_pdf(report, stone, grade_labels: Mapping[tuple[s
     document.setFont(FONT_REGULAR, 8)
     document.drawString(MARGIN, 52, "Synthetic dataset: not an appraisal, market reference, sale offer, transaction or public passport.")
     document.showPage()
-    for asset_type, filename in _DEMO_PDF_MEDIA:
-        _draw_demo_media_page(document, asset_type, filename)
+    if report.report_id == _DEMO_SHOWCASE_REPORT_ID:
+        for asset_type, filename in _DEMO_PDF_MEDIA:
+            _draw_demo_media_page(document, asset_type, filename)
     document.save()
     return output.getvalue()

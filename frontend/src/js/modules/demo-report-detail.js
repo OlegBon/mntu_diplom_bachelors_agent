@@ -3,6 +3,7 @@ import { getDemoPassportPreviewPdf, getDemoReport, getGradeMappings } from "./ap
 const ORIGIN_LABELS = { natural: "Природний", lab_grown: "Лабораторно вирощений", other: "Інше", unknown: "Не визначено" };
 const TREATMENT_LABELS = { not_assessed: "Не оцінено", none_detected: "Не виявлено", disclosed: "Заявлено", confirmed: "Підтверджено" };
 const IDENTIFICATION_LABELS = { preliminary: "Попередній", confirmed: "Підтверджено", inconclusive: "Невизначено" };
+const SHOWCASE_REPORT_ID = "DEMO-00999";
 
 function download(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -71,6 +72,9 @@ export async function initDemoReportDetail() {
     const [report, mappings] = await Promise.all([getDemoReport(dataset, reportId, token), getGradeMappings(token)]);
     const label = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
     document.getElementById("demo-report-id").textContent = report.report_id;
+    const isShowcase = report.report_id === SHOWCASE_REPORT_ID;
+    document.getElementById("demo-showcase-media").hidden = !isShowcase;
+    document.getElementById("demo-showcase-media-event").hidden = !isShowcase;
     const statusBadge = document.getElementById("demo-status-badge");
     statusBadge.textContent = "Видано";
     statusBadge.dataset.status = report.status;

@@ -23,9 +23,11 @@ review-cycle чи розрахунку наступного номера зві�
 opaque `404` для demo ID. Адміністратор також не бачить demo у звичайному
 списку чи detail; read-only доступ можливий лише через явні маршрути
 `/demo/datasets/{dataset_id}` та `/demo/datasets/{dataset_id}/reports`.
-Admin-only UI preview і private demo PDF реалізовані задачею 158. PDF містить
-лише bundled synthetic photo/plotting assets і водяний знак `DEMO · INTERNAL
-PREVIEW`; він не має public ID, URL, QR або anonymous media endpoint.
+Admin-only UI preview і private demo PDF реалізовані задачею 158. Лише
+`DEMO-00999` є showcase: його PDF містить bundled synthetic photo/plotting
+assets і водяний знак `DEMO · INTERNAL PREVIEW`; інші demo PDF мають лише
+основну сторінку. Жоден demo PDF не має public ID, URL, QR або anonymous media
+endpoint.
 
 Усі regular write-маршрути відхиляють demo: update, transition, market
 attachment, work-session, media та passport. Demo ніколи не має public
