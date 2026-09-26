@@ -147,13 +147,21 @@ export function renderMarketReferencePrice(report) {
   const popover = createElement("div", "report-price__popover");
   popover.hidden = true;
   const observed = formatDateTime(reference.observed_at);
-  const details = [
-    ["Тип", referenceType],
-    ["Провайдер", reference.source_name],
-  ];
-  if (isDemoReference) details.push(["Набір", "synthetic-demo-v1"]);
-  else details.push(["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`]);
-  details.push(["Отримано", observed.date]);
+  const details = isDemoReference
+    ? [
+      ["Тип", referenceType],
+      ["Провайдер", reference.source_name],
+      ["Знімок провайдера", "Не передбачено для synthetic demo"],
+      ["Отримано", observed.date],
+      ["Еквівалент", "Не розраховується для synthetic demo"],
+      ["Курс НБУ", "Не застосовується для synthetic demo"],
+    ]
+    : [
+      ["Тип", referenceType],
+      ["Провайдер", reference.source_name],
+      ["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`],
+      ["Отримано", observed.date],
+    ];
   if (reference.converted_amount && reference.converted_currency_code) {
     details.push(["Еквівалент", `${reference.converted_currency_code} ${formatPrice(reference.converted_amount)}`]);
     details.push(["Курс НБУ", `${formatFxRate(reference.fx_rate)} UAH/USD · ${formatDateOnly(reference.fx_rate_date)} · знімок #${reference.fx_snapshot_id ?? "—"}`]);

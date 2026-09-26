@@ -38,7 +38,13 @@ function renderDemoValuations(container, valuations) {
       createElement("span", "", "DEMO · демонстраційний орієнтир"),
     );
     const details = createElement("dl", "market-reference-card__details");
-    for (const [term, value] of [["Провайдер", valuation.source_name], ["Набір", "synthetic-demo-v1"], ["Отримано", formatDate(valuation.observed_at)]]) {
+    for (const [term, value] of [
+      ["Провайдер", valuation.source_name],
+      ["Знімок провайдера", "Не передбачено для synthetic demo"],
+      ["Отримано", formatDate(valuation.observed_at)],
+      ["Еквівалент", "Не розраховується для synthetic demo"],
+      ["Курс НБУ", "Не застосовується для synthetic demo"],
+    ]) {
       const row = document.createElement("div");
       row.append(createElement("dt", "", term), createElement("dd", "", value));
       details.append(row);

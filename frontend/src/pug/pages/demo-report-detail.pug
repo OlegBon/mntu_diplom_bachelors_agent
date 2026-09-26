@@ -105,13 +105,11 @@ block content
                     h2 Вкладення
                     ul.report-detail__list.demo-media-list
                         li
-                            img.demo-media-list__image(src="/img/demo-stone-photo.png" alt="Синтетичне демонстраційне фото каменю" loading="lazy" width="160" height="160")
                             div
                                 strong demo-stone-photo.png
                                 span Фото каменю · synthetic asset
                                 button.btn.btn-outline.btn--compact(type="button" disabled title="Demo assets не публікуються") Опублікувати в паспорті
                         li
-                            img.demo-media-list__image(src="/img/demo-plotting.svg" alt="Синтетична демонстраційна plotting-схема" loading="lazy" width="160" height="105")
                             div
                                 strong demo-plotting.svg
                                 span Plotting diagram · synthetic asset
@@ -119,11 +117,13 @@ block content
                 section.report-detail__surface
                     h2 Публічний паспорт
                     p.report-detail__help DEMO · INTERNAL ONLY. Для synthetic-звіту не створюються public ID, URL, QR-код або anonymous endpoint.
+                    p.demo-passport-placeholder__code
+                        strong Код паспорта
+                        |  — не створюється
                     .demo-passport-placeholder
-                        div.demo-passport-placeholder__qr(aria-label="QR-код недоступний для demo-звіту") QR
-                        p
-                            strong Код паспорта
-                            |  — не створюється
+                        div.demo-passport-placeholder__qr(aria-label="QR-код недоступний для demo-звіту")
+                            span QR
+                            small Недоступний
                     .report-detail__transition-actions
                         button.btn.btn-primary(type="button" disabled) Опублікувати паспорт
                         button.btn.btn-outline(type="button" disabled) Відкрити публічний паспорт
