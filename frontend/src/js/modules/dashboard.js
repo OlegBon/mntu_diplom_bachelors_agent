@@ -126,7 +126,7 @@ export function renderMarketReferencePrice(report) {
   const isSystemReference = reference.valuation_kind === "system_market_reference";
   const typeMarker = isDemoReference ? "DEMO" : (isSystemReference ? "SYS" : "ADM");
   const referenceType = isDemoReference
-    ? "Синтетичний демонстраційний орієнтир"
+    ? "Демонстраційний орієнтир"
     : isSystemReference
     ? "Системний довідковий орієнтир"
     : "Підтверджений довідковий орієнтир";
@@ -150,9 +150,9 @@ export function renderMarketReferencePrice(report) {
   const details = [
     ["Тип", referenceType],
     ["Провайдер", reference.source_name],
-    ["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`],
-    ["Отримано", observed.date],
   ];
+  if (!isDemoReference) details.push(["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`]);
+  details.push(["Отримано", observed.date]);
   if (reference.converted_amount && reference.converted_currency_code) {
     details.push(["Еквівалент", `${reference.converted_currency_code} ${formatPrice(reference.converted_amount)}`]);
     details.push(["Курс НБУ", `${formatFxRate(reference.fx_rate)} UAH/USD · ${formatDateOnly(reference.fx_rate_date)} · знімок #${reference.fx_snapshot_id ?? "—"}`]);

@@ -86,16 +86,16 @@ block content
             .table-container(tabindex="0")
                 table.data-table
                     thead: tr
-                        th ID звіту
-                        th Дата
-                        th Форма
-                        th Вага (ct)
-                        th Колір
-                        th Чистота
-                        th Cut
-                        th Ціна (USD)
-                        th Статус звіту
-                        th Статус продажу
+                        th: button.table-sort(type="button" data-demo-sort-key="report_id" aria-label="Сортувати за ID звіту") ID звіту
+                        th: button.table-sort(type="button" data-demo-sort-key="report_date" aria-label="Сортувати за датою") Дата
+                        th: button.table-sort(type="button" data-demo-sort-key="shape" aria-label="Сортувати за формою") Форма
+                        th: button.table-sort(type="button" data-demo-sort-key="carat" aria-label="Сортувати за вагою") Вага (ct)
+                        th: button.table-sort(type="button" data-demo-sort-key="color" aria-label="Сортувати за кольором") Колір
+                        th: button.table-sort(type="button" data-demo-sort-key="clarity" aria-label="Сортувати за чистотою") Чистота
+                        th: button.table-sort(type="button" data-demo-sort-key="cut" aria-label="Сортувати за Cut") Cut
+                        th: button.table-sort(type="button" data-demo-sort-key="price" aria-label="Сортувати за demo-орієнтиром") Ціна (USD)
+                        th: button.table-sort(type="button" data-demo-sort-key="report_status" aria-label="Сортувати за статусом звіту") Статус звіту
+                        th: button.table-sort(type="button" data-demo-sort-key="market_status" aria-label="Сортувати за статусом продажу") Статус продажу
                         th Дії
                     tbody#demo-reports-body
                         tr: td(colspan="11") Завантаження…

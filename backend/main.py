@@ -426,6 +426,7 @@ def read_demo_dataset_reports(
     date_from: Optional[date] = None,
     date_to: Optional[date] = None,
     search: Optional[str] = Query(default=None, min_length=1, max_length=50),
+    sort: schemas.ReportListSort = "report_date_desc",
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
@@ -438,7 +439,7 @@ def read_demo_dataset_reports(
         status=report_status, market_status=market_status, shape=shape,
         color_grade=color_grade, clarity_grade=clarity_grade, cut_grade=cut_grade,
         carat_min=carat_min, carat_max=carat_max, price_min=price_min,
-        price_max=price_max, date_from=date_from, date_to=date_to, search=search,
+        price_max=price_max, date_from=date_from, date_to=date_to, search=search, sort=sort,
     )
     return schemas.ReportListResponse(
         items=reports,

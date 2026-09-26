@@ -377,6 +377,11 @@ input[type="number"]::-webkit-outer-spin-button {
   .analytics-tabs__tab:hover,
   .analytics-tabs__tab:focus-visible { color: variables.$primary-color; }
   .analytics-tabs__tab.is-active { border-bottom-color: variables.$primary-color; color: variables.$primary-color; }
+  .analytics-tabs__tab:disabled {
+    cursor: not-allowed;
+    opacity: 0.52;
+  }
+  .analytics-tabs__tab:disabled:hover { color: variables.$secondary-color; }
   .analytics-panel { margin-top: 0; }
   .analytics-table-wrap { overflow-x: auto; }
   .analytics-table { width: 100%; min-width: 48rem; border-collapse: collapse; }

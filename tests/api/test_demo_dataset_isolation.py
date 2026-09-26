@@ -187,3 +187,10 @@ def test_demo_dashboard_filters_and_price_remain_inside_demo_scope(client, db_se
     reference = response.json()["items"][0]["market_reference"]
     assert reference["valuation_kind"] == "synthetic_demo_reference"
     assert reference["source_name"] == "Demo Market A"
+
+    detail = client.get(
+        f"/demo/datasets/{DATASET_ID}/reports/DEMO-00001",
+        headers=headers,
+    )
+    assert detail.status_code == 200
+    assert detail.json()["market_references"][0]["source_name"] == "Demo Market A"

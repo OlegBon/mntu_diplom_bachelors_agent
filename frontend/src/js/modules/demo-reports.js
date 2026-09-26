@@ -34,6 +34,7 @@ function getUrlState() {
     price_max: params.get("price_max") || "",
     date_from: params.get("date_from") || "",
     date_to: params.get("date_to") || "",
+    sort: params.get("sort") || "report_date_desc",
   };
 }
 
@@ -48,6 +49,22 @@ function updateUrl(state) {
 
 function setStatus(container, message, kind = "info") {
   container.replaceChildren(createElement("p", `dashboard-state dashboard-state--${kind}`, message));
+}
+
+function toggleSort(currentSort, key) {
+  return currentSort === `${key}_asc` ? `${key}_desc` : `${key}_asc`;
+}
+
+function updateSortIndicators(root, sort) {
+  const separator = sort.lastIndexOf("_");
+  const key = sort.slice(0, separator);
+  const direction = sort.slice(separator + 1);
+  for (const button of root.querySelectorAll("[data-demo-sort-key]")) {
+    const active = button.dataset.demoSortKey === key;
+    button.toggleAttribute("data-sort-direction", active);
+    if (active) button.dataset.sortDirection = direction;
+    button.parentElement.setAttribute("aria-sort", active ? (direction === "asc" ? "ascending" : "descending") : "none");
+  }
 }
 
 function renderActions(report) {
@@ -187,6 +204,7 @@ export async function initDemoReports() {
   const load = async (nextState = state) => {
     state = { ...nextState, page: Math.max(Number(nextState.page) || 1, 1) };
     updateUrl(state);
+    updateSortIndicators(root, state.sort);
     setStatus(stateNode, "Завантаження demo-звітів…");
     tbody.replaceChildren();
     pagination.replaceChildren();
@@ -223,6 +241,9 @@ export async function initDemoReports() {
     const isOpen = advanced.classList.toggle("is-visible");
     toggleFilters.setAttribute("aria-expanded", String(isOpen));
   });
+  for (const button of root.querySelectorAll("[data-demo-sort-key]")) {
+    button.addEventListener("click", () => load({ ...state, page: 1, sort: toggleSort(state.sort, button.dataset.demoSortKey) }));
+  }
   document.addEventListener("click", closeReportOverlays);
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeReportOverlays(); });
   await load(state);

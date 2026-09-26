@@ -233,7 +233,7 @@ def get_report_domain(db: Session, report_id: str) -> models.DiamondReport | Non
 def get_demo_report_domain(
     db: Session, *, dataset_id: str, report_id: str,
 ) -> models.DiamondReport | None:
-    return (
+    report = (
         db.query(models.DiamondReport)
         .options(joinedload(models.DiamondReport.stone))
         .filter(
@@ -243,6 +243,9 @@ def get_demo_report_domain(
         )
         .first()
     )
+    if report is not None:
+        _attach_latest_market_reference_summaries(db, [report])
+    return report
 
 
 def get_report_domain_list(
@@ -364,6 +367,7 @@ def get_demo_report_domain_list(
     carat_min: Decimal | None, carat_max: Decimal | None,
     price_min: Decimal | None, price_max: Decimal | None,
     date_from: date | None, date_to: date | None, search: str | None,
+    sort: schemas.ReportListSort,
 ) -> tuple[list[models.DiamondReport], int]:
     """Return one isolated demonstration dataset; never mix it with operations."""
     query = (
@@ -412,8 +416,30 @@ def get_demo_report_domain_list(
     if search:
         query = query.filter(models.DiamondReport.report_id.ilike(f"%{search.strip()}%"))
     total = query.count()
+    sort_columns = {
+        "report_date_desc": (desc(models.DiamondReport.report_date), desc(models.DiamondReport.report_id)),
+        "report_date_asc": (asc(models.DiamondReport.report_date), asc(models.DiamondReport.report_id)),
+        "report_id_desc": (desc(models.DiamondReport.report_id),),
+        "report_id_asc": (asc(models.DiamondReport.report_id),),
+        "shape_asc": (asc(models.Stone.shape), asc(models.DiamondReport.report_id)),
+        "shape_desc": (desc(models.Stone.shape), desc(models.DiamondReport.report_id)),
+        "carat_asc": (asc(models.Stone.carat_weight), asc(models.DiamondReport.report_id)),
+        "carat_desc": (desc(models.Stone.carat_weight), desc(models.DiamondReport.report_id)),
+        "color_asc": (asc(models.Stone.color_grade), asc(models.DiamondReport.report_id)),
+        "color_desc": (desc(models.Stone.color_grade), desc(models.DiamondReport.report_id)),
+        "clarity_asc": (asc(models.Stone.clarity_grade), asc(models.DiamondReport.report_id)),
+        "clarity_desc": (desc(models.Stone.clarity_grade), desc(models.DiamondReport.report_id)),
+        "cut_asc": (asc(models.DiamondReport.system_cut_grade), asc(models.DiamondReport.report_id)),
+        "cut_desc": (desc(models.DiamondReport.system_cut_grade), desc(models.DiamondReport.report_id)),
+        "price_asc": (asc(demo_reference_amount), asc(models.DiamondReport.report_id)),
+        "price_desc": (desc(demo_reference_amount), desc(models.DiamondReport.report_id)),
+        "report_status_asc": (asc(models.DiamondReport.status), asc(models.DiamondReport.report_id)),
+        "report_status_desc": (desc(models.DiamondReport.status), desc(models.DiamondReport.report_id)),
+        "market_status_asc": (asc(models.Stone.market_status), asc(models.DiamondReport.report_id)),
+        "market_status_desc": (desc(models.Stone.market_status), desc(models.DiamondReport.report_id)),
+    }
     reports = (
-        query.order_by(desc(models.DiamondReport.report_date), desc(models.DiamondReport.report_id))
+        query.order_by(*sort_columns[sort])
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
