@@ -202,14 +202,14 @@ function initDemoWorkflowTabs(root, datasetId, token) {
   };
   const form = root.querySelector("#demo-workflow-slice");
   const controls = root.querySelector("#demo-workflow-controls");
-  const periodSummary = root.querySelector("#demo-workflow-period-summary");
+  const periodSummaryNode = root.querySelector("#demo-workflow-period-summary");
   const expertResults = root.querySelector("#demo-experts-results");
   const administratorResults = root.querySelector("#demo-administrators-results");
   const expertStatus = root.querySelector("#demo-experts-status");
   const administratorStatus = root.querySelector("#demo-administrators-status");
   const dialog = root.querySelector("#demo-workflow-actor-dialog");
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
-  if (!form || !controls || !periodSummary || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !dialog || !dialogContent) return;
+  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !dialog || !dialogContent) return;
 
   const activate = (tab) => {
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
@@ -233,7 +233,7 @@ function initDemoWorkflowTabs(root, datasetId, token) {
       const data = await getDemoWorkflowAnalytics(datasetId, token, filters);
       expertStatus.replaceChildren();
       administratorStatus.replaceChildren();
-      periodSummary.textContent = periodSummary(filters);
+      periodSummaryNode.textContent = periodSummary(filters);
       renderWorkflowRows(expertResults, data.experts, "Експерт", dialog, dialogContent);
       renderWorkflowRows(administratorResults, data.administrators, "Адміністратор", dialog, dialogContent);
     } catch {
