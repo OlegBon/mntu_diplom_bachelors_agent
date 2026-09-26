@@ -108,9 +108,23 @@ def get_demo_workflow_analytics(
     end = datetime.combine(date_to + timedelta(days=1), time.min) if date_to is not None else None
     grouped: dict[str, dict[str, object]] = {}
     for actor, event in query.all():
-        row = grouped.setdefault(actor.actor_key, {"actor": actor, "reports": set(), "durations": [], "intervals": []})
+        row = grouped.setdefault(actor.actor_key, {
+            "actor": actor,
+            "reports": set(),
+            "durations": [],
+            "intervals": [],
+            "issued": 0,
+            "returned": 0,
+            "void": 0,
+        })
         if event is not None and (start is None or event.occurred_at >= start) and (end is None or event.occurred_at < end):
             row["reports"].add(event.report_id)
+            if event.action in {"issued", "review_completed"}:
+                row["issued"] += 1
+            elif event.action == "review_returned":
+                row["returned"] += 1
+            elif event.action == "review_voided":
+                row["void"] += 1
             if event.duration_seconds is not None:
                 row["durations"].append(event.duration_seconds)
                 row["intervals"].append(event)
@@ -128,6 +142,7 @@ def get_demo_workflow_analytics(
                     report_id=event.report_id,
                     duration_seconds=event.duration_seconds,
                     occurred_at=event.occurred_at,
+                    action=event.action,
                 ) for event in source]
 
             rows.append(schemas.DemoWorkflowActorStats(
@@ -136,6 +151,9 @@ def get_demo_workflow_analytics(
                 total_duration_seconds=sum(durations),
                 avg_duration_seconds=round(sum(durations) / len(durations)) if durations else None,
                 median_duration_seconds=round(median(durations)) if durations else None,
+                issued_reports=item["issued"],
+                returned_to_draft=item["returned"],
+                void_reports=item["void"],
                 shortest_intervals=interval_records(intervals[:3]),
                 longest_intervals=interval_records(list(reversed(intervals[-3:]))),
             ))

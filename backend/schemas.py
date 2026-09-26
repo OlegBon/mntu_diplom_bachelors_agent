@@ -432,6 +432,7 @@ class DemoWorkflowDurationRecord(BaseModel):
     report_id: str
     duration_seconds: int
     occurred_at: datetime
+    action: str
 
 
 class DemoWorkflowActorStats(BaseModel):
@@ -443,6 +444,9 @@ class DemoWorkflowActorStats(BaseModel):
     total_duration_seconds: int
     avg_duration_seconds: Optional[int]
     median_duration_seconds: Optional[int]
+    issued_reports: int = 0
+    returned_to_draft: int = 0
+    void_reports: int = 0
     shortest_intervals: list[DemoWorkflowDurationRecord] = Field(default_factory=list)
     longest_intervals: list[DemoWorkflowDurationRecord] = Field(default_factory=list)
 

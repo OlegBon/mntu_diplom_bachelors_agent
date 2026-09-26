@@ -96,6 +96,41 @@ generator відхиляє без запису. Поточна реалізац�
 лишаються `NULL`. Вкладення preview — bundled presentation assets, а не
 `media_assets`, тому їх неможливо опублікувати або отримати через URL.
 
+## `synthetic-demo-v4`: нерівномірний workflow
+
+`synthetic-demo-v4` є наступною immutable версією v3 для технічної
+демонстрації аналітики. Вона не описує реальних людей і не використовується
+як training data, оцінка продуктивності, SLA або кадрове рішення.
+
+- П'ять fictional gemologists мають фіксовані квоти `300 / 240 / 190 / 160 /
+  110` report та різні детерміновані профілі тривалості.
+- Три fictional administrators мають квоти `500 / 320 / 180` review report.
+  Призначення детерміновано перемішуються по всьому датасету, а не йдуть
+  round-robin або суцільними відрізками дат.
+- Частина маршрутів містить synthetic повернення до чернетки, 50 report
+  завершуються synthetic `void`; інші мають фінальний `issued`. Це лише
+  контрольовані outcomes demo-моделі.
+- Перед заміною v3 запускається лише читання:
+
+  ```powershell
+  .\.venv\Scripts\python.exe scripts\generate_synthetic_demo_dataset.py --dry-run-replace-v3
+  ```
+
+  Очікувані умови: рівно 1 000 v3 report/Stone, 2 000 report events і
+  valuations, 6 actors, 3 000 workflow events, нуль media/passports/work
+  sessions, `ready_for_replace: true`.
+
+Після окремих backup, restore verification та підтвердження застосовується
+лише explicit команда:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_synthetic_demo_dataset.py --replace-v3 --confirm-replace-v3
+```
+
+Вона видаляє лише verified v3-owned graph та створює v4 із тими самими
+`DEMO-00001…DEMO-01000`; operational `DR-*`, accounts і provider data поза
+контуром.
+
 ## Historical `DR-00001…DR-01000`
 
 Діапазон підтверджено як старий synthetic seed. Його не перейменовують у

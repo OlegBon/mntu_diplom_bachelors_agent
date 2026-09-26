@@ -65,7 +65,7 @@ function createElement(tagName, className, textContent) {
 }
 export async function initDemoReportDetail() {
   const root = document.querySelector("[data-demo-report-detail]"); if (!root || localStorage.getItem("role") !== "admin") return;
-  const params = new URLSearchParams(window.location.search); const requestedDataset = params.get("dataset"); let dataset = requestedDataset || "synthetic-demo-v2"; const reportId = params.get("id"); const token = localStorage.getItem("token");
+  const params = new URLSearchParams(window.location.search); const requestedDataset = params.get("dataset"); let dataset = requestedDataset || "synthetic-demo-v4"; const reportId = params.get("id"); const token = localStorage.getItem("token");
   if (!reportId) return;
   const status = document.getElementById("demo-report-status");
   try {
@@ -74,8 +74,18 @@ export async function initDemoReportDetail() {
       report = await getDemoReport(dataset, reportId, token);
     } catch (error) {
       if (requestedDataset) throw error;
-      dataset = "synthetic-demo-v1";
-      report = await getDemoReport(dataset, reportId, token);
+      dataset = "synthetic-demo-v3";
+      try {
+        report = await getDemoReport(dataset, reportId, token);
+      } catch {
+        dataset = "synthetic-demo-v2";
+        try {
+          report = await getDemoReport(dataset, reportId, token);
+        } catch {
+          dataset = "synthetic-demo-v1";
+          report = await getDemoReport(dataset, reportId, token);
+        }
+      }
     }
     const mappings = await getGradeMappings(token);
     const label = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";

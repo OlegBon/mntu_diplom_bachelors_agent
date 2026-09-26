@@ -2,8 +2,8 @@ import { getDemoDataset, getDemoReports, getDemoWorkflowAnalytics, getGradeMappi
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderTable } from "./analytics-ui.js";
 
-const PREFERRED_DATASET_ID = "synthetic-demo-v3";
-const FALLBACK_DATASET_IDS = ["synthetic-demo-v2", "synthetic-demo-v1"];
+const PREFERRED_DATASET_ID = "synthetic-demo-v4";
+const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
 const PAGE_SIZE = 25;
 const REPORT_STATUS_LABELS = { issued: "Видано" };
 const SALE_STATUS_LABELS = { not_for_sale: "Не продається" };
@@ -173,8 +173,8 @@ function openSyntheticActorDialog(dialog, content, actor) {
     ["Усього demo-звітів", actor.reports_touched],
     ["Чернетки", "Не моделюються"],
     ["На перевірці", "Не моделюються"],
-    ["Видано", actor.role === "gemologist" ? actor.reports_touched : "Не застосовується"],
-    ["Анульовано", "Не моделюються"],
+    ["Видано", actor.issued_reports],
+    ["Анульовано", actor.void_reports],
     ["Завершені робочі сесії", actor.completed_intervals],
     ["Активний час", formatDuration(actor.total_duration_seconds)],
     ["Середня активна сесія", formatDuration(actor.avg_duration_seconds)],
@@ -209,7 +209,12 @@ function renderDemoIntervalList(title, items = [], datasetId) {
     const reportLink = createElement("a", "", item.report_id);
     reportLink.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(item.report_id)}`;
     const occurredAt = new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.occurred_at));
-    row.append(reportLink, document.createTextNode(`: ${formatDuration(item.duration_seconds)} · ${occurredAt}`));
+    const decision = {
+      review_completed: "Видано",
+      review_returned: "Повернено у чернетку",
+      review_voided: "Анульовано",
+    }[item.action];
+    row.append(reportLink, document.createTextNode(`: ${formatDuration(item.duration_seconds)} · ${decision ? `${decision} · ` : ""}${occurredAt}`));
     list.append(row);
   }
   section.append(list);
@@ -221,7 +226,7 @@ function renderWorkflowRows(container, actors, dialog, dialogContent, datasetId)
     const actorButton = createElement("button", "analytics-expert-button", actor.display_name);
     actorButton.type = "button";
     actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, { ...actor, dataset_id: datasetId }));
-    return [actorButton, "Synthetic", String(actor.reports_touched), "—", "—", String(actor.reports_touched), "—", formatDuration(actor.total_duration_seconds)];
+    return [actorButton, "Synthetic", String(actor.reports_touched), "—", "—", String(actor.issued_reports), String(actor.void_reports), formatDuration(actor.total_duration_seconds)];
   }), "За обраний період synthetic-подій немає.");
 }
 
@@ -234,11 +239,11 @@ function renderSyntheticAdministrators(container, actors, datasetId) {
     const metrics = createElement("dl", "analytics-metrics");
     [
       ["Завершено перевірок", actor.completed_intervals],
-      ["Видано", actor.reports_touched],
-      ["Повернуто", "Не моделюється"],
-      ["Анульовано", "Не моделюється"],
+      ["Видано", actor.issued_reports],
+      ["Повернуто", actor.returned_to_draft],
+      ["Анульовано", actor.void_reports],
       ["Середня тривалість", formatDuration(actor.avg_duration_seconds)],
-      ["Медіанна тривалість", "Не моделюється"],
+      ["Медіанна тривалість", formatDuration(actor.median_duration_seconds)],
     ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
     card.append(
       heading,
