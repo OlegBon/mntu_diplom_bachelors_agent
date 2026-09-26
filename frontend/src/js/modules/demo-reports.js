@@ -1,18 +1,12 @@
 import { getDemoDataset, getDemoReports, getDemoWorkflowAnalytics, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
+import { duration as formatDuration, element as createElement, periodSummary, renderTable } from "./analytics-ui.js";
 
 const PREFERRED_DATASET_ID = "synthetic-demo-v3";
 const FALLBACK_DATASET_IDS = ["synthetic-demo-v2", "synthetic-demo-v1"];
 const PAGE_SIZE = 25;
 const REPORT_STATUS_LABELS = { issued: "Видано" };
 const SALE_STATUS_LABELS = { not_for_sale: "Не продається" };
-
-function createElement(tagName, className, textContent) {
-  const element = document.createElement(tagName);
-  if (className) element.className = className;
-  if (textContent !== undefined) element.textContent = textContent;
-  return element;
-}
 
 function createBadge(value, kind) {
   return createElement("span", `status-badge status-badge--${kind}`, value);
@@ -171,20 +165,6 @@ function populateGradeFilter(select, category, mappings) {
   }
 }
 
-function formatDuration(totalSeconds) {
-  if (!totalSeconds) return "—";
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.round((totalSeconds % 3600) / 60);
-  return hours ? `${hours} год ${minutes} хв` : `${minutes} хв`;
-}
-
-function workflowPeriodSummary(filters) {
-  if (filters.date_from && filters.date_to) return `Поточний зріз: з ${filters.date_from} до ${filters.date_to}.`;
-  if (filters.date_from) return `Поточний зріз: від ${filters.date_from}.`;
-  if (filters.date_to) return `Поточний зріз: до ${filters.date_to}.`;
-  return "Поточний зріз: за весь доступний час.";
-}
-
 function openSyntheticActorDialog(dialog, content, actor) {
   const metrics = document.createElement("dl");
   metrics.className = "analytics-metrics";
@@ -204,32 +184,13 @@ function openSyntheticActorDialog(dialog, content, actor) {
   dialog.showModal();
 }
 
-function renderWorkflowRows(tbody, actors, dialog, dialogContent) {
-  tbody.replaceChildren();
-  if (!actors.length) {
-    const row = document.createElement("tr");
-    const cell = createElement("td", "", "За обраний період synthetic-подій немає.");
-    cell.colSpan = 5;
-    row.append(cell);
-    tbody.append(row);
-    return;
-  }
-  for (const actor of actors) {
-    const row = document.createElement("tr");
+function renderWorkflowRows(container, actors, roleLabel, dialog, dialogContent) {
+  renderTable(container, [roleLabel, "Звітів у workflow", "Завершених інтервалів", "Сумарний synthetic час", "Середній інтервал"], actors.map((actor) => {
     const actorButton = createElement("button", "analytics-expert-button", actor.display_name);
     actorButton.type = "button";
     actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, actor));
-    const actorCell = document.createElement("td");
-    actorCell.append(actorButton);
-    row.append(
-      actorCell,
-      createElement("td", "", String(actor.reports_touched)),
-      createElement("td", "", String(actor.completed_intervals)),
-      createElement("td", "", formatDuration(actor.total_duration_seconds)),
-      createElement("td", "", formatDuration(actor.avg_duration_seconds)),
-    );
-    tbody.append(row);
-  }
+    return [actorButton, String(actor.reports_touched), String(actor.completed_intervals), formatDuration(actor.total_duration_seconds), formatDuration(actor.avg_duration_seconds)];
+  }), "За обраний період synthetic-подій немає.");
 }
 
 function initDemoWorkflowTabs(root, datasetId, token) {
@@ -242,13 +203,13 @@ function initDemoWorkflowTabs(root, datasetId, token) {
   const form = root.querySelector("#demo-workflow-slice");
   const controls = root.querySelector("#demo-workflow-controls");
   const periodSummary = root.querySelector("#demo-workflow-period-summary");
-  const expertBody = root.querySelector("#demo-experts-body");
-  const administratorBody = root.querySelector("#demo-administrators-body");
+  const expertResults = root.querySelector("#demo-experts-results");
+  const administratorResults = root.querySelector("#demo-administrators-results");
   const expertStatus = root.querySelector("#demo-experts-status");
   const administratorStatus = root.querySelector("#demo-administrators-status");
   const dialog = root.querySelector("#demo-workflow-actor-dialog");
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
-  if (!form || !controls || !periodSummary || !expertBody || !administratorBody || !expertStatus || !administratorStatus || !dialog || !dialogContent) return;
+  if (!form || !controls || !periodSummary || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !dialog || !dialogContent) return;
 
   const activate = (tab) => {
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
@@ -272,9 +233,9 @@ function initDemoWorkflowTabs(root, datasetId, token) {
       const data = await getDemoWorkflowAnalytics(datasetId, token, filters);
       expertStatus.replaceChildren();
       administratorStatus.replaceChildren();
-      periodSummary.textContent = workflowPeriodSummary(filters);
-      renderWorkflowRows(expertBody, data.experts, dialog, dialogContent);
-      renderWorkflowRows(administratorBody, data.administrators, dialog, dialogContent);
+      periodSummary.textContent = periodSummary(filters);
+      renderWorkflowRows(expertResults, data.experts, "Експерт", dialog, dialogContent);
+      renderWorkflowRows(administratorResults, data.administrators, "Адміністратор", dialog, dialogContent);
     } catch {
       setStatus(expertStatus, "Не вдалося завантажити synthetic workflow.", "error");
       setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");

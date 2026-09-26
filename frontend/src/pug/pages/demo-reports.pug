@@ -120,34 +120,18 @@ block content
                     button.btn.btn-primary(type="submit") Застосувати період
                     button.btn.btn-outline(type="reset") За весь час
             p#demo-workflow-period-summary.analytics-period-summary(role="status" aria-live="polite") Поточний зріз: за весь доступний час.
-        section#demo-experts-panel.demo-workflow-panel(hidden role="tabpanel" aria-labelledby="demo-tab-experts")
+        section#demo-experts-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-experts")
             p.demo-scope__notice(role="note")
                 strong DEMO · SYNTHETIC WORKFLOW
                 |  Це лише технічний зріз вигаданих ролей і відтворюваних інтервалів. Він не вимірює продуктивність, якість, SLA або рейтинг реальних людей.
             #demo-experts-status.dashboard-status(role="status" aria-live="polite")
-            .analytics-table-wrap(tabindex="0")
-                table.analytics-table
-                    thead: tr
-                        th Експерт
-                        th Звітів у workflow
-                        th Завершених інтервалів
-                        th Сумарний synthetic час
-                        th Середній інтервал
-                    tbody#demo-experts-body
-        section#demo-administrators-panel.demo-workflow-panel(hidden role="tabpanel" aria-labelledby="demo-tab-administrators")
+            #demo-experts-results(aria-live="polite")
+        section#demo-administrators-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-administrators")
             p.demo-scope__notice(role="note")
                 strong DEMO · SYNTHETIC WORKFLOW
                 |  Використовується той самий зріз дат, що й для synthetic експертів; дані не пов’язані з обліковими записами адміністратора.
             #demo-administrators-status.dashboard-status(role="status" aria-live="polite")
-            .analytics-table-wrap(tabindex="0")
-                table.analytics-table
-                    thead: tr
-                        th Адміністратор
-                        th Звітів у workflow
-                        th Завершених інтервалів
-                        th Сумарний synthetic час
-                        th Середній інтервал
-                    tbody#demo-administrators-body
+            #demo-administrators-results(aria-live="polite")
         dialog#demo-workflow-actor-dialog.account-dialog(aria-labelledby="demo-workflow-actor-dialog-title")
             form(method="dialog")
                 .account-dialog__header
