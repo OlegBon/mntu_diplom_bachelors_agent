@@ -137,11 +137,12 @@ class DemoSyntheticActor(Base):
     __tablename__ = "demo_synthetic_actors"
     __table_args__ = (
         UniqueConstraint("dataset_id", "actor_key", name="uq_demo_actor_dataset_key"),
+        Index("ix_demo_synthetic_actors_dataset_id", "dataset_id"),
         {"schema": "diamond_oltp"},
     )
 
     actor_id = Column(Integer, primary_key=True)
-    dataset_id = Column(String(64), ForeignKey("diamond_oltp.demo_datasets.dataset_id"), nullable=False, index=True)
+    dataset_id = Column(String(64), ForeignKey("diamond_oltp.demo_datasets.dataset_id"), nullable=False)
     actor_key = Column(String(64), nullable=False)
     role = Column(String(16), nullable=False)
     display_name = Column(String(120), nullable=False)
@@ -154,17 +155,21 @@ class DemoWorkflowEvent(Base):
     __tablename__ = "demo_workflow_events"
     __table_args__ = (
         Index("ix_demo_workflow_dataset_occurred", "dataset_id", "occurred_at"),
+        Index("ix_demo_workflow_events_dataset_id", "dataset_id"),
+        Index("ix_demo_workflow_events_report_id", "report_id"),
+        Index("ix_demo_workflow_events_actor_id", "actor_id"),
+        Index("ix_demo_workflow_events_occurred_at", "occurred_at"),
         {"schema": "diamond_oltp"},
     )
 
     workflow_event_id = Column(Integer, primary_key=True)
-    dataset_id = Column(String(64), ForeignKey("diamond_oltp.demo_datasets.dataset_id"), nullable=False, index=True)
-    report_id = Column(String(20), ForeignKey("diamond_oltp.diamond_reports.report_id"), nullable=False, index=True)
-    actor_id = Column(Integer, ForeignKey("diamond_oltp.demo_synthetic_actors.actor_id"), nullable=False, index=True)
+    dataset_id = Column(String(64), ForeignKey("diamond_oltp.demo_datasets.dataset_id"), nullable=False)
+    report_id = Column(String(20), ForeignKey("diamond_oltp.diamond_reports.report_id"), nullable=False)
+    actor_id = Column(Integer, ForeignKey("diamond_oltp.demo_synthetic_actors.actor_id"), nullable=False)
     action = Column(String(32), nullable=False)
     from_status = Column(String(16), nullable=True)
     to_status = Column(String(16), nullable=True)
-    occurred_at = Column(DateTime, nullable=False, index=True)
+    occurred_at = Column(DateTime, nullable=False)
     duration_seconds = Column(Integer, nullable=True)
 
 

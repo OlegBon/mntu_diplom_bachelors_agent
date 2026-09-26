@@ -22,6 +22,13 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Alembic creates this column as VARCHAR(32) by default, while this
+    # revision identifier is longer.  Widen it before Alembic records this
+    # revision so MariaDB cannot silently truncate the version number.
+    op.execute(
+        "ALTER TABLE diamond_oltp.alembic_version "
+        "MODIFY version_num VARCHAR(128) NOT NULL"
+    )
     op.add_column(
         "market_data_providers",
         sa.Column("brand_asset_key", sa.String(length=100), nullable=True),
