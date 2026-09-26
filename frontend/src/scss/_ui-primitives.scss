@@ -670,6 +670,12 @@ input[type="number"]::-webkit-outer-spin-button {
 .demo-som-cell { border: 0; min-width: 0; color: #17345f; font-weight: 700; background: #dbeafe; cursor: default; }
 .demo-som-cell--b { background: #d1fae5; }.demo-som-cell--c { background: #fef3c7; }.demo-som-cell--d { background: #fde2e2; }
 .demo-som-cell.is-selected { outline: 3px solid variables.$text-strong; outline-offset: -3px; }
+.demo-som-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: 1rem; }
+.demo-som-legend__item { border-left: 4px solid #bfdbfe; padding: 0.35rem 0.5rem; font-size: 0.8rem; }.demo-som-legend__item--b { border-color: #a7f3d0; }.demo-som-legend__item--c { border-color: #fde68a; }.demo-som-legend__item--d { border-color: #fecaca; }
+.demo-som-legend__item strong, .demo-som-legend__item span, .demo-som-value-stack strong, .demo-som-value-stack span, .demo-som-benchmark strong, .demo-som-benchmark span { display: block; }
+.demo-som-value-stack span, .demo-som-legend__item span, .demo-som-benchmark span { color: variables.$secondary-color; font-size: 0.85rem; }
+.demo-som-position, .demo-som-benchmark { border-top: 1px solid variables.$border-color; margin-top: 1rem; padding-top: 1rem; }
+.demo-som-position h4, .demo-som-benchmark h4 { margin-bottom: 0.35rem; }.demo-som-benchmark strong { color: variables.$primary-color; font-size: 1.15rem; }
 @media (max-width: 767px) { .demo-som-layout { grid-template-columns: 1fr; } .demo-som-grid { max-width: none; } }
 
   .table-sort {

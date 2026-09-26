@@ -488,6 +488,25 @@ class DemoSomSelectedReport(BaseModel):
     clarity_grade: Optional[int]
     system_cut_grade: Optional[int]
     neighborhood_count: int
+    cell_count: int
+    segment_key: str
+    segment_label: str
+    segment_description: str
+    peer_report_ids: list[str] = Field(default_factory=list)
+    segment_reference_min: Decimal
+    segment_reference_max: Decimal
+
+
+class DemoSomSegmentSummary(BaseModel):
+    key: str
+    label: str
+    description: str
+    report_count: int
+    carat_min: Decimal
+    carat_max: Decimal
+    reference_min: Decimal
+    reference_max: Decimal
+    dominant_shapes: list[str]
 
 
 class DemoSomResponse(BaseModel):
@@ -498,6 +517,7 @@ class DemoSomResponse(BaseModel):
     feature_names: list[str]
     coverage: dict[str, object]
     cells: list[DemoSomCell]
+    segments: list[DemoSomSegmentSummary]
     selected_report: Optional[DemoSomSelectedReport] = None
 
 

@@ -227,16 +227,45 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
         ordered = sorted(values)
         return ordered[len(ordered) // 2]
 
-    def segment_label(x: int, y: int) -> str:
-        # Descriptive map zones only; they are not quality classes.
-        return ("Профіль A", "Профіль B", "Профіль C", "Профіль D")[(x // 5) + 2 * (y // 5)]
+    def segment_key(x: int, y: int) -> str:
+        return ("A", "B", "C", "D")[(x // 5) + 2 * (y // 5)]
+
+    segment_members: dict[str, list[tuple[models.DemoSomAssignment, models.DiamondReport, models.Stone]]] = {key: [] for key in "ABCD"}
+    for (x, y), members in cells.items():
+        segment_members[segment_key(x, y)].extend(members)
+
+    def describe_segment(key: str, members: list[tuple[models.DemoSomAssignment, models.DiamondReport, models.Stone]]) -> tuple[str, str, list[str], Decimal, Decimal, Decimal, Decimal]:
+        weights = [item[2].carat_weight for item in members if item[2].carat_weight is not None]
+        references = [item[0].selected_reference_amount for item in members]
+        shapes = sorted({item[2].shape for item in members})
+        names = {"A": "Профіль A", "B": "Профіль B", "C": "Профіль C", "D": "Профіль D"}
+        if not members:
+            return names[key], "У цьому synthetic artifact для зони поки немає каменів.", [], Decimal("0"), Decimal("0"), Decimal("0"), Decimal("0")
+        weight_min, weight_max = min(weights), max(weights)
+        reference_min, reference_max = min(references), max(references)
+        description = (
+            f"Описова зона SOM: {weight_min}–{weight_max} ct; часті форми — "
+            f"{', '.join(shapes[:2])}. Це не клас якості чи інвестиційний висновок."
+        )
+        return names[key], description, shapes[:3], weight_min, weight_max, reference_min, reference_max
+
+    segments = []
+    segment_lookup = {}
+    for key, members in segment_members.items():
+        label, description, shapes, weight_min, weight_max, reference_min, reference_max = describe_segment(key, members)
+        segment_lookup[key] = (label, description, reference_min, reference_max)
+        segments.append(schemas.DemoSomSegmentSummary(
+            key=key, label=label, description=description, report_count=len(members),
+            carat_min=weight_min, carat_max=weight_max, reference_min=reference_min,
+            reference_max=reference_max, dominant_shapes=shapes,
+        ))
 
     serialized_cells = []
     for x in range(artifact.grid_size):
         for y in range(artifact.grid_size):
             members = cells.get((x, y), [])
             serialized_cells.append(schemas.DemoSomCell(
-                x=x, y=y, report_count=len(members), segment_label=segment_label(x, y),
+                x=x, y=y, report_count=len(members), segment_label=segment_lookup[segment_key(x, y)][0],
                 median_carat_weight=median_decimal([member[2].carat_weight for member in members if member[2].carat_weight is not None]),
                 median_reference_amount=median_decimal([member[0].selected_reference_amount for member in members]),
             ))
@@ -246,6 +275,8 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
         if match is None:
             raise ReportDomainError("Demo report is not included in this synthetic SOM artifact")
         assignment, report, stone = match
+        key = segment_key(assignment.som_x, assignment.som_y)
+        label, description, reference_min, reference_max = segment_lookup[key]
         neighborhood_count = sum(
             len(members) for (x, y), members in cells.items()
             if abs(x - assignment.som_x) <= 1 and abs(y - assignment.som_y) <= 1
@@ -256,13 +287,16 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
             selected_reference_amount=assignment.selected_reference_amount,
             carat_weight=stone.carat_weight, shape=stone.shape, color_grade=stone.color_grade,
             clarity_grade=stone.clarity_grade, system_cut_grade=report.system_cut_grade,
-            neighborhood_count=neighborhood_count,
+            neighborhood_count=neighborhood_count, cell_count=len(cells[(assignment.som_x, assignment.som_y)]),
+            segment_key=key, segment_label=label, segment_description=description,
+            peer_report_ids=[member[0].report_id for member in sorted(cells[(assignment.som_x, assignment.som_y)], key=lambda item: (item[0].distance, item[0].report_id)) if member[0].report_id != report_id][:3],
+            segment_reference_min=reference_min, segment_reference_max=reference_max,
         )
     return schemas.DemoSomResponse(
         dataset_id=dataset_id, artifact_version=artifact.artifact_version,
         policy_scenario_id=artifact.policy_scenario_id, grid_size=artifact.grid_size,
         feature_names=json.loads(artifact.feature_schema), coverage=json.loads(artifact.coverage),
-        cells=serialized_cells, selected_report=selected,
+        cells=serialized_cells, segments=segments, selected_report=selected,
     )
 
 
