@@ -38,4 +38,5 @@ def test_demo_som_is_artifact_backed_and_admin_only(client, db_session, experts)
     assert response.status_code == 200
     assert response.json()["selected_report"]["selected_provider"] == "Demo Market B"
     assert len(response.json()["cells"]) == 100
+    assert client.get(f"/demo/datasets/{DATASET_ID}/som", params={"report_id": "DR-00001"}, headers=headers).status_code == 404
     assert client.get(f"/demo/datasets/{DATASET_ID}/som", headers=auth_headers(client, experts["owner"].username)).status_code == 404

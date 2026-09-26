@@ -243,20 +243,21 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
     selected = None
     if report_id:
         match = next((member for member in assignments if member[0].report_id == report_id), None)
-        if match is not None:
-            assignment, report, stone = match
-            neighborhood_count = sum(
-                len(members) for (x, y), members in cells.items()
-                if abs(x - assignment.som_x) <= 1 and abs(y - assignment.som_y) <= 1
-            )
-            selected = schemas.DemoSomSelectedReport(
-                report_id=report.report_id, som_x=assignment.som_x, som_y=assignment.som_y,
-                distance=assignment.distance, selected_provider=assignment.selected_provider,
-                selected_reference_amount=assignment.selected_reference_amount,
-                carat_weight=stone.carat_weight, shape=stone.shape, color_grade=stone.color_grade,
-                clarity_grade=stone.clarity_grade, system_cut_grade=report.system_cut_grade,
-                neighborhood_count=neighborhood_count,
-            )
+        if match is None:
+            raise ReportDomainError("Demo report is not included in this synthetic SOM artifact")
+        assignment, report, stone = match
+        neighborhood_count = sum(
+            len(members) for (x, y), members in cells.items()
+            if abs(x - assignment.som_x) <= 1 and abs(y - assignment.som_y) <= 1
+        )
+        selected = schemas.DemoSomSelectedReport(
+            report_id=report.report_id, som_x=assignment.som_x, som_y=assignment.som_y,
+            distance=assignment.distance, selected_provider=assignment.selected_provider,
+            selected_reference_amount=assignment.selected_reference_amount,
+            carat_weight=stone.carat_weight, shape=stone.shape, color_grade=stone.color_grade,
+            clarity_grade=stone.clarity_grade, system_cut_grade=report.system_cut_grade,
+            neighborhood_count=neighborhood_count,
+        )
     return schemas.DemoSomResponse(
         dataset_id=dataset_id, artifact_version=artifact.artifact_version,
         policy_scenario_id=artifact.policy_scenario_id, grid_size=artifact.grid_size,
