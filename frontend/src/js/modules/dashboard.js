@@ -14,7 +14,7 @@ function createElement(tagName, className, textContent) {
   return element;
 }
 
-function formatDateTime(value) {
+export function formatDateTime(value) {
   const date = new Date(value);
   return {
     date: new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(date),
@@ -22,7 +22,7 @@ function formatDateTime(value) {
   };
 }
 
-function formatPrice(value) {
+export function formatPrice(value) {
   if (value === null || value === undefined) return "—";
   return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 2 }).format(Number(value));
 }
@@ -62,7 +62,7 @@ function updateUrl(state) {
   window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
 }
 
-function closeOverlays() {
+export function closeReportOverlays() {
   for (const menu of document.querySelectorAll(".report-actions__menu:not([hidden]), .report-price__popover:not([hidden])")) menu.hidden = true;
   for (const toggle of document.querySelectorAll(".report-actions__toggle[aria-expanded='true'], .report-price__toggle[aria-expanded='true']")) toggle.setAttribute("aria-expanded", "false");
 }
@@ -96,7 +96,7 @@ function renderActions(report) {
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
     const isOpen = menu.hidden;
-    closeOverlays();
+    closeReportOverlays();
     menu.hidden = !isOpen;
     toggle.setAttribute("aria-expanded", String(isOpen));
   });
@@ -119,12 +119,15 @@ function formatDateOnly(value) {
   return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${value}T12:00:00`));
 }
 
-function renderMarketReferencePrice(report) {
+export function renderMarketReferencePrice(report) {
   const reference = report.market_reference;
   const references = report.market_references?.length ? report.market_references : [reference];
+  const isDemoReference = reference.valuation_kind === "synthetic_demo_reference";
   const isSystemReference = reference.valuation_kind === "system_market_reference";
-  const typeMarker = isSystemReference ? "SYS" : "ADM";
-  const referenceType = isSystemReference
+  const typeMarker = isDemoReference ? "DEMO" : (isSystemReference ? "SYS" : "ADM");
+  const referenceType = isDemoReference
+    ? "Демонстраційний орієнтир"
+    : isSystemReference
     ? "Системний довідковий орієнтир"
     : "Підтверджений довідковий орієнтир";
   const wrapper = createElement("div", "report-price");
@@ -144,12 +147,21 @@ function renderMarketReferencePrice(report) {
   const popover = createElement("div", "report-price__popover");
   popover.hidden = true;
   const observed = formatDateTime(reference.observed_at);
-  const details = [
-    ["Тип", referenceType],
-    ["Провайдер", reference.source_name],
-    ["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`],
-    ["Отримано", observed.date],
-  ];
+  const details = isDemoReference
+    ? [
+      ["Тип", referenceType],
+      ["Провайдер", reference.source_name],
+      ["Знімок провайдера", "Не передбачено для synthetic demo"],
+      ["Отримано", observed.date],
+      ["Еквівалент", "Не розраховується для synthetic demo"],
+      ["Курс НБУ", "Не застосовується для synthetic demo"],
+    ]
+    : [
+      ["Тип", referenceType],
+      ["Провайдер", reference.source_name],
+      ["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`],
+      ["Отримано", observed.date],
+    ];
   if (reference.converted_amount && reference.converted_currency_code) {
     details.push(["Еквівалент", `${reference.converted_currency_code} ${formatPrice(reference.converted_amount)}`]);
     details.push(["Курс НБУ", `${formatFxRate(reference.fx_rate)} UAH/USD · ${formatDateOnly(reference.fx_rate_date)} · знімок #${reference.fx_snapshot_id ?? "—"}`]);
@@ -172,14 +184,16 @@ function renderMarketReferencePrice(report) {
   popover.append(createElement(
     "p",
     "report-price__warning",
-    isSystemReference
+    isDemoReference
+      ? "Синтетичне демонстраційне значення; не є ринковою, експертною, продажною чи транзакційною ціною."
+      : isSystemReference
       ? "Розраховано системою за останнім затвердженим знімком; не є експертною, продажною чи транзакційною ціною."
       : "Застосовність підтверджена адміністратором; не є експертною, продажною чи транзакційною ціною.",
   ));
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
     const isOpen = popover.hidden;
-    closeOverlays();
+    closeReportOverlays();
     popover.hidden = !isOpen;
     toggle.setAttribute("aria-expanded", String(isOpen));
   });
@@ -394,8 +408,8 @@ export async function initDashboard() {
   for (const button of root.querySelectorAll(".table-sort")) {
     button.addEventListener("click", () => load({ ...state, page: 1, sort: toggleSort(state.sort, button.dataset.sortKey) }));
   }
-  document.addEventListener("click", closeOverlays);
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeOverlays(); });
+  document.addEventListener("click", closeReportOverlays);
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeReportOverlays(); });
   await load(state);
   registerVisibleDataRefresh(() => load(state, { silent: true }));
 }

@@ -1,0 +1,110 @@
+extends ../layout/main
+
+block content
+    .dashboard-page.demo-scope(hidden data-protected-page="true" data-demo-reports)
+        .page-header
+            div
+                h1.page-title Демо
+                p.page-subtitle Ізольований synthetic dataset для внутрішньої демонстрації інтерфейсу та технічних моделей.
+        .analytics-tabs(role="tablist" aria-label="Розділи demo dataset")
+            button.analytics-tabs__tab.is-active(type="button" role="tab" aria-selected="true" aria-controls="demo-reports-panel" id="demo-tab-reports") Демо-звіти
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 164") Експерти
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 164") Адміністратори
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 159") Камені
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 165") Провайдери
+        #demo-reports-panel(role="tabpanel" aria-labelledby="demo-tab-reports")
+            p.demo-scope__notice(role="note")
+                strong DEMO · SYNTHETIC DATA
+                |  Ізольований внутрішній набір: не експертні, ринкові, продажні чи транзакційні дані.
+            section.demo-scope__showcase(aria-label="Показовий demo-звіт")
+                div
+                    strong Показовий private preview
+                    p DEMO-00999 містить синтетичні вкладення та внутрішній PDF без public ID, URL або QR-коду.
+                a.btn.btn-outline.btn--compact(href="/demo-report-detail.html?id=DEMO-00999") Відкрити DEMO-00999
+            .filters-container
+                .filters-bar
+                    .search-group
+                        label.sr-only(for="demo-report-search") Пошук за номером demo-звіту
+                        input#demo-report-search(type="search" placeholder="Пошук за номером звіту" autocomplete="off")
+                    button#demo-toggle-filters.btn.btn-primary(type="button" aria-expanded="false" aria-controls="demo-advanced-filters") Фільтри
+                    .filter-control.filter-control--quick
+                        label.sr-only(for="demo-quick-report-status") Статус звіту
+                        select#demo-quick-report-status.form-select
+                            option(value="") Усі статуси звіту
+                            option(value="issued") Видано
+                    .filter-control.filter-control--quick
+                        label.sr-only(for="demo-quick-market-status") Статус продажу
+                        select#demo-quick-market-status.form-select
+                            option(value="") Усі статуси продажу
+                            option(value="not_for_sale") Не продається
+                    .filter-control.filter-control--quick
+                        label.sr-only(for="demo-expert-filter") Експерт
+                        select#demo-expert-filter.form-select(disabled title="Synthetic experts буде додано задачею 164")
+                            option Усі експерти — незабаром
+                #demo-advanced-filters.advanced-filters
+                    form#demo-dashboard-filters.filters-grid
+                        .filter-item
+                            label(for="demo-shape-filter") Форма (Shape)
+                            select#demo-shape-filter.form-select(name="shape")
+                                option(value="") Будь-яка
+                                option(value="Round") Round
+                                option(value="Princess") Princess
+                                option(value="Oval") Oval
+                                option(value="Emerald") Emerald
+                                option(value="Cushion") Cushion
+                                option(value="Radiant") Radiant
+                                option(value="Pear") Pear
+                                option(value="Heart") Heart
+                                option(value="Marquise") Marquise
+                                option(value="Asscher") Asscher
+                        .filter-item
+                            label Вага (Carat)
+                            .range-inputs
+                                input#demo-carat-min.form-control(type="number" name="carat_min" min="0" step="0.01" placeholder="Від")
+                                input#demo-carat-max.form-control(type="number" name="carat_max" min="0" step="0.01" placeholder="До")
+                        .filter-item
+                            label(for="demo-color-filter") Колір (Color)
+                            select#demo-color-filter.form-select(name="color_grade")
+                                option(value="") Будь-який
+                        .filter-item
+                            label(for="demo-clarity-filter") Чистота (Clarity)
+                            select#demo-clarity-filter.form-select(name="clarity_grade")
+                                option(value="") Будь-яка
+                        .filter-item
+                            label(for="demo-cut-filter") Якість (Cut)
+                            select#demo-cut-filter.form-select(name="cut_grade")
+                                option(value="") Будь-яка
+                        .filter-item
+                            label Довідковий орієнтир (USD)
+                            .range-inputs
+                                input#demo-price-min.form-control(type="number" name="price_min" min="0" step="0.01" placeholder="Від")
+                                input#demo-price-max.form-control(type="number" name="price_max" min="0" step="0.01" placeholder="До")
+                        .filter-item
+                            label(for="demo-date-from") Дата створення: від
+                            input#demo-date-from.form-control(type="date" name="date_from")
+                        .filter-item
+                            label(for="demo-date-to") Дата створення: до
+                            input#demo-date-to.form-control(type="date" name="date_to")
+                        .filter-actions
+                            button.btn.btn-primary.btn-sm(type="submit") Застосувати
+                            button.btn.btn-outline.btn-sm(type="reset") Очистити
+            #demo-dashboard-status.dashboard-status(role="status" aria-live="polite")
+            p#demo-dataset-meta.dashboard-demo-note Завантаження набору…
+            p.dashboard-demo-note DEMO · SYNTHETIC DATA. Не є експертними, ринковими, продажними чи транзакційними даними.
+            .table-container(tabindex="0")
+                table.data-table
+                    thead: tr
+                        th: button.table-sort(type="button" data-demo-sort-key="report_id" aria-label="Сортувати за ID звіту") ID звіту
+                        th: button.table-sort(type="button" data-demo-sort-key="report_date" aria-label="Сортувати за датою") Дата
+                        th: button.table-sort(type="button" data-demo-sort-key="shape" aria-label="Сортувати за формою") Форма
+                        th: button.table-sort(type="button" data-demo-sort-key="carat" aria-label="Сортувати за вагою") Вага (ct)
+                        th: button.table-sort(type="button" data-demo-sort-key="color" aria-label="Сортувати за кольором") Колір
+                        th: button.table-sort(type="button" data-demo-sort-key="clarity" aria-label="Сортувати за чистотою") Чистота
+                        th: button.table-sort(type="button" data-demo-sort-key="cut" aria-label="Сортувати за Cut") Cut
+                        th: button.table-sort(type="button" data-demo-sort-key="price" aria-label="Сортувати за demo-орієнтиром") Ціна (USD)
+                        th: button.table-sort(type="button" data-demo-sort-key="report_status" aria-label="Сортувати за статусом звіту") Статус звіту
+                        th: button.table-sort(type="button" data-demo-sort-key="market_status" aria-label="Сортувати за статусом продажу") Статус продажу
+                        th Дії
+                    tbody#demo-reports-body
+                        tr: td(colspan="11") Завантаження…
+            nav#demo-pagination.pagination(aria-label="Пагінація demo-звітів")

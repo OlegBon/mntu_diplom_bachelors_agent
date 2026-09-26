@@ -19,6 +19,9 @@
 - Показ selected demo report marker лише в demo mode. Не називати кластери
   technical/mass-market/investment без окремого підтвердженого контракту;
   не показувати confidence, predicted price чи `is_investment_grade`.
+- Розмістити карту у вкладці «Камені» admin-only розділу «Демо» й узгодити її
+  `від / до / за весь час` зріз із задачами 164 та 165. Список demo-звітів
+  зберігає власні dashboard filters і не є джерелом неявного SOM slice.
 
 ## Перевірки
 

@@ -136,3 +136,61 @@ def test_synthetic_analysis_requires_manifest_allow_list(db_session, experts) ->
         crud.require_demo_dataset_analysis_eligibility(
             db_session, dataset_id=DATASET_ID, scenario="verified_ml",
         )
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_admin_can_download_private_demo_preview_without_public_passport(client, db_session, experts) -> None:
+    create_demo_report(db_session, experts)
+    admin_headers = auth_headers(client, experts["admin"].username)
+    owner_headers = auth_headers(client, experts["owner"].username)
+
+    response = client.get(
+        f"/demo/datasets/{DATASET_ID}/reports/DEMO-00001/passport-preview/pdf",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.content.startswith(b"%PDF-")
+    assert 'filename="demo-preview-DEMO-00001.pdf"' in response.headers["content-disposition"]
+    assert client.get(
+        f"/demo/datasets/{DATASET_ID}/reports/DEMO-00001/passport-preview/pdf",
+        headers=owner_headers,
+    ).status_code == 404
+    assert db_session.query(models.PublicPassport).filter_by(report_id="DEMO-00001").count() == 0
+
+
+@pytest.mark.api
+@pytest.mark.integration
+def test_demo_dashboard_filters_and_price_remain_inside_demo_scope(client, db_session, experts) -> None:
+    report = create_demo_report(db_session, experts)
+    db_session.add(models.StoneValuation(
+        stone_id=report.stone_id,
+        valuation_kind="synthetic_demo_reference",
+        amount=Decimal("4321.00"),
+        currency_code="USD",
+        unit="TOTAL_USD",
+        source_name="Demo Market A",
+        observed_at=datetime(2026, 1, 1, 12, 0),
+    ))
+    db_session.commit()
+    headers = auth_headers(client, experts["admin"].username)
+
+    response = client.get(
+        f"/demo/datasets/{DATASET_ID}/reports",
+        params={"shape": "Round", "carat_min": "1.00", "price_min": "4000", "date_from": "2026-01-01"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    reference = response.json()["items"][0]["market_reference"]
+    assert reference["valuation_kind"] == "synthetic_demo_reference"
+    assert reference["source_name"] == "Demo Market A"
+
+    detail = client.get(
+        f"/demo/datasets/{DATASET_ID}/reports/DEMO-00001",
+        headers=headers,
+    )
+    assert detail.status_code == 200
+    assert detail.json()["market_references"][0]["source_name"] == "Demo Market A"

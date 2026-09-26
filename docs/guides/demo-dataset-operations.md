@@ -23,7 +23,11 @@ review-cycle чи розрахунку наступного номера зві�
 opaque `404` для demo ID. Адміністратор також не бачить demo у звичайному
 списку чи detail; read-only доступ можливий лише через явні маршрути
 `/demo/datasets/{dataset_id}` та `/demo/datasets/{dataset_id}/reports`.
-Генерація, UI preview і private demo PDF залишаються наступними задачами.
+Admin-only UI preview і private demo PDF реалізовані задачею 158. Лише
+`DEMO-00999` є showcase: його PDF містить bundled synthetic photo/plotting
+assets і водяний знак `DEMO · INTERNAL PREVIEW`; інші demo PDF мають лише
+основну сторінку. Жоден demo PDF не має public ID, URL, QR або anonymous media
+endpoint.
 
 Усі regular write-маршрути відхиляють demo: update, transition, market
 attachment, work-session, media та passport. Demo ніколи не має public
@@ -73,8 +77,9 @@ issued lifecycle, system/expert grades, безпечний короткий те
 Повторний запуск із тим самим count/seed перевіряє manifest checksum і число
 report rows та нічого не дублює. Інший count/seed або частковий набір
 generator відхиляє без запису. Поточна реалізація навмисно не створює
-вигадані account-и, work sessions, media або public passports: actor-поля
-лишаються `NULL`, а showcase media належать окремому наступному кроку.
+вигадані account-и, work sessions або public passports: actor-поля
+лишаються `NULL`. Вкладення preview — bundled presentation assets, а не
+`media_assets`, тому їх неможливо опублікувати або отримати через URL.
 
 ## Historical `DR-00001…DR-01000`
 

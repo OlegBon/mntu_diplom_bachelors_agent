@@ -5,6 +5,42 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-26 — synthetic-demo-date-boundary-plan
+
+- **Задача:** зафіксувати окремий контрольований шлях виправлення граничної дати synthetic demo dataset.
+- **Змінені файли:** `docs/{architecture,progress,work_plan}.md`, `docs/backlog/{README.md,167-synthetic-demo-dataset-date-boundary-renewal.md}`.
+- **Рішення / Результат:** 167 описує renewal `synthetic-demo-v1 → v2`: backup/restore verification, read-only dry-run, exact replacement лише v1-owned demo rows і повторну перевірку `DEMO-00999`. Вона передує 164/159/165; 166 лишається незалежною safety-задачею для historical `DR-*`.
+- **Перевірки:** документацію звірено через пошук посилань і `git diff --check`.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** код генератора та локальна MariaDB не змінювалися; apply потребує окремого підтвердження користувача.
+
+## 2026-09-26 — demo-showcase-scope
+
+- **Задача:** обмежити synthetic media showcase одним демонстраційним звітом після уточнення 158.
+- **Змінені файли:** `backend/passport_pdf.py`, `frontend/src/{pug/pages/demo-report-detail.pug,js/modules/demo-report-detail.js}`, `tests/api/test_demo_preview_media.py`, `docs/{progress.md,guides/demo-dataset-operations.md}`.
+- **Рішення / Результат:** `DEMO-00999` — єдиний showcase: лише він показує sidebar-вкладення, подію «Синтетичні вкладення додано до демонстраційного перегляду» та два asset-аркуші у private demo PDF. Інші synthetic reports зберігають базову timeline і односторінковий internal PDF.
+- **Перевірки:** `python -m pytest tests/api/test_demo_dataset_isolation.py tests/api/test_demo_preview_media.py` — 7 passed; `cmd /c "cd frontend && npm test"` — 25 passed.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це presentation/payload rule, не DB-метадані; `DEMO-01000` ще має граничну дату 01.01.2026 до окремого контрольованого перевипускання набору.
+
+## 2026-09-26 — demo-preview-attachment-clarity
+
+- **Задача:** уточнити presentation-layer завершеної 158 для synthetic вкладень у detail.
+- **Змінені файли:** `frontend/src/pug/pages/demo-report-detail.pug`, `docs/progress.md`.
+- **Рішення / Результат:** disabled controls синтетичних photo/plotting наслідують семантику реального звіту — «Прибрати з паспорта», але пояснюють, що це лише вбудований internal PDF preview. Timeline показує створення, видачу та додавання двох synthetic assets; майбутні actor/workflow events залишаються задачею 164.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 25 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** `synthetic-demo-v1` досі має граничний `DEMO-01000` від 01.01.2026 через формулу генератора; immutable набір не переписується UI-зміною. Виправлення дат потребує окремого підтверджуваного reset або нового manifest version.
+
+## 2026-09-26 — admin-demo-report-and-passport-preview
+
+- **Задача:** виконати 158 — дати адміністратору ізольований read-only список, detail та private demo PDF без перетворення synthetic dataset на публічні звіти.
+- **Змінені файли:** `backend/passport_pdf.py`, `backend/assets/demo/*`, `frontend/src/{pug/pages/demo-reports.pug,pug/pages/demo-report-detail.pug,scss/{_variables,_ui-primitives}.scss}`, `tests/api/test_demo_preview_media.py`, `docs/{architecture,progress,work_plan}.md`, `docs/guides/demo-dataset-operations.md`, `docs/backlog/{README.md,166-synthetic-demo-backup-and-historical-reclassification.md}`; завершений backlog-файл `158-admin-demo-report-and-passport-preview.md` вилучено.
+- **Рішення / Результат:** admin-only «Демо» повторює dashboard-патерни, має стриманий бурштиновий `DEMO · SYNTHETIC DATA` marker та веде до показового `DEMO-00999`. Detail лишається read-only; public ID, URL і QR недоступні. Private PDF отримав `DEMO · INTERNAL PREVIEW` watermark і два bundled synthetic assets (photo/plotting), що не є `media_assets` та не мають URL. 166 зафіксовано як окремий safety-flow для backup, restore verification і майбутньої allow-list класифікації historical `DR-*`.
+- **Перевірки:** `cmd /c "cd frontend && npm run build"` — успішно; `python -m pytest tests/api/test_demo_dataset_isolation.py tests/api/test_demo_preview_media.py` — успішно; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** demo PDF не є issued/public документом і не створює `public_passports`; synthetic actors/analytics, SOM та demo providers залишаються задачами 164/159/165. Historical `DR-00001…DR-01000` не змінено; реальний backup або backfill вимагає окремого підтвердження.
+
 ## 2026-09-25 — synthetic-demo-dataset-generator
 
 - **Задача:** виконати 157 — створити детермінований, ізольований synthetic demo dataset для майбутніх private preview та SOM.

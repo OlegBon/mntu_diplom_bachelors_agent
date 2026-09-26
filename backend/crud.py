@@ -233,7 +233,7 @@ def get_report_domain(db: Session, report_id: str) -> models.DiamondReport | Non
 def get_demo_report_domain(
     db: Session, *, dataset_id: str, report_id: str,
 ) -> models.DiamondReport | None:
-    return (
+    report = (
         db.query(models.DiamondReport)
         .options(joinedload(models.DiamondReport.stone))
         .filter(
@@ -243,6 +243,9 @@ def get_demo_report_domain(
         )
         .first()
     )
+    if report is not None:
+        _attach_latest_market_reference_summaries(db, [report])
+    return report
 
 
 def get_report_domain_list(
@@ -359,6 +362,12 @@ def get_report_domain_list(
 
 def get_demo_report_domain_list(
     db: Session, *, dataset_id: str, page: int, page_size: int,
+    status: str | None, market_status: str | None, shape: str | None,
+    color_grade: int | None, clarity_grade: int | None, cut_grade: int | None,
+    carat_min: Decimal | None, carat_max: Decimal | None,
+    price_min: Decimal | None, price_max: Decimal | None,
+    date_from: date | None, date_to: date | None, search: str | None,
+    sort: schemas.ReportListSort,
 ) -> tuple[list[models.DiamondReport], int]:
     """Return one isolated demonstration dataset; never mix it with operations."""
     query = (
@@ -370,9 +379,67 @@ def get_demo_report_domain_list(
             models.DiamondReport.demo_dataset_id == dataset_id,
         )
     )
+    demo_reference_amount = (
+        select(models.StoneValuation.amount)
+        .where(
+            models.StoneValuation.stone_id == models.DiamondReport.stone_id,
+            models.StoneValuation.valuation_kind == "synthetic_demo_reference",
+        )
+        .order_by(models.StoneValuation.created_at.desc(), models.StoneValuation.valuation_id.desc())
+        .limit(1)
+        .scalar_subquery()
+    )
+    if status:
+        query = query.filter(models.DiamondReport.status == status)
+    if market_status:
+        query = query.filter(models.Stone.market_status == market_status)
+    if shape:
+        query = query.filter(models.Stone.shape == shape.strip())
+    if color_grade is not None:
+        query = query.filter(models.Stone.color_grade == color_grade)
+    if clarity_grade is not None:
+        query = query.filter(models.Stone.clarity_grade == clarity_grade)
+    if cut_grade is not None:
+        query = query.filter(models.DiamondReport.system_cut_grade == cut_grade)
+    if carat_min is not None:
+        query = query.filter(models.Stone.carat_weight >= carat_min)
+    if carat_max is not None:
+        query = query.filter(models.Stone.carat_weight <= carat_max)
+    if price_min is not None:
+        query = query.filter(demo_reference_amount >= price_min)
+    if price_max is not None:
+        query = query.filter(demo_reference_amount <= price_max)
+    if date_from is not None:
+        query = query.filter(models.DiamondReport.report_date >= datetime.combine(date_from, time.min))
+    if date_to is not None:
+        query = query.filter(models.DiamondReport.report_date < datetime.combine(date_to + timedelta(days=1), time.min))
+    if search:
+        query = query.filter(models.DiamondReport.report_id.ilike(f"%{search.strip()}%"))
     total = query.count()
+    sort_columns = {
+        "report_date_desc": (desc(models.DiamondReport.report_date), desc(models.DiamondReport.report_id)),
+        "report_date_asc": (asc(models.DiamondReport.report_date), asc(models.DiamondReport.report_id)),
+        "report_id_desc": (desc(models.DiamondReport.report_id),),
+        "report_id_asc": (asc(models.DiamondReport.report_id),),
+        "shape_asc": (asc(models.Stone.shape), asc(models.DiamondReport.report_id)),
+        "shape_desc": (desc(models.Stone.shape), desc(models.DiamondReport.report_id)),
+        "carat_asc": (asc(models.Stone.carat_weight), asc(models.DiamondReport.report_id)),
+        "carat_desc": (desc(models.Stone.carat_weight), desc(models.DiamondReport.report_id)),
+        "color_asc": (asc(models.Stone.color_grade), asc(models.DiamondReport.report_id)),
+        "color_desc": (desc(models.Stone.color_grade), desc(models.DiamondReport.report_id)),
+        "clarity_asc": (asc(models.Stone.clarity_grade), asc(models.DiamondReport.report_id)),
+        "clarity_desc": (desc(models.Stone.clarity_grade), desc(models.DiamondReport.report_id)),
+        "cut_asc": (asc(models.DiamondReport.system_cut_grade), asc(models.DiamondReport.report_id)),
+        "cut_desc": (desc(models.DiamondReport.system_cut_grade), desc(models.DiamondReport.report_id)),
+        "price_asc": (asc(demo_reference_amount), asc(models.DiamondReport.report_id)),
+        "price_desc": (desc(demo_reference_amount), desc(models.DiamondReport.report_id)),
+        "report_status_asc": (asc(models.DiamondReport.status), asc(models.DiamondReport.report_id)),
+        "report_status_desc": (desc(models.DiamondReport.status), desc(models.DiamondReport.report_id)),
+        "market_status_asc": (asc(models.Stone.market_status), asc(models.DiamondReport.report_id)),
+        "market_status_desc": (desc(models.Stone.market_status), desc(models.DiamondReport.report_id)),
+    }
     reports = (
-        query.order_by(desc(models.DiamondReport.report_date), desc(models.DiamondReport.report_id))
+        query.order_by(*sort_columns[sort])
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
@@ -392,7 +459,7 @@ def _attach_latest_market_reference_summaries(
         db.query(models.StoneValuation)
         .filter(
             models.StoneValuation.stone_id.in_(stone_ids),
-            models.StoneValuation.valuation_kind.in_(("market_reference", "system_market_reference")),
+            models.StoneValuation.valuation_kind.in_(("market_reference", "system_market_reference", "synthetic_demo_reference")),
         )
         .order_by(
             case((models.StoneValuation.valuation_kind == "market_reference", 0), else_=1),
@@ -418,7 +485,10 @@ def _attach_latest_market_reference_summaries(
         references = by_stone.get(report.stone_id, [])
         latest_by_provider: dict[str, models.StoneValuation] = {}
         for valuation in references:
-            provider_code = snapshot_provider_codes.get(valuation.market_snapshot_id)
+            provider_code = snapshot_provider_codes.get(valuation.market_snapshot_id) or (
+                valuation.source_name.lower().replace(" ", "_")
+                if valuation.valuation_kind == "synthetic_demo_reference" else None
+            )
             if provider_code and provider_code not in latest_by_provider:
                 latest_by_provider[provider_code] = valuation
         summaries = [
@@ -440,10 +510,9 @@ def _attach_latest_market_reference_summaries(
             for provider_code, valuation in latest_by_provider.items()
         ]
         report.market_references = summaries
-        report.market_reference = next(
-            (summary for summary in summaries if summary.provider_code == primary_code),
-            None,
-        )
+        report.market_reference = next((summary for summary in summaries if summary.provider_code == primary_code), None)
+        if report.record_scope == "demo" and report.market_reference is None:
+            report.market_reference = next(iter(summaries), None)
 
 
 def create_report_domain(

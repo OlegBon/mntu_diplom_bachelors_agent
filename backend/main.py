@@ -16,7 +16,7 @@ from . import crud, database, media_storage, models, schemas, security
 from .fx import FxProviderError, fetch_nbu_usd_uah
 from .market_operations import freshness_status, run_provider_operation
 from .market_providers import get_market_provider
-from .passport_pdf import PublicPassportPdfMedia, build_public_passport_pdf
+from .passport_pdf import PublicPassportPdfMedia, build_demo_passport_preview_pdf, build_public_passport_pdf
 
 app = FastAPI(title="Diamond ID System API")
 
@@ -413,6 +413,20 @@ def read_demo_dataset_reports(
     dataset_id: str,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=100),
+    report_status: Optional[schemas.ReportStatus] = None,
+    market_status: Optional[schemas.MarketStatus] = None,
+    shape: Optional[str] = Query(default=None, min_length=1, max_length=50),
+    color_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    clarity_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    cut_grade: Optional[int] = Query(default=None, ge=0, le=99),
+    carat_min: Optional[Decimal] = Query(default=None, ge=0),
+    carat_max: Optional[Decimal] = Query(default=None, ge=0),
+    price_min: Optional[Decimal] = Query(default=None, ge=0),
+    price_max: Optional[Decimal] = Query(default=None, ge=0),
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
+    search: Optional[str] = Query(default=None, min_length=1, max_length=50),
+    sort: schemas.ReportListSort = "report_id_desc",
     db: Session = Depends(get_db),
     current_user: models.Expert = Depends(get_current_user),
 ):
@@ -422,6 +436,10 @@ def read_demo_dataset_reports(
         raise HTTPException(status_code=404, detail="Demo dataset not found")
     reports, total = crud.get_demo_report_domain_list(
         db, dataset_id=dataset_id, page=page, page_size=page_size,
+        status=report_status, market_status=market_status, shape=shape,
+        color_grade=color_grade, clarity_grade=clarity_grade, cut_grade=cut_grade,
+        carat_min=carat_min, carat_max=carat_max, price_min=price_min,
+        price_max=price_max, date_from=date_from, date_to=date_to, search=search, sort=sort,
     )
     return schemas.ReportListResponse(
         items=reports,
@@ -447,6 +465,29 @@ def read_demo_dataset_report(
     if report is None or report.stone_id is None:
         raise HTTPException(status_code=404, detail="Demo report not found")
     return report
+
+
+@app.get("/demo/datasets/{dataset_id}/reports/{report_id}/passport-preview/pdf", response_class=Response)
+def download_demo_report_passport_preview_pdf(
+    dataset_id: str,
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Download an admin-only synthetic preview; it never creates public state."""
+    require_demo_admin(current_user)
+    if crud.get_demo_dataset(db, dataset_id) is None:
+        raise HTTPException(status_code=404, detail="Demo dataset not found")
+    report = crud.get_demo_report_domain(db, dataset_id=dataset_id, report_id=report_id)
+    if report is None or report.stone is None:
+        raise HTTPException(status_code=404, detail="Demo report not found")
+    grade_labels = {(mapping.category, mapping.grade_value): mapping.grade_label for mapping in crud.get_mappings(db)}
+    document = build_demo_passport_preview_pdf(report, report.stone, grade_labels)
+    return Response(
+        content=document,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="demo-preview-{report_id}.pdf"'},
+    )
 
 
 @app.post("/reports", response_model=schemas.ReportResponse)

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420" role="img" aria-labelledby="title desc">
+  <title id="title">Демонстраційна plotting-схема</title>
+  <desc id="desc">Синтетична схема розташування внутрішніх ознак для внутрішнього demo-звіту.</desc>
+  <rect width="640" height="420" fill="#f8fafc"/>
+  <rect x="28" y="28" width="584" height="364" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <circle cx="320" cy="198" r="122" fill="#f8fbff" stroke="#2563eb" stroke-width="3"/>
+  <circle cx="320" cy="198" r="78" fill="none" stroke="#93c5fd" stroke-width="2"/>
+  <path d="M198 198h244M320 76v244M234 112l172 172M406 112 234 284" fill="none" stroke="#bfdbfe" stroke-width="2"/>
+  <circle cx="276" cy="157" r="6" fill="#2563eb"/><circle cx="358" cy="218" r="6" fill="#2563eb"/><circle cx="322" cy="129" r="6" fill="#2563eb"/>
+  <text x="320" y="354" fill="#475569" font-family="Arial, sans-serif" font-size="18" text-anchor="middle">DEMO · SYNTHETIC PLOTTING</text>
+</svg>

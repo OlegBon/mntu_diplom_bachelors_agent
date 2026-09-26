@@ -276,6 +276,31 @@ input[type="number"]::-webkit-outer-spin-button {
   min-height: var(--control-height, 2.75rem);
 }
 
+.dashboard-page .analytics-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid variables.$border-color;
+}
+
+.dashboard-page .analytics-tabs__tab {
+  flex: 0 0 auto;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  color: variables.$secondary-color;
+  font: 600 0.95rem/1.35 variables.$font-main;
+  cursor: pointer;
+}
+
+.dashboard-page .analytics-tabs__tab:hover,
+.dashboard-page .analytics-tabs__tab:focus-visible { color: variables.$primary-color; }
+.dashboard-page .analytics-tabs__tab.is-active { border-bottom-color: variables.$primary-color; color: variables.$primary-color; }
+.dashboard-page .analytics-tabs__tab:disabled { cursor: not-allowed; opacity: 0.52; }
+.dashboard-page .analytics-tabs__tab:disabled:hover { color: variables.$secondary-color; }
+
 .account-page {
   padding: clamp(2rem, 5vw, 4.5rem) 0 clamp(3rem, 6vw, 5rem);
 
@@ -377,6 +402,11 @@ input[type="number"]::-webkit-outer-spin-button {
   .analytics-tabs__tab:hover,
   .analytics-tabs__tab:focus-visible { color: variables.$primary-color; }
   .analytics-tabs__tab.is-active { border-bottom-color: variables.$primary-color; color: variables.$primary-color; }
+  .analytics-tabs__tab:disabled {
+    cursor: not-allowed;
+    opacity: 0.52;
+  }
+  .analytics-tabs__tab:disabled:hover { color: variables.$secondary-color; }
   .analytics-panel { margin-top: 0; }
   .analytics-table-wrap { overflow-x: auto; }
   .analytics-table { width: 100%; min-width: 48rem; border-collapse: collapse; }
@@ -583,6 +613,16 @@ input[type="number"]::-webkit-outer-spin-button {
   .report-price__detail,
   .report-price__warning { margin: 0; font-size: 0.8rem; line-height: 1.45; }
   .report-price__warning { margin-top: 0.5rem; color: variables.$secondary-color; }
+  .report-price__alternatives {
+    margin-top: 0.6rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid variables.$border-color;
+    color: variables.$secondary-color;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+  .report-price__alternatives strong { color: variables.$text-strong; font-size: inherit; }
+  .report-price__alternatives ul { margin: 0.25rem 0 0; padding-left: 1.1rem; }
   .report-price__missing { color: variables.$secondary-color; }
   .dashboard-demo-note {
     margin: 0.75rem 0 0.5rem;
@@ -590,6 +630,30 @@ input[type="number"]::-webkit-outer-spin-button {
     font-size: 0.875rem;
     text-align: center;
   }
+  .demo-scope__notice {
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid variables.$warning-color;
+    background: variables.$white;
+    color: variables.$text-color;
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+  .demo-scope__notice strong { color: variables.$warning-color; }
+  .demo-scope__notice--compact { margin-top: -0.5rem; }
+  .demo-scope__showcase {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 1.5rem;
+    padding: 1rem;
+    border: 1px solid variables.$border-color;
+    border-left: 3px solid variables.$warning-color;
+    background: variables.$white;
+  }
+  .demo-scope__showcase strong { color: variables.$text-strong; }
+  .demo-scope__showcase p { margin: 0.25rem 0 0; color: variables.$secondary-color; font-size: 0.875rem; }
 
   .table-sort {
     border: 0;
@@ -706,6 +770,8 @@ input[type="number"]::-webkit-outer-spin-button {
     width: calc(100% - 4rem);
     margin-inline: auto;
   }
+  .demo-scope__showcase { align-items: stretch; flex-direction: column; }
+  .demo-scope__showcase .btn { width: 100%; }
 }
 
 @media (max-width: 900px) {
@@ -852,6 +918,17 @@ input[type="number"]::-webkit-outer-spin-button {
   }
   .report-detail__list,
   .report-detail__timeline { display: grid; gap: 0.75rem; list-style: none; }
+  .demo-media-list > li { display: block; }
+  .demo-media-list strong,
+  .demo-media-list span { display: block; overflow-wrap: anywhere; }
+  .demo-media-list span { margin-top: 0.2rem; color: variables.$secondary-color; font-size: 0.8rem; }
+  .demo-media-list .btn { margin-top: 0.55rem; }
+  .demo-passport-placeholder__code { margin: 0.75rem 0; color: variables.$secondary-color; font-size: 0.85rem; }
+  .demo-passport-placeholder__code strong { color: variables.$text-strong; }
+  .demo-passport-placeholder { margin: 0.75rem 0; }
+  .demo-passport-placeholder__qr { display: grid; width: min(11rem, 100%); height: 11rem; place-items: center; border: 1px dashed variables.$border-color; color: variables.$secondary-color; text-align: center; }
+  .demo-passport-placeholder__qr span { display: block; font-size: 1rem; font-weight: 700; }
+  .demo-passport-placeholder__qr small { display: block; margin-top: 0.25rem; font-size: 0.75rem; }
   .report-detail__list a { color: variables.$primary-color; font-weight: 600; }
   #detail-media .btn--compact { display: block; width: fit-content; margin-top: 0.5rem; }
   .account-dialog { width: min(34rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; border: 1px solid variables.$border-color; padding: 1.5rem; background: variables.$white; overflow-y: auto; }

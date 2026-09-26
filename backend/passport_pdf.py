@@ -24,6 +24,12 @@ MARGIN = 42
 FONT_REGULAR = "DiamondPassportRegular"
 FONT_BOLD = "DiamondPassportBold"
 _FONT_DIRECTORY = Path(__file__).resolve().parent / "assets" / "fonts"
+_DEMO_ASSETS_DIRECTORY = Path(__file__).resolve().parent / "assets" / "demo"
+_DEMO_PDF_MEDIA = (
+    ("stone_photo", "demo-stone-photo.png"),
+    ("plotting_diagram", "demo-plotting.png"),
+)
+_DEMO_SHOWCASE_REPORT_ID = "DEMO-00999"
 
 ORIGIN_LABELS = {
     "natural": "Природний",
@@ -115,6 +121,55 @@ def _draw_media_page(document: canvas.Canvas, media: PublicPassportPdfMedia) -> 
     document.setFillColor(colors.HexColor("#64748b"))
     document.setFont(FONT_REGULAR, 7.5)
     document.drawCentredString(PAGE_WIDTH / 2, 48, "Матеріал доступний у чинному публічному паспорті на момент формування PDF.")
+    document.showPage()
+    return True
+
+
+def _draw_demo_watermark(document: canvas.Canvas) -> None:
+    document.saveState()
+    document.setFillColor(colors.HexColor("#fde68a"))
+    document.setFont(FONT_BOLD, 26)
+    document.translate(PAGE_WIDTH / 2, PAGE_HEIGHT / 2)
+    document.rotate(35)
+    document.drawCentredString(0, 0, "DEMO · INTERNAL PREVIEW")
+    document.restoreState()
+
+
+def _draw_demo_media_page(document: canvas.Canvas, asset_type: str, filename: str) -> bool:
+    """Draw one bundled synthetic asset; it is never exposed through a public URL."""
+    path = _DEMO_ASSETS_DIRECTORY / filename
+    label = MEDIA_LABELS.get(asset_type)
+    if label is None or not path.is_file():
+        return False
+    try:
+        image = ImageReader(str(path))
+        image_width, image_height = image.getSize()
+    except Exception:  # ImageReader normalizes decoder-specific errors.
+        return False
+    if image_width <= 0 or image_height <= 0:
+        return False
+
+    _draw_demo_watermark(document)
+    document.setFillColor(colors.HexColor("#d97706"))
+    document.rect(0, PAGE_HEIGHT - 12, PAGE_WIDTH, 12, fill=1, stroke=0)
+    document.setFillColor(colors.HexColor("#0f172a"))
+    document.setFont(FONT_BOLD, 18)
+    document.drawString(MARGIN, PAGE_HEIGHT - 52, label)
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.setFont(FONT_REGULAR, 10)
+    document.drawString(MARGIN, PAGE_HEIGHT - 70, "DEMO · SYNTHETIC ASSET · лише для внутрішнього перегляду")
+
+    max_width = PAGE_WIDTH - (MARGIN * 2)
+    max_height = PAGE_HEIGHT - 178
+    scale = min(max_width / image_width, max_height / image_height)
+    draw_width = image_width * scale
+    draw_height = image_height * scale
+    image_x = (PAGE_WIDTH - draw_width) / 2
+    image_y = 86 + (max_height - draw_height) / 2
+    document.drawImage(image, image_x, image_y, draw_width, draw_height, preserveAspectRatio=True, mask="auto")
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.setFont(FONT_REGULAR, 7.5)
+    document.drawCentredString(PAGE_WIDTH / 2, 48, "Synthetic asset: не є лабораторним зображенням, публічним вкладенням або доказом.")
     document.showPage()
     return True
 
@@ -217,5 +272,53 @@ def build_public_passport_pdf(
     ordered_media = sorted(public_media, key=lambda item: (item.asset_type != "stone_photo", item.asset_type))
     for media in ordered_media:
         _draw_media_page(document, media)
+    document.save()
+    return output.getvalue()
+
+
+def build_demo_passport_preview_pdf(report, stone, grade_labels: Mapping[tuple[str, int], str]) -> bytes:
+    """Render one private synthetic preview without a public token, URL or QR."""
+    _register_fonts()
+    output = BytesIO()
+    document = canvas.Canvas(output, pagesize=A4, pageCompression=1)
+    document.setTitle(f"DEMO internal preview {report.report_id}")
+    document.setAuthor("Diamant ID")
+    document.setSubject("Synthetic internal demonstration preview")
+    _draw_demo_watermark(document)
+    document.setFillColor(colors.HexColor("#d97706"))
+    document.rect(0, PAGE_HEIGHT - 12, PAGE_WIDTH, 12, fill=1, stroke=0)
+    document.setFillColor(colors.HexColor("#0f172a"))
+    document.setFont(FONT_BOLD, 22)
+    document.drawString(MARGIN, PAGE_HEIGHT - 58, "Демонстраційний паспорт")
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.setFont(FONT_REGULAR, 10)
+    document.drawString(MARGIN, PAGE_HEIGHT - 76, "DEMO · SYNTHETIC DATA · лише внутрішній перегляд")
+    y = PAGE_HEIGHT - 120
+    _draw_label_value(document, MARGIN, y, "Номер demo-звіту", report.report_id)
+    _draw_label_value(document, PAGE_WIDTH / 2 + 12, y, "Дата видачі", _format_date(report.issued_at))
+    y -= 72
+    document.setFont(FONT_BOLD, 13)
+    document.setFillColor(colors.HexColor("#0f172a"))
+    document.drawString(MARGIN, y, "Характеристики каменю")
+    y -= 24
+    _draw_label_value(document, MARGIN, y, "Форма", stone.shape)
+    _draw_label_value(document, PAGE_WIDTH / 2 + 12, y, "Вага", f"{stone.carat_weight} ct")
+    y -= 42
+    _draw_label_value(document, MARGIN, y, "Колір", _grade_label(grade_labels, "color", stone.color_grade))
+    _draw_label_value(document, PAGE_WIDTH / 2 + 12, y, "Чистота", _grade_label(grade_labels, "clarity", stone.clarity_grade))
+    y -= 60
+    document.setFont(FONT_BOLD, 13)
+    document.setFillColor(colors.HexColor("#0f172a"))
+    document.drawString(MARGIN, y, "Системні оцінки")
+    y -= 24
+    _draw_label_value(document, MARGIN, y, "Proportions", _grade_label(grade_labels, "proportions", report.system_proportions_grade))
+    _draw_label_value(document, PAGE_WIDTH / 2 + 12, y, "Final Cut", _grade_label(grade_labels, "cut", report.system_cut_grade))
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.setFont(FONT_REGULAR, 8)
+    document.drawString(MARGIN, 52, "Synthetic dataset: not an appraisal, market reference, sale offer, transaction or public passport.")
+    document.showPage()
+    if report.report_id == _DEMO_SHOWCASE_REPORT_ID:
+        for asset_type, filename in _DEMO_PDF_MEDIA:
+            _draw_demo_media_page(document, asset_type, filename)
     document.save()
     return output.getvalue()
