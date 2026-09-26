@@ -65,11 +65,19 @@ function createElement(tagName, className, textContent) {
 }
 export async function initDemoReportDetail() {
   const root = document.querySelector("[data-demo-report-detail]"); if (!root || localStorage.getItem("role") !== "admin") return;
-  const params = new URLSearchParams(window.location.search); const dataset = params.get("dataset") || "synthetic-demo-v2"; const reportId = params.get("id"); const token = localStorage.getItem("token");
+  const params = new URLSearchParams(window.location.search); const requestedDataset = params.get("dataset"); let dataset = requestedDataset || "synthetic-demo-v2"; const reportId = params.get("id"); const token = localStorage.getItem("token");
   if (!reportId) return;
   const status = document.getElementById("demo-report-status");
   try {
-    const [report, mappings] = await Promise.all([getDemoReport(dataset, reportId, token), getGradeMappings(token)]);
+    let report;
+    try {
+      report = await getDemoReport(dataset, reportId, token);
+    } catch (error) {
+      if (requestedDataset) throw error;
+      dataset = "synthetic-demo-v1";
+      report = await getDemoReport(dataset, reportId, token);
+    }
+    const mappings = await getGradeMappings(token);
     const label = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
     document.getElementById("demo-report-id").textContent = report.report_id;
     const isShowcase = report.report_id === SHOWCASE_REPORT_ID;
