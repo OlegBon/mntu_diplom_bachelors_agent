@@ -35,7 +35,7 @@ function publicPassportIdFromLookup(value) {
   throw new Error("Введіть код публічного паспорта зі сторінки звіту.");
 }
 
-function applyApprovedNavigation(isAuthenticated) {
+function applyApprovedNavigation(isAuthenticated, user = null) {
   const navList = document.getElementById("nav-list");
   const authBlock = document.getElementById("auth-block");
   const sessionName = document.getElementById("header-session-name");
@@ -57,8 +57,9 @@ function applyApprovedNavigation(isAuthenticated) {
     return;
   }
 
-  const username = localStorage.getItem("username") || "Користувач";
-  const isAdmin = localStorage.getItem("role") === "admin";
+  const username = user?.username || localStorage.getItem("username") || "Користувач";
+  const isAdmin = user?.role === "admin";
+  const demoAccessEnabled = isAdmin && user?.demo_access_enabled === true;
   const createReportAction = document.getElementById("create-report-action");
   if (createReportAction) createReportAction.hidden = isAdmin;
 
@@ -73,7 +74,7 @@ function applyApprovedNavigation(isAuthenticated) {
   sessionName.hidden = false;
 
   const links = isAdmin
-    ? [["/dashboard.html", "Всі звіти"], ["/demo-reports.html", "Демо"], ["/experts.html", "Експерти"], ["/references.html", "Довідники"], ["/market-data.html", "Ринкові дані"], ["/ml-analysis.html", "Аналітика"], ["/profile.html", "Профіль"]]
+    ? [["/dashboard.html", "Всі звіти"], ...(demoAccessEnabled ? [["/demo-reports.html", "Демо"]] : []), ["/experts.html", "Експерти"], ["/references.html", "Довідники"], ["/market-data.html", "Ринкові дані"], ["/ml-analysis.html", "Аналітика"], ["/profile.html", "Профіль"]]
     : [["/dashboard.html", "Всі звіти"], ["/create-report.html", "Новий звіт"], ["/profile.html", "Профіль"]];
   for (const [href, label] of links) navList.append(createNavigationLink(href, label));
 
@@ -122,20 +123,31 @@ document.addEventListener("DOMContentLoaded", () => {
   if (protectedPage) protectedPage.hidden = false;
   const homeLoginCta = document.getElementById("home-login-cta");
   if (homeLoginCta) homeLoginCta.hidden = isAuthenticated;
-  applyApprovedNavigation(isAuthenticated);
+  if (!isAuthenticated) applyApprovedNavigation(false);
 
   if (isAuthenticated) {
     void getCurrentUser(localStorage.getItem("token")).then((user) => {
       localStorage.setItem("username", user.username);
       localStorage.setItem("role", user.role);
-      applyApprovedNavigation(true);
+      localStorage.setItem("demo_access_enabled", String(user.demo_access_enabled));
+      if (currentPath.startsWith("/demo-") && !user.demo_access_enabled) {
+        window.location.replace("/dashboard.html");
+        return;
+      }
+      applyApprovedNavigation(true, user);
     }).catch(() => {
       localStorage.removeItem("token");
       localStorage.removeItem("username");
       localStorage.removeItem("role");
+      localStorage.removeItem("demo_access_enabled");
       window.location.replace("/login.html");
     });
   }
+
+  window.addEventListener("demo-access-changed", (event) => {
+    const user = event.detail;
+    applyApprovedNavigation(true, user);
+  });
 
   if (isAuthenticated) void initDashboard();
   if (isAuthenticated && isCreateReportPage) void initReportWizard();

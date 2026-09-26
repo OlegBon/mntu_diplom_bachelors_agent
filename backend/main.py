@@ -145,6 +145,18 @@ def update_my_profile(
     return crud.update_own_profile(db, current_user, profile)
 
 
+@app.put("/users/me/demo-access", response_model=schemas.ExpertBase)
+def update_my_demo_access(
+    payload: schemas.DemoAccessUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Let an administrator opt into, or out of, the isolated demo surface."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=404, detail="Demo dataset not found")
+    return crud.update_own_demo_access(db, current_user, enabled=payload.enabled)
+
+
 @app.put("/users/me/password", status_code=status.HTTP_204_NO_CONTENT)
 def update_my_password(
     password_update: schemas.PasswordUpdate,
@@ -185,8 +197,8 @@ def require_admin(current_user: models.Expert) -> None:
 
 
 def require_demo_admin(current_user: models.Expert) -> None:
-    """Do not reveal the existence of the isolated demo surface to experts."""
-    if current_user.role != "admin":
+    """Keep every demo route opaque unless its administrator explicitly opted in."""
+    if current_user.role != "admin" or not current_user.demo_access_enabled:
         raise HTTPException(status_code=404, detail="Demo dataset not found")
 
 

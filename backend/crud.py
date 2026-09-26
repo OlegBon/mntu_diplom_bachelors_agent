@@ -1081,6 +1081,14 @@ def update_own_profile(db: Session, user: models.Expert, profile: schemas.Profil
     return user
 
 
+def update_own_demo_access(db: Session, user: models.Expert, *, enabled: bool) -> models.Expert:
+    """Persist one administrator's own synthetic-demo opt-in."""
+    user.demo_access_enabled = enabled if user.role == "admin" else False
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def update_own_password(db: Session, user: models.Expert, password_update: schemas.PasswordUpdate) -> bool:
     if not verify_password(password_update.current_password, user.password_hash):
         return False

@@ -57,6 +57,12 @@ class PasswordUpdate(BaseModel):
             raise ValueError("Password must not exceed 72 UTF-8 bytes")
         return value
 
+
+class DemoAccessUpdate(BaseModel):
+    """Self-service opt-in for the isolated synthetic demo surface."""
+
+    enabled: bool
+
 # Схема для експерта (дані, що ми віддаємо на фронт)
 class ExpertBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -68,6 +74,7 @@ class ExpertBase(BaseModel):
     middle_name: Optional[str]
     role: str
     is_active: bool
+    demo_access_enabled: bool
 
 class ExpertListResponse(BaseModel):
     items: list[ExpertBase]
