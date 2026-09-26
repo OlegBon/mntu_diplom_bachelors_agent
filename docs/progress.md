@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-26 — admin-demo-report-and-passport-preview
+
+- **Задача:** виконати 158 — дати адміністратору ізольований read-only список, detail та private demo PDF без перетворення synthetic dataset на публічні звіти.
+- **Змінені файли:** `backend/passport_pdf.py`, `backend/assets/demo/*`, `frontend/src/{pug/pages/demo-reports.pug,pug/pages/demo-report-detail.pug,scss/{_variables,_ui-primitives}.scss}`, `tests/api/test_demo_preview_media.py`, `docs/{architecture,progress,work_plan}.md`, `docs/guides/demo-dataset-operations.md`, `docs/backlog/{README.md,166-synthetic-demo-backup-and-historical-reclassification.md}`; завершений backlog-файл `158-admin-demo-report-and-passport-preview.md` вилучено.
+- **Рішення / Результат:** admin-only «Демо» повторює dashboard-патерни, має стриманий бурштиновий `DEMO · SYNTHETIC DATA` marker та веде до показового `DEMO-00999`. Detail лишається read-only; public ID, URL і QR недоступні. Private PDF отримав `DEMO · INTERNAL PREVIEW` watermark і два bundled synthetic assets (photo/plotting), що не є `media_assets` та не мають URL. 166 зафіксовано як окремий safety-flow для backup, restore verification і майбутньої allow-list класифікації historical `DR-*`.
+- **Перевірки:** `cmd /c "cd frontend && npm run build"` — успішно; `python -m pytest tests/api/test_demo_dataset_isolation.py tests/api/test_demo_preview_media.py` — успішно; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** demo PDF не є issued/public документом і не створює `public_passports`; synthetic actors/analytics, SOM та demo providers залишаються задачами 164/159/165. Historical `DR-00001…DR-01000` не змінено; реальний backup або backfill вимагає окремого підтвердження.
+
 ## 2026-09-25 — synthetic-demo-dataset-generator
 
 - **Задача:** виконати 157 — створити детермінований, ізольований synthetic demo dataset для майбутніх private preview та SOM.

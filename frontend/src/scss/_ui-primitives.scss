@@ -630,6 +630,30 @@ input[type="number"]::-webkit-outer-spin-button {
     font-size: 0.875rem;
     text-align: center;
   }
+  .demo-scope__notice {
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid variables.$warning-color;
+    background: variables.$white;
+    color: variables.$text-color;
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+  .demo-scope__notice strong { color: variables.$warning-color; }
+  .demo-scope__notice--compact { margin-top: -0.5rem; }
+  .demo-scope__showcase {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 1.5rem;
+    padding: 1rem;
+    border: 1px solid variables.$border-color;
+    border-left: 3px solid variables.$warning-color;
+    background: variables.$white;
+  }
+  .demo-scope__showcase strong { color: variables.$text-strong; }
+  .demo-scope__showcase p { margin: 0.25rem 0 0; color: variables.$secondary-color; font-size: 0.875rem; }
 
   .table-sort {
     border: 0;
@@ -746,6 +770,8 @@ input[type="number"]::-webkit-outer-spin-button {
     width: calc(100% - 4rem);
     margin-inline: auto;
   }
+  .demo-scope__showcase { align-items: stretch; flex-direction: column; }
+  .demo-scope__showcase .btn { width: 100%; }
 }
 
 @media (max-width: 900px) {

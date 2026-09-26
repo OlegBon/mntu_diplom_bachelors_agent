@@ -1,7 +1,7 @@
 extends ../layout/main
 
 block content
-    .dashboard-page(hidden data-protected-page="true" data-demo-reports)
+    .dashboard-page.demo-scope(hidden data-protected-page="true" data-demo-reports)
         .page-header
             div
                 h1.page-title Демо
@@ -13,6 +13,14 @@ block content
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 159") Камені
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 165") Провайдери
         #demo-reports-panel(role="tabpanel" aria-labelledby="demo-tab-reports")
+            p.demo-scope__notice(role="note")
+                strong DEMO · SYNTHETIC DATA
+                |  Ізольований внутрішній набір: не експертні, ринкові, продажні чи транзакційні дані.
+            section.demo-scope__showcase(aria-label="Показовий demo-звіт")
+                div
+                    strong Показовий private preview
+                    p DEMO-00999 містить синтетичні вкладення та внутрішній PDF без public ID, URL або QR-коду.
+                a.btn.btn-outline.btn--compact(href="/demo-report-detail.html?id=DEMO-00999") Відкрити DEMO-00999
             .filters-container
                 .filters-bar
                     .search-group

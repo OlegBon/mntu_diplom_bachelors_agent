@@ -24,6 +24,11 @@ MARGIN = 42
 FONT_REGULAR = "DiamondPassportRegular"
 FONT_BOLD = "DiamondPassportBold"
 _FONT_DIRECTORY = Path(__file__).resolve().parent / "assets" / "fonts"
+_DEMO_ASSETS_DIRECTORY = Path(__file__).resolve().parent / "assets" / "demo"
+_DEMO_PDF_MEDIA = (
+    ("stone_photo", "demo-stone-photo.png"),
+    ("plotting_diagram", "demo-plotting.png"),
+)
 
 ORIGIN_LABELS = {
     "natural": "Природний",
@@ -115,6 +120,55 @@ def _draw_media_page(document: canvas.Canvas, media: PublicPassportPdfMedia) -> 
     document.setFillColor(colors.HexColor("#64748b"))
     document.setFont(FONT_REGULAR, 7.5)
     document.drawCentredString(PAGE_WIDTH / 2, 48, "Матеріал доступний у чинному публічному паспорті на момент формування PDF.")
+    document.showPage()
+    return True
+
+
+def _draw_demo_watermark(document: canvas.Canvas) -> None:
+    document.saveState()
+    document.setFillColor(colors.HexColor("#fde68a"))
+    document.setFont(FONT_BOLD, 26)
+    document.translate(PAGE_WIDTH / 2, PAGE_HEIGHT / 2)
+    document.rotate(35)
+    document.drawCentredString(0, 0, "DEMO · INTERNAL PREVIEW")
+    document.restoreState()
+
+
+def _draw_demo_media_page(document: canvas.Canvas, asset_type: str, filename: str) -> bool:
+    """Draw one bundled synthetic asset; it is never exposed through a public URL."""
+    path = _DEMO_ASSETS_DIRECTORY / filename
+    label = MEDIA_LABELS.get(asset_type)
+    if label is None or not path.is_file():
+        return False
+    try:
+        image = ImageReader(str(path))
+        image_width, image_height = image.getSize()
+    except Exception:  # ImageReader normalizes decoder-specific errors.
+        return False
+    if image_width <= 0 or image_height <= 0:
+        return False
+
+    _draw_demo_watermark(document)
+    document.setFillColor(colors.HexColor("#d97706"))
+    document.rect(0, PAGE_HEIGHT - 12, PAGE_WIDTH, 12, fill=1, stroke=0)
+    document.setFillColor(colors.HexColor("#0f172a"))
+    document.setFont(FONT_BOLD, 18)
+    document.drawString(MARGIN, PAGE_HEIGHT - 52, label)
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.setFont(FONT_REGULAR, 10)
+    document.drawString(MARGIN, PAGE_HEIGHT - 70, "DEMO · SYNTHETIC ASSET · лише для внутрішнього перегляду")
+
+    max_width = PAGE_WIDTH - (MARGIN * 2)
+    max_height = PAGE_HEIGHT - 178
+    scale = min(max_width / image_width, max_height / image_height)
+    draw_width = image_width * scale
+    draw_height = image_height * scale
+    image_x = (PAGE_WIDTH - draw_width) / 2
+    image_y = 86 + (max_height - draw_height) / 2
+    document.drawImage(image, image_x, image_y, draw_width, draw_height, preserveAspectRatio=True, mask="auto")
+    document.setFillColor(colors.HexColor("#64748b"))
+    document.setFont(FONT_REGULAR, 7.5)
+    document.drawCentredString(PAGE_WIDTH / 2, 48, "Synthetic asset: не є лабораторним зображенням, публічним вкладенням або доказом.")
     document.showPage()
     return True
 
@@ -229,14 +283,8 @@ def build_demo_passport_preview_pdf(report, stone, grade_labels: Mapping[tuple[s
     document.setTitle(f"DEMO internal preview {report.report_id}")
     document.setAuthor("Diamant ID")
     document.setSubject("Synthetic internal demonstration preview")
-    document.saveState()
-    document.setFillColor(colors.HexColor("#cbd5e1"))
-    document.setFont(FONT_BOLD, 26)
-    document.translate(PAGE_WIDTH / 2, PAGE_HEIGHT / 2)
-    document.rotate(35)
-    document.drawCentredString(0, 0, "DEMO · INTERNAL PREVIEW")
-    document.restoreState()
-    document.setFillColor(colors.HexColor("#2563eb"))
+    _draw_demo_watermark(document)
+    document.setFillColor(colors.HexColor("#d97706"))
     document.rect(0, PAGE_HEIGHT - 12, PAGE_WIDTH, 12, fill=1, stroke=0)
     document.setFillColor(colors.HexColor("#0f172a"))
     document.setFont(FONT_BOLD, 22)
@@ -268,5 +316,7 @@ def build_demo_passport_preview_pdf(report, stone, grade_labels: Mapping[tuple[s
     document.setFont(FONT_REGULAR, 8)
     document.drawString(MARGIN, 52, "Synthetic dataset: not an appraisal, market reference, sale offer, transaction or public passport.")
     document.showPage()
+    for asset_type, filename in _DEMO_PDF_MEDIA:
+        _draw_demo_media_page(document, asset_type, filename)
     document.save()
     return output.getvalue()

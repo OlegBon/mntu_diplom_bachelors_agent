@@ -1,13 +1,16 @@
 extends ../layout/main
 
 block content
-    main.report-detail-page(hidden data-protected-page="true" data-demo-report-detail)
+    main.report-detail-page.demo-scope(hidden data-protected-page="true" data-demo-report-detail)
         .page-header
             div
                 p.report-detail__eyebrow DEMO · SYNTHETIC DATA
                 h1#demo-report-id Завантаження звіту…
                 p#demo-report-subtitle.page-subtitle Ізольований read-only демонстраційний звіт.
             a.btn.btn-outline(href="/demo-reports.html") До demo-звітів
+        p.demo-scope__notice.demo-scope__notice--compact(role="note")
+            strong DEMO · SYNTHETIC DATA
+            |  Внутрішній приклад. Усі імена, події, орієнтири та вкладення синтетичні.
         .report-detail__grid
             form.report-detail__surface
                 .report-detail__section
