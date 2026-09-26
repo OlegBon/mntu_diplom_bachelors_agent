@@ -13,6 +13,13 @@
   чи private texts.
 - Versioned reproducible SOM experiment: feature schema, normalisation, grid,
   random seed, training code/dependencies, dataset checksum і report→cell map.
+- Використати окремий versioned `synthetic policy scenario` поверх поточного
+  `synthetic-demo-v4`, а не перевипускати 1 000 reports лише для policy cases.
+  Scenario імітує дозволене, недозволене та прострочене використання
+  fictional `Demo Market A/B` values на рівні feature provenance. Він перевіряє
+  deterministic per-feature selection/exclusion, coverage summary і те, що
+  заборонене значення не потрапляє до artifact. Це demonstration механізму, не
+  юридичне рішення і не policy реального provider-а.
 - Admin-only карта: population/count, dataset version, feature list, methods,
   timestamp, neutral cluster descriptions і явний banner
   `Synthetic development demo — не ринкова аналітика`.
@@ -22,13 +29,20 @@
 - Розмістити карту у вкладці «Камені» admin-only розділу «Демо» й узгодити її
   `від / до / за весь час` зріз із задачами 164 та 165. Список demo-звітів
   зберігає власні dashboard filters і не є джерелом неявного SOM slice.
+- Права панель показує пояснюваний technical profile: SOM cell, population
+  клітини/сусідства, 4C/geometry, найближчі synthetic peers, описовий segment
+  summary і synthetic segment reference range. Велике value має бути явно
+  назване synthetic reference/scenario, а не predicted price; IDC Final Cut
+  показується як детермінований system result, а не прогноз якості.
 
 ## Перевірки
 
 Reproducible artifact на тому самому manifest/seed, stable cell mapping,
 admin-only API/UI, expert/anonymous 404, rejection для dataset без
 `synthetic_som` або для чужого report ID, empty-state без dataset та a11y без
-покладання лише на колір.
+покладання лише на колір. Synthetic policy scenario має довести, що один report
+не дублюється через двох provider-ів, а недозволені/прострочені values відсутні
+з feature vectors та artifact; UI показує coverage/exclusion summary.
 
 ## Залежності
 
