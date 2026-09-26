@@ -1,7 +1,7 @@
 import { getDemoDataset, getDemoReports, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 
-const DATASET_ID = "synthetic-demo-v1";
+const DATASET_ID = "synthetic-demo-v2";
 const PAGE_SIZE = 25;
 const REPORT_STATUS_LABELS = { issued: "Видано" };
 const SALE_STATUS_LABELS = { not_for_sale: "Не продається" };

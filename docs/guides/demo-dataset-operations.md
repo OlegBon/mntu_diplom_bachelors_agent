@@ -48,7 +48,7 @@ Synthetic generator не приписує report, event, session або media ч
 вигадану людину. Operational upload API не змінюється: він завжди записує
 поточного автора.
 
-## Генератор `synthetic-demo-v1`
+## Генератор `synthetic-demo-v2` і контрольована заміна v1
 
 Після застосування `0015_multi_provider_market_references` набір створює
 окрема команда, а не `seed_db.py`. Вона не викликає OpenFacet, НБУ, IDEX,
@@ -63,9 +63,24 @@ SHA-256 майбутнього content manifest, але не відкриває 
 
 Фактичний запис у локальну БД вимагає окремо погодженого явного параметра:
 
+Перед заміною наявного v1 виконайте лише читання inventory:
+
 ```powershell
-.\.venv\Scripts\python.exe scripts\generate_synthetic_demo_dataset.py --apply
+.\.venv\Scripts\python.exe scripts\generate_synthetic_demo_dataset.py --dry-run-replace-v1
 ```
+
+Він має показати `ready_for_replace: true`, рівно 1 000 reports/stones,
+2 000 events/valuations, нуль media/passports/work sessions і точний набір ID.
+Перед destructive-кроком обов’язкові logical backup та restore verification
+локальних `diamond_oltp` і `diamond_market` у disposable БД.
+
+Після окремого погодження фактична транзакційна заміна v1 на v2:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_synthetic_demo_dataset.py --replace-v1 --confirm-replace-v1
+```
+
+`--apply` лишається лише для порожнього середовища, де ще немає demo manifest.
 
 За замовчуванням generator створює рівно 1 000 `DEMO-00001…DEMO-01000`
 записів за трирічний синтетичний період. Кожен має normalized `Stone`,

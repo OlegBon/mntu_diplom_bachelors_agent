@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-26 — synthetic-demo-v2-renewal
+
+- **Задача:** виконати 167 — контрольоване оновлення межі дат synthetic demo dataset.
+- **Змінені файли:** `scripts/generate_synthetic_demo_dataset.py`, `frontend/src/js/modules/{demo-reports,demo-report-detail}.js`, `tests/unit/test_synthetic_demo_v2_renewal.py`, `docs/{architecture,progress,work_plan}.md`, `docs/guides/demo-dataset-operations.md`.
+- **Рішення / Результат:** генератор готує immutable `synthetic-demo-v2` з inclusive діапазоном `03.01.2023 09:00` … `31.12.2025 09:00`. Новий `--dry-run-replace-v1` читає повний v1-owned dependency inventory; `--replace-v1 --confirm-replace-v1` виконає одну транзакційну заміну лише після backup/restore verification та окремого підтвердження. Операційні `DR-*`, акаунти, provider/FX data не входять до цього контуру.
+- **Перевірки:** `python -m pytest tests/unit/test_synthetic_demo_generator.py tests/unit/test_synthetic_demo_v2_renewal.py` — 5 passed; `cmd /c "cd frontend && npm run build"` — успішно.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** v1 у локальній MariaDB ще не замінено; перед apply потрібні backup і restore verification, read-only dry-run та явна згода користувача. До цього моменту UI v2 не має даних для відображення.
+
 ## 2026-09-26 — synthetic-demo-date-boundary-plan
 
 - **Задача:** зафіксувати окремий контрольований шлях виправлення граничної дати synthetic demo dataset.

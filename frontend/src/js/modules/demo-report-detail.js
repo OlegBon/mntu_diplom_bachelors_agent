@@ -65,7 +65,7 @@ function createElement(tagName, className, textContent) {
 }
 export async function initDemoReportDetail() {
   const root = document.querySelector("[data-demo-report-detail]"); if (!root || localStorage.getItem("role") !== "admin") return;
-  const params = new URLSearchParams(window.location.search); const dataset = params.get("dataset") || "synthetic-demo-v1"; const reportId = params.get("id"); const token = localStorage.getItem("token");
+  const params = new URLSearchParams(window.location.search); const dataset = params.get("dataset") || "synthetic-demo-v2"; const reportId = params.get("id"); const token = localStorage.getItem("token");
   if (!reportId) return;
   const status = document.getElementById("demo-report-status");
   try {
