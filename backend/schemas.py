@@ -426,6 +426,24 @@ class DemoDatasetResponse(BaseModel):
     created_at: datetime
 
 
+class DemoWorkflowActorStats(BaseModel):
+    actor_key: str
+    display_name: str
+    role: Literal["gemologist", "admin"]
+    reports_touched: int
+    completed_intervals: int
+    total_duration_seconds: int
+    avg_duration_seconds: Optional[int]
+
+
+class DemoWorkflowAnalyticsResponse(BaseModel):
+    dataset_id: str
+    date_from: Optional[date]
+    date_to: Optional[date]
+    experts: list[DemoWorkflowActorStats]
+    administrators: list[DemoWorkflowActorStats]
+
+
 class FxDataSnapshotResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -131,6 +131,43 @@ class DemoDataset(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
+class DemoSyntheticActor(Base):
+    """A deterministic non-account identity used only inside one demo dataset."""
+
+    __tablename__ = "demo_synthetic_actors"
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "actor_key", name="uq_demo_actor_dataset_key"),
+        {"schema": "diamond_oltp"},
+    )
+
+    actor_id = Column(Integer, primary_key=True)
+    dataset_id = Column(String(64), ForeignKey("diamond_oltp.demo_datasets.dataset_id"), nullable=False, index=True)
+    actor_key = Column(String(64), nullable=False)
+    role = Column(String(16), nullable=False)
+    display_name = Column(String(120), nullable=False)
+    sort_order = Column(Integer, nullable=False)
+
+
+class DemoWorkflowEvent(Base):
+    """Append-only synthetic workflow record; it is never an operational event."""
+
+    __tablename__ = "demo_workflow_events"
+    __table_args__ = (
+        Index("ix_demo_workflow_dataset_occurred", "dataset_id", "occurred_at"),
+        {"schema": "diamond_oltp"},
+    )
+
+    workflow_event_id = Column(Integer, primary_key=True)
+    dataset_id = Column(String(64), ForeignKey("diamond_oltp.demo_datasets.dataset_id"), nullable=False, index=True)
+    report_id = Column(String(20), ForeignKey("diamond_oltp.diamond_reports.report_id"), nullable=False, index=True)
+    actor_id = Column(Integer, ForeignKey("diamond_oltp.demo_synthetic_actors.actor_id"), nullable=False, index=True)
+    action = Column(String(32), nullable=False)
+    from_status = Column(String(16), nullable=True)
+    to_status = Column(String(16), nullable=True)
+    occurred_at = Column(DateTime, nullable=False, index=True)
+    duration_seconds = Column(Integer, nullable=True)
+
+
 class Stone(Base):
     """Stable physical identity and commercial state of a diamond."""
 

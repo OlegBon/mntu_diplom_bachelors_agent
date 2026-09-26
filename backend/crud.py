@@ -90,6 +90,49 @@ def require_demo_dataset_analysis_eligibility(
     return dataset
 
 
+def get_demo_workflow_analytics(
+    db: Session, *, dataset_id: str, date_from: date | None, date_to: date | None,
+) -> schemas.DemoWorkflowAnalyticsResponse:
+    """Return only synthetic workflow aggregates for one manifest-authorized dataset."""
+    require_demo_dataset_analysis_eligibility(db, dataset_id=dataset_id, scenario="demo_operations")
+    query = (
+        db.query(models.DemoSyntheticActor, models.DemoWorkflowEvent)
+        .outerjoin(
+            models.DemoWorkflowEvent,
+            (models.DemoWorkflowEvent.actor_id == models.DemoSyntheticActor.actor_id)
+            & (models.DemoWorkflowEvent.dataset_id == dataset_id),
+        )
+        .filter(models.DemoSyntheticActor.dataset_id == dataset_id)
+    )
+    start = datetime.combine(date_from, time.min) if date_from is not None else None
+    end = datetime.combine(date_to + timedelta(days=1), time.min) if date_to is not None else None
+    grouped: dict[str, dict[str, object]] = {}
+    for actor, event in query.all():
+        row = grouped.setdefault(actor.actor_key, {"actor": actor, "reports": set(), "durations": []})
+        if event is not None and (start is None or event.occurred_at >= start) and (end is None or event.occurred_at < end):
+            row["reports"].add(event.report_id)
+            if event.duration_seconds is not None:
+                row["durations"].append(event.duration_seconds)
+    def serialize(role: str) -> list[schemas.DemoWorkflowActorStats]:
+        rows = []
+        for item in grouped.values():
+            actor = item["actor"]
+            if actor.role != role:
+                continue
+            durations = item["durations"]
+            rows.append(schemas.DemoWorkflowActorStats(
+                actor_key=actor.actor_key, display_name=actor.display_name, role=actor.role,
+                reports_touched=len(item["reports"]), completed_intervals=len(durations),
+                total_duration_seconds=sum(durations),
+                avg_duration_seconds=round(sum(durations) / len(durations)) if durations else None,
+            ))
+        return sorted(rows, key=lambda row: row.actor_key)
+    return schemas.DemoWorkflowAnalyticsResponse(
+        dataset_id=dataset_id, date_from=date_from, date_to=date_to,
+        experts=serialize("gemologist"), administrators=serialize("admin"),
+    )
+
+
 def _legacy_origin_code(origin: str) -> int:
     return {"natural": 0, "lab_grown": 1, "unknown": 2, "other": 3}[origin]
 
