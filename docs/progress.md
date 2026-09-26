@@ -10,9 +10,9 @@
 - **Задача:** виконати 167 — контрольоване оновлення межі дат synthetic demo dataset.
 - **Змінені файли:** `scripts/generate_synthetic_demo_dataset.py`, `frontend/src/js/modules/{demo-reports,demo-report-detail}.js`, `tests/unit/test_synthetic_demo_v2_renewal.py`, `docs/{architecture,progress,work_plan}.md`, `docs/guides/demo-dataset-operations.md`.
 - **Рішення / Результат:** генератор готує immutable `synthetic-demo-v2` з inclusive діапазоном `03.01.2023 09:00` … `31.12.2025 09:00`. Новий `--dry-run-replace-v1` читає повний v1-owned dependency inventory; `--replace-v1 --confirm-replace-v1` виконає одну транзакційну заміну лише після backup/restore verification та окремого підтвердження. Операційні `DR-*`, акаунти, provider/FX data не входять до цього контуру.
-- **Перевірки:** `python -m pytest tests/unit/test_synthetic_demo_generator.py tests/unit/test_synthetic_demo_v2_renewal.py` — 5 passed; `cmd /c "cd frontend && npm run build"` — успішно.
+- **Перевірки:** `python -m pytest tests/unit/test_synthetic_demo_generator.py tests/unit/test_synthetic_demo_v2_renewal.py tests/api/test_demo_dataset_isolation.py tests/api/test_demo_preview_media.py` — 12 passed; `cmd /c "cd frontend && npm test"` — 25 passed. Read-only dry-run: 1 000 v1 reports/stones, 2 000 events/valuations, 0 media/passports/sessions, `ready_for_replace: true`. Backup `D:\DevTools\Backups\diamant-id-before-demo-v2-20260926-153257.sql` (2.56 MB) успішно відновлено у disposable MariaDB на `127.0.0.1:3307`, перевірено inventory; сервер і тимчасовий data directory зупинені та вилучені.
 - **Нові змінні середовища:** немає.
-- **Обмеження:** v1 у локальній MariaDB ще не замінено; перед apply потрібні backup і restore verification, read-only dry-run та явна згода користувача. До цього моменту UI v2 не має даних для відображення.
+- **Обмеження:** v1 у локальній MariaDB ще не замінено. Backup, restore verification і dry-run завершені; лишається окрема явна згода користувача на `--replace-v1 --confirm-replace-v1`. До apply frontend прозоро показує v1 через compatibility fallback; після появи manifest v2 автоматично обирає v2.
 
 ## 2026-09-26 — synthetic-demo-date-boundary-plan
 
