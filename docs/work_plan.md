@@ -111,7 +111,7 @@
 - [x] 158 — Admin demo report/PDF/passport preview: immutable private preview без public code/URL/QR, із read-only dashboard/detail, bundled synthetic assets і watermark; historical `DR-*` не змінено.
 - [x] 167 — Synthetic demo dataset date-boundary renewal: після verified backup/restore виконано транзакційну заміну v1 на `synthetic-demo-v2`; збережені ті самі `DEMO-…` ID, межі `03.01.2023` … `31.12.2025`, 1 000 reports, 2 000 events/valuations і нуль public passports. Historical `DR-*` не зачіпались.
 - [x] 164 — Synthetic demo actors і workflow analytics: `synthetic-demo-v4` містить 5 virtual gemologists, 3 administrators, 3 220 isolated workflow events, нерівні deterministic quotas/тривалості та 950 issued / 50 void outcomes; admin-only вкладки «Експерти»/«Адміністратори» мають спільний date slice без productivity/SLA/rating claims. `0016`/`0017` застосовані, historical `DR-*` та operational analytics не зачіпалися.
-- [ ] [168 — Opt-in доступ адміністратора до «Демо»](./backlog/168-admin-opt-in-demo-access.md): server-side preference з default `false`, self-service checkbox у профілі, opaque gate для всіх `/demo/*` і header без flash/flicker; перед 159/165.
+- [x] 168 — Opt-in доступ адміністратора до «Демо»: `0018` додає persisted `demo_access_enabled=false`; admin змінює лише власний opt-in у профілі, всі `/demo/*` мають opaque `404` gate, а header і protected demo page чекають resolved `/users/me` без flash/flicker.
 - [ ] [169 — UI spacing і layout consistency](./backlog/169-ui-spacing-and-layout-consistency.md): системно вирівняти відступи, action rows і responsive layout на всіх сторінках без зміни UX flows чи API.
 - [ ] [159 — Synthetic SOM demo](./backlog/159-synthetic-som-demo.md): reproducible admin-only карта у вкладці «Камені» для demo dataset, не заміна 151–153.
 - [ ] [165 — Synthetic demo provider analytics](./backlog/165-synthetic-demo-provider-analytics.md): `Demo Market A/B` coverage/provenance у відокремленій вкладці без real provider data.
@@ -125,7 +125,7 @@
 
 ### Рекомендована черга активних задач
 
-1. `168 → 159 → 165` — спершу зробити per-admin opt-in і єдиний opaque demo gate, потім додати SOM для каменів і
+1. `159 → 165` — після per-admin opt-in і єдиного opaque demo gate додати SOM для каменів і
    fictional provider analytics без змішування з operational даними.
    `166` — незалежний P2 safety gate перед будь-якою реальною класифікацією
    historical `DR-*`; його не запускають як неявну частину demo-аналітики.
