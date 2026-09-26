@@ -95,20 +95,15 @@ def get_demo_workflow_analytics(
 ) -> schemas.DemoWorkflowAnalyticsResponse:
     """Return only synthetic workflow aggregates for one manifest-authorized dataset."""
     require_demo_dataset_analysis_eligibility(db, dataset_id=dataset_id, scenario="demo_operations")
-    query = (
-        db.query(models.DemoSyntheticActor, models.DemoWorkflowEvent)
-        .outerjoin(
-            models.DemoWorkflowEvent,
-            (models.DemoWorkflowEvent.actor_id == models.DemoSyntheticActor.actor_id)
-            & (models.DemoWorkflowEvent.dataset_id == dataset_id),
-        )
+    actors = (
+        db.query(models.DemoSyntheticActor)
         .filter(models.DemoSyntheticActor.dataset_id == dataset_id)
+        .order_by(models.DemoSyntheticActor.sort_order)
+        .all()
     )
-    start = datetime.combine(date_from, time.min) if date_from is not None else None
-    end = datetime.combine(date_to + timedelta(days=1), time.min) if date_to is not None else None
-    grouped: dict[str, dict[str, object]] = {}
-    for actor, event in query.all():
-        row = grouped.setdefault(actor.actor_key, {
+    actors_by_id = {actor.actor_id: actor for actor in actors}
+    grouped: dict[str, dict[str, object]] = {
+        actor.actor_key: {
             "actor": actor,
             "reports": set(),
             "durations": [],
@@ -116,15 +111,39 @@ def get_demo_workflow_analytics(
             "issued": 0,
             "returned": 0,
             "void": 0,
-        })
-        if event is not None and (start is None or event.occurred_at >= start) and (end is None or event.occurred_at < end):
+        }
+        for actor in actors
+    }
+    events = (
+        db.query(models.DemoWorkflowEvent)
+        .filter(models.DemoWorkflowEvent.dataset_id == dataset_id)
+        .order_by(models.DemoWorkflowEvent.workflow_event_id)
+        .all()
+    )
+    report_authors = {
+        event.report_id: event.actor_id
+        for event in events
+        if event.action == "draft_completed"
+    }
+    start = datetime.combine(date_from, time.min) if date_from is not None else None
+    end = datetime.combine(date_to + timedelta(days=1), time.min) if date_to is not None else None
+    for event in events:
+        if (start is None or event.occurred_at >= start) and (end is None or event.occurred_at < end):
+            actor = actors_by_id[event.actor_id]
+            row = grouped[actor.actor_key]
             row["reports"].add(event.report_id)
-            if event.action in {"issued", "review_completed"}:
+            if event.action == "issued":
                 row["issued"] += 1
             elif event.action == "review_returned":
                 row["returned"] += 1
             elif event.action == "review_voided":
                 row["void"] += 1
+                author_id = report_authors.get(event.report_id)
+                author = actors_by_id.get(author_id)
+                if author is not None and author.role == "gemologist":
+                    grouped[author.actor_key]["void"] += 1
+            elif event.action == "review_completed":
+                row["issued"] += 1
             if event.duration_seconds is not None:
                 row["durations"].append(event.duration_seconds)
                 row["intervals"].append(event)

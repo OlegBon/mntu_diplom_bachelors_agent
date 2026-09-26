@@ -5,7 +5,7 @@ import { duration as formatDuration, element as createElement, periodSummary, re
 const PREFERRED_DATASET_ID = "synthetic-demo-v4";
 const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
 const PAGE_SIZE = 25;
-const REPORT_STATUS_LABELS = { issued: "Видано" };
+const REPORT_STATUS_LABELS = { issued: "Видано", void: "Анульовано" };
 const SALE_STATUS_LABELS = { not_for_sale: "Не продається" };
 
 function createBadge(value, kind) {

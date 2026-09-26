@@ -4,6 +4,7 @@ const ORIGIN_LABELS = { natural: "Природний", lab_grown: "Лабора�
 const TREATMENT_LABELS = { not_assessed: "Не оцінено", none_detected: "Не виявлено", disclosed: "Заявлено", confirmed: "Підтверджено" };
 const IDENTIFICATION_LABELS = { preliminary: "Попередній", confirmed: "Підтверджено", inconclusive: "Невизначено" };
 const SHOWCASE_REPORT_ID = "DEMO-00999";
+const REPORT_STATUS_LABELS = { issued: "Видано", void: "Анульовано" };
 
 function download(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -91,10 +92,9 @@ export async function initDemoReportDetail() {
     const label = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
     document.getElementById("demo-report-id").textContent = report.report_id;
     const isShowcase = report.report_id === SHOWCASE_REPORT_ID;
-    document.getElementById("demo-showcase-media").hidden = !isShowcase;
     document.getElementById("demo-showcase-media-event").hidden = !isShowcase;
     const statusBadge = document.getElementById("demo-status-badge");
-    statusBadge.textContent = "Видано";
+    statusBadge.textContent = REPORT_STATUS_LABELS[report.status] || report.status;
     statusBadge.dataset.status = report.status;
     document.getElementById("demo-system-summary").textContent = `Системний IDC: Proportions ${label("proportions", report.system_proportions_grade)}, Final Cut ${label("cut", report.system_cut_grade)}.`;
     const values = {
