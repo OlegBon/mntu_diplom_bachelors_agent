@@ -174,6 +174,50 @@ class DemoWorkflowEvent(Base):
     duration_seconds = Column(Integer, nullable=True)
 
 
+class DemoSomArtifact(Base):
+    """Immutable SOM run metadata for one manifest-bound synthetic dataset."""
+
+    __tablename__ = "demo_som_artifacts"
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "artifact_version", "content_sha256", name="uq_demo_som_artifact_content"),
+        Index("ix_demo_som_artifacts_dataset_created", "dataset_id", "created_at"),
+        {"schema": "diamond_oltp"},
+    )
+
+    artifact_id = Column(Integer, primary_key=True)
+    dataset_id = Column(String(64), ForeignKey("diamond_oltp.demo_datasets.dataset_id"), nullable=False)
+    artifact_version = Column(String(64), nullable=False)
+    policy_scenario_id = Column(String(64), nullable=False)
+    dataset_content_sha256 = Column(String(64), nullable=False)
+    training_seed = Column(Integer, nullable=False)
+    grid_size = Column(Integer, nullable=False)
+    feature_schema = Column(Text, nullable=False)
+    normalization = Column(Text, nullable=False)
+    coverage = Column(Text, nullable=False)
+    content_sha256 = Column(String(64), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class DemoSomAssignment(Base):
+    """One immutable synthetic report-to-cell assignment within a SOM artifact."""
+
+    __tablename__ = "demo_som_assignments"
+    __table_args__ = (
+        UniqueConstraint("artifact_id", "report_id", name="uq_demo_som_assignment_report"),
+        Index("ix_demo_som_assignments_artifact_cell", "artifact_id", "som_x", "som_y"),
+        {"schema": "diamond_oltp"},
+    )
+
+    assignment_id = Column(Integer, primary_key=True)
+    artifact_id = Column(Integer, ForeignKey("diamond_oltp.demo_som_artifacts.artifact_id"), nullable=False)
+    report_id = Column(String(20), ForeignKey("diamond_oltp.diamond_reports.report_id"), nullable=False)
+    som_x = Column(Integer, nullable=False)
+    som_y = Column(Integer, nullable=False)
+    distance = Column(DECIMAL(14, 8), nullable=False)
+    selected_provider = Column(String(100), nullable=False)
+    selected_reference_amount = Column(DECIMAL(14, 2), nullable=False)
+
+
 class Stone(Base):
     """Stable physical identity and commercial state of a diamond."""
 

@@ -466,6 +466,41 @@ class DemoWorkflowAnalyticsResponse(BaseModel):
     administrators: list[DemoWorkflowActorStats]
 
 
+class DemoSomCell(BaseModel):
+    x: int
+    y: int
+    report_count: int
+    segment_label: str
+    median_carat_weight: Optional[Decimal] = None
+    median_reference_amount: Optional[Decimal] = None
+
+
+class DemoSomSelectedReport(BaseModel):
+    report_id: str
+    som_x: int
+    som_y: int
+    distance: Decimal
+    selected_provider: str
+    selected_reference_amount: Decimal
+    carat_weight: Decimal
+    shape: str
+    color_grade: Optional[int]
+    clarity_grade: Optional[int]
+    system_cut_grade: Optional[int]
+    neighborhood_count: int
+
+
+class DemoSomResponse(BaseModel):
+    dataset_id: str
+    artifact_version: str
+    policy_scenario_id: str
+    grid_size: int
+    feature_names: list[str]
+    coverage: dict[str, object]
+    cells: list[DemoSomCell]
+    selected_report: Optional[DemoSomSelectedReport] = None
+
+
 class FxDataSnapshotResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -34,6 +34,10 @@
   summary і synthetic segment reference range. Велике value має бути явно
   назване synthetic reference/scenario, а не predicted price; IDC Final Cut
   показується як детермінований system result, а не прогноз якості.
+- Artifact зберігається окремо від `diamond_analytics.ml_results`: metadata,
+  checksum, schema/normalisation/coverage та immutable `report → cell`
+  assignments належать лише `diamond_oltp.demo_som_*`. API ніколи не тренує
+  модель у GET-запиті; генератор створює artifact окремою явною командою.
 
 ## Перевірки
 

@@ -1,4 +1,4 @@
-import { getDemoDataset, getDemoReports, getDemoWorkflowAnalytics, getGradeMappings } from "./api.js";
+import { getDemoDataset, getDemoReports, getDemoWorkflowAnalytics, getDemoSom, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderTable } from "./analytics-ui.js";
 
@@ -259,12 +259,46 @@ function renderSyntheticAdministrators(container, actors, datasetId) {
   container.replaceChildren(fragment);
 }
 
+function formatUsd(value) {
+  return new Intl.NumberFormat("uk-UA", { style: "currency", currency: "USD" }).format(Number(value));
+}
+
+function renderSom(container, data) {
+  const selected = data.selected_report;
+  const grid = createElement("div", "demo-som-grid");
+  grid.style.setProperty("--som-size", String(data.grid_size));
+  for (const cell of data.cells) {
+    const button = createElement("button", `demo-som-cell demo-som-cell--${cell.segment_label.slice(-1).toLowerCase()}`, String(cell.report_count));
+    button.type = "button";
+    button.title = `${cell.segment_label}: ${cell.report_count} synthetic звітів`;
+    if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
+    grid.append(button);
+  }
+  const coverage = data.coverage || {};
+  const left = createElement("section", "demo-som-map");
+  left.append(createElement("h3", "", "Карта сегментів"), grid, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Профілі A–D — описові зони карти, не класи якості.`));
+  const right = createElement("aside", "demo-som-profile");
+  right.append(createElement("h3", "", "Профіль показового каменю"));
+  if (selected) {
+    const details = document.createElement("dl");
+    details.className = "analytics-metrics";
+    [["Звіт", selected.report_id], ["SOM-клітинка", `${selected.som_x + 1} × ${selected.som_y + 1}`], ["У сусідстві", `${selected.neighborhood_count} demo-звітів`], ["Форма / вага", `${selected.shape} · ${selected.carat_weight} ct`], ["Synthetic орієнтир", `${formatUsd(selected.selected_reference_amount)} · ${selected.selected_provider}`]].forEach(([label, value]) => details.append(createElement("dt", "", label), createElement("dd", "", value)));
+    right.append(details);
+  }
+  right.append(createElement("p", "account-help", `Охоплення: ${coverage.accepted_reports ?? 0} включено з ${coverage.candidate_reports ?? 0}; ${coverage.excluded_reports ?? 0} виключено через відсутність повного дозволеного synthetic вектора.`));
+  right.append(createElement("p", "account-help", "Synthetic орієнтир — лише демонстраційна величина сценарію, не прогнозована чи ринкова ціна."));
+  const layout = createElement("div", "demo-som-layout");
+  layout.append(left, right);
+  container.replaceChildren(layout);
+}
+
 function initDemoWorkflowTabs(root, datasetId, token) {
   const tabButtons = [...root.querySelectorAll("[data-demo-tab]")];
   const panels = {
     reports: root.querySelector("#demo-reports-panel"),
     experts: root.querySelector("#demo-experts-panel"),
     administrators: root.querySelector("#demo-administrators-panel"),
+    stones: root.querySelector("#demo-stones-panel"),
   };
   const form = root.querySelector("#demo-workflow-slice");
   const controls = root.querySelector("#demo-workflow-controls");
@@ -273,13 +307,15 @@ function initDemoWorkflowTabs(root, datasetId, token) {
   const administratorResults = root.querySelector("#demo-administrators-results");
   const expertStatus = root.querySelector("#demo-experts-status");
   const administratorStatus = root.querySelector("#demo-administrators-status");
+  const somStatus = root.querySelector("#demo-som-status");
+  const somResults = root.querySelector("#demo-som-results");
   const dialog = root.querySelector("#demo-workflow-actor-dialog");
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
-  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !dialog || !dialogContent) return;
+  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !somStatus || !somResults || !dialog || !dialogContent) return;
 
   const activate = (tab) => {
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
-    controls.hidden = tab === "reports";
+    controls.hidden = tab === "reports" || tab === "stones";
     for (const button of tabButtons) {
       const active = button.dataset.demoTab === tab;
       button.classList.toggle("is-active", active);
@@ -307,7 +343,17 @@ function initDemoWorkflowTabs(root, datasetId, token) {
       setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
     }
   };
-  for (const button of tabButtons) button.addEventListener("click", () => activate(button.dataset.demoTab));
+  const loadSom = async () => {
+    setStatus(somStatus, "Завантаження synthetic SOM…");
+    try {
+      const data = await getDemoSom(datasetId, token, "DEMO-00999");
+      somStatus.replaceChildren();
+      renderSom(somResults, data);
+    } catch {
+      setStatus(somStatus, "SOM artifact ще не згенеровано для цього demo-набору.", "error");
+    }
+  };
+  for (const button of tabButtons) button.addEventListener("click", () => { activate(button.dataset.demoTab); if (button.dataset.demoTab === "stones") void loadSom(); });
   form.addEventListener("submit", (event) => { event.preventDefault(); void load(); });
   form.addEventListener("reset", () => window.setTimeout(() => void load(), 0));
   dialog.addEventListener("close", () => dialogContent.replaceChildren());
