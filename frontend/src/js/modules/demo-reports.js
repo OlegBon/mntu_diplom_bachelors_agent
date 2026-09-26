@@ -81,7 +81,9 @@ function renderActions(report, datasetId) {
   print.href = `${detailUrl}&print=1`;
   print.target = "_blank";
   print.rel = "noopener noreferrer";
-  menu.append(detail, edit, print);
+  const som = createElement("a", "report-actions__item", "Аналіз SOM");
+  som.href = `/demo-reports.html?tab=stones&som_report=${encodeURIComponent(report.report_id)}`;
+  menu.append(detail, som, edit, print);
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
     const isOpen = menu.hidden;
@@ -297,12 +299,22 @@ function renderSom(container, data, labelFor) {
     details.append(createElement("dt", "", "Synthetic орієнтир"), reference);
     const position = createElement("section", "demo-som-position");
     position.append(createElement("h4", "", "Позиція в сегменті"), createElement("strong", "", selected.segment_label), createElement("p", "account-help", selected.segment_description));
-    const peers = createElement("p", "account-help", selected.peer_report_ids.length ? `Найближчі synthetic приклади: ${selected.peer_report_ids.join(", ")}.` : "У клітинці поки немає інших synthetic прикладів.");
+    const peers = createElement("p", "account-help");
+    if (selected.peer_report_ids.length) {
+      peers.append(document.createTextNode("Найближчі synthetic приклади: "));
+      selected.peer_report_ids.forEach((reportId, index) => {
+        if (index) peers.append(document.createTextNode(", "));
+        const link = createElement("a", "", reportId);
+        link.href = `/demo-reports.html?tab=stones&som_report=${encodeURIComponent(reportId)}`;
+        peers.append(link);
+      });
+      peers.append(document.createTextNode("."));
+    } else peers.textContent = "У клітинці поки немає інших synthetic прикладів.";
     const benchmark = createElement("section", "demo-som-benchmark");
-    benchmark.append(createElement("h4", "", "Демо-орієнтир сегмента"), createElement("strong", "", `${formatUsd(selected.segment_reference_min)}–${formatUsd(selected.segment_reference_max)}`), createElement("span", "", "Діапазон схожих synthetic каменів"));
+    benchmark.append(createElement("h4", "", "Демо-орієнтир сегмента"), createElement("strong", "", `${formatUsd(selected.segment_reference_min)} – ${formatUsd(selected.segment_reference_max)}`), createElement("span", "", "Діапазон значень усієї описової зони SOM, а не лише трьох найближчих прикладів."));
     right.append(details, position, peers, benchmark);
   }
-  right.append(createElement("p", "account-help", `Охоплення: ${coverage.accepted_reports ?? 0} включено з ${coverage.candidate_reports ?? 0}; ${coverage.excluded_reports ?? 0} виключено через відсутність повного дозволеного synthetic вектора.`));
+  right.append(createElement("p", "account-help", `Охоплення: ${coverage.accepted_reports ?? 0} включено з ${coverage.candidate_reports ?? 0}; ${coverage.excluded_reports ?? 0} виключено через відсутність повного дозволеного synthetic вектора.`), createElement("p", "account-help", coverage.policy_explanation || "Для виключених звітів policy scenario не залишає дозволеного synthetic орієнтиру."));
   right.append(createElement("p", "account-help", "Synthetic орієнтир — лише демонстраційна величина сценарію, не прогнозована чи ринкова ціна."));
   const layout = createElement("div", "demo-som-layout");
   layout.append(left, right);
@@ -363,7 +375,8 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const loadSom = async () => {
     setStatus(somStatus, "Завантаження synthetic SOM…");
     try {
-      const data = await getDemoSom(datasetId, token, "DEMO-00999");
+      const selectedId = new URLSearchParams(window.location.search).get("som_report") || "DEMO-00999";
+      const data = await getDemoSom(datasetId, token, selectedId);
       somStatus.replaceChildren();
       renderSom(somResults, data, labelFor);
     } catch {
@@ -375,6 +388,10 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   form.addEventListener("reset", () => window.setTimeout(() => void load(), 0));
   dialog.addEventListener("close", () => dialogContent.replaceChildren());
   void load();
+  if (new URLSearchParams(window.location.search).get("tab") === "stones") {
+    activate("stones");
+    void loadSom();
+  }
 }
 
 export async function initDemoReports() {

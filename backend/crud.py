@@ -238,7 +238,7 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
         weights = [item[2].carat_weight for item in members if item[2].carat_weight is not None]
         references = [item[0].selected_reference_amount for item in members]
         shapes = sorted({item[2].shape for item in members})
-        names = {"A": "Профіль A", "B": "Профіль B", "C": "Профіль C", "D": "Профіль D"}
+        names = {"A": "Зона SOM A", "B": "Зона SOM B", "C": "Зона SOM C", "D": "Зона SOM D"}
         if not members:
             return names[key], "У цьому synthetic artifact для зони поки немає каменів.", [], Decimal("0"), Decimal("0"), Decimal("0"), Decimal("0")
         weight_min, weight_max = min(weights), max(weights)
@@ -292,10 +292,15 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
             peer_report_ids=[member[0].report_id for member in sorted(cells[(assignment.som_x, assignment.som_y)], key=lambda item: (item[0].distance, item[0].report_id)) if member[0].report_id != report_id][:3],
             segment_reference_min=reference_min, segment_reference_max=reference_max,
         )
+    coverage = json.loads(artifact.coverage)
+    coverage["policy_explanation"] = (
+        "10 звітів мають одночасно недозволений Demo Market B і умовно прострочений "
+        "Demo Market A у synthetic policy scenario; жодне з цих значень не використано."
+    )
     return schemas.DemoSomResponse(
         dataset_id=dataset_id, artifact_version=artifact.artifact_version,
         policy_scenario_id=artifact.policy_scenario_id, grid_size=artifact.grid_size,
-        feature_names=json.loads(artifact.feature_schema), coverage=json.loads(artifact.coverage),
+        feature_names=json.loads(artifact.feature_schema), coverage=coverage,
         cells=serialized_cells, segments=segments, selected_report=selected,
     )
 
