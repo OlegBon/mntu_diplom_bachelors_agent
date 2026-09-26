@@ -108,6 +108,31 @@ class ReplacementInventory:
         )
 
 
+@dataclass(frozen=True)
+class WorkflowReplacementInventory:
+    """Ownership evidence required before the v2 to v3 renewal."""
+
+    report_count: int
+    stone_count: int
+    report_event_count: int
+    valuation_count: int
+    media_count: int
+    passport_count: int
+    work_session_count: int
+    exact_expected_ids: bool
+
+    @property
+    def safe_to_replace(self) -> bool:
+        return (
+            self.report_count == DEFAULT_COUNT
+            and self.stone_count == DEFAULT_COUNT
+            and self.report_event_count == DEFAULT_COUNT * 2
+            and self.valuation_count == DEFAULT_COUNT * 2
+            and self.passport_count == self.work_session_count == 0
+            and self.exact_expected_ids
+        )
+
+
 def build_records(*, count: int = DEFAULT_COUNT, seed: int = DEFAULT_SEED) -> list[DemoRecord]:
     """Return a reproducible, internally coherent population with no network I/O."""
     if count < 1 or count > 10_000:
@@ -341,6 +366,36 @@ def inventory_legacy_v1(db: Session) -> ReplacementInventory:
     )
 
 
+def inventory_workflow_legacy_v2(db: Session) -> WorkflowReplacementInventory:
+    """Read only the v2-owned graph; do not infer ownership from ID prefixes."""
+    reports = db.query(models.DiamondReport).filter(
+        models.DiamondReport.record_scope == "demo",
+        models.DiamondReport.demo_dataset_id == WORKFLOW_LEGACY_DATASET_ID,
+    ).all()
+    report_ids = [report.report_id for report in reports]
+    stone_ids = [report.stone_id for report in reports if report.stone_id is not None]
+    return WorkflowReplacementInventory(
+        report_count=len(reports),
+        stone_count=len(stone_ids),
+        report_event_count=db.query(models.ReportEvent).filter(
+            models.ReportEvent.report_id.in_(report_ids) if report_ids else False,
+        ).count(),
+        valuation_count=db.query(models.StoneValuation).filter(
+            models.StoneValuation.stone_id.in_(stone_ids) if stone_ids else False,
+        ).count(),
+        media_count=db.query(models.MediaAsset).filter(
+            models.MediaAsset.report_id.in_(report_ids) if report_ids else False,
+        ).count(),
+        passport_count=db.query(models.PublicPassport).filter(
+            models.PublicPassport.report_id.in_(report_ids) if report_ids else False,
+        ).count(),
+        work_session_count=db.query(models.ReportWorkSession).filter(
+            models.ReportWorkSession.report_id.in_(report_ids) if report_ids else False,
+        ).count(),
+        exact_expected_ids=set(report_ids) == _expected_report_ids(),
+    )
+
+
 def replacement_preview(records: list[DemoRecord], inventory: ReplacementInventory | None = None) -> dict[str, object]:
     result: dict[str, object] = {
         "dataset_id": DATASET_ID,
@@ -360,9 +415,10 @@ def replacement_preview(records: list[DemoRecord], inventory: ReplacementInvento
 
 def workflow_replacement_preview(
     records: list[DemoRecord], actors: list[SyntheticActorRecord], workflow: list[SyntheticWorkflowRecord],
+    inventory: WorkflowReplacementInventory | None = None,
 ) -> dict[str, object]:
     """Describe v3 creation without reading or changing the database."""
-    return {
+    preview: dict[str, object] = {
         "dataset_id": WORKFLOW_DATASET_ID,
         "replaces_dataset_id": WORKFLOW_LEGACY_DATASET_ID,
         "record_count": len(records),
@@ -372,6 +428,10 @@ def workflow_replacement_preview(
         "read_only": True,
         "requires_backup_and_explicit_replace_confirmation": True,
     }
+    if inventory is not None:
+        preview["v2_inventory"] = asdict(inventory)
+        preview["ready_for_replace"] = inventory.safe_to_replace
+    return preview
 
 
 def replace_legacy_v1(db: Session, records: list[DemoRecord]) -> None:
@@ -405,28 +465,86 @@ def replace_legacy_v1(db: Session, records: list[DemoRecord]) -> None:
         raise
 
 
+def replace_workflow_legacy_v2(
+    db: Session, records: list[DemoRecord], actors: list[SyntheticActorRecord], workflow: list[SyntheticWorkflowRecord],
+) -> None:
+    """Atomically renew the verified v2 graph into immutable v3 workflow data."""
+    inventory = inventory_workflow_legacy_v2(db)
+    if not inventory.safe_to_replace:
+        raise RuntimeError("Legacy v2 inventory is not safe to replace; no changes were made")
+    if db.get(models.DemoDataset, WORKFLOW_DATASET_ID) is not None:
+        raise RuntimeError("Synthetic demo v3 manifest already exists; no changes were made")
+    reports = db.query(models.DiamondReport).filter(
+        models.DiamondReport.record_scope == "demo",
+        models.DiamondReport.demo_dataset_id == WORKFLOW_LEGACY_DATASET_ID,
+    ).all()
+    report_ids = [report.report_id for report in reports]
+    stone_ids = [report.stone_id for report in reports if report.stone_id is not None]
+    try:
+        db.query(models.DemoWorkflowEvent).filter(
+            models.DemoWorkflowEvent.dataset_id == WORKFLOW_LEGACY_DATASET_ID,
+        ).delete(synchronize_session=False)
+        db.query(models.DemoSyntheticActor).filter(
+            models.DemoSyntheticActor.dataset_id == WORKFLOW_LEGACY_DATASET_ID,
+        ).delete(synchronize_session=False)
+        db.query(models.ReportEvent).filter(models.ReportEvent.report_id.in_(report_ids)).delete(synchronize_session=False)
+        db.query(models.MediaAsset).filter(models.MediaAsset.report_id.in_(report_ids)).delete(synchronize_session=False)
+        db.query(models.StoneValuation).filter(models.StoneValuation.stone_id.in_(stone_ids)).delete(synchronize_session=False)
+        db.query(models.DiamondReport).filter(models.DiamondReport.report_id.in_(report_ids)).delete(synchronize_session=False)
+        db.query(models.Stone).filter(models.Stone.stone_id.in_(stone_ids)).delete(synchronize_session=False)
+        db.query(models.DemoDataset).filter(
+            models.DemoDataset.dataset_id == WORKFLOW_LEGACY_DATASET_ID,
+        ).delete(synchronize_session=False)
+        db.flush()
+        db.expunge_all()
+        apply_workflow_dataset(db, records, actors, workflow, commit=False)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true", help="Create v2 only when no demo manifest exists")
     parser.add_argument("--dry-run-replace-v1", action="store_true", help="Read v1 ownership inventory; never writes")
     parser.add_argument("--replace-v1", action="store_true", help="Replace verified v1 rows with v2")
     parser.add_argument("--confirm-replace-v1", action="store_true", help="Required together with --replace-v1")
+    parser.add_argument("--dry-run-replace-v2", action="store_true", help="Read v2 ownership inventory; never writes")
+    parser.add_argument("--replace-v2", action="store_true", help="Replace verified v2 rows with v3 workflow data")
+    parser.add_argument("--confirm-replace-v2", action="store_true", help="Required together with --replace-v2")
     parser.add_argument("--count", type=int, default=DEFAULT_COUNT)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     args = parser.parse_args()
     records = build_records(count=args.count, seed=args.seed)
+    actors = build_synthetic_actors()
+    workflow = build_synthetic_workflow(records)
     if args.replace_v1 and not args.confirm_replace_v1:
         parser.error("--replace-v1 requires --confirm-replace-v1")
-    if args.apply and (args.replace_v1 or args.dry_run_replace_v1):
+    if args.replace_v2 and not args.confirm_replace_v2:
+        parser.error("--replace-v2 requires --confirm-replace-v2")
+    if args.apply and (args.replace_v1 or args.dry_run_replace_v1 or args.replace_v2 or args.dry_run_replace_v2):
         parser.error("--apply cannot be combined with replacement options")
     if args.dry_run_replace_v1:
         with SessionLocal() as db:
             print(json.dumps(replacement_preview(records, inventory_legacy_v1(db)), ensure_ascii=False, indent=2))
         return
+    if args.dry_run_replace_v2:
+        with SessionLocal() as db:
+            print(json.dumps(workflow_replacement_preview(records, actors, workflow, inventory_workflow_legacy_v2(db)), ensure_ascii=False, indent=2))
+        return
     if args.replace_v1:
         with SessionLocal() as db:
             replace_legacy_v1(db, records)
         result = replacement_preview(records)
+        result["read_only"] = False
+        result["replaced"] = True
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return
+    if args.replace_v2:
+        with SessionLocal() as db:
+            replace_workflow_legacy_v2(db, records, actors, workflow)
+        result = workflow_replacement_preview(records, actors, workflow)
         result["read_only"] = False
         result["replaced"] = True
         print(json.dumps(result, ensure_ascii=False, indent=2))
