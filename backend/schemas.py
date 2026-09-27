@@ -473,6 +473,16 @@ class DemoSomCell(BaseModel):
     segment_label: str
     median_carat_weight: Optional[Decimal] = None
     median_reference_amount: Optional[Decimal] = None
+    median_reference_usd_per_carat: Optional[Decimal] = None
+    benchmark_band: Optional[str] = None
+
+
+class DemoSomBenchmarkBand(BaseModel):
+    key: str
+    label: str
+    lower_bound_usd_per_carat: Optional[Decimal] = None
+    upper_bound_usd_per_carat: Optional[Decimal] = None
+    cell_count: int
 
 
 class DemoSomSelectedReport(BaseModel):
@@ -517,6 +527,7 @@ class DemoSomResponse(BaseModel):
     feature_names: list[str]
     coverage: dict[str, object]
     cells: list[DemoSomCell]
+    benchmark_bands: list[DemoSomBenchmarkBand]
     segments: list[DemoSomSegmentSummary]
     selected_report: Optional[DemoSomSelectedReport] = None
 

@@ -265,6 +265,14 @@ function formatUsd(value) {
   return new Intl.NumberFormat("uk-UA", { style: "currency", currency: "USD" }).format(Number(value));
 }
 
+function formatUsdPerCarat(value, compact = false) {
+  return `${new Intl.NumberFormat("uk-UA", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: compact ? 0 : 2,
+  }).format(Number(value))}/ct`;
+}
+
 function renderSom(container, data, labelFor) {
   const selected = data.selected_report;
   const grid = createElement("div", "demo-som-grid");
@@ -318,7 +326,37 @@ function renderSom(container, data, labelFor) {
   right.append(createElement("p", "account-help", "Synthetic орієнтир — лише демонстраційна величина сценарію, не прогнозована чи ринкова ціна."));
   const layout = createElement("div", "demo-som-layout");
   layout.append(left, right);
-  container.replaceChildren(layout);
+  const benchmarkMap = createElement("section", "demo-som-map demo-som-map--benchmark");
+  const benchmarkGrid = createElement("div", "demo-som-grid demo-som-grid--benchmark");
+  benchmarkGrid.style.setProperty("--som-size", String(data.grid_size));
+  for (const cell of data.cells) {
+    const band = cell.benchmark_band || "empty";
+    const value = cell.median_reference_usd_per_carat;
+    const button = createElement("button", `demo-som-cell demo-som-benchmark-cell demo-som-benchmark-cell--${band}`, value === null || value === undefined ? "—" : formatUsdPerCarat(value, true));
+    button.type = "button";
+    button.title = value === null || value === undefined
+      ? "У цій SOM-клітинці немає synthetic benchmark"
+      : `${formatUsdPerCarat(value)} · ${cell.report_count} synthetic звітів`;
+    button.setAttribute("aria-label", button.title);
+    if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
+    benchmarkGrid.append(button);
+  }
+  const benchmarkLegend = createElement("div", "demo-som-legend demo-som-benchmark-legend");
+  for (const band of data.benchmark_bands || []) {
+    const item = createElement("div", `demo-som-legend__item demo-som-benchmark-legend__item--${band.key}`);
+    const lower = band.lower_bound_usd_per_carat === null || band.lower_bound_usd_per_carat === undefined ? null : formatUsdPerCarat(band.lower_bound_usd_per_carat);
+    const upper = band.upper_bound_usd_per_carat === null || band.upper_bound_usd_per_carat === undefined ? null : formatUsdPerCarat(band.upper_bound_usd_per_carat);
+    const range = lower && upper ? `${lower} – ${upper}` : lower ? `від ${lower}` : `до ${upper}`;
+    item.append(createElement("strong", "", band.label), createElement("span", "", `${range} · ${band.cell_count} клітинок`));
+    benchmarkLegend.append(item);
+  }
+  benchmarkMap.append(
+    createElement("h3", "", "Карта synthetic benchmark сегментів"),
+    benchmarkGrid,
+    benchmarkLegend,
+    createElement("p", "account-help", "Та самі SOM-координати й marker. Значення в клітинці — медіанний дозволений synthetic USD/ct; це не прогноз, не market value і не інвестиційна категорія."),
+  );
+  container.replaceChildren(layout, benchmarkMap);
 }
 
 function initDemoWorkflowTabs(root, datasetId, token, labelFor) {

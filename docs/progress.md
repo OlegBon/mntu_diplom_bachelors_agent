@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-27 — synthetic-som-benchmark-map
+
+- **Задача:** завершити 159 другою thematic проєкцією synthetic SOM.
+- **Змінені файли:** `backend/{synthetic_som,schemas,crud}.py`, `frontend/src/{js/modules/demo-reports.js,scss/_ui-primitives.scss}`, `tests/unit/test_synthetic_som_benchmark.py`, `docs/{guides/synthetic-som-demo,backlog/README,work_plan,progress}.md`.
+- **Рішення / Результат:** API read-only обчислює для кожної непорожньої SOM-клітинки точну медіану дозволеного synthetic `USD/ct` і розподіляє медіани клітинок на чотири детерміновані nearest-rank квартильні смуги. Під основною картою з’явилася друга карта з тими самими координатами й marker обраного звіту; клітинки показують synthetic `USD/ct`, легенда — межі й кількість клітинок. Це не змінює immutable artifact, dataset, policy scenario, реальні ціни чи operational дані.
+- **Перевірки:** `pytest tests/unit/test_synthetic_som_benchmark.py tests/api/test_demo_som.py` — 3 passed; `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — без помилок; `scripts/check_doc_links.py` — очікується перед фінальним комітом.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** тематична карта є лише описовим synthetic benchmark. Browser automation у цьому середовищі недоступна, тому потрібна ручна локальна UI-перевірка до merge.
+
 ## 2026-09-27 — work-plan-backlog-queue-alignment
 
 - **Задача:** узгодити коротку «Рекомендовану чергу активних задач» з повним активним backlog.

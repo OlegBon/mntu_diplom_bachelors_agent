@@ -221,12 +221,6 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
     for assignment, report, stone in assignments:
         cells.setdefault((assignment.som_x, assignment.som_y), []).append((assignment, report, stone))
 
-    def median_decimal(values: list[Decimal]) -> Decimal | None:
-        if not values:
-            return None
-        ordered = sorted(values)
-        return ordered[len(ordered) // 2]
-
     def segment_key(x: int, y: int) -> str:
         return ("A", "B", "C", "D")[(x // 5) + 2 * (y // 5)]
 
@@ -260,14 +254,47 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
             reference_max=reference_max, dominant_shapes=shapes,
         ))
 
+    cell_reference_per_carat: dict[tuple[int, int], Decimal | None] = {
+        coordinates: synthetic_som.median_decimal(
+            assignment.selected_reference_amount / stone.carat_weight
+            for assignment, _report, stone in members
+            if stone.carat_weight is not None and stone.carat_weight > 0
+        )
+        for coordinates, members in cells.items()
+    }
+    benchmark_thresholds = synthetic_som.benchmark_quantile_thresholds(
+        value for value in cell_reference_per_carat.values() if value is not None
+    )
+    benchmark_labels = {
+        "q1": "Нижчий synthetic benchmark",
+        "q2": "Помірний synthetic benchmark",
+        "q3": "Вищий synthetic benchmark",
+        "q4": "Найвищий synthetic benchmark",
+    }
+    benchmark_bands = []
+    if benchmark_thresholds is not None:
+        for index, key in enumerate(synthetic_som.BENCHMARK_BAND_KEYS):
+            benchmark_bands.append(schemas.DemoSomBenchmarkBand(
+                key=key,
+                label=benchmark_labels[key],
+                lower_bound_usd_per_carat=benchmark_thresholds[index - 1] if index else None,
+                upper_bound_usd_per_carat=benchmark_thresholds[index] if index < 3 else None,
+                cell_count=sum(
+                    synthetic_som.benchmark_band(value, benchmark_thresholds) == key
+                    for value in cell_reference_per_carat.values()
+                ),
+            ))
+
     serialized_cells = []
     for x in range(artifact.grid_size):
         for y in range(artifact.grid_size):
             members = cells.get((x, y), [])
             serialized_cells.append(schemas.DemoSomCell(
                 x=x, y=y, report_count=len(members), segment_label=segment_lookup[segment_key(x, y)][0],
-                median_carat_weight=median_decimal([member[2].carat_weight for member in members if member[2].carat_weight is not None]),
-                median_reference_amount=median_decimal([member[0].selected_reference_amount for member in members]),
+                median_carat_weight=synthetic_som.median_decimal(member[2].carat_weight for member in members if member[2].carat_weight is not None),
+                median_reference_amount=synthetic_som.median_decimal(member[0].selected_reference_amount for member in members),
+                median_reference_usd_per_carat=cell_reference_per_carat.get((x, y)),
+                benchmark_band=synthetic_som.benchmark_band(cell_reference_per_carat.get((x, y)), benchmark_thresholds),
             ))
     selected = None
     if report_id:
@@ -301,7 +328,7 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
         dataset_id=dataset_id, artifact_version=artifact.artifact_version,
         policy_scenario_id=artifact.policy_scenario_id, grid_size=artifact.grid_size,
         feature_names=json.loads(artifact.feature_schema), coverage=coverage,
-        cells=serialized_cells, segments=segments, selected_report=selected,
+        cells=serialized_cells, benchmark_bands=benchmark_bands, segments=segments, selected_report=selected,
     )
 
 
