@@ -96,7 +96,9 @@ export const updateMarketReferencePolicy = (policy, token) => requestApi(
 
 export const getMarketDataSnapshots = (token) => requestApi("/market-data/snapshots", { token });
 
-export const getFxDataSnapshots = (token) => requestApi("/market-data/fx-snapshots", { token });
+export const getFxDataSnapshots = (paramsOrToken, maybeToken) => analyticsRequest(
+  "/market-data/fx-snapshots", paramsOrToken, maybeToken,
+);
 
 export const getMarketProviderSchedules = (token) => requestApi("/market-data/provider-schedules", { token });
 

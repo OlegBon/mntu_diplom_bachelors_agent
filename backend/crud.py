@@ -1879,13 +1879,16 @@ def get_market_data_snapshots(db: Session) -> list[models.MarketDataSnapshot]:
     )
 
 
-def get_fx_data_snapshots(db: Session) -> list[models.FxDataSnapshot]:
-    return (
-        db.query(models.FxDataSnapshot)
-        .filter(models.FxDataSnapshot.provider_code == "nbu")
-        .order_by(models.FxDataSnapshot.retrieved_at.desc(), models.FxDataSnapshot.fx_snapshot_id.desc())
-        .all()
-    )
+def get_fx_data_snapshots(
+    db: Session, *, date_from: date | None = None, date_to: date | None = None,
+) -> list[models.FxDataSnapshot]:
+    """Return official NBU FX snapshots, optionally bounded by official rate date."""
+    query = db.query(models.FxDataSnapshot).filter(models.FxDataSnapshot.provider_code == "nbu")
+    if date_from is not None:
+        query = query.filter(models.FxDataSnapshot.rate_date >= date_from)
+    if date_to is not None:
+        query = query.filter(models.FxDataSnapshot.rate_date <= date_to)
+    return query.order_by(models.FxDataSnapshot.retrieved_at.desc(), models.FxDataSnapshot.fx_snapshot_id.desc()).all()
 
 
 def get_market_provider_schedules(db: Session) -> list[models.MarketProviderSchedule]:

@@ -562,6 +562,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const providerResults = root.querySelector("#demo-providers-results");
   const currencyStatus = root.querySelector("#demo-currency-status");
   const currencyResults = root.querySelector("#demo-currency-results");
+  const periodHelpNode = root.querySelector("#demo-workflow-period-help");
   const somStatus = root.querySelector("#demo-som-status");
   const somResults = root.querySelector("#demo-som-results");
   const somSearchForm = root.querySelector("#demo-som-report-search");
@@ -570,14 +571,17 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
   const providerDialog = root.querySelector("#demo-provider-dialog");
   const providerDialogContent = root.querySelector("#demo-provider-dialog-content");
-  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !providerResults || !currencyStatus || !currencyResults || !expertStatus || !administratorStatus || !providerStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent || !providerDialog || !providerDialogContent) return;
+  if (!form || !controls || !periodSummaryNode || !periodHelpNode || !expertResults || !administratorResults || !providerResults || !currencyStatus || !currencyResults || !expertStatus || !administratorStatus || !providerStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent || !providerDialog || !providerDialogContent) return;
 
   let activeTab = "reports";
 
   const activate = (tab) => {
     activeTab = tab;
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
-    controls.hidden = !["experts", "administrators", "providers"].includes(tab);
+    controls.hidden = !["experts", "administrators", "providers", "currency"].includes(tab);
+    periodHelpNode.textContent = tab === "currency"
+      ? "Зріз застосовується до офіційної дати курсу НБУ. Він не фільтрує demo-звіти, орієнтири чи SOM."
+      : "Дані за весь доступний період. У demo зрізі події та тривалості формуються детерміновано; вони не є active-time, review-cycle, SLA чи оцінкою реальних людей.";
     for (const button of tabButtons) {
       const active = button.dataset.demoTab === tab;
       button.classList.toggle("is-active", active);
@@ -591,6 +595,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     setStatus(expertStatus, message, "error");
     setStatus(administratorStatus, message, "error");
     setStatus(providerStatus, message, "error");
+    setStatus(currencyStatus, message, "error");
     return false;
   };
   const loadWorkflow = async () => {
@@ -624,10 +629,13 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     }
   };
   const loadCurrencySources = async () => {
+    const filters = filtersForSlice();
+    if (!validateSlice(filters)) return;
     setStatus(currencyStatus, "Завантаження офіційних FX-знімків НБУ…");
     try {
-      const snapshots = await getFxDataSnapshots(token);
+      const snapshots = await getFxDataSnapshots(filters, token);
       currencyStatus.replaceChildren();
+      periodSummaryNode.textContent = periodSummary(filters);
       renderCurrencySources(currencyResults, snapshots, providerDialog, providerDialogContent);
     } catch {
       setStatus(currencyStatus, "Не вдалося завантажити FX-знімки НБУ.", "error");
@@ -654,6 +662,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (activeTab === "providers") void loadProviders();
+    else if (activeTab === "currency") void loadCurrencySources();
     else void loadWorkflow();
   });
   somSearchForm.addEventListener("submit", (event) => {
@@ -668,6 +677,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   });
   form.addEventListener("reset", () => window.setTimeout(() => {
     if (activeTab === "providers") void loadProviders();
+    else if (activeTab === "currency") void loadCurrencySources();
     else void loadWorkflow();
   }, 0));
   dialog.addEventListener("close", () => dialogContent.replaceChildren());

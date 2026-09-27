@@ -1174,10 +1174,14 @@ def read_market_data_snapshots(
 
 @app.get("/market-data/fx-snapshots", response_model=List[schemas.FxDataSnapshotResponse])
 def read_fx_data_snapshots(
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
     db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
 ):
     require_admin(current_user)
-    return crud.get_fx_data_snapshots(db)
+    if date_from is not None and date_to is not None and date_from > date_to:
+        raise HTTPException(status_code=422, detail="date_from must not be after date_to")
+    return crud.get_fx_data_snapshots(db, date_from=date_from, date_to=date_to)
 
 
 @app.get("/market-data/provider-schedules", response_model=List[schemas.MarketProviderScheduleResponse])
