@@ -1,4 +1,4 @@
-import { getDemoDataset, getDemoReports, getDemoProviderAnalytics, getDemoWorkflowAnalytics, getDemoSom, getGradeMappings } from "./api.js";
+import { getDemoDataset, getDemoReports, getDemoProviderAnalytics, getDemoWorkflowAnalytics, getDemoSom, getFxDataSnapshots, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderTable } from "./analytics-ui.js";
 
@@ -270,13 +270,16 @@ function openDemoProviderDialog(dialog, content, provider, datasetId) {
   metrics.className = "analytics-metrics";
   [
     ["Тип джерела", provider.source_class],
-    ["Provenance", provider.provenance],
-    ["Статус умов", provider.terms_status],
+    ["Походження даних", provider.provenance],
+    ["Статус договору й умов", provider.terms_status],
     ["Покриття у зрізі", `${provider.covered_report_count} із ${provider.candidate_report_count} demo-звітів`],
-    ["Кількість synthetic значень", provider.reference_count],
+    ["Тип значень", "Synthetic demonstration reference"],
+    ["Кількість значень", provider.reference_count],
     ["Період значень", `${provider.first_period} — ${provider.last_period}`],
-    ["Медіанний synthetic орієнтир", provider.median_amount === null ? "—" : formatUsd(provider.median_amount)],
-    ["Діапазон synthetic орієнтирів", provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`],
+    ["Медіанний орієнтир", provider.median_amount === null ? "—" : formatUsd(provider.median_amount)],
+    ["Діапазон орієнтирів", provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`],
+    ["Знімки провайдера", "Не створюються: значення детерміновано генерує локальний demo-набір."],
+    ["Останнє отримання", "Не застосовується: немає зовнішнього сервісу."],
   ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
   const sample = provider.latest_report_id ? createElement("a", "id-link", provider.latest_report_id) : null;
   if (sample) sample.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(provider.latest_report_id)}`;
@@ -290,6 +293,48 @@ function openDemoProviderDialog(dialog, content, provider, datasetId) {
     sampleSection,
   );
   dialog.showModal();
+}
+
+function renderCurrencySources(container, snapshots, dialog, dialogContent) {
+  container.replaceChildren();
+  if (!snapshots.length) {
+    container.append(createElement("p", "account-help", "Знімків офіційного курсу НБУ ще немає."));
+    return;
+  }
+  const latest = snapshots[0];
+  const rate = Number(latest.rate).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const sourceButton = createElement("button", "analytics-expert-button", "Національний банк України (НБУ)");
+  sourceButton.type = "button";
+  sourceButton.addEventListener("click", () => {
+    const metrics = document.createElement("dl");
+    metrics.className = "analytics-metrics";
+    [
+      ["Тип джерела", "Офіційний валютний провайдер"],
+      ["Походження даних", "Офіційний сервіс НБУ"],
+      ["Тип значень", `${latest.base_currency_code}/${latest.quote_currency_code} official FX rate`],
+      ["Кількість знімків", snapshots.length],
+      ["Останній курс", `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`],
+      ["Офіційна дата курсу", formatDateTime(`${latest.rate_date}T00:00:00`).date],
+      ["Останнє отримання", `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`],
+    ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
+    dialogContent.replaceChildren(
+      createElement("h3", "", "Національний банк України (НБУ)"),
+      metrics,
+      createElement("p", "account-help", "FX-знімки зберігаються immutable. Вони застосовуються лише для окремої USD/UAH-конвертації дозволених орієнтирів і не є ціною, оцінкою або аналітикою каменю."),
+    );
+    dialog.showModal();
+  });
+  const tableHost = document.createElement("div");
+  tableHost.className = "table-container demo-provider-analytics__table";
+  renderTable(tableHost, ["Валютне джерело", "Пара", "Останній курс", "Офіційна дата", "Отримано", "Знімків"], [[
+    sourceButton,
+    `${latest.base_currency_code}/${latest.quote_currency_code}`,
+    `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`,
+    formatDateTime(`${latest.rate_date}T00:00:00`).date,
+    `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`,
+    String(snapshots.length),
+  ]]);
+  container.append(tableHost);
 }
 
 function renderDemoProviderAnalytics(container, data, datasetId, dialog, dialogContent) {
@@ -504,6 +549,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     administrators: root.querySelector("#demo-administrators-panel"),
     providers: root.querySelector("#demo-providers-panel"),
     stones: root.querySelector("#demo-stones-panel"),
+    currency: root.querySelector("#demo-currency-panel"),
   };
   const form = root.querySelector("#demo-workflow-slice");
   const controls = root.querySelector("#demo-workflow-controls");
@@ -514,6 +560,8 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const administratorStatus = root.querySelector("#demo-administrators-status");
   const providerStatus = root.querySelector("#demo-providers-status");
   const providerResults = root.querySelector("#demo-providers-results");
+  const currencyStatus = root.querySelector("#demo-currency-status");
+  const currencyResults = root.querySelector("#demo-currency-results");
   const somStatus = root.querySelector("#demo-som-status");
   const somResults = root.querySelector("#demo-som-results");
   const somSearchForm = root.querySelector("#demo-som-report-search");
@@ -522,14 +570,14 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
   const providerDialog = root.querySelector("#demo-provider-dialog");
   const providerDialogContent = root.querySelector("#demo-provider-dialog-content");
-  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !providerResults || !expertStatus || !administratorStatus || !providerStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent || !providerDialog || !providerDialogContent) return;
+  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !providerResults || !currencyStatus || !currencyResults || !expertStatus || !administratorStatus || !providerStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent || !providerDialog || !providerDialogContent) return;
 
   let activeTab = "reports";
 
   const activate = (tab) => {
     activeTab = tab;
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
-    controls.hidden = tab === "reports" || tab === "stones";
+    controls.hidden = !["experts", "administrators", "providers"].includes(tab);
     for (const button of tabButtons) {
       const active = button.dataset.demoTab === tab;
       button.classList.toggle("is-active", active);
@@ -575,6 +623,16 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       setStatus(providerStatus, "Не вдалося завантажити synthetic provider analytics.", "error");
     }
   };
+  const loadCurrencySources = async () => {
+    setStatus(currencyStatus, "Завантаження офіційних FX-знімків НБУ…");
+    try {
+      const snapshots = await getFxDataSnapshots(token);
+      currencyStatus.replaceChildren();
+      renderCurrencySources(currencyResults, snapshots, providerDialog, providerDialogContent);
+    } catch {
+      setStatus(currencyStatus, "Не вдалося завантажити FX-знімки НБУ.", "error");
+    }
+  };
   const loadSom = async (requestedId = new URLSearchParams(window.location.search).get("som_report") || "") => {
     setStatus(somStatus, "Завантаження synthetic SOM…");
     try {
@@ -591,6 +649,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     activate(button.dataset.demoTab);
     if (button.dataset.demoTab === "stones") void loadSom();
     if (button.dataset.demoTab === "providers") void loadProviders();
+    if (button.dataset.demoTab === "currency") void loadCurrencySources();
   });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -614,10 +673,10 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   dialog.addEventListener("close", () => dialogContent.replaceChildren());
   providerDialog.addEventListener("close", () => providerDialogContent.replaceChildren());
   void loadWorkflow();
-  if (new URLSearchParams(window.location.search).get("tab") === "stones") {
-    activate("stones");
-    void loadSom();
-  }
+  const requestedTab = new URLSearchParams(window.location.search).get("tab");
+  if (requestedTab === "stones") { activate("stones"); void loadSom(); }
+  if (requestedTab === "providers") { activate("providers"); void loadProviders(); }
+  if (requestedTab === "currency") { activate("currency"); void loadCurrencySources(); }
 }
 
 export async function initDemoReports() {
