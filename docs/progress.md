@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-27 — synthetic-som-demo-foundation
+
+- **Задача:** реалізувати базовий підетап 159 — isolated reproducible SOM для `synthetic-demo-v4` та задокументувати його межі.
+- **Змінені файли:** `backend/{synthetic_som,models,schemas,crud,main}.py`, `alembic/versions/0019_demo_som_artifacts.py`, `scripts/generate_synthetic_som_artifact.py`, `frontend/src/{pug/pages/demo-reports.pug,js/modules/{api,demo-reports}.js,scss/_ui-primitives.scss}`, `tests/api/test_demo_som.py`, `docs/{guides/{README,synthetic-som-demo}.md,backlog/{README,159-synthetic-som-demo,170-guides-information-architecture}.md,work_plan,progress}.md`.
+- **Рішення / Результат:** `0019` додає immutable `demo_som_artifacts` і `demo_som_assignments` окремо від reserved `ml_results`; explicit generator створив artifact `#1` для `synthetic-demo-v4` з 990 assignments. SOM використовує фіксований seed, normalized 4C/geometry та policy-selected synthetic `USD/ct`; 10 vector-ів виключено, коли сценарій не залишає дозволеного provider value. Admin opt-in UI має карту, explanatory profile, zone legend, report search, links до peers і дію `⋮ → Аналіз SOM`; усі твердження лишаються synthetic/descriptive. Додано guide, а 170 планує перенесення пояснювальної документації без дублювання ADR/architecture/backlog.
+- **Перевірки:** `0019_demo_som_artifacts (head)` застосовано до local MariaDB; `alembic check` — без diff; targeted `pytest tests/api/test_demo_som.py` — passed; `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** thematic synthetic `USD/ct` benchmark map ще є наступним підетапом 159. Real SOM/market analytics не доступні до 151–153 і не використовують OpenFacet/IDEX як training data без окремого дозволу.
+
 ## 2026-09-26 — ui-spacing-layout-planning
 
 - **Задача:** зафіксувати 169 — системний UX/UI audit відступів і layout consistency.

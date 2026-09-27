@@ -20,6 +20,7 @@
 | [current-domain-and-report-workflow.md](./current-domain-and-report-workflow.md) | Повний актуальний шлях звіту: ролі, wizard, поля, IDC, statuses/review, private media, public passport, код/URL/QR, PDF та межі публічних даних. |
 | [idc-demo-v1-ruleset.md](./idc-demo-v1-ruleset.md) | Межі `idc-demo-v1`, матриця IDC 2013, джерела expert grades і безпечне оновлення ruleset. |
 | [demo-dataset-operations.md](./demo-dataset-operations.md) | Ізоляція synthetic demo dataset, scope, manifest, inventory, backfill і rollback межі. |
+| [synthetic-som-demo.md](./synthetic-som-demo.md) | Як працює ізольована SOM-карта, policy scenario, artifact, UI та межі щодо real analytics. |
 | [mariadb-local-recovery.md](./mariadb-local-recovery.md) | Безпечний перехід з аварійного XAMPP MariaDB у чисте локальне середовище через SQL-дампи. |
 
 ## Заплановані guides
@@ -28,6 +29,9 @@
 - `backend-api-guide.md` — FastAPI, JWT, RBAC, контракти й помилки API.
 - `database-guide.md` — MariaDB-схеми, seed, майбутні Alembic-міграції.
 - `testing-guide.md` — pytest, JS/DOM, Playwright і межі тестового контуру.
+
+План перенесення пояснювальних матеріалів у guides без дублювання рішень або
+архітектури — [170](../backlog/170-guides-information-architecture.md).
 
 Ці файли додаються лише тоді, коли їхній зміст буде звірено з кодом; назви не
 означають, що відповідний guide або функціонал уже реалізовано.

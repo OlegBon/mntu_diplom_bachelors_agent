@@ -38,6 +38,10 @@
   checksum, schema/normalisation/coverage та immutable `report → cell`
   assignments належать лише `diamond_oltp.demo_som_*`. API ніколи не тренує
   модель у GET-запиті; генератор створює artifact окремою явною командою.
+- Після основної карти додати другу thematic проєкцію тих самих клітинок:
+  synthetic benchmark segment map за медіанним дозволеним `USD/ct`. Вона має
+  спільний marker, явну легенду квантилів і не є predicted price, market
+  value або investment category.
 
 ## Перевірки
 
