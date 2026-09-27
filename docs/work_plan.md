@@ -127,17 +127,24 @@
 
 ### Рекомендована черга активних задач
 
-1. `159 → 171 → 165` — завершити SOM, прибрати local auth logout під час transient restart/error, далі додати fictional provider analytics без змішування з operational даними.
-   fictional provider analytics без змішування з operational даними.
-   `166` — незалежний P2 safety gate перед будь-якою реальною класифікацією
-   historical `DR-*`; його не запускають як неявну частину demo-аналітики.
-2. `163` — показати operations/coverage provider-ів на вже реальних і demo
-   provider records; `141` може готувати English IDEX mock-up паралельно, але
-   не відкриває live IDEX без їхнього письмового approval.
-3. `169 → 145`, `154`, `155`, `151 → 152 → 153` — спершу окремий UI spacing audit, далі i18n та наступні аналітичні
-   контури за їхніми окремими залежностями.
-4. `160 → 137 → 161 → 140` — лише після локального verified experiment:
-   platform decision, CI gate, PostgreSQL/staging і managed deployment.
+1. `159 → 171 → 165` — завершити запланований підетап SOM (thematic synthetic
+   `USD/ct` map), прибрати local auth logout під час transient restart/error, далі
+   додати fictional provider analytics без змішування з operational даними.
+2. Незалежні контури, які можна планувати окремо: `169` (UI spacing/layout),
+   `170` (information architecture для guides), `166` (P2 safety gate перед
+   будь-якою historical synthetic reclassification `DR-*`). `166` не є неявною
+   частиною demo-аналітики.
+3. Provider-напрям: `163` — operations/coverage для наявних real і demo provider
+   records після 122/162; `141` може готувати English IDEX mock-up паралельно, але
+   не відкриває live IDEX без письмового approval.
+4. Наступні продуктові та аналітичні контури: `145` — лише після 146 і рішення
+   `160`; `154` і `155` — незалежні контури; `151 → 152 → 153` — ліцензований
+   data contract, верифікований експеримент і лише тоді descriptive analytics для
+   реальних даних.
+5. Delivery-залежність: після локального verified experiment `152` — `160 → 137
+   → 161 → 140`: platform decision, CI gate, PostgreSQL/staging і managed
+   deployment. Після цього залишаються операційні налаштування CORS, secrets,
+   health-check, доменів/TLS та ручного production smoke-test.
 
 ### Зафіксовані розбіжності з початковими нотатками
 
