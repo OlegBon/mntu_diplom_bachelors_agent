@@ -320,7 +320,7 @@ function renderSom(container, data, labelFor) {
     item.append(createElement("strong", "", `${segment.label} · ${segment.report_count}`), createElement("span", "", `${segment.carat_min}–${segment.carat_max} ct · ${segment.dominant_shapes.join(" / ")}`));
     legend.append(item);
   }
-  left.append(createElement("h3", "", "Карта сегментів"), mainMapViewport, createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."), legend, mainCellDetails, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Кольори відповідають описовим профілям у легенді, не класам якості.`));
+  left.append(createElement("h3", "", "Карта сегментів"), mainMapViewport, mainCellDetails, createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."), legend, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Кольори відповідають описовим профілям у легенді, не класам якості.`));
   const right = createElement("aside", "demo-som-profile");
   right.append(createElement("h3", "", "Профіль показового каменю"));
   if (selected) {
@@ -407,9 +407,9 @@ function renderSom(container, data, labelFor) {
   benchmarkMap.append(
     createElement("h3", "", "Карта synthetic benchmark сегментів · USD/ct"),
     benchmarkViewport,
+    benchmarkCellDetails,
     createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."),
     benchmarkLegend,
-    benchmarkCellDetails,
     createElement("p", "account-help", "Та самі SOM-координати й marker. Значення в клітинці — медіанний дозволений synthetic USD/ct; це не прогноз, не market value і не інвестиційна категорія."),
   );
   const benchmarkProfile = createElement("aside", "demo-som-profile");
