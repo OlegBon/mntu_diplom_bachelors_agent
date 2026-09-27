@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-27 — session-resilience-planning
+
+- **Задача:** зафіксувати 171 після діагностики неочікуваних logout у local development.
+- **Змінені файли:** `docs/{progress,work_plan}.md`, `docs/backlog/{README,171-session-resilience-and-production-auth}.md`.
+- **Рішення / Результат:** підтверджено, що поточний JWT access token живе 30 хвилин, а frontend на protected-page bootstrap трактує будь-яку помилку `/users/me` як невалідну сесію. Етап A 171 відокремлює local resilience: `401` очищує token, network/temporary `5xx` — лише retry state; TTL для local MVP буде конфігурованим і практичним. Етап B до production замінює довгий JWT на короткий access + rotating, server-revocable refresh session у secure HttpOnly cookie.
+- **Перевірки:** read-only audit `backend/security.py`, `/token`, `get_current_user`, frontend bootstrap і API error handlers; дані, schema, JWT, `.env` і runtime не змінювалися.
+- **Нові змінні середовища:** немає на етапі планування.
+- **Обмеження:** 171 ще не реалізована; current 30-minute token і aggressive transient-error logout лишаються чинними до її виконання.
+
 ## 2026-09-27 — synthetic-som-demo-foundation
 
 - **Задача:** реалізувати базовий підетап 159 — isolated reproducible SOM для `synthetic-demo-v4` та задокументувати його межі.
