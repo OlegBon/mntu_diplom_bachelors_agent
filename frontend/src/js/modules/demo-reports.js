@@ -278,7 +278,7 @@ function openDemoProviderDialog(dialog, content, provider, datasetId) {
     ["Період значень", `${provider.first_period} — ${provider.last_period}`],
     ["Медіанний орієнтир", provider.median_amount === null ? "—" : formatUsd(provider.median_amount)],
     ["Діапазон орієнтирів", provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`],
-    ["Знімки провайдера", "Не створюються: значення детерміновано генерує локальний demo-набір."],
+    ["Знімок провайдера", "Не передбачено: значення детерміновано генерує локальний demo-набір."],
     ["Останнє отримання", "Не застосовується: немає зовнішнього сервісу."],
   ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
   const sample = provider.latest_report_id ? createElement("a", "id-link", provider.latest_report_id) : null;

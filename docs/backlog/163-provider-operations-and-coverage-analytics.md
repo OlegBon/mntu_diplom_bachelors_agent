@@ -13,6 +13,11 @@
 
 ## Scope
 
+Коли вкладка буде додана до real «Аналітики», порядок має бути:
+**Камені → Експерти → Адміністратори → Провайдери → Валютні джерела**.
+Date slice показується лише для вкладок, на чиї дані він реально впливає;
+валютні FX-знімки є окремою категорією, а не market-reference provider-ом.
+
 - Freshness останнього snapshot-а, configured warn/block thresholds,
   scheduled/manual outcomes, retry, candidate → approved/rejected і причина.
 - Coverage нових або змінених operational drafts за provider-ом; причини
