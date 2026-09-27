@@ -265,17 +265,53 @@ function formatUsd(value) {
   return new Intl.NumberFormat("uk-UA", { style: "currency", currency: "USD" }).format(Number(value));
 }
 
+function formatUsdPerCarat(value, compact = false) {
+  return `${new Intl.NumberFormat("uk-UA", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: compact ? 0 : 2,
+  }).format(Number(value))}/ct`;
+}
+
+function formatCompactUsdPerCarat(value) {
+  const amount = Number(value);
+  if (amount >= 1000) return `${(amount / 1000).toLocaleString("uk-UA", { maximumFractionDigits: 1 })}k`;
+  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 }).format(amount);
+}
+
+function createSomCellDetails() {
+  const details = createElement("p", "demo-som-cell-details account-help");
+  details.hidden = true;
+  details.setAttribute("role", "status");
+  return details;
+}
+
+function showSomCellDetails(container, text) {
+  container.textContent = text;
+  container.hidden = false;
+}
+
 function renderSom(container, data, labelFor) {
   const selected = data.selected_report;
   const grid = createElement("div", "demo-som-grid");
+  const mainCellDetails = createSomCellDetails();
   grid.style.setProperty("--som-size", String(data.grid_size));
   for (const cell of data.cells) {
     const button = createElement("button", `demo-som-cell demo-som-cell--${cell.segment_label.slice(-1).toLowerCase()}`, String(cell.report_count));
     button.type = "button";
     button.title = `${cell.segment_label}: ${cell.report_count} synthetic звітів`;
+    button.setAttribute("aria-label", `${cell.segment_label}, клітинка ${cell.x + 1} × ${cell.y + 1}: ${cell.report_count} synthetic звітів. Показати деталі клітинки.`);
+    button.addEventListener("click", () => showSomCellDetails(mainCellDetails, [
+      `Клітинка ${cell.x + 1} × ${cell.y + 1} · ${cell.segment_label}.`,
+      `${cell.report_count} synthetic звітів.`,
+      cell.median_carat_weight === null || cell.median_carat_weight === undefined ? "Медіанна вага: —." : `Медіанна вага: ${cell.median_carat_weight} ct.`,
+      cell.median_reference_amount === null || cell.median_reference_amount === undefined ? "Медіанний synthetic орієнтир: —." : `Медіанний synthetic орієнтир: ${formatUsd(cell.median_reference_amount)}.`,
+    ].join(" ")));
     if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
     grid.append(button);
   }
+  const mainMapViewport = createElement("div", "demo-som-map__viewport");
+  mainMapViewport.append(grid);
   const coverage = data.coverage || {};
   const left = createElement("section", "demo-som-map");
   const legend = createElement("div", "demo-som-legend");
@@ -284,7 +320,7 @@ function renderSom(container, data, labelFor) {
     item.append(createElement("strong", "", `${segment.label} · ${segment.report_count}`), createElement("span", "", `${segment.carat_min}–${segment.carat_max} ct · ${segment.dominant_shapes.join(" / ")}`));
     legend.append(item);
   }
-  left.append(createElement("h3", "", "Карта сегментів"), grid, legend, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Кольори відповідають описовим профілям у легенді, не класам якості.`));
+  left.append(createElement("h3", "", "Карта сегментів"), mainMapViewport, mainCellDetails, createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."), legend, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Кольори відповідають описовим профілям у легенді, не класам якості.`));
   const right = createElement("aside", "demo-som-profile");
   right.append(createElement("h3", "", "Профіль показового каменю"));
   if (selected) {
@@ -318,7 +354,86 @@ function renderSom(container, data, labelFor) {
   right.append(createElement("p", "account-help", "Synthetic орієнтир — лише демонстраційна величина сценарію, не прогнозована чи ринкова ціна."));
   const layout = createElement("div", "demo-som-layout");
   layout.append(left, right);
-  container.replaceChildren(layout);
+  const overview = data.map_overview || {};
+  const overviewSection = createElement("section", "demo-som-overview");
+  overviewSection.append(createElement("h3", "", "Огляд карти"));
+  const overviewMetrics = createElement("dl", "demo-som-overview__metrics");
+  const providerUsage = Object.entries(overview.provider_usage || {}).map(([provider, count]) => `${provider}: ${count}`).join(" · ") || "—";
+  [
+    ["Охоплення", `${coverage.accepted_reports ?? 0} включено · ${coverage.excluded_reports ?? 0} виключено`],
+    ["Зайнято клітинок", `${overview.occupied_cells ?? 0} із ${data.grid_size ** 2}`],
+    ["Найщільніша клітинка", `${overview.densest_cell ?? "—"} · ${overview.densest_cell_report_count ?? 0} каменів`],
+    ["Найбільша зона", `${overview.largest_segment_label ?? "—"} · ${overview.largest_segment_report_count ?? 0} каменів`],
+    ["Дозволені орієнтири", providerUsage],
+  ].forEach(([term, value]) => {
+    const item = createElement("div", "demo-som-overview__item");
+    item.append(createElement("dt", "", term), createElement("dd", "", value));
+    overviewMetrics.append(item);
+  });
+  overviewSection.append(overviewMetrics);
+  const benchmarkMap = createElement("section", "demo-som-map");
+  const benchmarkGrid = createElement("div", "demo-som-grid demo-som-grid--benchmark");
+  const benchmarkCellDetails = createSomCellDetails();
+  benchmarkGrid.style.setProperty("--som-size", String(data.grid_size));
+  for (const cell of data.cells) {
+    const band = cell.benchmark_band || "empty";
+    const value = cell.median_reference_usd_per_carat;
+    const button = createElement("button", `demo-som-cell demo-som-benchmark-cell demo-som-benchmark-cell--${band}`, value === null || value === undefined ? "—" : formatCompactUsdPerCarat(value));
+    button.type = "button";
+    button.title = value === null || value === undefined
+      ? "У цій SOM-клітинці немає synthetic benchmark"
+      : `${formatUsdPerCarat(value)} · ${cell.report_count} synthetic звітів`;
+    button.setAttribute("aria-label", button.title);
+    button.addEventListener("click", () => {
+      const bandLabel = (data.benchmark_bands || []).find((band) => band.key === cell.benchmark_band)?.label || "Synthetic benchmark недоступний";
+      showSomCellDetails(benchmarkCellDetails, value === null || value === undefined
+        ? `Клітинка ${cell.x + 1} × ${cell.y + 1}. У ній немає synthetic benchmark.`
+        : `Клітинка ${cell.x + 1} × ${cell.y + 1} · ${bandLabel}. Медіанний дозволений synthetic орієнтир: ${formatUsdPerCarat(value)}. ${cell.report_count} synthetic звітів.`);
+    });
+    if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
+    benchmarkGrid.append(button);
+  }
+  const benchmarkViewport = createElement("div", "demo-som-map__viewport");
+  benchmarkViewport.append(benchmarkGrid);
+  const benchmarkLegend = createElement("div", "demo-som-legend demo-som-benchmark-legend");
+  for (const band of data.benchmark_bands || []) {
+    const item = createElement("div", `demo-som-legend__item demo-som-benchmark-legend__item--${band.key}`);
+    const lower = band.lower_bound_usd_per_carat === null || band.lower_bound_usd_per_carat === undefined ? null : formatUsdPerCarat(band.lower_bound_usd_per_carat);
+    const upper = band.upper_bound_usd_per_carat === null || band.upper_bound_usd_per_carat === undefined ? null : formatUsdPerCarat(band.upper_bound_usd_per_carat);
+    const range = lower && upper ? `${lower} – ${upper}` : lower ? `від ${lower}` : `до ${upper}`;
+    item.append(createElement("strong", "", band.label), createElement("span", "", `${range} · ${band.cell_count} клітинок`));
+    benchmarkLegend.append(item);
+  }
+  benchmarkMap.append(
+    createElement("h3", "", "Карта synthetic benchmark сегментів · USD/ct"),
+    benchmarkViewport,
+    benchmarkCellDetails,
+    createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."),
+    benchmarkLegend,
+    createElement("p", "account-help", "Та самі SOM-координати й marker. Значення в клітинці — медіанний дозволений synthetic USD/ct; це не прогноз, не market value і не інвестиційна категорія."),
+  );
+  const benchmarkProfile = createElement("aside", "demo-som-profile");
+  const selectedBenchmarkCell = selected
+    ? data.cells.find((cell) => cell.x === selected.som_x && cell.y === selected.som_y)
+    : null;
+  if (selectedBenchmarkCell?.median_reference_usd_per_carat !== null && selectedBenchmarkCell?.median_reference_usd_per_carat !== undefined) {
+    const selectedBenchmark = createElement("section", "demo-som-benchmark demo-som-benchmark--summary");
+    selectedBenchmark.append(
+      createElement("h4", "", "Медіанний дозволений synthetic орієнтир клітинки"),
+      createElement("strong", "", formatUsdPerCarat(selectedBenchmarkCell.median_reference_usd_per_carat)),
+      createElement("span", "", `Клітинка ${selected.som_x + 1} × ${selected.som_y + 1} · ${selectedBenchmarkCell.report_count} synthetic звітів.`),
+    );
+    benchmarkProfile.append(selectedBenchmark);
+  }
+  benchmarkProfile.append(
+    createElement("h3", "", "Як читати benchmark-карту"),
+    createElement("p", "account-help", "Кожна клітинка показує медіанний дозволений synthetic USD/ct каменів у цій самій SOM-клітинці. Тому карта зберігає сусідство основної SOM, але підсвічує відносний рівень synthetic орієнтирів."),
+    createElement("p", "account-help", "Чотири кольори — квартилі медіан клітинок поточного immutable artifact. Вони не є класами якості, ринковими сегментами, predicted price чи investment category."),
+    createElement("p", "account-help", "Значення у клітинках скорочені до k для читабельності; повне USD/ct доступне у підказці та доступній назві клітинки. Marker відповідає вибраному звіту і збігається з marker основної карти."),
+  );
+  const benchmarkLayout = createElement("div", "demo-som-layout demo-som-layout--benchmark");
+  benchmarkLayout.append(benchmarkMap, benchmarkProfile);
+  container.replaceChildren(overviewSection, layout, benchmarkLayout);
 }
 
 function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
@@ -374,12 +489,12 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
     }
   };
-  const loadSom = async (requestedId = new URLSearchParams(window.location.search).get("som_report") || "DEMO-00999") => {
+  const loadSom = async (requestedId = new URLSearchParams(window.location.search).get("som_report") || "") => {
     setStatus(somStatus, "Завантаження synthetic SOM…");
     try {
       const selectedId = requestedId.trim().toUpperCase();
       const data = await getDemoSom(datasetId, token, selectedId);
-      somSearchInput.value = selectedId;
+      somSearchInput.value = data.selected_report?.report_id || selectedId;
       somStatus.replaceChildren();
       renderSom(somResults, data, labelFor);
     } catch {

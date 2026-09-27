@@ -473,6 +473,25 @@ class DemoSomCell(BaseModel):
     segment_label: str
     median_carat_weight: Optional[Decimal] = None
     median_reference_amount: Optional[Decimal] = None
+    median_reference_usd_per_carat: Optional[Decimal] = None
+    benchmark_band: Optional[str] = None
+
+
+class DemoSomBenchmarkBand(BaseModel):
+    key: str
+    label: str
+    lower_bound_usd_per_carat: Optional[Decimal] = None
+    upper_bound_usd_per_carat: Optional[Decimal] = None
+    cell_count: int
+
+
+class DemoSomMapOverview(BaseModel):
+    occupied_cells: int
+    densest_cell: str
+    densest_cell_report_count: int
+    largest_segment_label: str
+    largest_segment_report_count: int
+    provider_usage: dict[str, int]
 
 
 class DemoSomSelectedReport(BaseModel):
@@ -495,6 +514,7 @@ class DemoSomSelectedReport(BaseModel):
     peer_report_ids: list[str] = Field(default_factory=list)
     segment_reference_min: Decimal
     segment_reference_max: Decimal
+    is_initial_example: bool = False
 
 
 class DemoSomSegmentSummary(BaseModel):
@@ -517,6 +537,8 @@ class DemoSomResponse(BaseModel):
     feature_names: list[str]
     coverage: dict[str, object]
     cells: list[DemoSomCell]
+    benchmark_bands: list[DemoSomBenchmarkBand]
+    map_overview: DemoSomMapOverview
     segments: list[DemoSomSegmentSummary]
     selected_report: Optional[DemoSomSelectedReport] = None
 

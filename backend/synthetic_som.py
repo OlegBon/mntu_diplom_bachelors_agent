@@ -26,6 +26,36 @@ FEATURE_NAMES = (
     "table_percent", "depth_percent", "crown_angle", "pavilion_angle",
     "permitted_demo_reference_usd_per_carat",
 )
+BENCHMARK_BAND_KEYS = ("q1", "q2", "q3", "q4")
+
+
+def median_decimal(values: Iterable[Decimal]) -> Decimal | None:
+    """Return an exact Decimal median for a non-empty sequence."""
+    ordered = sorted(values)
+    if not ordered:
+        return None
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) / Decimal("2")
+
+
+def benchmark_quantile_thresholds(values: Iterable[Decimal]) -> tuple[Decimal, Decimal, Decimal] | None:
+    """Return deterministic nearest-rank quartile thresholds for cell medians."""
+    ordered = sorted(values)
+    if not ordered:
+        return None
+    return tuple(ordered[max(0, int(np.ceil(len(ordered) * fraction)) - 1)] for fraction in (0.25, 0.5, 0.75))
+
+
+def benchmark_band(value: Decimal | None, thresholds: tuple[Decimal, Decimal, Decimal] | None) -> str | None:
+    """Classify a synthetic USD/ct cell summary into a display-only quartile band."""
+    if value is None or thresholds is None:
+        return None
+    for index, threshold in enumerate(thresholds):
+        if value <= threshold:
+            return BENCHMARK_BAND_KEYS[index]
+    return BENCHMARK_BAND_KEYS[-1]
 
 
 @dataclass(frozen=True)
