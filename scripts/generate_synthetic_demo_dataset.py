@@ -40,7 +40,7 @@ WORKFLOW_V4_GENERATOR_VERSION = "164-v4"
 DEFAULT_COUNT = 1_000
 DEFAULT_SEED = 15_700
 PROVENANCE = "synthetic-demo-v2; deterministic development-only records"
-ELIGIBILITY = ["demo_operations", "synthetic_som"]
+ELIGIBILITY = ["demo_operations", "synthetic_som", "demo_provider_analytics"]
 RANGE_START = datetime(2023, 1, 3, 9, 0)
 RANGE_END = datetime(2025, 12, 31, 9, 0)
 

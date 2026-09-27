@@ -16,6 +16,7 @@ from .security import get_password_hash, verify_password
 
 from .calculator import DiamondCalculator
 from . import synthetic_som
+from . import provider_analytics
 
 
 CURRENT_RULESET_ID = "idc-demo-v1"
@@ -437,6 +438,21 @@ def get_demo_workflow_analytics(
     return schemas.DemoWorkflowAnalyticsResponse(
         dataset_id=dataset_id, date_from=date_from, date_to=date_to,
         experts=serialize("gemologist"), administrators=serialize("admin"),
+    )
+
+
+def get_demo_provider_analytics(
+    db: Session, *, dataset_id: str, date_from: date | None, date_to: date | None,
+) -> schemas.ProviderAnalyticsResponse:
+    """Read fictional provider summaries without consulting market-provider tables."""
+    require_demo_dataset_analysis_eligibility(
+        db, dataset_id=dataset_id, scenario="demo_provider_analytics",
+    )
+    return provider_analytics.read_provider_analytics(
+        db,
+        scope=provider_analytics.demo_scope(dataset_id),
+        date_from=date_from,
+        date_to=date_to,
     )
 
 

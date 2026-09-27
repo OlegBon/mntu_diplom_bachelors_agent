@@ -466,6 +466,32 @@ class DemoWorkflowAnalyticsResponse(BaseModel):
     administrators: list[DemoWorkflowActorStats]
 
 
+class ProviderAnalyticsProvider(BaseModel):
+    """Neutral, read-only summary of one allowed valuation source."""
+
+    provider_name: str
+    reference_count: int
+    covered_report_count: int
+    first_observed_at: Optional[datetime]
+    last_observed_at: Optional[datetime]
+    min_amount: Optional[Decimal]
+    median_amount: Optional[Decimal]
+    max_amount: Optional[Decimal]
+    latest_report_id: Optional[str]
+
+
+class ProviderAnalyticsResponse(BaseModel):
+    """Scope-bound aggregation reusable by demo and future authorized sources."""
+
+    scope: str
+    dataset_id: Optional[str]
+    date_from: Optional[date]
+    date_to: Optional[date]
+    candidate_report_count: int
+    reference_count: int
+    providers: list[ProviderAnalyticsProvider]
+
+
 class DemoSomCell(BaseModel):
     x: int
     y: int
