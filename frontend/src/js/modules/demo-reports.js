@@ -380,6 +380,18 @@ function renderSom(container, data, labelFor) {
     createElement("p", "account-help", "Та самі SOM-координати й marker. Значення в клітинці — медіанний дозволений synthetic USD/ct; це не прогноз, не market value і не інвестиційна категорія."),
   );
   const benchmarkProfile = createElement("aside", "demo-som-profile");
+  const selectedBenchmarkCell = selected
+    ? data.cells.find((cell) => cell.x === selected.som_x && cell.y === selected.som_y)
+    : null;
+  if (selectedBenchmarkCell?.median_reference_usd_per_carat !== null && selectedBenchmarkCell?.median_reference_usd_per_carat !== undefined) {
+    const selectedBenchmark = createElement("section", "demo-som-benchmark demo-som-benchmark--summary");
+    selectedBenchmark.append(
+      createElement("h4", "", "Медіанний дозволений synthetic орієнтир клітинки"),
+      createElement("strong", "", formatUsdPerCarat(selectedBenchmarkCell.median_reference_usd_per_carat)),
+      createElement("span", "", `Клітинка ${selected.som_x + 1} × ${selected.som_y + 1} · ${selectedBenchmarkCell.report_count} synthetic звітів.`),
+    );
+    benchmarkProfile.append(selectedBenchmark);
+  }
   benchmarkProfile.append(
     createElement("h3", "", "Як читати benchmark-карту"),
     createElement("p", "account-help", "Кожна клітинка показує медіанний дозволений synthetic USD/ct каменів у цій самій SOM-клітинці. Тому карта зберігає сусідство основної SOM, але підсвічує відносний рівень synthetic орієнтирів."),
