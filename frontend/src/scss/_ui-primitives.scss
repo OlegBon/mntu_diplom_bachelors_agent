@@ -687,7 +687,7 @@ input[type="number"]::-webkit-outer-spin-button {
 .demo-som-legend__item strong, .demo-som-legend__item span, .demo-som-value-stack strong, .demo-som-value-stack span, .demo-som-benchmark strong, .demo-som-benchmark span { display: block; }
 .demo-som-value-stack span, .demo-som-legend__item span, .demo-som-benchmark span { color: variables.$secondary-color; font-size: 0.85rem; }
 .demo-som-position, .demo-som-benchmark { border-top: 1px solid variables.$border-color; margin-top: 1rem; padding-top: 1rem; }
-.demo-som-benchmark--summary { border-top: 0; margin-top: 0; padding-top: 0; }
+.demo-som-benchmark--summary { border-top: 0; border-bottom: 1px solid variables.$border-color; margin: 0 0 1rem; padding: 0 0 1rem; }
 .demo-som-position h4, .demo-som-benchmark h4 { margin-bottom: 0.35rem; }.demo-som-benchmark strong { color: variables.$primary-color; font-size: 1.15rem; }
 @media (max-width: 767px) { .demo-som-layout { grid-template-columns: 1fr; } .demo-som-grid { max-width: none; } .demo-som-overview__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .demo-som-benchmark-cell { font-size: clamp(0.54rem, 2.7vw, 0.72rem); } }
 
