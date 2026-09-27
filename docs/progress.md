@@ -13,6 +13,14 @@
 - **Перевірки:** `python -m pytest tests/unit/test_security_access_token.py tests/api/test_auth_and_experts.py -q` — 5 passed; `cmd /c "cd frontend && npm test"` — 27 passed; `python -m compileall -q backend`; `python scripts/check_doc_links.py` — OK; `git diff --check` — без помилок.
 - **Нові змінні середовища:** `ACCESS_TOKEN_EXPIRE_MINUTES` — local-only TTL access JWT, типово `480`, допустимо `15–720`.
 - **Обмеження:** не додано refresh token, cookie session, server-side revoke/device inventory, production CORS/TLS/rate limit чи зміни RBAC. Перед Stage B потрібен окремий security review.
+## 2026-09-27 — database-topology-configuration-planning
+
+- **Задача:** зафіксувати 172 після уточнення local MariaDB та майбутньої PostgreSQL/cloud topology.
+- **Змінені файли:** `docs/{work_plan,progress}.md`, `docs/backlog/{README,172-database-topology-and-configuration-contract}.md`.
+- **Рішення / Результат:** local MariaDB складається з трьох databases `diamond_oltp`, `diamond_market`, `diamond_analytics`; `DB_NAME=diamond_oltp` лише задає default connection database, а schema-qualified SQLAlchemy models вимагають права на всі три. Цільовий PostgreSQL/cloud контур — одна physical database з трьома schemas з цими самими назвами, не всі таблиці в `public`. Demo SOM artifacts лишаються в `diamond_oltp`; reserved `diamond_analytics.ml_results` не є demo SOM storage. 172 готує configuration/grants/Alembic/backup contract перед 161, але не виконує migration чи cloud provisioning.
+- **Перевірки:** backlog links і залежності звірені з 160/161; code, schema, env і дані не змінювалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** конкретні PostgreSQL grants, schemas, migration order і disposable smoke-test будуть результатом 172; фактична міграція залишається 161.
 
 ## 2026-09-27 — synthetic-som-demo-finalization
 

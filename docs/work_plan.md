@@ -121,6 +121,7 @@
 - [ ] [163 — Provider operations and coverage analytics](./backlog/163-provider-operations-and-coverage-analytics.md): admin tab freshness, operation outcome і coverage після 122/162.
 - [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локального verified experiment 152 підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
 - [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 152, рішення 160 і CI gate 137 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
+- [ ] [172 — Database topology і configuration contract](./backlog/172-database-topology-and-configuration-contract.md): local `diamond_oltp`/`diamond_market`/`diamond_analytics` у MariaDB ↔ одна PostgreSQL/cloud database з трьома schemas; configuration, grants, Alembic/backup input перед 161.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.
 - [ ] [140 — Хмарне розгортання та scheduler ринкових даних](./backlog/140-cloud-deployment-and-provider-scheduler.md): після 152 → 160 → 137 → 161 обрати staging/cloud runtime, налаштувати deployment, secrets, managed scheduler кожні 5 хвилин для provider CLI, logs/alerts і runbook; локальний Windows Task Scheduler не є ціллю.
 - [ ] Налаштувати CORS, env secrets, health-check, домени/TLS та ручний smoke-test до публічного запуску.
@@ -139,8 +140,8 @@
    `160`; `154` і `155` — незалежні контури; `151 → 152 → 153` — ліцензований
    data contract, верифікований експеримент і лише тоді descriptive analytics для
    реальних даних.
-5. Delivery-залежність: після локального verified experiment `152` — `160 → 137
-   → 161 → 140`: platform decision, CI gate, PostgreSQL/staging і managed
+5. Delivery-залежність: після локального verified experiment `152` — `172 → 160 → 137
+   → 161 → 140`: database topology/configuration contract, platform decision, CI gate, PostgreSQL/staging і managed
    deployment. Після цього залишаються операційні налаштування CORS, secrets,
    health-check, доменів/TLS та ручного production smoke-test.
 
