@@ -4,12 +4,16 @@ from typing import Optional
 import bcrypt
 from jose import jwt
 
-from .config import get_required_env
+from .config import get_bounded_int_env, get_required_env
 
 
 SECRET_KEY = get_required_env("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Local MVP only. Production replaces this with short access tokens and
+# rotating, server-revocable refresh sessions (task 171, stage B).
+ACCESS_TOKEN_EXPIRE_MINUTES = get_bounded_int_env(
+    "ACCESS_TOKEN_EXPIRE_MINUTES", default=480, minimum=15, maximum=720,
+)
 
 _BCRYPT_MAX_PASSWORD_BYTES = 72
 

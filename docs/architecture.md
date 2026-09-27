@@ -94,6 +94,7 @@ Backend запускають із кореня репозиторію через
 
 - `POST /token` приймає form-data логін і пароль та повертає JWT Bearer token.
 - `get_current_user` перевіряє JWT і завантажує користувача з БД.
+- Local MVP задає access-token TTL через `ACCESS_TOKEN_EXPIRE_MINUTES` (типово 480, дозволено 15–720 хвилин). Під час bootstrap frontend очищує локальну сесію лише після підтвердженого API `401`; network/timeout/`5xx` лишають token і показують retry state. Це не production session model: до staging потрібні короткий access token та rotating, server-revocable refresh sessions у `HttpOnly`/`SameSite` cookie.
 - Роль `admin` потрібна для керування користувачами й оновлення ринкової ціни; роль `gemologist` призначена для роботи зі звітами.
 - Frontend передає токен у `Authorization: Bearer …`; API доступний на окремому локальному origin через CORS.
 

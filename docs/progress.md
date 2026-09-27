@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-27 — session-resilience-local
+
+- **Задача:** виконати етап A задачі 171: прибрати local logout під час короткого restart/network/`5xx`, зробити access-token TTL локально конфігурованим і зафіксувати межу з production auth.
+- **Змінені файли:** `.env.example`, `backend/{config,security}.py`, `frontend/{package.json,src/{pug/layout/main.pug,scss/_product-ux.scss,js/{main.js,modules/{auth,report-detail}.js}},tests/session-resilience.test.mjs}`, `tests/unit/test_security_access_token.py`, `docs/{architecture,local-start,work_plan,progress}.md`; з active backlog видалено `159-synthetic-som-demo.md`, `164-synthetic-demo-actors-and-workflow-analytics.md` і завершену `171-session-resilience-and-production-auth.md`.
+- **Рішення / Результат:** bootstrap захищеної сторінки спершу перевіряє `/users/me` і ініціалізує page-specific модулі лише після успішної відповіді. Підтверджений `401` очищує лише auth-поля localStorage й веде до login; network error, timeout або `5xx` зберігають сесію та показують retry state без flash анонімної навігації. Виправлено безумовний logout у підготовці private report detail. `ACCESS_TOKEN_EXPIRE_MINUTES` має local-MVP default `480` і діапазон `15–720`; це не production strategy. Stage B лишається окремим: 15–30-хвилинний access token плюс rotating, server-revocable refresh sessions у secure `HttpOnly`/`SameSite` cookie, device/revoke/reuse/CSRF контури та security review.
+- **Перевірки:** `python -m pytest tests/unit/test_security_access_token.py tests/api/test_auth_and_experts.py -q` — 5 passed; `cmd /c "cd frontend && npm test"` — 27 passed; `python -m compileall -q backend`; `python scripts/check_doc_links.py` — OK; `git diff --check` — без помилок.
+- **Нові змінні середовища:** `ACCESS_TOKEN_EXPIRE_MINUTES` — local-only TTL access JWT, типово `480`, допустимо `15–720`.
+- **Обмеження:** не додано refresh token, cookie session, server-side revoke/device inventory, production CORS/TLS/rate limit чи зміни RBAC. Перед Stage B потрібен окремий security review.
+
 ## 2026-09-27 — synthetic-som-demo-finalization
 
 - **Задача:** завершити погоджені UX-пункти 159 та виправити presentation thematic synthetic benchmark map.

@@ -8,6 +8,27 @@ body {
   color: variables.$text-strong;
 }
 
+.session-retry-state {
+  background: variables.$surface-subtle;
+  border-bottom: 1px solid variables.$border-color;
+
+  &__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  p { color: variables.$text-strong; font-weight: 600; }
+
+  @media (max-width: 34rem) {
+    &__content { align-items: stretch; flex-direction: column; }
+    .btn { width: 100%; }
+  }
+}
+
 .page-content {
   padding: 0;
 }
