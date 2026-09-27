@@ -13,6 +13,7 @@
 - **Перевірки:** `python -m pytest tests/unit/test_security_access_token.py tests/api/test_auth_and_experts.py -q` — 5 passed; `cmd /c "cd frontend && npm test"` — 27 passed; `python -m compileall -q backend`; `python scripts/check_doc_links.py` — OK; `git diff --check` — без помилок.
 - **Нові змінні середовища:** `ACCESS_TOKEN_EXPIRE_MINUTES` — local-only TTL access JWT, типово `480`, допустимо `15–720`.
 - **Обмеження:** не додано refresh token, cookie session, server-side revoke/device inventory, production CORS/TLS/rate limit чи зміни RBAC. Перед Stage B потрібен окремий security review.
+
 ## 2026-09-27 — database-topology-configuration-planning
 
 - **Задача:** зафіксувати 172 після уточнення local MariaDB та майбутньої PostgreSQL/cloud topology.
