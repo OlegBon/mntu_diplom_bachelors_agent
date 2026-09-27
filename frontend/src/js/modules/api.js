@@ -142,6 +142,10 @@ export const getDemoWorkflowAnalytics = (datasetId, token, filters = {}) => {
   const suffix = query.toString();
   return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/workflow-analytics${suffix ? `?${suffix}` : ""}`, { token });
 };
+export const getDemoSom = (datasetId, token, reportId = "") => {
+  const query = reportId ? `?report_id=${encodeURIComponent(reportId)}` : "";
+  return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/som${query}`, { token });
+};
 export const getDemoPassportPreviewPdf = async (datasetId, reportId, token) => {
   const response = await fetch(`${BASE_URL}/demo/datasets/${encodeURIComponent(datasetId)}/reports/${encodeURIComponent(reportId)}/passport-preview/pdf`, { headers: { Authorization: `Bearer ${token}` } });
   if (!response.ok) throw new ApiRequestError("Не вдалося сформувати demo PDF preview", response.status);

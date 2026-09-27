@@ -1,0 +1,70 @@
+# Synthetic SOM demo
+
+## Призначення
+
+«Демо → Камені» показує технічний, відтворюваний приклад карти Кохонена
+(SOM) на ізольованому наборі `synthetic-demo-v4`. Це спосіб пояснити
+механіку сегментації та інтерфейс, а не оцінка каменю, ринковий прогноз,
+інвестиційний висновок чи verified ML.
+
+Доступ мають лише адміністратори, які явно ввімкнули «Демо» у власному
+профілі. Для експертів, гостей і адміністраторів без opt-in API та UI
+відповідають opaque `404`.
+
+## Як формується карта
+
+1. Скрипт читає лише `DEMO-*` одного manifest-bound dataset.
+2. До вектора входять вага, color, clarity, system Final Cut, proportions і
+   дозволений synthetic reference у `USD/ct`.
+3. `synthetic-provider-policy-v1` відбирає один fictional provider-derived
+   reference для каменю: пріоритетний `Demo Market B`, або дозволений fallback
+   `Demo Market A`. Якщо обидва значення за умовами сценарію недоступні,
+   весь вектор виключається — заборонене значення не підставляється.
+4. Ознаки нормалізуються; SOM 10×10 навчається з фіксованим seed. Кожному
+   каменю призначається найближча клітинка.
+5. Результат зберігається як immutable artifact: checksum набору, версія,
+   schema features, normalisation, coverage та `report → cell` assignments.
+   `GET /demo/.../som` лише читає artifact і ніколи не навчає модель у запиті.
+
+Повторна генерація того самого набору й artifact version є idempotent. Команда
+для явного створення artifact:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_synthetic_som_artifact.py --apply
+```
+
+## Як читати UI
+
+- Основна карта показує схожість synthetic профілів. Число у клітинці —
+  кількість включених demo-звітів.
+- «Зони SOM A–D» — великі 5×5 області для читабельності карти. Це не
+  алгоритмічно названі класи, не grade, не technical/mass-market/investment
+  категорії та не властивість окремого каменю.
+- «У сусідстві» включає поточну клітинку і до восьми прилеглих клітинок.
+- Профіль вибраного каменю показує його 4C, Final Cut, клітинку, peers та
+  дозволений synthetic reference. Посилання peers і дія `⋮ → Аналіз SOM`
+  відкривають ту саму карту з новим marker.
+- «Демо-орієнтир сегмента» — діапазон synthetic references по всій зоні SOM,
+  не predicted price і не фактична ринкова/продажна ціна.
+
+## Межі та майбутнє
+
+`Demo Market A/B` — вигадані джерела. Policy scenario — тест технічного
+per-feature gating, а не юридична інтерпретація умов реального provider-а.
+OpenFacet, IDEX та operational reports не входять у цей artifact.
+
+Для real SOM потрібні data contract, дозволи на конкретний спосіб
+використання provider-derived features, quality/coverage report, versioned
+artifact і validation. До цього real UI показує контрольований unavailable
+state, а не порожню або імітаційну карту. Деталі — у
+[ADR-005](../decisions/005-analytics-and-verified-ml-strategy.md) та задачах
+[151](../backlog/151-analytics-data-contract-and-quality.md)–
+[153](../backlog/153-stone-analytics-visualization.md).
+
+## Запланована thematic карта
+
+Наступний підетап 159 додасть під основною картою другу проєкцію тих самих
+SOM-координат: «Карта synthetic benchmark сегментів». Колір клітинки означає
+квантиль її медіанного дозволеного synthetic `USD/ct`, а не total USD,
+інвестиційну категорію чи прогноз. Marker обраного каменю буде спільним для
+обох карт.

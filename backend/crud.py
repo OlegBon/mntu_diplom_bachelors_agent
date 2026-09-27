@@ -15,6 +15,7 @@ from .fx import NbuUsdUahRate, convert_usd_to_uah
 from .security import get_password_hash, verify_password
 
 from .calculator import DiamondCalculator
+from . import synthetic_som
 
 
 CURRENT_RULESET_ID = "idc-demo-v1"
@@ -88,6 +89,220 @@ def require_demo_dataset_analysis_eligibility(
     if scenario not in eligibility:
         raise ReportDomainError("Demo dataset is not eligible for this analysis scenario")
     return dataset
+
+
+def _demo_som_source_rows(db: Session, *, dataset_id: str) -> list[synthetic_som.SomSourceRow]:
+    """Load only manifest-bound demo facts and their synthetic references."""
+    reports = (
+        db.query(models.DiamondReport)
+        .join(models.Stone, models.DiamondReport.stone_id == models.Stone.stone_id)
+        .options(joinedload(models.DiamondReport.stone))
+        .filter(
+            models.DiamondReport.record_scope == "demo",
+            models.DiamondReport.demo_dataset_id == dataset_id,
+        )
+        .order_by(models.DiamondReport.report_id)
+        .all()
+    )
+    stone_ids = [report.stone_id for report in reports if report.stone_id is not None]
+    valuations = (
+        db.query(models.StoneValuation)
+        .filter(
+            models.StoneValuation.stone_id.in_(stone_ids),
+            models.StoneValuation.valuation_kind == "synthetic_demo_reference",
+        )
+        .order_by(models.StoneValuation.valuation_id)
+        .all()
+        if stone_ids else []
+    )
+    references: dict[int, dict[str, Decimal]] = {}
+    for valuation in valuations:
+        references.setdefault(valuation.stone_id, {})[valuation.source_name] = valuation.amount
+    result: list[synthetic_som.SomSourceRow] = []
+    for report in reports:
+        stone = report.stone
+        if stone is None or report.stone_id is None or stone.carat_weight is None:
+            continue
+        result.append(synthetic_som.SomSourceRow(
+            report_id=report.report_id,
+            carat_weight=stone.carat_weight,
+            color_grade=stone.color_grade,
+            clarity_grade=stone.clarity_grade,
+            system_cut_grade=report.system_cut_grade,
+            table_percent=stone.table_percent,
+            depth_percent=stone.depth_percent,
+            crown_angle=stone.crown_angle,
+            pavilion_angle=stone.pavilion_angle,
+            references=references.get(report.stone_id, {}),
+        ))
+    return result
+
+
+def build_demo_som_artifact(db: Session, *, dataset_id: str) -> models.DemoSomArtifact:
+    """Persist one reproducible artifact; never modify reports or market facts."""
+    dataset = require_demo_dataset_analysis_eligibility(db, dataset_id=dataset_id, scenario="synthetic_som")
+    rows = _demo_som_source_rows(db, dataset_id=dataset_id)
+    prepared, excluded, provider_usage = synthetic_som.prepare_rows(rows)
+    _, mean, scale, assignments = synthetic_som.train(prepared)
+    digest = synthetic_som.artifact_checksum(
+        dataset_sha256=dataset.content_sha256, prepared=prepared, assignments=assignments,
+    )
+    existing = (
+        db.query(models.DemoSomArtifact)
+        .filter(
+            models.DemoSomArtifact.dataset_id == dataset_id,
+            models.DemoSomArtifact.artifact_version == synthetic_som.ARTIFACT_VERSION,
+            models.DemoSomArtifact.content_sha256 == digest,
+        )
+        .one_or_none()
+    )
+    if existing is not None:
+        return existing
+    coverage = {
+        "candidate_reports": len(rows),
+        "accepted_reports": len(prepared),
+        "excluded_reports": excluded,
+        "excluded_reason": "Немає повного набору дозволених synthetic demo-орієнтирів для вектора SOM.",
+        "provider_usage": provider_usage,
+        "notice": "Synthetic policy scenario лише демонструє per-feature policy gating; це не умови реальних провайдерів.",
+    }
+    artifact = models.DemoSomArtifact(
+        dataset_id=dataset_id,
+        artifact_version=synthetic_som.ARTIFACT_VERSION,
+        policy_scenario_id=synthetic_som.POLICY_SCENARIO_ID,
+        dataset_content_sha256=dataset.content_sha256,
+        training_seed=synthetic_som.TRAINING_SEED,
+        grid_size=synthetic_som.GRID_SIZE,
+        feature_schema=json.dumps(list(synthetic_som.FEATURE_NAMES), ensure_ascii=False),
+        normalization=json.dumps({"mean": mean.tolist(), "scale": scale.tolist()}),
+        coverage=json.dumps(coverage, ensure_ascii=False),
+        content_sha256=digest,
+    )
+    db.add(artifact)
+    db.flush()
+    db.add_all([
+        models.DemoSomAssignment(
+            artifact_id=artifact.artifact_id,
+            report_id=item.source.report_id,
+            som_x=assignment[0], som_y=assignment[1],
+            distance=Decimal(str(round(assignment[2], 8))),
+            selected_provider=item.selected_provider,
+            selected_reference_amount=item.selected_amount,
+        )
+        for item, assignment in zip(prepared, assignments, strict=True)
+    ])
+    db.flush()
+    return artifact
+
+
+def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> schemas.DemoSomResponse:
+    """Read the newest matching synthetic artifact without recalculating it."""
+    dataset = require_demo_dataset_analysis_eligibility(db, dataset_id=dataset_id, scenario="synthetic_som")
+    artifact = (
+        db.query(models.DemoSomArtifact)
+        .filter(
+            models.DemoSomArtifact.dataset_id == dataset_id,
+            models.DemoSomArtifact.artifact_version == synthetic_som.ARTIFACT_VERSION,
+            models.DemoSomArtifact.dataset_content_sha256 == dataset.content_sha256,
+        )
+        .order_by(models.DemoSomArtifact.artifact_id.desc())
+        .first()
+    )
+    if artifact is None:
+        raise ReportDomainError("Synthetic SOM artifact is not generated for this dataset")
+    assignments = (
+        db.query(models.DemoSomAssignment, models.DiamondReport, models.Stone)
+        .join(models.DiamondReport, models.DemoSomAssignment.report_id == models.DiamondReport.report_id)
+        .join(models.Stone, models.DiamondReport.stone_id == models.Stone.stone_id)
+        .filter(models.DemoSomAssignment.artifact_id == artifact.artifact_id)
+        .all()
+    )
+    cells: dict[tuple[int, int], list[tuple[models.DemoSomAssignment, models.DiamondReport, models.Stone]]] = {}
+    for assignment, report, stone in assignments:
+        cells.setdefault((assignment.som_x, assignment.som_y), []).append((assignment, report, stone))
+
+    def median_decimal(values: list[Decimal]) -> Decimal | None:
+        if not values:
+            return None
+        ordered = sorted(values)
+        return ordered[len(ordered) // 2]
+
+    def segment_key(x: int, y: int) -> str:
+        return ("A", "B", "C", "D")[(x // 5) + 2 * (y // 5)]
+
+    segment_members: dict[str, list[tuple[models.DemoSomAssignment, models.DiamondReport, models.Stone]]] = {key: [] for key in "ABCD"}
+    for (x, y), members in cells.items():
+        segment_members[segment_key(x, y)].extend(members)
+
+    def describe_segment(key: str, members: list[tuple[models.DemoSomAssignment, models.DiamondReport, models.Stone]]) -> tuple[str, str, list[str], Decimal, Decimal, Decimal, Decimal]:
+        weights = [item[2].carat_weight for item in members if item[2].carat_weight is not None]
+        references = [item[0].selected_reference_amount for item in members]
+        shapes = sorted({item[2].shape for item in members})
+        names = {"A": "Зона SOM A", "B": "Зона SOM B", "C": "Зона SOM C", "D": "Зона SOM D"}
+        if not members:
+            return names[key], "У цьому synthetic artifact для зони поки немає каменів.", [], Decimal("0"), Decimal("0"), Decimal("0"), Decimal("0")
+        weight_min, weight_max = min(weights), max(weights)
+        reference_min, reference_max = min(references), max(references)
+        description = (
+            f"Описова зона SOM: {weight_min}–{weight_max} ct; часті форми — "
+            f"{', '.join(shapes[:2])}. Це не клас якості чи інвестиційний висновок."
+        )
+        return names[key], description, shapes[:3], weight_min, weight_max, reference_min, reference_max
+
+    segments = []
+    segment_lookup = {}
+    for key, members in segment_members.items():
+        label, description, shapes, weight_min, weight_max, reference_min, reference_max = describe_segment(key, members)
+        segment_lookup[key] = (label, description, reference_min, reference_max)
+        segments.append(schemas.DemoSomSegmentSummary(
+            key=key, label=label, description=description, report_count=len(members),
+            carat_min=weight_min, carat_max=weight_max, reference_min=reference_min,
+            reference_max=reference_max, dominant_shapes=shapes,
+        ))
+
+    serialized_cells = []
+    for x in range(artifact.grid_size):
+        for y in range(artifact.grid_size):
+            members = cells.get((x, y), [])
+            serialized_cells.append(schemas.DemoSomCell(
+                x=x, y=y, report_count=len(members), segment_label=segment_lookup[segment_key(x, y)][0],
+                median_carat_weight=median_decimal([member[2].carat_weight for member in members if member[2].carat_weight is not None]),
+                median_reference_amount=median_decimal([member[0].selected_reference_amount for member in members]),
+            ))
+    selected = None
+    if report_id:
+        match = next((member for member in assignments if member[0].report_id == report_id), None)
+        if match is None:
+            raise ReportDomainError("Demo report is not included in this synthetic SOM artifact")
+        assignment, report, stone = match
+        key = segment_key(assignment.som_x, assignment.som_y)
+        label, description, reference_min, reference_max = segment_lookup[key]
+        neighborhood_count = sum(
+            len(members) for (x, y), members in cells.items()
+            if abs(x - assignment.som_x) <= 1 and abs(y - assignment.som_y) <= 1
+        )
+        selected = schemas.DemoSomSelectedReport(
+            report_id=report.report_id, som_x=assignment.som_x, som_y=assignment.som_y,
+            distance=assignment.distance, selected_provider=assignment.selected_provider,
+            selected_reference_amount=assignment.selected_reference_amount,
+            carat_weight=stone.carat_weight, shape=stone.shape, color_grade=stone.color_grade,
+            clarity_grade=stone.clarity_grade, system_cut_grade=report.system_cut_grade,
+            neighborhood_count=neighborhood_count, cell_count=len(cells[(assignment.som_x, assignment.som_y)]),
+            segment_key=key, segment_label=label, segment_description=description,
+            peer_report_ids=[member[0].report_id for member in sorted(cells[(assignment.som_x, assignment.som_y)], key=lambda item: (item[0].distance, item[0].report_id)) if member[0].report_id != report_id][:3],
+            segment_reference_min=reference_min, segment_reference_max=reference_max,
+        )
+    coverage = json.loads(artifact.coverage)
+    coverage["policy_explanation"] = (
+        "10 звітів мають одночасно недозволений Demo Market B і умовно прострочений "
+        "Demo Market A у synthetic policy scenario; жодне з цих значень не використано."
+    )
+    return schemas.DemoSomResponse(
+        dataset_id=dataset_id, artifact_version=artifact.artifact_version,
+        policy_scenario_id=artifact.policy_scenario_id, grid_size=artifact.grid_size,
+        feature_names=json.loads(artifact.feature_schema), coverage=coverage,
+        cells=serialized_cells, segments=segments, selected_report=selected,
+    )
 
 
 def get_demo_workflow_analytics(

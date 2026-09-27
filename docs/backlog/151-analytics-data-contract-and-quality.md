@@ -32,6 +32,25 @@ Synthetic demo за 156–159 є окремим technical population і не з�
   target і не можуть непомітно замінювати одне одного.
 - Описати feature contract, units, currency/date normalization, source
   timestamps, missing/outlier policy, duplicate/leakage checks і quality report.
+- Вести versioned provider-policy card для кожного зовнішнього джерела:
+  agreement/Terms evidence, owner, дозволені purposes (`reference_display`,
+  `aggregate_analytics`, `descriptive_clustering`, `model_training`, export),
+  field scope, attribution, retention, effective/expiry/review dates і статус.
+  Застосунок не інтерпретує юридичний текст автоматично: відповідальний admin
+  фіксує перевірене рішення, а server-side policy gate виконує його технічно.
+- Policy застосовується до **окремого значення**, а не лише до всього каменю.
+  Для кожного feature з provider provenance experiment має мати явний,
+  versioned selection rule. Заборонене або прострочене значення не потрапляє у
+  feature vector, нормалізацію, SOM/model artifact чи explanation. Камінь
+  лишається допустимим, якщо всі обов'язкові features можна сформувати з інших
+  дозволених джерел; інакше виключається саме з цього запуску з причиною.
+  Один камінь може з'явитися в experiment лише раз — ніколи по одному разу на
+  кожного provider-а. Mixed-source manifest зберігає policy version і
+  per-feature provenance для кожного використаного значення.
+- Quality report показує candidate/accepted/excluded population, причини
+  виключення та coverage дозволених provider values. Спливання або відкликання
+  policy блокує новий запуск; старий artifact зберігає audit provenance і
+  відображається лише відповідно до policy.
 - Зафіксувати versioned immutable dataset manifest, reproducible
   train/validation/test splits (переважно temporal/grouped) та privacy policy.
 

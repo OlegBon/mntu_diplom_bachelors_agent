@@ -113,7 +113,9 @@
 - [x] 164 — Synthetic demo actors і workflow analytics: `synthetic-demo-v4` містить 5 virtual gemologists, 3 administrators, 3 220 isolated workflow events, нерівні deterministic quotas/тривалості та 950 issued / 50 void outcomes; admin-only вкладки «Експерти»/«Адміністратори» мають спільний date slice без productivity/SLA/rating claims. `0016`/`0017` застосовані, historical `DR-*` та operational analytics не зачіпалися.
 - [x] 168 — Opt-in доступ адміністратора до «Демо»: `0018` додає persisted `demo_access_enabled=false`; admin змінює лише власний opt-in у профілі, всі `/demo/*` мають opaque `404` gate, а header і protected demo page чекають resolved `/users/me` без flash/flicker.
 - [ ] [169 — UI spacing і layout consistency](./backlog/169-ui-spacing-and-layout-consistency.md): системно вирівняти відступи, action rows і responsive layout на всіх сторінках без зміни UX flows чи API.
-- [ ] [159 — Synthetic SOM demo](./backlog/159-synthetic-som-demo.md): reproducible admin-only карта у вкладці «Камені» для demo dataset, не заміна 151–153.
+- [ ] [159 — Synthetic SOM demo](./backlog/159-synthetic-som-demo.md): reproducible admin-only карта у вкладці «Камені» для demo dataset, policy-gated artifact, report selection і пояснюваний profile; наступний підетап — thematic synthetic `USD/ct` benchmark map. Не заміна 151–153.
+- [ ] [171 — Session resilience і production auth](./backlog/171-session-resilience-and-production-auth.md): local MVP не скидає сесію на transient API failure, а production отримує окремий rotating refresh-session flow; не змішувати з 159.
+- [ ] [170 — Guides information architecture](./backlog/170-guides-information-architecture.md): поступово винести актуальні пояснення сценаріїв у `docs/guides/`, лишивши ADR/architecture/backlog/progress їхніми джерелами істини.
 - [ ] [165 — Synthetic demo provider analytics](./backlog/165-synthetic-demo-provider-analytics.md): `Demo Market A/B` coverage/provenance у відокремленій вкладці без real provider data.
 - [ ] [166 — Backup і historical synthetic reclassification](./backlog/166-synthetic-demo-backup-and-historical-reclassification.md): logical backup, restore verification, exact allow-list dry-run і окремо підтверджуваний scope-only backfill/rollback для legacy `DR-*`; не блокує demo-аналітику.
 - [ ] [163 — Provider operations and coverage analytics](./backlog/163-provider-operations-and-coverage-analytics.md): admin tab freshness, operation outcome і coverage після 122/162.
@@ -125,7 +127,7 @@
 
 ### Рекомендована черга активних задач
 
-1. `159 → 165` — після per-admin opt-in і єдиного opaque demo gate додати SOM для каменів і
+1. `159 → 171 → 165` — завершити SOM, прибрати local auth logout під час transient restart/error, далі додати fictional provider analytics без змішування з operational даними.
    fictional provider analytics без змішування з operational даними.
    `166` — незалежний P2 safety gate перед будь-якою реальною класифікацією
    historical `DR-*`; його не запускають як неявну частину demo-аналітики.

@@ -480,6 +480,21 @@ def read_demo_workflow_analytics(
         raise HTTPException(status_code=404, detail="Demo dataset not found") from error
 
 
+@app.get("/demo/datasets/{dataset_id}/som", response_model=schemas.DemoSomResponse)
+def read_demo_som(
+    dataset_id: str,
+    report_id: Optional[str] = Query(default=None, min_length=1, max_length=20),
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Read a generated synthetic SOM artifact; never train from a request."""
+    require_demo_admin(current_user)
+    try:
+        return crud.get_demo_som(db, dataset_id=dataset_id, report_id=report_id)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=404, detail="Demo SOM is unavailable") from error
+
+
 @app.get("/demo/datasets/{dataset_id}/reports/{report_id}", response_model=schemas.ReportResponse)
 def read_demo_dataset_report(
     dataset_id: str,

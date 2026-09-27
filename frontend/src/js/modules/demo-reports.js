@@ -1,4 +1,4 @@
-import { getDemoDataset, getDemoReports, getDemoWorkflowAnalytics, getGradeMappings } from "./api.js";
+import { getDemoDataset, getDemoReports, getDemoWorkflowAnalytics, getDemoSom, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderTable } from "./analytics-ui.js";
 
@@ -81,7 +81,9 @@ function renderActions(report, datasetId) {
   print.href = `${detailUrl}&print=1`;
   print.target = "_blank";
   print.rel = "noopener noreferrer";
-  menu.append(detail, edit, print);
+  const som = createElement("a", "report-actions__item", "Аналіз SOM");
+  som.href = `/demo-reports.html?tab=stones&som_report=${encodeURIComponent(report.report_id)}`;
+  menu.append(detail, som, edit, print);
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
     const isOpen = menu.hidden;
@@ -259,12 +261,73 @@ function renderSyntheticAdministrators(container, actors, datasetId) {
   container.replaceChildren(fragment);
 }
 
-function initDemoWorkflowTabs(root, datasetId, token) {
+function formatUsd(value) {
+  return new Intl.NumberFormat("uk-UA", { style: "currency", currency: "USD" }).format(Number(value));
+}
+
+function renderSom(container, data, labelFor) {
+  const selected = data.selected_report;
+  const grid = createElement("div", "demo-som-grid");
+  grid.style.setProperty("--som-size", String(data.grid_size));
+  for (const cell of data.cells) {
+    const button = createElement("button", `demo-som-cell demo-som-cell--${cell.segment_label.slice(-1).toLowerCase()}`, String(cell.report_count));
+    button.type = "button";
+    button.title = `${cell.segment_label}: ${cell.report_count} synthetic звітів`;
+    if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
+    grid.append(button);
+  }
+  const coverage = data.coverage || {};
+  const left = createElement("section", "demo-som-map");
+  const legend = createElement("div", "demo-som-legend");
+  for (const segment of data.segments) {
+    const item = createElement("div", `demo-som-legend__item demo-som-legend__item--${segment.key.toLowerCase()}`);
+    item.append(createElement("strong", "", `${segment.label} · ${segment.report_count}`), createElement("span", "", `${segment.carat_min}–${segment.carat_max} ct · ${segment.dominant_shapes.join(" / ")}`));
+    legend.append(item);
+  }
+  left.append(createElement("h3", "", "Карта сегментів"), grid, legend, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Кольори відповідають описовим профілям у легенді, не класам якості.`));
+  const right = createElement("aside", "demo-som-profile");
+  right.append(createElement("h3", "", "Профіль показового каменю"));
+  if (selected) {
+    const details = document.createElement("dl");
+    details.className = "analytics-metrics";
+    [["Звіт", selected.report_id], ["SOM-клітинка", `${selected.som_x + 1} × ${selected.som_y + 1}`], ["У клітинці", `${selected.cell_count} demo-звітів`], ["У сусідстві", `${selected.neighborhood_count} demo-звітів`], ["Колір / чистота", `${labelFor("color", selected.color_grade)} / ${labelFor("clarity", selected.clarity_grade)}`], ["Системний Final Cut", labelFor("cut", selected.system_cut_grade)]].forEach(([label, value]) => details.append(createElement("dt", "", label), createElement("dd", "", value)));
+    const formWeight = createElement("dd", "demo-som-value-stack");
+    formWeight.append(createElement("strong", "", selected.shape), createElement("span", "", `${selected.carat_weight} ct`));
+    details.append(createElement("dt", "", "Форма / вага"), formWeight);
+    const reference = createElement("dd", "demo-som-value-stack");
+    reference.append(createElement("strong", "", formatUsd(selected.selected_reference_amount)), createElement("span", "", selected.selected_provider));
+    details.append(createElement("dt", "", "Synthetic орієнтир"), reference);
+    const position = createElement("section", "demo-som-position");
+    position.append(createElement("h4", "", "Позиція в сегменті"), createElement("strong", "", selected.segment_label), createElement("p", "account-help", selected.segment_description));
+    const peers = createElement("p", "account-help");
+    if (selected.peer_report_ids.length) {
+      peers.append(document.createTextNode("Найближчі synthetic приклади: "));
+      selected.peer_report_ids.forEach((reportId, index) => {
+        if (index) peers.append(document.createTextNode(", "));
+        const link = createElement("a", "", reportId);
+        link.href = `/demo-reports.html?tab=stones&som_report=${encodeURIComponent(reportId)}`;
+        peers.append(link);
+      });
+      peers.append(document.createTextNode("."));
+    } else peers.textContent = "У клітинці поки немає інших synthetic прикладів.";
+    const benchmark = createElement("section", "demo-som-benchmark");
+    benchmark.append(createElement("h4", "", "Демо-орієнтир сегмента"), createElement("strong", "", `${formatUsd(selected.segment_reference_min)} – ${formatUsd(selected.segment_reference_max)}`), createElement("span", "", "Діапазон значень усієї описової зони SOM, а не лише трьох найближчих прикладів."));
+    right.append(details, position, peers, benchmark);
+  }
+  right.append(createElement("p", "account-help", `Охоплення: ${coverage.accepted_reports ?? 0} включено з ${coverage.candidate_reports ?? 0}; ${coverage.excluded_reports ?? 0} виключено через відсутність повного дозволеного synthetic вектора.`), createElement("p", "account-help", coverage.policy_explanation || "Для виключених звітів policy scenario не залишає дозволеного synthetic орієнтиру."));
+  right.append(createElement("p", "account-help", "Synthetic орієнтир — лише демонстраційна величина сценарію, не прогнозована чи ринкова ціна."));
+  const layout = createElement("div", "demo-som-layout");
+  layout.append(left, right);
+  container.replaceChildren(layout);
+}
+
+function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const tabButtons = [...root.querySelectorAll("[data-demo-tab]")];
   const panels = {
     reports: root.querySelector("#demo-reports-panel"),
     experts: root.querySelector("#demo-experts-panel"),
     administrators: root.querySelector("#demo-administrators-panel"),
+    stones: root.querySelector("#demo-stones-panel"),
   };
   const form = root.querySelector("#demo-workflow-slice");
   const controls = root.querySelector("#demo-workflow-controls");
@@ -273,13 +336,17 @@ function initDemoWorkflowTabs(root, datasetId, token) {
   const administratorResults = root.querySelector("#demo-administrators-results");
   const expertStatus = root.querySelector("#demo-experts-status");
   const administratorStatus = root.querySelector("#demo-administrators-status");
+  const somStatus = root.querySelector("#demo-som-status");
+  const somResults = root.querySelector("#demo-som-results");
+  const somSearchForm = root.querySelector("#demo-som-report-search");
+  const somSearchInput = root.querySelector("#demo-som-report-id");
   const dialog = root.querySelector("#demo-workflow-actor-dialog");
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
-  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !dialog || !dialogContent) return;
+  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent) return;
 
   const activate = (tab) => {
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
-    controls.hidden = tab === "reports";
+    controls.hidden = tab === "reports" || tab === "stones";
     for (const button of tabButtons) {
       const active = button.dataset.demoTab === tab;
       button.classList.toggle("is-active", active);
@@ -307,11 +374,37 @@ function initDemoWorkflowTabs(root, datasetId, token) {
       setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
     }
   };
-  for (const button of tabButtons) button.addEventListener("click", () => activate(button.dataset.demoTab));
+  const loadSom = async (requestedId = new URLSearchParams(window.location.search).get("som_report") || "DEMO-00999") => {
+    setStatus(somStatus, "Завантаження synthetic SOM…");
+    try {
+      const selectedId = requestedId.trim().toUpperCase();
+      const data = await getDemoSom(datasetId, token, selectedId);
+      somSearchInput.value = selectedId;
+      somStatus.replaceChildren();
+      renderSom(somResults, data, labelFor);
+    } catch {
+      setStatus(somStatus, "Для цього номера немає доступного synthetic SOM-профілю. Перевірте DEMO-ідентифікатор.", "error");
+    }
+  };
+  for (const button of tabButtons) button.addEventListener("click", () => { activate(button.dataset.demoTab); if (button.dataset.demoTab === "stones") void loadSom(); });
   form.addEventListener("submit", (event) => { event.preventDefault(); void load(); });
+  somSearchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const reportId = somSearchInput.value.trim().toUpperCase();
+    if (!reportId) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", "stones");
+    params.set("som_report", reportId);
+    window.history.replaceState({}, "", `${window.location.pathname}?${params}`);
+    void loadSom(reportId);
+  });
   form.addEventListener("reset", () => window.setTimeout(() => void load(), 0));
   dialog.addEventListener("close", () => dialogContent.replaceChildren());
   void load();
+  if (new URLSearchParams(window.location.search).get("tab") === "stones") {
+    activate("stones");
+    void loadSom();
+  }
 }
 
 export async function initDemoReports() {
@@ -406,6 +499,6 @@ export async function initDemoReports() {
   }
   document.addEventListener("click", closeReportOverlays);
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeReportOverlays(); });
-  initDemoWorkflowTabs(root, datasetId, token);
+  initDemoWorkflowTabs(root, datasetId, token, labelFor);
   await load(state);
 }

@@ -5,6 +5,24 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-27 — session-resilience-planning
+
+- **Задача:** зафіксувати 171 після діагностики неочікуваних logout у local development.
+- **Змінені файли:** `docs/{progress,work_plan}.md`, `docs/backlog/{README,171-session-resilience-and-production-auth}.md`.
+- **Рішення / Результат:** підтверджено, що поточний JWT access token живе 30 хвилин, а frontend на protected-page bootstrap трактує будь-яку помилку `/users/me` як невалідну сесію. Етап A 171 відокремлює local resilience: `401` очищує token, network/temporary `5xx` — лише retry state; TTL для local MVP буде конфігурованим і практичним. Етап B до production замінює довгий JWT на короткий access + rotating, server-revocable refresh session у secure HttpOnly cookie.
+- **Перевірки:** read-only audit `backend/security.py`, `/token`, `get_current_user`, frontend bootstrap і API error handlers; дані, schema, JWT, `.env` і runtime не змінювалися.
+- **Нові змінні середовища:** немає на етапі планування.
+- **Обмеження:** 171 ще не реалізована; current 30-minute token і aggressive transient-error logout лишаються чинними до її виконання.
+
+## 2026-09-27 — synthetic-som-demo-foundation
+
+- **Задача:** реалізувати базовий підетап 159 — isolated reproducible SOM для `synthetic-demo-v4` та задокументувати його межі.
+- **Змінені файли:** `backend/{synthetic_som,models,schemas,crud,main}.py`, `alembic/versions/0019_demo_som_artifacts.py`, `scripts/generate_synthetic_som_artifact.py`, `frontend/src/{pug/pages/demo-reports.pug,js/modules/{api,demo-reports}.js,scss/_ui-primitives.scss}`, `tests/api/test_demo_som.py`, `docs/{guides/{README,synthetic-som-demo}.md,backlog/{README,159-synthetic-som-demo,170-guides-information-architecture}.md,work_plan,progress}.md`.
+- **Рішення / Результат:** `0019` додає immutable `demo_som_artifacts` і `demo_som_assignments` окремо від reserved `ml_results`; explicit generator створив artifact `#1` для `synthetic-demo-v4` з 990 assignments. SOM використовує фіксований seed, normalized 4C/geometry та policy-selected synthetic `USD/ct`; 10 vector-ів виключено, коли сценарій не залишає дозволеного provider value. Admin opt-in UI має карту, explanatory profile, zone legend, report search, links до peers і дію `⋮ → Аналіз SOM`; усі твердження лишаються synthetic/descriptive. Додано guide, а 170 планує перенесення пояснювальної документації без дублювання ADR/architecture/backlog.
+- **Перевірки:** `0019_demo_som_artifacts (head)` застосовано до local MariaDB; `alembic check` — без diff; targeted `pytest tests/api/test_demo_som.py` — passed; `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** thematic synthetic `USD/ct` benchmark map ще є наступним підетапом 159. Real SOM/market analytics не доступні до 151–153 і не використовують OpenFacet/IDEX як training data без окремого дозволу.
+
 ## 2026-09-26 — ui-spacing-layout-planning
 
 - **Задача:** зафіксувати 169 — системний UX/UI audit відступів і layout consistency.
