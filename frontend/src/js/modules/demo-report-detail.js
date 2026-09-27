@@ -91,6 +91,7 @@ export async function initDemoReportDetail() {
     const mappings = await getGradeMappings(token);
     const label = (category, value) => mappings.find((item) => item.category === category && item.grade_value === value)?.grade_label || "—";
     document.getElementById("demo-report-id").textContent = report.report_id;
+    document.getElementById("demo-som-link").href = `/demo-reports.html?tab=stones&som_report=${encodeURIComponent(report.report_id)}`;
     const isShowcase = report.report_id === SHOWCASE_REPORT_ID;
     document.getElementById("demo-showcase-media-event").hidden = !isShowcase;
     const statusBadge = document.getElementById("demo-status-badge");

@@ -670,21 +670,27 @@ input[type="number"]::-webkit-outer-spin-button {
 .demo-som-map, .demo-som-profile { border: 1px solid variables.$border-color; background: variables.$white; padding: 1.25rem; }
 .demo-som-map h3, .demo-som-profile h3 { margin-bottom: 1rem; }
 .demo-som-map--benchmark { margin-top: 1.25rem; }
+.demo-som-overview { display: grid; gap: 0.75rem; border: 1px solid variables.$border-color; background: variables.$white; margin: 1rem 0; padding: 1.25rem; }
+.demo-som-overview h3 { margin: 0; }
+.demo-som-overview__metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem; margin: 0; }
+.demo-som-overview__metrics dt { color: variables.$secondary-color; font-size: 0.78rem; }.demo-som-overview__metrics dd { margin: 0.2rem 0 0; font-size: 0.9rem; font-weight: 700; overflow-wrap: anywhere; }
+.demo-som-initial-example { color: variables.$primary-hover; font-size: 0.85rem; font-weight: 700; margin: -0.5rem 0 1rem; }
 .demo-som-grid { display: grid; grid-template-columns: repeat(var(--som-size), minmax(1.8rem, 1fr)); gap: 2px; aspect-ratio: 1; max-width: 34rem; }
 .demo-som-cell { border: 0; min-width: 0; color: #17345f; font-weight: 700; background: #dbeafe; cursor: default; }
 .demo-som-cell--b { background: #d1fae5; }.demo-som-cell--c { background: #fef3c7; }.demo-som-cell--d { background: #fde2e2; }
 .demo-som-cell.is-selected { outline: 3px solid variables.$text-strong; outline-offset: -3px; }
-.demo-som-grid--benchmark { max-width: 34rem; }
+.demo-som-benchmark-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.42fr); gap: 1.25rem; align-items: start; }
+.demo-som-grid--benchmark { width: 100%; max-width: none; aspect-ratio: auto; grid-auto-rows: minmax(3.25rem, 1fr); }
 .demo-som-benchmark-cell { color: variables.$text-strong; font-size: clamp(0.56rem, 1.4vw, 0.76rem); line-height: 1.1; padding: 0.15rem; }
 .demo-som-benchmark-cell--q1 { background: #dbeafe; }.demo-som-benchmark-cell--q2 { background: #d1fae5; }.demo-som-benchmark-cell--q3 { background: #fef3c7; }.demo-som-benchmark-cell--q4 { background: #fde2e2; }.demo-som-benchmark-cell--empty { background: variables.$surface-muted; color: variables.$text-muted; }
-.demo-som-benchmark-legend__item--q1 { border-color: #bfdbfe; }.demo-som-benchmark-legend__item--q2 { border-color: #a7f3d0; }.demo-som-benchmark-legend__item--q3 { border-color: #fde68a; }.demo-som-benchmark-legend__item--q4 { border-color: #fecaca; }
 .demo-som-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: 1rem; }
 .demo-som-legend__item { border-left: 4px solid #bfdbfe; padding: 0.35rem 0.5rem; font-size: 0.8rem; }.demo-som-legend__item--b { border-color: #a7f3d0; }.demo-som-legend__item--c { border-color: #fde68a; }.demo-som-legend__item--d { border-color: #fecaca; }
+.demo-som-legend__item.demo-som-benchmark-legend__item--q1 { border-color: #bfdbfe; }.demo-som-legend__item.demo-som-benchmark-legend__item--q2 { border-color: #a7f3d0; }.demo-som-legend__item.demo-som-benchmark-legend__item--q3 { border-color: #fde68a; }.demo-som-legend__item.demo-som-benchmark-legend__item--q4 { border-color: #fecaca; }
 .demo-som-legend__item strong, .demo-som-legend__item span, .demo-som-value-stack strong, .demo-som-value-stack span, .demo-som-benchmark strong, .demo-som-benchmark span { display: block; }
 .demo-som-value-stack span, .demo-som-legend__item span, .demo-som-benchmark span { color: variables.$secondary-color; font-size: 0.85rem; }
 .demo-som-position, .demo-som-benchmark { border-top: 1px solid variables.$border-color; margin-top: 1rem; padding-top: 1rem; }
 .demo-som-position h4, .demo-som-benchmark h4 { margin-bottom: 0.35rem; }.demo-som-benchmark strong { color: variables.$primary-color; font-size: 1.15rem; }
-@media (max-width: 767px) { .demo-som-layout { grid-template-columns: 1fr; } .demo-som-grid { max-width: none; } }
+@media (max-width: 767px) { .demo-som-layout, .demo-som-benchmark-layout { grid-template-columns: 1fr; } .demo-som-grid { max-width: none; } .demo-som-overview__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .demo-som-grid--benchmark { grid-auto-rows: minmax(2.35rem, 1fr); } .demo-som-benchmark-cell { font-size: clamp(0.54rem, 2.7vw, 0.72rem); } }
 
   .table-sort {
     border: 0;

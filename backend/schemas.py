@@ -485,6 +485,15 @@ class DemoSomBenchmarkBand(BaseModel):
     cell_count: int
 
 
+class DemoSomMapOverview(BaseModel):
+    occupied_cells: int
+    densest_cell: str
+    densest_cell_report_count: int
+    largest_segment_label: str
+    largest_segment_report_count: int
+    provider_usage: dict[str, int]
+
+
 class DemoSomSelectedReport(BaseModel):
     report_id: str
     som_x: int
@@ -505,6 +514,7 @@ class DemoSomSelectedReport(BaseModel):
     peer_report_ids: list[str] = Field(default_factory=list)
     segment_reference_min: Decimal
     segment_reference_max: Decimal
+    is_initial_example: bool = False
 
 
 class DemoSomSegmentSummary(BaseModel):
@@ -528,6 +538,7 @@ class DemoSomResponse(BaseModel):
     coverage: dict[str, object]
     cells: list[DemoSomCell]
     benchmark_bands: list[DemoSomBenchmarkBand]
+    map_overview: DemoSomMapOverview
     segments: list[DemoSomSegmentSummary]
     selected_report: Optional[DemoSomSelectedReport] = None
 

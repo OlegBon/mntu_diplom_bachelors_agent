@@ -297,6 +297,9 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
                 benchmark_band=synthetic_som.benchmark_band(cell_reference_per_carat.get((x, y)), benchmark_thresholds),
             ))
     selected = None
+    is_initial_example = report_id is None
+    if report_id is None and assignments:
+        report_id = max(member[0].report_id for member in assignments)
     if report_id:
         match = next((member for member in assignments if member[0].report_id == report_id), None)
         if match is None:
@@ -318,17 +321,29 @@ def get_demo_som(db: Session, *, dataset_id: str, report_id: str | None) -> sche
             segment_key=key, segment_label=label, segment_description=description,
             peer_report_ids=[member[0].report_id for member in sorted(cells[(assignment.som_x, assignment.som_y)], key=lambda item: (item[0].distance, item[0].report_id)) if member[0].report_id != report_id][:3],
             segment_reference_min=reference_min, segment_reference_max=reference_max,
+            is_initial_example=is_initial_example,
         )
     coverage = json.loads(artifact.coverage)
     coverage["policy_explanation"] = (
         "10 звітів мають одночасно недозволений Demo Market B і умовно прострочений "
         "Demo Market A у synthetic policy scenario; жодне з цих значень не використано."
     )
+    densest_coordinates, densest_members = max(cells.items(), key=lambda item: (len(item[1]), item[0]), default=((0, 0), []))
+    largest_segment = max(segments, key=lambda segment: (segment.report_count, segment.key), default=None)
+    map_overview = schemas.DemoSomMapOverview(
+        occupied_cells=len(cells),
+        densest_cell=f"{densest_coordinates[0] + 1} × {densest_coordinates[1] + 1}",
+        densest_cell_report_count=len(densest_members),
+        largest_segment_label=largest_segment.label if largest_segment else "—",
+        largest_segment_report_count=largest_segment.report_count if largest_segment else 0,
+        provider_usage=coverage.get("provider_usage", {}),
+    )
     return schemas.DemoSomResponse(
         dataset_id=dataset_id, artifact_version=artifact.artifact_version,
         policy_scenario_id=artifact.policy_scenario_id, grid_size=artifact.grid_size,
         feature_names=json.loads(artifact.feature_schema), coverage=coverage,
-        cells=serialized_cells, benchmark_bands=benchmark_bands, segments=segments, selected_report=selected,
+        cells=serialized_cells, benchmark_bands=benchmark_bands, map_overview=map_overview,
+        segments=segments, selected_report=selected,
     )
 
 
