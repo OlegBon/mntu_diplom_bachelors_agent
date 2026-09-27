@@ -279,17 +279,39 @@ function formatCompactUsdPerCarat(value) {
   return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 }).format(amount);
 }
 
+function createSomCellDetails() {
+  const details = createElement("p", "demo-som-cell-details account-help");
+  details.hidden = true;
+  details.setAttribute("role", "status");
+  return details;
+}
+
+function showSomCellDetails(container, text) {
+  container.textContent = text;
+  container.hidden = false;
+}
+
 function renderSom(container, data, labelFor) {
   const selected = data.selected_report;
   const grid = createElement("div", "demo-som-grid");
+  const mainCellDetails = createSomCellDetails();
   grid.style.setProperty("--som-size", String(data.grid_size));
   for (const cell of data.cells) {
     const button = createElement("button", `demo-som-cell demo-som-cell--${cell.segment_label.slice(-1).toLowerCase()}`, String(cell.report_count));
     button.type = "button";
     button.title = `${cell.segment_label}: ${cell.report_count} synthetic звітів`;
+    button.setAttribute("aria-label", `${cell.segment_label}, клітинка ${cell.x + 1} × ${cell.y + 1}: ${cell.report_count} synthetic звітів. Показати деталі клітинки.`);
+    button.addEventListener("click", () => showSomCellDetails(mainCellDetails, [
+      `Клітинка ${cell.x + 1} × ${cell.y + 1} · ${cell.segment_label}.`,
+      `${cell.report_count} synthetic звітів.`,
+      cell.median_carat_weight === null || cell.median_carat_weight === undefined ? "Медіанна вага: —." : `Медіанна вага: ${cell.median_carat_weight} ct.`,
+      cell.median_reference_amount === null || cell.median_reference_amount === undefined ? "Медіанний synthetic орієнтир: —." : `Медіанний synthetic орієнтир: ${formatUsd(cell.median_reference_amount)}.`,
+    ].join(" ")));
     if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
     grid.append(button);
   }
+  const mainMapViewport = createElement("div", "demo-som-map__viewport");
+  mainMapViewport.append(grid);
   const coverage = data.coverage || {};
   const left = createElement("section", "demo-som-map");
   const legend = createElement("div", "demo-som-legend");
@@ -298,7 +320,7 @@ function renderSom(container, data, labelFor) {
     item.append(createElement("strong", "", `${segment.label} · ${segment.report_count}`), createElement("span", "", `${segment.carat_min}–${segment.carat_max} ct · ${segment.dominant_shapes.join(" / ")}`));
     legend.append(item);
   }
-  left.append(createElement("h3", "", "Карта сегментів"), grid, legend, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Кольори відповідають описовим профілям у легенді, не класам якості.`));
+  left.append(createElement("h3", "", "Карта сегментів"), mainMapViewport, createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."), legend, mainCellDetails, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Кольори відповідають описовим профілям у легенді, не класам якості.`));
   const right = createElement("aside", "demo-som-profile");
   right.append(createElement("h3", "", "Профіль показового каменю"));
   if (selected) {
@@ -351,6 +373,7 @@ function renderSom(container, data, labelFor) {
   overviewSection.append(overviewMetrics);
   const benchmarkMap = createElement("section", "demo-som-map");
   const benchmarkGrid = createElement("div", "demo-som-grid demo-som-grid--benchmark");
+  const benchmarkCellDetails = createSomCellDetails();
   benchmarkGrid.style.setProperty("--som-size", String(data.grid_size));
   for (const cell of data.cells) {
     const band = cell.benchmark_band || "empty";
@@ -361,9 +384,17 @@ function renderSom(container, data, labelFor) {
       ? "У цій SOM-клітинці немає synthetic benchmark"
       : `${formatUsdPerCarat(value)} · ${cell.report_count} synthetic звітів`;
     button.setAttribute("aria-label", button.title);
+    button.addEventListener("click", () => {
+      const bandLabel = (data.benchmark_bands || []).find((band) => band.key === cell.benchmark_band)?.label || "Synthetic benchmark недоступний";
+      showSomCellDetails(benchmarkCellDetails, value === null || value === undefined
+        ? `Клітинка ${cell.x + 1} × ${cell.y + 1}. У ній немає synthetic benchmark.`
+        : `Клітинка ${cell.x + 1} × ${cell.y + 1} · ${bandLabel}. Медіанний дозволений synthetic орієнтир: ${formatUsdPerCarat(value)}. ${cell.report_count} synthetic звітів.`);
+    });
     if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
     benchmarkGrid.append(button);
   }
+  const benchmarkViewport = createElement("div", "demo-som-map__viewport");
+  benchmarkViewport.append(benchmarkGrid);
   const benchmarkLegend = createElement("div", "demo-som-legend demo-som-benchmark-legend");
   for (const band of data.benchmark_bands || []) {
     const item = createElement("div", `demo-som-legend__item demo-som-benchmark-legend__item--${band.key}`);
@@ -375,8 +406,10 @@ function renderSom(container, data, labelFor) {
   }
   benchmarkMap.append(
     createElement("h3", "", "Карта synthetic benchmark сегментів · USD/ct"),
-    benchmarkGrid,
+    benchmarkViewport,
+    createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."),
     benchmarkLegend,
+    benchmarkCellDetails,
     createElement("p", "account-help", "Та самі SOM-координати й marker. Значення в клітинці — медіанний дозволений synthetic USD/ct; це не прогноз, не market value і не інвестиційна категорія."),
   );
   const benchmarkProfile = createElement("aside", "demo-som-profile");
