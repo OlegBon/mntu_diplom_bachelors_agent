@@ -46,7 +46,9 @@ SOM artifacts чи operational records.
 відбирають demo reports за `report_date`; далі агрегуються лише valuation,
 прив'язані до каменів цих звітів. Таблиця показує покриття, кількість значень,
 діапазон дат observation, медіану, діапазон і read-only посилання на останній
-demo report.
+demo report. Назва provider-а клікабельна: модалка показує серверно задані
+source class, provenance, статус умов і policy використання. Для demo статус
+прямо каже, що це не договір, ліцензія або дозвіл на real provider data.
 
 ## Межі
 

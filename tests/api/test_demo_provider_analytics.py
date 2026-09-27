@@ -85,6 +85,10 @@ def test_demo_provider_analytics_is_scope_bound_date_scoped_and_admin_only(clien
             "median_amount": "1000.00",
             "max_amount": "1000.00",
             "latest_report_id": "DEMO-00001",
+            "source_class": "Fictional synthetic provider",
+            "provenance": "synthetic-demo-vN / deterministic generator",
+            "terms_status": "Not a contract or market-data agreement",
+            "usage_policy": "Allowed only as an isolated synthetic demonstration reference.",
         },
         {
             "provider_name": "Demo Market B",
@@ -96,6 +100,10 @@ def test_demo_provider_analytics_is_scope_bound_date_scoped_and_admin_only(clien
             "median_amount": "1100.00",
             "max_amount": "1100.00",
             "latest_report_id": "DEMO-00001",
+            "source_class": "Fictional synthetic provider",
+            "provenance": "synthetic-demo-vN / deterministic generator",
+            "terms_status": "Not a contract or market-data agreement",
+            "usage_policy": "Allowed only as an isolated synthetic demonstration reference.",
         },
     ]
     assert client.get(f"/demo/datasets/{DATASET_ID}/provider-analytics", headers=auth_headers(client, experts["owner"].username)).status_code == 404

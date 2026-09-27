@@ -478,6 +478,10 @@ class ProviderAnalyticsProvider(BaseModel):
     median_amount: Optional[Decimal]
     max_amount: Optional[Decimal]
     latest_report_id: Optional[str]
+    source_class: str
+    provenance: str
+    terms_status: str
+    usage_policy: str
 
 
 class ProviderAnalyticsResponse(BaseModel):

@@ -265,7 +265,34 @@ function formatUsd(value) {
   return new Intl.NumberFormat("uk-UA", { style: "currency", currency: "USD" }).format(Number(value));
 }
 
-function renderDemoProviderAnalytics(container, data, datasetId) {
+function openDemoProviderDialog(dialog, content, provider, datasetId) {
+  const metrics = document.createElement("dl");
+  metrics.className = "analytics-metrics";
+  [
+    ["Тип джерела", provider.source_class],
+    ["Provenance", provider.provenance],
+    ["Статус умов", provider.terms_status],
+    ["Покриття у зрізі", `${provider.covered_report_count} із ${provider.candidate_report_count} demo-звітів`],
+    ["Кількість synthetic значень", provider.reference_count],
+    ["Період значень", `${provider.first_period} — ${provider.last_period}`],
+    ["Медіанний synthetic орієнтир", provider.median_amount === null ? "—" : formatUsd(provider.median_amount)],
+    ["Діапазон synthetic орієнтирів", provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`],
+  ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
+  const sample = provider.latest_report_id ? createElement("a", "id-link", provider.latest_report_id) : null;
+  if (sample) sample.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(provider.latest_report_id)}`;
+  const sampleSection = createElement("section", "analytics-review-list");
+  sampleSection.append(createElement("h3", "", "Останній synthetic приклад"), sample || createElement("p", "account-help", "У цьому зрізі немає прикладу."));
+  content.replaceChildren(
+    createElement("h3", "analytics-dialog-name", provider.provider_name),
+    metrics,
+    createElement("p", "account-help", provider.usage_policy),
+    createElement("p", "account-help", "Ці умови описують лише demo-сценарій. Вони не є договором, ліцензією чи дозволом використовувати реальні provider data."),
+    sampleSection,
+  );
+  dialog.showModal();
+}
+
+function renderDemoProviderAnalytics(container, data, datasetId, dialog, dialogContent) {
   const formatPeriod = (value) => value ? formatDateTime(value).date : "—";
   const latestReportLink = (reportId) => {
     if (!reportId) return "—";
@@ -276,15 +303,24 @@ function renderDemoProviderAnalytics(container, data, datasetId) {
   };
   const overview = createElement("p", "account-help", `${data.candidate_report_count} demo-звітів у зрізі · ${data.reference_count} synthetic орієнтирів.`);
   const tableHost = createElement("div", "demo-provider-analytics__table");
-  renderTable(tableHost, ["Провайдер", "Покриття", "Значень", "Період", "Медіана", "Діапазон", "Останній приклад"], data.providers.map((provider) => [
-    provider.provider_name,
+  renderTable(tableHost, ["Провайдер", "Покриття", "Значень", "Період", "Медіана", "Діапазон", "Останній приклад"], data.providers.map((provider) => {
+    const providerButton = createElement("button", "analytics-expert-button", provider.provider_name);
+    providerButton.type = "button";
+    providerButton.addEventListener("click", () => openDemoProviderDialog(dialog, dialogContent, {
+      ...provider,
+      candidate_report_count: data.candidate_report_count,
+      first_period: formatPeriod(provider.first_observed_at),
+      last_period: formatPeriod(provider.last_observed_at),
+    }, datasetId));
+    return [
+    providerButton,
     `${provider.covered_report_count} із ${data.candidate_report_count}`,
     String(provider.reference_count),
     `${formatPeriod(provider.first_observed_at)} — ${formatPeriod(provider.last_observed_at)}`,
     provider.median_amount === null ? "—" : formatUsd(provider.median_amount),
     provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`,
     latestReportLink(provider.latest_report_id),
-  ]), "У вибраному зрізі немає synthetic provider values.");
+  ]; }), "У вибраному зрізі немає synthetic provider values.");
   const note = createElement("p", "account-help", "Суми — immutable synthetic reference values у USD для всього каменю. Вони не є ринковими даними, прогнозом, ціною продажу або рейтингом провайдера.");
   container.replaceChildren(overview, tableHost, note);
 }
@@ -484,7 +520,9 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const somSearchInput = root.querySelector("#demo-som-report-id");
   const dialog = root.querySelector("#demo-workflow-actor-dialog");
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
-  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !providerResults || !expertStatus || !administratorStatus || !providerStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent) return;
+  const providerDialog = root.querySelector("#demo-provider-dialog");
+  const providerDialogContent = root.querySelector("#demo-provider-dialog-content");
+  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !providerResults || !expertStatus || !administratorStatus || !providerStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent || !providerDialog || !providerDialogContent) return;
 
   let activeTab = "reports";
 
@@ -532,7 +570,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       const data = await getDemoProviderAnalytics(datasetId, token, filters);
       providerStatus.replaceChildren();
       periodSummaryNode.textContent = periodSummary(filters);
-      renderDemoProviderAnalytics(providerResults, data, data.dataset_id);
+      renderDemoProviderAnalytics(providerResults, data, data.dataset_id, providerDialog, providerDialogContent);
     } catch {
       setStatus(providerStatus, "Не вдалося завантажити synthetic provider analytics.", "error");
     }
@@ -574,6 +612,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     else void loadWorkflow();
   }, 0));
   dialog.addEventListener("close", () => dialogContent.replaceChildren());
+  providerDialog.addEventListener("close", () => providerDialogContent.replaceChildren());
   void loadWorkflow();
   if (new URLSearchParams(window.location.search).get("tab") === "stones") {
     activate("stones");

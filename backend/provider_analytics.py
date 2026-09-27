@@ -27,6 +27,17 @@ class ProviderAnalyticsScope:
     valuation_kinds: frozenset[str]
     provider_names: frozenset[str]
     label: str
+    provider_metadata: dict[str, "ProviderAnalyticsMetadata"]
+
+
+@dataclass(frozen=True)
+class ProviderAnalyticsMetadata:
+    """Policy facts attached by a server-side source adapter, never by the UI."""
+
+    source_class: str
+    provenance: str
+    terms_status: str
+    usage_policy: str
 
 
 def demo_scope(dataset_id: str) -> ProviderAnalyticsScope:
@@ -37,6 +48,20 @@ def demo_scope(dataset_id: str) -> ProviderAnalyticsScope:
         valuation_kinds=frozenset({"synthetic_demo_reference"}),
         provider_names=frozenset({"Demo Market A", "Demo Market B"}),
         label="synthetic_demo",
+        provider_metadata={
+            "Demo Market A": ProviderAnalyticsMetadata(
+                source_class="Fictional synthetic provider",
+                provenance="synthetic-demo-vN / deterministic generator",
+                terms_status="Not a contract or market-data agreement",
+                usage_policy="Allowed only as an isolated synthetic demonstration reference.",
+            ),
+            "Demo Market B": ProviderAnalyticsMetadata(
+                source_class="Fictional synthetic provider",
+                provenance="synthetic-demo-vN / deterministic generator",
+                terms_status="Not a contract or market-data agreement",
+                usage_policy="Allowed only as an isolated synthetic demonstration reference.",
+            ),
+        },
     )
 
 
@@ -89,6 +114,7 @@ def read_provider_analytics(
 
     providers = []
     for provider_name, entries in grouped.items():
+        metadata = scope.provider_metadata[provider_name]
         amounts = [entry.amount for entry in entries]
         covered_reports = {report_by_stone[entry.stone_id].report_id for entry in entries}
         latest = max(entries, key=lambda entry: (entry.observed_at, entry.valuation_id)) if entries else None
@@ -102,6 +128,10 @@ def read_provider_analytics(
             median_amount=Decimal(str(median(amounts))) if amounts else None,
             max_amount=max(amounts, default=None),
             latest_report_id=report_by_stone[latest.stone_id].report_id if latest is not None else None,
+            source_class=metadata.source_class,
+            provenance=metadata.provenance,
+            terms_status=metadata.terms_status,
+            usage_policy=metadata.usage_policy,
         ))
     return schemas.ProviderAnalyticsResponse(
         scope=scope.label,
