@@ -42,7 +42,6 @@
 | --- | --- | --- |
 | P2 | [169-ui-spacing-and-layout-consistency.md](./169-ui-spacing-and-layout-consistency.md) | Systematic spacing/layout consistency audit без redesign чи зміни domain flows. |
 | P3 | [170-guides-information-architecture.md](./170-guides-information-architecture.md) | Перенесення пояснювальної документації у guides без дублювання ADR/architecture/backlog. |
-| P1 | [165-synthetic-demo-provider-analytics.md](./165-synthetic-demo-provider-analytics.md) | Fictional demo-provider analytics без real market data. |
 | P2 | [166-synthetic-demo-backup-and-historical-reclassification.md](./166-synthetic-demo-backup-and-historical-reclassification.md) | Backup, restore verification і контрольована класифікація historical synthetic `DR-*`. |
 | P2 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
 | P2 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |

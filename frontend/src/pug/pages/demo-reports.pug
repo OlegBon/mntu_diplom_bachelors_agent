@@ -8,10 +8,11 @@ block content
                 p.page-subtitle Ізольований synthetic dataset для внутрішньої демонстрації інтерфейсу та технічних моделей.
         .analytics-tabs(role="tablist" aria-label="Розділи demo dataset")
             button.analytics-tabs__tab.is-active(type="button" role="tab" aria-selected="true" aria-controls="demo-reports-panel" id="demo-tab-reports" data-demo-tab="reports") Демо-звіти
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-stones-panel" id="demo-tab-stones" data-demo-tab="stones") Камені
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-experts-panel" id="demo-tab-experts" data-demo-tab="experts") Експерти
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-administrators-panel" id="demo-tab-administrators" data-demo-tab="administrators") Адміністратори
-            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-stones-panel" id="demo-tab-stones" data-demo-tab="stones") Камені
-            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" disabled title="Заплановано задачею 165") Провайдери
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-providers-panel" id="demo-tab-providers" data-demo-tab="providers") Провайдери
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-currency-panel" id="demo-tab-currency" data-demo-tab="currency") Валютні джерела
         #demo-reports-panel(role="tabpanel" aria-labelledby="demo-tab-reports")
             p.demo-scope__notice(role="note")
                 strong DEMO · SYNTHETIC DATA
@@ -108,7 +109,7 @@ block content
                     tbody#demo-reports-body
                         tr: td(colspan="11") Завантаження…
             nav#demo-pagination.pagination(aria-label="Пагінація demo-звітів")
-        #demo-workflow-controls(hidden)
+        #demo-workflow-controls.demo-time-slice(hidden aria-label="Зріз аналітичних даних")
             form#demo-workflow-slice.analytics-period-filter
                 .form-group
                     label(for="demo-workflow-date-from") Від
@@ -121,6 +122,14 @@ block content
                     button.btn.btn-outline(type="reset") За весь час
             p#demo-workflow-period-summary.analytics-period-summary(role="status" aria-live="polite") Поточний зріз: за весь доступний час.
             p#demo-workflow-period-help.account-help Дані за весь доступний період. У demo зрізі події та тривалості формуються детерміновано; вони не є active-time, review-cycle, SLA чи оцінкою реальних людей.
+        section#demo-currency-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-currency")
+            h2 Валютні джерела
+            p.account-help Окремий read-only огляд офіційних USD/UAH знімків НБУ. Валютний курс не є орієнтиром каменю, не входить до synthetic SOM і не змішується з Demo Market A/B.
+            p.demo-scope__notice(role="note")
+                strong ВАЛЮТНЕ ДЖЕРЕЛО · НБУ
+                |  Показано лише зафіксовані FX-знімки. Їхня дата й час отримання зберігаються окремо від demo-набору та від ринкових орієнтирів.
+            #demo-currency-status.dashboard-status(role="status" aria-live="polite")
+            #demo-currency-results(aria-live="polite")
         section#demo-experts-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-experts")
             h2 Synthetic експерти та звіти
             p.account-help Показано synthetic workflow за вибраний період. Actors не є обліковими записами, а всі demo-звіти мають виданий synthetic lifecycle.
@@ -137,6 +146,14 @@ block content
                 |  Використовується той самий зріз дат, що й для synthetic експертів; дані не пов’язані з обліковими записами адміністратора.
             #demo-administrators-status.dashboard-status(role="status" aria-live="polite")
             #demo-administrators-results(aria-live="polite")
+        section#demo-providers-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-providers")
+            h2 Synthetic провайдери та орієнтири
+            p.account-help Окремий read-only зріз лише для вигаданих Demo Market A/B і synthetic demo-звітів у вибраному періоді.
+            p.demo-scope__notice(role="note")
+                strong DEMO · SYNTHETIC PROVIDERS
+                |  Це coverage і provenance demonstration values, не ринкові джерела, не ціна продажу та не порівняння якості провайдерів.
+            #demo-providers-status.dashboard-status(role="status" aria-live="polite")
+            #demo-providers-results(aria-live="polite")
         section#demo-stones-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-stones")
             h2 Карта сегментів (SOM)
             p.account-help Технічна сегментація тільки ізольованого synthetic dataset. Це не прогноз, не оцінка, не ринкова чи інвестиційна аналітика.
@@ -155,3 +172,9 @@ block content
                     h2#demo-workflow-actor-dialog-title Деталі synthetic actor
                     button.account-dialog__close(type="submit" aria-label="Закрити") ×
                 #demo-workflow-actor-dialog-content
+        dialog#demo-provider-dialog.account-dialog(aria-labelledby="demo-provider-dialog-title")
+            form(method="dialog")
+                .account-dialog__header
+                    h2#demo-provider-dialog-title Деталі джерела
+                    button.account-dialog__close(type="submit" aria-label="Закрити") ×
+                #demo-provider-dialog-content

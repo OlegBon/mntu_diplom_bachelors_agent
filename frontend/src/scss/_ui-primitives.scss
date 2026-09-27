@@ -696,6 +696,7 @@ input[type="number"]::-webkit-outer-spin-button {
 .demo-som-position, .demo-som-benchmark { border-top: 1px solid variables.$border-color; margin-top: 1rem; padding-top: 1rem; }
 .demo-som-benchmark--summary { border-top: 0; border-bottom: 1px solid variables.$border-color; margin: 0 0 1rem; padding: 0 0 1rem; }
 .demo-som-position h4, .demo-som-benchmark h4 { margin-bottom: 0.35rem; }.demo-som-benchmark strong { color: variables.$primary-color; font-size: 1.15rem; }
+.demo-provider-analytics__table { margin: 1rem 0; }
 @media (max-width: 767px) { .demo-som-layout { grid-template-columns: 1fr; } .demo-som-grid { max-width: none; } .demo-som-overview__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .demo-som-benchmark-cell { font-size: clamp(0.54rem, 2.7vw, 0.72rem); } }
 @media (max-width: 424px) { .demo-som-map__viewport { width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; -webkit-overflow-scrolling: touch; padding-bottom: 0.4rem; } .demo-som-map__viewport .demo-som-grid { min-width: 23rem; max-width: 23rem; } .demo-som-map { overflow: hidden; } .demo-som-scroll-hint { display: block; } }
 @media (max-width: 599px) { .demo-som-search { grid-template-columns: 1fr; } .demo-som-search .btn { justify-self: stretch; width: 100%; } }

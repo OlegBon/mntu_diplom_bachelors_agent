@@ -1,4 +1,4 @@
-import { getDemoDataset, getDemoReports, getDemoWorkflowAnalytics, getDemoSom, getGradeMappings } from "./api.js";
+import { getDemoDataset, getDemoReports, getDemoProviderAnalytics, getDemoWorkflowAnalytics, getDemoSom, getFxDataSnapshots, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderTable } from "./analytics-ui.js";
 
@@ -265,6 +265,111 @@ function formatUsd(value) {
   return new Intl.NumberFormat("uk-UA", { style: "currency", currency: "USD" }).format(Number(value));
 }
 
+function openDemoProviderDialog(dialog, content, provider, datasetId) {
+  const metrics = document.createElement("dl");
+  metrics.className = "analytics-metrics";
+  [
+    ["Тип джерела", provider.source_class],
+    ["Походження даних", provider.provenance],
+    ["Статус договору й умов", provider.terms_status],
+    ["Покриття у зрізі", `${provider.covered_report_count} із ${provider.candidate_report_count} demo-звітів`],
+    ["Тип значень", "Synthetic demonstration reference"],
+    ["Кількість значень", provider.reference_count],
+    ["Період значень", `${provider.first_period} — ${provider.last_period}`],
+    ["Медіанний орієнтир", provider.median_amount === null ? "—" : formatUsd(provider.median_amount)],
+    ["Діапазон орієнтирів", provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`],
+    ["Знімок провайдера", "Не передбачено: значення детерміновано генерує локальний demo-набір."],
+    ["Останнє отримання", "Не застосовується: немає зовнішнього сервісу."],
+  ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
+  const sample = provider.latest_report_id ? createElement("a", "id-link", provider.latest_report_id) : null;
+  if (sample) sample.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(provider.latest_report_id)}`;
+  const sampleSection = createElement("section", "analytics-review-list");
+  sampleSection.append(createElement("h3", "", "Останній synthetic приклад"), sample || createElement("p", "account-help", "У цьому зрізі немає прикладу."));
+  content.replaceChildren(
+    createElement("h3", "analytics-dialog-name", provider.provider_name),
+    metrics,
+    createElement("p", "account-help", provider.usage_policy),
+    createElement("p", "account-help", "Ці умови описують лише demo-сценарій. Вони не є договором, ліцензією чи дозволом використовувати реальні provider data."),
+    sampleSection,
+  );
+  dialog.showModal();
+}
+
+function renderCurrencySources(container, snapshots, dialog, dialogContent) {
+  container.replaceChildren();
+  if (!snapshots.length) {
+    container.append(createElement("p", "account-help", "Знімків офіційного курсу НБУ ще немає."));
+    return;
+  }
+  const latest = snapshots[0];
+  const rate = Number(latest.rate).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const sourceButton = createElement("button", "analytics-expert-button", "Національний банк України (НБУ)");
+  sourceButton.type = "button";
+  sourceButton.addEventListener("click", () => {
+    const metrics = document.createElement("dl");
+    metrics.className = "analytics-metrics";
+    [
+      ["Тип джерела", "Офіційний валютний провайдер"],
+      ["Походження даних", "Офіційний сервіс НБУ"],
+      ["Тип значень", `${latest.base_currency_code}/${latest.quote_currency_code} official FX rate`],
+      ["Кількість знімків", snapshots.length],
+      ["Останній курс", `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`],
+      ["Офіційна дата курсу", formatDateTime(`${latest.rate_date}T00:00:00`).date],
+      ["Останнє отримання", `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`],
+    ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
+    dialogContent.replaceChildren(
+      createElement("h3", "", "Національний банк України (НБУ)"),
+      metrics,
+      createElement("p", "account-help", "FX-знімки зберігаються immutable. Вони застосовуються лише для окремої USD/UAH-конвертації дозволених орієнтирів і не є ціною, оцінкою або аналітикою каменю."),
+    );
+    dialog.showModal();
+  });
+  const tableHost = document.createElement("div");
+  tableHost.className = "table-container demo-provider-analytics__table";
+  renderTable(tableHost, ["Валютне джерело", "Пара", "Останній курс", "Офіційна дата", "Отримано", "Знімків"], [[
+    sourceButton,
+    `${latest.base_currency_code}/${latest.quote_currency_code}`,
+    `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`,
+    formatDateTime(`${latest.rate_date}T00:00:00`).date,
+    `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`,
+    String(snapshots.length),
+  ]]);
+  container.append(tableHost);
+}
+
+function renderDemoProviderAnalytics(container, data, datasetId, dialog, dialogContent) {
+  const formatPeriod = (value) => value ? formatDateTime(value).date : "—";
+  const latestReportLink = (reportId) => {
+    if (!reportId) return "—";
+    const link = createElement("a", "id-link", reportId);
+    link.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(reportId)}`;
+    link.title = "Відкрити read-only demo-звіт";
+    return link;
+  };
+  const overview = createElement("p", "account-help", `${data.candidate_report_count} demo-звітів у зрізі · ${data.reference_count} synthetic орієнтирів.`);
+  const tableHost = createElement("div", "demo-provider-analytics__table");
+  renderTable(tableHost, ["Провайдер", "Покриття", "Значень", "Період", "Медіана", "Діапазон", "Останній приклад"], data.providers.map((provider) => {
+    const providerButton = createElement("button", "analytics-expert-button", provider.provider_name);
+    providerButton.type = "button";
+    providerButton.addEventListener("click", () => openDemoProviderDialog(dialog, dialogContent, {
+      ...provider,
+      candidate_report_count: data.candidate_report_count,
+      first_period: formatPeriod(provider.first_observed_at),
+      last_period: formatPeriod(provider.last_observed_at),
+    }, datasetId));
+    return [
+    providerButton,
+    `${provider.covered_report_count} із ${data.candidate_report_count}`,
+    String(provider.reference_count),
+    `${formatPeriod(provider.first_observed_at)} — ${formatPeriod(provider.last_observed_at)}`,
+    provider.median_amount === null ? "—" : formatUsd(provider.median_amount),
+    provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`,
+    latestReportLink(provider.latest_report_id),
+  ]; }), "У вибраному зрізі немає synthetic provider values.");
+  const note = createElement("p", "account-help", "Суми — immutable synthetic reference values у USD для всього каменю. Вони не є ринковими даними, прогнозом, ціною продажу або рейтингом провайдера.");
+  container.replaceChildren(overview, tableHost, note);
+}
+
 function formatUsdPerCarat(value, compact = false) {
   return `${new Intl.NumberFormat("uk-UA", {
     style: "currency",
@@ -442,7 +547,9 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     reports: root.querySelector("#demo-reports-panel"),
     experts: root.querySelector("#demo-experts-panel"),
     administrators: root.querySelector("#demo-administrators-panel"),
+    providers: root.querySelector("#demo-providers-panel"),
     stones: root.querySelector("#demo-stones-panel"),
+    currency: root.querySelector("#demo-currency-panel"),
   };
   const form = root.querySelector("#demo-workflow-slice");
   const controls = root.querySelector("#demo-workflow-controls");
@@ -451,30 +558,49 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const administratorResults = root.querySelector("#demo-administrators-results");
   const expertStatus = root.querySelector("#demo-experts-status");
   const administratorStatus = root.querySelector("#demo-administrators-status");
+  const providerStatus = root.querySelector("#demo-providers-status");
+  const providerResults = root.querySelector("#demo-providers-results");
+  const currencyStatus = root.querySelector("#demo-currency-status");
+  const currencyResults = root.querySelector("#demo-currency-results");
+  const periodHelpNode = root.querySelector("#demo-workflow-period-help");
   const somStatus = root.querySelector("#demo-som-status");
   const somResults = root.querySelector("#demo-som-results");
   const somSearchForm = root.querySelector("#demo-som-report-search");
   const somSearchInput = root.querySelector("#demo-som-report-id");
   const dialog = root.querySelector("#demo-workflow-actor-dialog");
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
-  if (!form || !controls || !periodSummaryNode || !expertResults || !administratorResults || !expertStatus || !administratorStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent) return;
+  const providerDialog = root.querySelector("#demo-provider-dialog");
+  const providerDialogContent = root.querySelector("#demo-provider-dialog-content");
+  if (!form || !controls || !periodSummaryNode || !periodHelpNode || !expertResults || !administratorResults || !providerResults || !currencyStatus || !currencyResults || !expertStatus || !administratorStatus || !providerStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent || !providerDialog || !providerDialogContent) return;
+
+  let activeTab = "reports";
 
   const activate = (tab) => {
+    activeTab = tab;
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
-    controls.hidden = tab === "reports" || tab === "stones";
+    controls.hidden = !["experts", "administrators", "providers", "currency"].includes(tab);
+    periodHelpNode.textContent = tab === "currency"
+      ? "Зріз застосовується до офіційної дати курсу НБУ. Він не фільтрує demo-звіти, орієнтири чи SOM."
+      : "Дані за весь доступний період. У demo зрізі події та тривалості формуються детерміновано; вони не є active-time, review-cycle, SLA чи оцінкою реальних людей.";
     for (const button of tabButtons) {
       const active = button.dataset.demoTab === tab;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-selected", String(active));
     }
   };
-  const load = async () => {
-    const filters = Object.fromEntries(new FormData(form).entries());
-    if (filters.date_from && filters.date_to && filters.date_from > filters.date_to) {
-      setStatus(expertStatus, "Дата «Від» не може бути пізнішою за дату «До».", "error");
-      setStatus(administratorStatus, "Дата «Від» не може бути пізнішою за дату «До».", "error");
-      return;
-    }
+  const filtersForSlice = () => Object.fromEntries(new FormData(form).entries());
+  const validateSlice = (filters) => {
+    if (!filters.date_from || !filters.date_to || filters.date_from <= filters.date_to) return true;
+    const message = "Дата «Від» не може бути пізнішою за дату «До».";
+    setStatus(expertStatus, message, "error");
+    setStatus(administratorStatus, message, "error");
+    setStatus(providerStatus, message, "error");
+    setStatus(currencyStatus, message, "error");
+    return false;
+  };
+  const loadWorkflow = async () => {
+    const filters = filtersForSlice();
+    if (!validateSlice(filters)) return;
     setStatus(expertStatus, "Завантаження synthetic workflow…");
     setStatus(administratorStatus, "Завантаження synthetic workflow…");
     try {
@@ -489,6 +615,32 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
     }
   };
+  const loadProviders = async () => {
+    const filters = filtersForSlice();
+    if (!validateSlice(filters)) return;
+    setStatus(providerStatus, "Завантаження synthetic provider analytics…");
+    try {
+      const data = await getDemoProviderAnalytics(datasetId, token, filters);
+      providerStatus.replaceChildren();
+      periodSummaryNode.textContent = periodSummary(filters);
+      renderDemoProviderAnalytics(providerResults, data, data.dataset_id, providerDialog, providerDialogContent);
+    } catch {
+      setStatus(providerStatus, "Не вдалося завантажити synthetic provider analytics.", "error");
+    }
+  };
+  const loadCurrencySources = async () => {
+    const filters = filtersForSlice();
+    if (!validateSlice(filters)) return;
+    setStatus(currencyStatus, "Завантаження офіційних FX-знімків НБУ…");
+    try {
+      const snapshots = await getFxDataSnapshots(filters, token);
+      currencyStatus.replaceChildren();
+      periodSummaryNode.textContent = periodSummary(filters);
+      renderCurrencySources(currencyResults, snapshots, providerDialog, providerDialogContent);
+    } catch {
+      setStatus(currencyStatus, "Не вдалося завантажити FX-знімки НБУ.", "error");
+    }
+  };
   const loadSom = async (requestedId = new URLSearchParams(window.location.search).get("som_report") || "") => {
     setStatus(somStatus, "Завантаження synthetic SOM…");
     try {
@@ -501,8 +653,18 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       setStatus(somStatus, "Для цього номера немає доступного synthetic SOM-профілю. Перевірте DEMO-ідентифікатор.", "error");
     }
   };
-  for (const button of tabButtons) button.addEventListener("click", () => { activate(button.dataset.demoTab); if (button.dataset.demoTab === "stones") void loadSom(); });
-  form.addEventListener("submit", (event) => { event.preventDefault(); void load(); });
+  for (const button of tabButtons) button.addEventListener("click", () => {
+    activate(button.dataset.demoTab);
+    if (button.dataset.demoTab === "stones") void loadSom();
+    if (button.dataset.demoTab === "providers") void loadProviders();
+    if (button.dataset.demoTab === "currency") void loadCurrencySources();
+  });
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (activeTab === "providers") void loadProviders();
+    else if (activeTab === "currency") void loadCurrencySources();
+    else void loadWorkflow();
+  });
   somSearchForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const reportId = somSearchInput.value.trim().toUpperCase();
@@ -513,13 +675,18 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     window.history.replaceState({}, "", `${window.location.pathname}?${params}`);
     void loadSom(reportId);
   });
-  form.addEventListener("reset", () => window.setTimeout(() => void load(), 0));
+  form.addEventListener("reset", () => window.setTimeout(() => {
+    if (activeTab === "providers") void loadProviders();
+    else if (activeTab === "currency") void loadCurrencySources();
+    else void loadWorkflow();
+  }, 0));
   dialog.addEventListener("close", () => dialogContent.replaceChildren());
-  void load();
-  if (new URLSearchParams(window.location.search).get("tab") === "stones") {
-    activate("stones");
-    void loadSom();
-  }
+  providerDialog.addEventListener("close", () => providerDialogContent.replaceChildren());
+  void loadWorkflow();
+  const requestedTab = new URLSearchParams(window.location.search).get("tab");
+  if (requestedTab === "stones") { activate("stones"); void loadSom(); }
+  if (requestedTab === "providers") { activate("providers"); void loadProviders(); }
+  if (requestedTab === "currency") { activate("currency"); void loadCurrencySources(); }
 }
 
 export async function initDemoReports() {
