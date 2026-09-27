@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-27 — database-topology-configuration-planning
+
+- **Задача:** зафіксувати 172 після уточнення local MariaDB та майбутньої PostgreSQL/cloud topology.
+- **Змінені файли:** `docs/{work_plan,progress}.md`, `docs/backlog/{README,172-database-topology-and-configuration-contract}.md`.
+- **Рішення / Результат:** local MariaDB складається з трьох databases `diamond_oltp`, `diamond_market`, `diamond_analytics`; `DB_NAME=diamond_oltp` лише задає default connection database, а schema-qualified SQLAlchemy models вимагають права на всі три. Цільовий PostgreSQL/cloud контур — одна physical database з трьома schemas з цими самими назвами, не всі таблиці в `public`. Demo SOM artifacts лишаються в `diamond_oltp`; reserved `diamond_analytics.ml_results` не є demo SOM storage. 172 готує configuration/grants/Alembic/backup contract перед 161, але не виконує migration чи cloud provisioning.
+- **Перевірки:** backlog links і залежності звірені з 160/161; code, schema, env і дані не змінювалися.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** конкретні PostgreSQL grants, schemas, migration order і disposable smoke-test будуть результатом 172; фактична міграція залишається 161.
+
 ## 2026-09-27 — synthetic-som-demo-finalization
 
 - **Задача:** завершити погоджені UX-пункти 159 та виправити presentation thematic synthetic benchmark map.

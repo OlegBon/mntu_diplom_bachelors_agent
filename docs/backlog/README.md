@@ -53,6 +53,7 @@
 | P2 | [151-analytics-data-contract-and-quality.md](./151-analytics-data-contract-and-quality.md) | Ліцензії, dataset, target, quality і reproducible splits. |
 | P2 | [152-verified-ml-experiment.md](./152-verified-ml-experiment.md) | Baseline, validation, artifact та model-result provenance. |
 | P2 | [153-stone-analytics-visualization.md](./153-stone-analytics-visualization.md) | Private descriptive SOM / market segments після якісних даних. |
+| P2 | [172-database-topology-and-configuration-contract.md](./172-database-topology-and-configuration-contract.md) | Local MariaDB databases ↔ одна PostgreSQL/cloud database з трьома schemas; input для 161. |
 | P3 | [160-platform-and-stack-decision.md](./160-platform-and-stack-decision.md) | Cloud platform ADR, current stack and TypeScript/Vite criteria. |
 | P3 | [137-github-actions-continuous-integration.md](./137-github-actions-continuous-integration.md) | Reproducible CI до переходу на protected `main`, без deploy. |
 | P3 | [161-postgresql-migration-and-staging.md](./161-postgresql-migration-and-staging.md) | PostgreSQL, staging, deployment and scheduler integration. |
