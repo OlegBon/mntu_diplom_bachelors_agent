@@ -19,6 +19,20 @@ def get_required_env(name: str) -> str:
     return value
 
 
+def get_bounded_int_env(name: str, *, default: int, minimum: int, maximum: int) -> int:
+    """Read a bounded integer setting without exposing environment contents."""
+    raw_value = os.getenv(name)
+    if raw_value is None or not raw_value.strip():
+        return default
+    try:
+        value = int(raw_value)
+    except ValueError as error:
+        raise RuntimeError(f"Змінна середовища {name} має бути цілим числом.") from error
+    if not minimum <= value <= maximum:
+        raise RuntimeError(f"Змінна середовища {name} має бути в межах {minimum}–{maximum}.")
+    return value
+
+
 def get_database_url() -> str | URL:
     """Повернути явний URL БД або зібрати його з локальних DB_* змінних."""
     database_url = os.getenv("DATABASE_URL")

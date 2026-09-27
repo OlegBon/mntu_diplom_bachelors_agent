@@ -34,6 +34,11 @@ html(lang="uk")
                             span
                             span
 
+        section#session-retry-state.session-retry-state(hidden role="status" aria-live="polite")
+            .container.session-retry-state__content
+                p#session-retry-message Сеанс збережено. API тимчасово недоступний.
+                button#session-retry-button.btn.btn-outline(type="button") Спробувати знову
+
         main.page-content
             .container
                 block content

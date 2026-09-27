@@ -18,7 +18,7 @@ import {
   transitionDomainReport,
   updateDomainReport,
 } from "./api.js";
-import { logout } from "./auth.js";
+import { isConfirmedUnauthorized, logout } from "./auth.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 import { createDraftWorkSessionTracker } from "./report-work-session.js";
 
@@ -550,7 +550,14 @@ export async function initReportDetail() {
     populateExpertGradeSelects(form, mappings);
     populateReferenceSelect(form.querySelector("#detail-girdle"), references, "girdle_thickness");
     populateReferenceSelect(form.querySelector("#detail-culet"), references, "culet_size");
-  } catch { logout("/login.html"); return; }
+  } catch (error) {
+    if (isConfirmedUnauthorized(error)) {
+      logout("/login.html");
+      return;
+    }
+    setStatus(status, "Не вдалося підготувати сторінку звіту. Сеанс збережено — оновіть сторінку після відновлення API.", true);
+    return;
+  }
   workSessionTracker = createDraftWorkSessionTracker({ reportId, token, form });
   document.getElementById("media-publication-dialog-close").addEventListener("click", closeMediaPublicationDialog);
   document.getElementById("media-publication-cancel").addEventListener("click", closeMediaPublicationDialog);

@@ -1,4 +1,4 @@
-import { checkAuth, logout } from "./modules/auth.js";
+import { checkAuth, clearSession, isConfirmedUnauthorized, logout } from "./modules/auth.js";
 import { getCurrentUser, loginUser } from "./modules/api.js";
 import { initDashboard } from "./modules/dashboard.js";
 import { initReportWizard } from "./modules/report-wizard.js";
@@ -102,6 +102,19 @@ function applyApprovedNavigation(isAuthenticated, user = null) {
   authBlock.append(logoutButton);
 }
 
+function initializeAuthenticatedPage(currentPath, isCreateReportPage) {
+  if (currentPath.endsWith("/dashboard.html")) void initDashboard();
+  if (isCreateReportPage) void initReportWizard();
+  if (currentPath.endsWith("/report-detail.html")) void initReportDetail();
+  if (currentPath.endsWith("/profile.html")) void initProfile();
+  if (currentPath.endsWith("/experts.html")) void initAdminUsers();
+  if (currentPath.endsWith("/references.html")) void initReferenceCatalog();
+  if (currentPath.endsWith("/market-data.html")) void initMarketData();
+  if (currentPath.endsWith("/ml-analysis.html")) void initAnalytics();
+  if (currentPath.endsWith("/demo-reports.html")) void initDemoReports();
+  if (currentPath.endsWith("/demo-report-detail.html")) void initDemoReportDetail();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initPasswordVisibility();
   const isAuthenticated = checkAuth();
@@ -121,14 +134,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const protectedPage = document.querySelector("[data-protected-page]");
   const homeLoginCta = document.getElementById("home-login-cta");
-  if (!isAuthenticated) {
-    if (protectedPage) protectedPage.hidden = false;
-    if (homeLoginCta) homeLoginCta.hidden = false;
-    applyApprovedNavigation(false);
-  }
+  const retryState = document.getElementById("session-retry-state");
+  const retryMessage = document.getElementById("session-retry-message");
+  const retryButton = document.getElementById("session-retry-button");
 
-  if (isAuthenticated) {
-    void getCurrentUser(localStorage.getItem("token")).then((user) => {
+  const hideRetryState = () => {
+    if (retryState) retryState.hidden = true;
+  };
+  const showRetryState = () => {
+    if (retryMessage) retryMessage.textContent = "Сеанс збережено. API тимчасово недоступний — спробуйте знову за мить.";
+    if (retryState) retryState.hidden = false;
+  };
+  const bootstrapAuthenticatedSession = async () => {
+    if (retryButton) retryButton.disabled = true;
+    try {
+      const user = await getCurrentUser(localStorage.getItem("token"));
       localStorage.setItem("username", user.username);
       localStorage.setItem("role", user.role);
       localStorage.setItem("demo_access_enabled", String(user.demo_access_enabled));
@@ -138,14 +158,29 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (protectedPage) protectedPage.hidden = false;
       if (homeLoginCta) homeLoginCta.hidden = true;
+      hideRetryState();
       applyApprovedNavigation(true, user);
-    }).catch(() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      localStorage.removeItem("role");
-      localStorage.removeItem("demo_access_enabled");
-      window.location.replace("/login.html");
-    });
+      initializeAuthenticatedPage(currentPath, isCreateReportPage);
+    } catch (error) {
+      if (isConfirmedUnauthorized(error)) {
+        clearSession();
+        window.location.replace("/login.html");
+        return;
+      }
+      showRetryState();
+    } finally {
+      if (retryButton) retryButton.disabled = false;
+    }
+  };
+  if (!isAuthenticated) {
+    if (protectedPage) protectedPage.hidden = false;
+    if (homeLoginCta) homeLoginCta.hidden = false;
+    applyApprovedNavigation(false);
+  }
+
+  if (isAuthenticated) {
+    void bootstrapAuthenticatedSession();
+    retryButton?.addEventListener("click", () => void bootstrapAuthenticatedSession());
   }
 
   window.addEventListener("demo-access-changed", (event) => {
@@ -153,16 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
     applyApprovedNavigation(true, user);
   });
 
-  if (isAuthenticated) void initDashboard();
-  if (isAuthenticated && isCreateReportPage) void initReportWizard();
-  if (isAuthenticated && currentPath.endsWith("/report-detail.html")) void initReportDetail();
-  if (isAuthenticated && currentPath.endsWith("/profile.html")) void initProfile();
-  if (isAuthenticated && currentPath.endsWith("/experts.html")) void initAdminUsers();
-  if (isAuthenticated && currentPath.endsWith("/references.html")) void initReferenceCatalog();
-  if (isAuthenticated && currentPath.endsWith("/market-data.html")) void initMarketData();
-  if (isAuthenticated && currentPath.endsWith("/ml-analysis.html")) void initAnalytics();
-  if (isAuthenticated && currentPath.endsWith("/demo-reports.html")) void initDemoReports();
-  if (isAuthenticated && currentPath.endsWith("/demo-report-detail.html")) void initDemoReportDetail();
   if (currentPath.endsWith("/passport.html")) void initPublicPassport();
 
   const burgerBtn = document.getElementById("burger-btn");
