@@ -14,6 +14,15 @@
 - **Нові змінні середовища:** немає.
 - **Обмеження:** `0021_provider_restricted_access` застосовано до локальної MariaDB після явного підтвердження; Alembic head підтверджено. Assignment UI, analytics read-only policy/audit projection та sanitized English mock-up — наступні логічні кроки 141.
 
+## 2026-09-28 — provider-access-ui-layout
+
+- **Задача:** виправити семантичний порядок профілю та responsive controls provider-access у межах 141.
+- **Змінені файли:** `frontend/src/{pug/pages/profile.pug,js/modules/market-data.js}`, `docs/progress.md`.
+- **Рішення / результат:** wide profile grid має пари «Дані профілю / Змінити пароль» і «Демо / керування партнерськими даними»; mobile зберігає цей порядок. Динамічні provider policy forms використовують shared `form-group`, `form-control` і `form-actions`: читабельні локалізовані назви провайдерів, стандартні поля, розділені кнопки та їхнє наявне full-width mobile правило.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** browser visual QA у цьому середовищі недоступний; потрібна коротка ручна перевірка трьох breakpoint-ів у локальному браузері.
+
 ## 2026-09-28 — provider-operations-and-coverage-analytics
 
 - **Задача:** завершити 163 — додати admin-only operational facts про freshness, provider operations і draft coverage без змішування demo або оцінювання provider-ів.

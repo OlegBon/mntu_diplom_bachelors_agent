@@ -113,19 +113,26 @@ function renderProviderAccessPolicies(container, policies, administrators, onSav
   container.replaceChildren();
   for (const policy of policies) {
     const form = document.createElement("form"); form.className = "market-data-card";
-    const title = document.createElement("h3"); title.textContent = policy.provider_code;
+    const providerNames = { nbu: "Національний банк України (НБУ)", openfacet: "OpenFacet" };
+    const title = document.createElement("h3"); title.textContent = providerNames[policy.provider_code] || policy.provider_code;
+    const modeGroup = document.createElement("div"); modeGroup.className = "form-group";
     const modeLabel = document.createElement("label"); modeLabel.textContent = "Режим доступу";
-    const mode = document.createElement("select"); mode.name = "access_mode";
+    const mode = document.createElement("select"); mode.name = "access_mode"; mode.className = "form-control";
     [["disabled", "Вимкнено"], ["restricted_trial", "Обмежений trial"], ["standard_internal", "Внутрішній стандартний"]].forEach(([value, text]) => {
       const option = document.createElement("option"); option.value = value; option.textContent = text; option.selected = value === policy.access_mode; mode.append(option);
     });
+    modeLabel.append(mode); modeGroup.append(modeLabel);
+    const limitGroup = document.createElement("div"); limitGroup.className = "form-group";
     const limitLabel = document.createElement("label"); limitLabel.textContent = "Денний ліміт запитів";
-    const limit = document.createElement("input"); limit.type = "number"; limit.min = "1"; limit.name = "daily_request_limit"; limit.value = policy.daily_request_limit || "";
+    const limit = document.createElement("input"); limit.type = "number"; limit.min = "1"; limit.name = "daily_request_limit"; limit.className = "form-control"; limit.value = policy.daily_request_limit || ""; limitLabel.append(limit); limitGroup.append(limitLabel);
+    const expiryGroup = document.createElement("div"); expiryGroup.className = "form-group";
     const expiryLabel = document.createElement("label"); expiryLabel.textContent = "Trial діє до (UTC)";
-    const expiry = document.createElement("input"); expiry.type = "datetime-local"; expiry.name = "trial_expires_at";
+    const expiry = document.createElement("input"); expiry.type = "datetime-local"; expiry.name = "trial_expires_at"; expiry.className = "form-control";
     expiry.value = policy.trial_expires_at ? new Date(policy.trial_expires_at).toISOString().slice(0, 16) : "";
+    expiryLabel.append(expiry); expiryGroup.append(expiryLabel);
+    const termsGroup = document.createElement("div"); termsGroup.className = "form-group";
     const termsLabel = document.createElement("label"); termsLabel.textContent = "Посилання або коротка примітка до умов";
-    const terms = document.createElement("input"); terms.type = "text"; terms.maxLength = 2000; terms.name = "terms_reference"; terms.value = policy.terms_reference || "";
+    const terms = document.createElement("input"); terms.type = "text"; terms.maxLength = 2000; terms.name = "terms_reference"; terms.className = "form-control"; terms.value = policy.terms_reference || ""; termsLabel.append(terms); termsGroup.append(termsLabel);
     const note = document.createElement("p"); note.className = "account-help"; note.textContent = "Дозволено лише природні камені, внутрішнє використання; public display і ML у цьому релізі вимкнені.";
     const assignments = document.createElement("div"); assignments.className = "market-data-card__actions";
     const assignmentTitle = document.createElement("p"); assignmentTitle.textContent = policy.access_mode === "restricted_trial" ? "Призначені адміністратори restricted trial:" : "Призначення доступні лише для restricted trial.";
@@ -136,9 +143,11 @@ function renderProviderAccessPolicies(container, policies, administrators, onSav
       input.addEventListener("change", async () => { input.disabled = true; try { await onAssignment(policy.provider_code, administrator.expert_id, input.checked); } catch (error) { input.checked = !input.checked; throw error; } finally { input.disabled = false; } });
       label.append(input, document.createTextNode(`${administrator.last_name || ""} ${administrator.first_name || ""} (${administrator.username})`.trim())); assignments.append(label);
     });
+    const actions = document.createElement("div"); actions.className = "form-actions";
     const eventsButton = document.createElement("button"); eventsButton.type = "button"; eventsButton.className = "btn btn-outline"; eventsButton.textContent = "Показати журнал умов"; eventsButton.addEventListener("click", () => onEvents(policy.provider_code));
     const button = document.createElement("button"); button.type = "submit"; button.className = "btn btn-primary"; button.textContent = "Зберегти умови";
-    form.append(title, modeLabel, mode, limitLabel, limit, expiryLabel, expiry, termsLabel, terms, note, assignments, eventsButton, button);
+    actions.append(eventsButton, button);
+    form.append(title, modeGroup, limitGroup, expiryGroup, termsGroup, note, assignments, actions);
     form.addEventListener("submit", async (event) => {
       event.preventDefault(); button.disabled = true;
       try { await onSave(policy.provider_code, { access_mode: mode.value, daily_request_limit: limit.value ? Number(limit.value) : null, trial_expires_at: expiry.value ? new Date(expiry.value).toISOString() : null, terms_reference: terms.value.trim() || null, natural_only: true, internal_only: true, public_display_allowed: false, ml_allowed: false }); }
