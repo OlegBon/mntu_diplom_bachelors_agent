@@ -2,6 +2,32 @@
 
 FastAPI entry point — `backend/main.py`. Route приймає Pydantic payload, отримує SQLAlchemy session через dependency, перевіряє JWT/current user і лише тоді викликає domain CRUD.
 
+```mermaid
+sequenceDiagram
+  participant C as Browser/api.js
+  participant R as FastAPI route
+  participant S as security.py
+  participant D as get_db
+  participant U as crud/domain
+  C->>R: JSON + Bearer JWT
+  R->>S: get_current_user / role
+  R->>D: Session dependency
+  R->>U: read or domain command
+  U-->>R: result/domain error
+  R-->>C: JSON + HTTP status
+```
+
+## Орієнтир у файлах
+
+| Файл | Відповідальність |
+| --- | --- |
+| `main.py` | routes, HTTP status, dependencies, CORS |
+| `schemas.py` | Pydantic request/response contract |
+| `security.py` | password hash, JWT, current user |
+| `crud.py` | queries, lifecycle/domain persistence |
+| `models.py` | SQLAlchemy schema mapping |
+| `calculator.py` | deterministic IDC rules, не ML |
+
 ## Мінімальний protected endpoint
 
 ```python
@@ -32,3 +58,7 @@ return result
 - `/public/passports/{public_id}` — окрема allow-listed anonymous projection.
 
 OpenAPI: `/docs` і `/openapi.json`. Read-only contract smoke: `scripts/audit-api.mjs`. Повний перелік — [architecture](../architecture.md), workflow — [current domain guide](./current-domain-and-report-workflow.md).
+
+## Правило для нового endpoint-а
+
+Спочатку Pydantic schema і domain operation, потім route з явним `response_model`, dependency та RBAC. Усі write paths мають commit/rollback; external provider fetch не запускається з report save. Додайте API test на дозволену роль і хоча б один denial/validation case.
