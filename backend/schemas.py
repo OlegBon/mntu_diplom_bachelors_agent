@@ -629,6 +629,53 @@ class MarketProviderOperationResponse(BaseModel):
     initiated_by_id: Optional[int]
 
 
+class ProviderCoverageSummary(BaseModel):
+    """Coverage of selected operational drafts; never a provider quality score."""
+
+    candidate_draft_reports: int
+    covered_draft_reports: int
+    excluded_non_natural_reports: int
+    missing_characteristics_reports: int
+    snapshot_unavailable_reports: int
+    quote_not_covered_reports: int
+    covered_report_ids: list[str] = Field(default_factory=list)
+
+
+class OperationalProviderAnalyticsRow(BaseModel):
+    """Read-only operational facts for one market-reference provider."""
+
+    provider_code: str
+    display_name: str
+    scope_note: str
+    schedule_enabled: Optional[bool]
+    warn_after_hours: Optional[int]
+    block_after_hours: Optional[int]
+    freshness_status: Literal["fresh", "warning", "stale", "missing"]
+    latest_snapshot_id: Optional[int]
+    latest_snapshot_status: Optional[MarketSnapshotStatus]
+    latest_retrieved_at: Optional[datetime]
+    snapshots_total: int
+    snapshots_candidate: int
+    snapshots_approved: int
+    snapshots_rejected: int
+    operations_total: int
+    manual_operations: int
+    scheduled_operations: int
+    retry_operations: int
+    failed_operations: int
+    latest_operation_status: Optional[Literal["success", "no_change", "failed", "skipped"]]
+    latest_operation_at: Optional[datetime]
+    coverage: ProviderCoverageSummary
+
+
+class OperationalProviderAnalyticsResponse(BaseModel):
+    """Admin-only provider operations, snapshot freshness and draft coverage."""
+
+    date_from: Optional[date]
+    date_to: Optional[date]
+    providers: list[OperationalProviderAnalyticsRow]
+
+
 class ReportListResponse(BaseModel):
     """Server-paginated, access-scoped report list for the dashboard."""
 
