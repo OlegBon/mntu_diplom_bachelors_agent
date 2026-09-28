@@ -17,6 +17,7 @@ from .security import get_password_hash, verify_password
 from .calculator import DiamondCalculator
 from . import synthetic_som
 from . import provider_analytics
+from . import narrative_quality
 
 
 CURRENT_RULESET_ID = "idc-demo-v1"
@@ -453,6 +454,55 @@ def get_demo_provider_analytics(
         scope=provider_analytics.demo_scope(dataset_id),
         date_from=date_from,
         date_to=date_to,
+    )
+
+
+def get_demo_narrative_quality_analytics(
+    db: Session, *, dataset_id: str, date_from: date | None, date_to: date | None,
+) -> schemas.NarrativeQualityAnalyticsResponse:
+    """Read synthetic narrative metadata without querying operational reports."""
+    require_demo_dataset_analysis_eligibility(db, dataset_id=dataset_id, scenario="demo_operations")
+    start = datetime.combine(date_from, time.min) if date_from is not None else None
+    end = datetime.combine(date_to + timedelta(days=1), time.min) if date_to is not None else None
+    reports_query = (
+        db.query(models.DiamondReport)
+        .options(joinedload(models.DiamondReport.stone))
+        .filter(
+            models.DiamondReport.record_scope == "demo",
+            models.DiamondReport.demo_dataset_id == dataset_id,
+        )
+    )
+    if start is not None:
+        reports_query = reports_query.filter(models.DiamondReport.report_date >= start)
+    if end is not None:
+        reports_query = reports_query.filter(models.DiamondReport.report_date < end)
+    reports = reports_query.order_by(models.DiamondReport.report_id).all()
+
+    reasons_query = (
+        db.query(models.ReportEvent)
+        .join(models.DiamondReport, models.ReportEvent.report_id == models.DiamondReport.report_id)
+        .filter(
+            models.DiamondReport.record_scope == "demo",
+            models.DiamondReport.demo_dataset_id == dataset_id,
+        )
+    )
+    if start is not None:
+        reasons_query = reasons_query.filter(models.ReportEvent.created_at >= start)
+    if end is not None:
+        reasons_query = reasons_query.filter(models.ReportEvent.created_at < end)
+    reasons = reasons_query.order_by(models.ReportEvent.report_id, models.ReportEvent.event_id).all()
+
+    current_semantics = "Поточне synthetic значення у demo-звітах, датованих вибраним періодом. Це не історія редагувань тексту."
+    reason_semantics = "Незмінний коментар події зміни статусу synthetic demo-звіту у вибраному періоді."
+    return schemas.NarrativeQualityAnalyticsResponse(
+        date_from=date_from,
+        date_to=date_to,
+        fields=[
+            _narrative_field_statistics(field_key="identification_method", label="Метод ідентифікації", source_semantics=current_semantics, entries=[(report.report_id, report.report_date, report.stone.identification_method if report.stone else None) for report in reports]),
+            _narrative_field_statistics(field_key="identification_conclusion", label="Висновок щодо ідентифікації", source_semantics=current_semantics, entries=[(report.report_id, report.report_date, report.stone.identification_conclusion if report.stone else None) for report in reports]),
+            _narrative_field_statistics(field_key="expert_comment", label="Коментар експерта", source_semantics=current_semantics, entries=[(report.report_id, report.report_date, report.expert_comment) for report in reports]),
+            _narrative_field_statistics(field_key="status_transition_reason", label="Коментар до зміни статусу", source_semantics=reason_semantics, entries=[(event.report_id, event.created_at, event.reason) for event in reasons]),
+        ],
     )
 
 
@@ -1485,6 +1535,97 @@ def _period_bounds(date_from: date | None, date_to: date | None) -> tuple[dateti
     start = datetime.combine(date_from, time.min, tzinfo=timezone.utc) if date_from else None
     end = datetime.combine(date_to + timedelta(days=1), time.min, tzinfo=timezone.utc) if date_to else None
     return start, end
+
+
+def get_report_narrative_quality(report: models.DiamondReport) -> schemas.NarrativeQualityReportResponse:
+    """Evaluate current private narratives without persisting a judgement."""
+    stone = report.stone
+    return schemas.NarrativeQualityReportResponse(
+        report_id=report.report_id,
+        warnings=narrative_quality.check_report_narratives(
+            identification_status=stone.identification_status if stone else "preliminary",
+            identification_method=stone.identification_method if stone else None,
+            identification_conclusion=stone.identification_conclusion if stone else None,
+            expert_comment=report.expert_comment,
+        ),
+    )
+
+
+def _narrative_field_statistics(
+    *, field_key: str, label: str, source_semantics: str, entries: list[tuple[str, datetime, str | None]],
+) -> schemas.NarrativeTextFieldStatistics:
+    measured = [
+        (report_id, occurred_at, narrative_quality.word_count(value), narrative_quality.non_whitespace_char_count(value))
+        for report_id, occurred_at, value in entries
+        if narrative_quality.normalize_text(value)
+    ]
+    words = [item[2] for item in measured]
+    characters = [item[3] for item in measured]
+    samples = [
+        schemas.NarrativeTextSample(
+            report_id=report_id, occurred_at=occurred_at,
+            word_count=words_count, non_whitespace_char_count=character_count,
+        )
+        for report_id, occurred_at, words_count, character_count in measured
+    ]
+    shortest = sorted(samples, key=lambda item: (item.non_whitespace_char_count, item.report_id, item.occurred_at))[:3]
+    longest = sorted(samples, key=lambda item: (-item.non_whitespace_char_count, item.report_id, item.occurred_at))[:3]
+    return schemas.NarrativeTextFieldStatistics(
+        field_key=field_key, label=label, source_semantics=source_semantics,
+        non_empty_count=len(measured),
+        median_word_count=float(median(words)) if words else None,
+        average_word_count=round(sum(words) / len(words), 2) if words else None,
+        median_non_whitespace_char_count=float(median(characters)) if characters else None,
+        average_non_whitespace_char_count=round(sum(characters) / len(characters), 2) if characters else None,
+        shortest=shortest, longest=longest,
+    )
+
+
+def get_narrative_quality_analytics(
+    db: Session, *, date_from: date | None = None, date_to: date | None = None,
+) -> schemas.NarrativeQualityAnalyticsResponse:
+    """Return metadata-only narrative measurements for operational records.
+
+    Report fields are current values grouped by report creation date. Status
+    reasons are immutable events grouped by event timestamp; no historical text
+    provenance is claimed for fields that do not have revision history.
+    """
+    start, end = _period_bounds(date_from, date_to)
+    reports_query = (
+        db.query(models.DiamondReport)
+        .options(joinedload(models.DiamondReport.stone))
+        .filter(models.DiamondReport.record_scope == "operational")
+    )
+    if start is not None:
+        reports_query = reports_query.filter(models.DiamondReport.created_at >= start)
+    if end is not None:
+        reports_query = reports_query.filter(models.DiamondReport.created_at < end)
+    reports = reports_query.order_by(models.DiamondReport.report_id).all()
+    report_entries = [(report.report_id, report.created_at or report.report_date, report) for report in reports]
+
+    reasons_query = (
+        db.query(models.ReportEvent)
+        .join(models.DiamondReport, models.ReportEvent.report_id == models.DiamondReport.report_id)
+        .filter(models.DiamondReport.record_scope == "operational")
+    )
+    if start is not None:
+        reasons_query = reasons_query.filter(models.ReportEvent.created_at >= start)
+    if end is not None:
+        reasons_query = reasons_query.filter(models.ReportEvent.created_at < end)
+    reasons = reasons_query.order_by(models.ReportEvent.report_id, models.ReportEvent.event_id).all()
+
+    current_semantics = "Поточне значення у звітах, створених у вибраному періоді. Це не історія редагувань тексту."
+    reason_semantics = "Незмінний коментар події зміни статусу, що сталася у вибраному періоді."
+    return schemas.NarrativeQualityAnalyticsResponse(
+        date_from=date_from,
+        date_to=date_to,
+        fields=[
+            _narrative_field_statistics(field_key="identification_method", label="Метод ідентифікації", source_semantics=current_semantics, entries=[(report_id, occurred_at, report.stone.identification_method if report.stone else None) for report_id, occurred_at, report in report_entries]),
+            _narrative_field_statistics(field_key="identification_conclusion", label="Висновок щодо ідентифікації", source_semantics=current_semantics, entries=[(report_id, occurred_at, report.stone.identification_conclusion if report.stone else None) for report_id, occurred_at, report in report_entries]),
+            _narrative_field_statistics(field_key="expert_comment", label="Коментар експерта", source_semantics=current_semantics, entries=[(report_id, occurred_at, report.expert_comment) for report_id, occurred_at, report in report_entries]),
+            _narrative_field_statistics(field_key="status_transition_reason", label="Коментар до зміни статусу", source_semantics=reason_semantics, entries=[(event.report_id, event.created_at, event.reason) for event in reasons]),
+        ],
+    )
 
 
 def _work_session_record(session: models.ReportWorkSession) -> schemas.WorkSessionDurationRecord:

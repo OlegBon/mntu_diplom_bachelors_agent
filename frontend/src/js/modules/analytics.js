@@ -1,6 +1,6 @@
-import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getOperationalProviderAnalytics } from "./api.js";
+import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getNarrativeQualityAnalytics, getOperationalProviderAnalytics } from "./api.js";
 import { logout } from "./auth.js";
-import { duration, element, periodSummary, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
+import { duration, element, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
 
 function fullName(row) {
   return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || "Не вказано";
@@ -190,6 +190,7 @@ export async function initAnalytics() {
   const token = localStorage.getItem("token");
   const expertResults = document.getElementById("analytics-expert-results");
   const adminResults = document.getElementById("analytics-admin-results");
+  const narrativeResults = document.getElementById("analytics-narrative-results");
   const providerResults = document.getElementById("analytics-provider-results");
   const currencyResults = document.getElementById("analytics-currency-results");
   const expertDialog = document.getElementById("analytics-expert-dialog");
@@ -224,11 +225,16 @@ export async function initAnalytics() {
     }
     status.hidden = true;
     try {
-      const [experts, admins, providers, currency] = await Promise.all([
-        getExpertStatistics(period, token), getAdminReviewStatistics(period, token),
+      const [experts, narratives, admins, providers, currency] = await Promise.all([
+        getExpertStatistics(period, token), getNarrativeQualityAnalytics(period, token),
+        getAdminReviewStatistics(period, token),
         getOperationalProviderAnalytics(period, token), getFxDataSnapshots(period, token),
       ]);
       renderExperts(expertResults, experts, expertDialog, expertDialogContent);
+      renderNarrativeAnalytics(narrativeResults, narratives, {
+        reportHref: (reportId) => `/report-detail.html?id=${encodeURIComponent(reportId)}`,
+        formatDateTime: dateTime,
+      });
       renderAdmins(adminResults, admins);
       renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
       renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);

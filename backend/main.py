@@ -515,6 +515,24 @@ def read_demo_provider_analytics(
         raise HTTPException(status_code=404, detail="Demo provider analytics is unavailable") from error
 
 
+@app.get("/demo/datasets/{dataset_id}/narrative-quality", response_model=schemas.NarrativeQualityAnalyticsResponse)
+def read_demo_narrative_quality_analytics(
+    dataset_id: str,
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Read metadata-only texts from one opted-in synthetic dataset."""
+    require_demo_admin(current_user)
+    try:
+        return crud.get_demo_narrative_quality_analytics(
+            db, dataset_id=dataset_id, date_from=date_from, date_to=date_to,
+        )
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=404, detail="Demo narrative analytics is unavailable") from error
+
+
 @app.get("/demo/datasets/{dataset_id}/som", response_model=schemas.DemoSomResponse)
 def read_demo_som(
     dataset_id: str,
@@ -633,6 +651,20 @@ def read_report_domain(
         raise HTTPException(status_code=404, detail="Report not found")
     require_operational_report_access(report, current_user)
     return report
+
+
+@app.get("/reports/{report_id}/narrative-quality", response_model=schemas.NarrativeQualityReportResponse)
+def read_report_narrative_quality(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Read non-blocking private narrative signals for an accessible report."""
+    report = crud.get_report_domain(db, report_id)
+    if not report or report.stone_id is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    require_operational_report_access(report, current_user)
+    return crud.get_report_narrative_quality(report)
 
 
 @app.get("/reports/{report_id}/valuations", response_model=List[schemas.StoneValuationResponse])
@@ -1088,6 +1120,21 @@ def get_admin_review_stats(
     require_admin(current_user)
     try:
         return crud.get_admin_review_stats(db, date_from=date_from, date_to=date_to)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.get("/statistics/narrative-quality", response_model=schemas.NarrativeQualityAnalyticsResponse)
+def get_narrative_quality_analytics(
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Admin-only, metadata-only text measurements; never returns text bodies."""
+    require_admin(current_user)
+    try:
+        return crud.get_narrative_quality_analytics(db, date_from=date_from, date_to=date_to)
     except crud.ReportDomainError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 

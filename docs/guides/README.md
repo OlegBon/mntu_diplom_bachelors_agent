@@ -23,6 +23,7 @@
 | [historical-synthetic-safety.md](./historical-synthetic-safety.md) | Підтверджений вручну allow-list, read-only dry-run, logical backup і disposable restore перед можливим historical scope backfill. |
 | [synthetic-som-demo.md](./synthetic-som-demo.md) | Як працює ізольована SOM-карта, policy scenario, artifact, UI та межі щодо real analytics. |
 | [synthetic-demo-provider-analytics.md](./synthetic-demo-provider-analytics.md) | Ізольована analytics fictional Demo Market A/B і scope-bound контракт для майбутніх дозволених real data. |
+| [narrative-quality.md](./narrative-quality.md) | Пояснювані private сигнали текстових полів, metadata-only admin analytics, семантика дат та межі майбутнього NLP. |
 | [mariadb-local-recovery.md](./mariadb-local-recovery.md) | Безпечний перехід з аварійного XAMPP MariaDB у чисте локальне середовище через SQL-дампи. |
 | [frontend-guide.md](./frontend-guide.md) | Pug/SCSS/JavaScript, Gulp, API client і UI-примітиви з фрагментами коду. |
 | [backend-api-guide.md](./backend-api-guide.md) | FastAPI route → JWT/RBAC → CRUD, API boundaries та приклади коду. |

@@ -10,6 +10,7 @@ block content
             button.analytics-tabs__tab.is-active(type="button" role="tab" aria-selected="true" aria-controls="demo-reports-panel" id="demo-tab-reports" data-demo-tab="reports") Демо-звіти
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-stones-panel" id="demo-tab-stones" data-demo-tab="stones") Камені
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-experts-panel" id="demo-tab-experts" data-demo-tab="experts") Експерти
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-narratives-panel" id="demo-tab-narratives" data-demo-tab="narratives") Тексти
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-administrators-panel" id="demo-tab-administrators" data-demo-tab="administrators") Адміністратори
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-providers-panel" id="demo-tab-providers" data-demo-tab="providers") Провайдери
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-currency-panel" id="demo-tab-currency" data-demo-tab="currency") Валютні джерела
@@ -138,6 +139,14 @@ block content
                 |  Це лише технічний зріз вигаданих ролей і відтворюваних інтервалів. Він не вимірює продуктивність, якість, SLA або рейтинг реальних людей.
             #demo-experts-status.dashboard-status(role="status" aria-live="polite")
             #demo-experts-results(aria-live="polite")
+        section#demo-narratives-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-narratives")
+            h2 Synthetic текстові поля
+            p.account-help Лише metadata synthetic demo-набору: без оцінювання, норми, рейтингу чи висновку про реального експерта. Самі тексти й уривки не показуються.
+            p.demo-scope__notice(role="note")
+                strong DEMO · SYNTHETIC TEXTS
+                |  Поточні synthetic значення беруться з demo-звітів у зрізі; коментарі подій — лише з synthetic lifecycle events у зрізі.
+            #demo-narratives-status.dashboard-status(role="status" aria-live="polite")
+            #demo-narratives-results(aria-live="polite")
         section#demo-administrators-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-administrators")
             h2 Synthetic перевірки адміністраторів
             p.account-help Тривалість — відтворюваний synthetic інтервал перевірки, а не вимір фактичного активного часу людини.

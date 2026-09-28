@@ -72,6 +72,10 @@ export const getOperationalProviderAnalytics = (paramsOrToken, maybeToken) => an
   "/statistics/provider-operations", paramsOrToken, maybeToken,
 );
 
+export const getNarrativeQualityAnalytics = (paramsOrToken, maybeToken) => analyticsRequest(
+  "/statistics/narrative-quality", paramsOrToken, maybeToken,
+);
+
 export const signalReportWorkSession = (reportId, payload, token) => requestApi(
   `/reports/${encodeURIComponent(reportId)}/work-session`, { method: "POST", token, body: payload },
 );
@@ -159,6 +163,12 @@ export const getDemoProviderAnalytics = (datasetId, token, filters = {}) => {
   const suffix = query.toString();
   return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/provider-analytics${suffix ? `?${suffix}` : ""}`, { token });
 };
+export const getDemoNarrativeQualityAnalytics = (datasetId, token, filters = {}) => {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) if (value) query.set(key, value);
+  const suffix = query.toString();
+  return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/narrative-quality${suffix ? `?${suffix}` : ""}`, { token });
+};
 export const getDemoSom = (datasetId, token, reportId = "") => {
   const query = reportId ? `?report_id=${encodeURIComponent(reportId)}` : "";
   return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/som${query}`, { token });
@@ -210,6 +220,10 @@ export const getReportPassportPdf = async (reportId, publicUrl, token) => {
 };
 
 export const updateDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}`, { method: "PUT", token, body: payload });
+
+export const getReportNarrativeQuality = (reportId, token) => requestApi(
+  `/reports/${encodeURIComponent(reportId)}/narrative-quality`, { token },
+);
 
 export const transitionDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/transitions`, { method: "POST", token, body: payload });
 

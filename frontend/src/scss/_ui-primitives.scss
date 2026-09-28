@@ -447,6 +447,7 @@ input[type="number"]::-webkit-outer-spin-button {
   .analytics-expert-button:focus-visible { color: variables.$primary-hover; }
   .analytics-queue { margin: 0 0 variables.$space-4; color: variables.$secondary-color; }
   .analytics-admin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: variables.$space-6; }
+  .analytics-narrative-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: variables.$space-6; }
   .analytics-admin-card { border: 1px solid variables.$border-color; padding: 1.25rem; }
   .analytics-admin-card h3 { margin: 0 0 variables.$space-4; color: variables.$text-strong; font-size: 1rem; }
   .analytics-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: variables.$space-3 variables.$space-6; margin: 0 0 1.25rem; }
@@ -502,6 +503,7 @@ input[type="number"]::-webkit-outer-spin-button {
     .analytics-tabs__tab { flex: 0 0 auto; padding: 0.75rem 0.7rem; font-size: 0.85rem; white-space: nowrap; }
     .analytics-metrics { grid-template-columns: 1fr; gap: 0.65rem; }
     .analytics-admin-list { grid-template-columns: 1fr; }
+    .analytics-narrative-list { grid-template-columns: 1fr; }
   }
 }
 
