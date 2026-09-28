@@ -32,11 +32,11 @@
 - **Нові змінні середовища:** немає.
 - **Обмеження:** потрібна ручна браузерна перевірка close/open drawer на 1280px, 1024px, 901px, 900px і 768px.
 
-## 2026-09-28 — drawer-active-marker-gutter
+## 2026-09-28 — drawer-active-link-treatment
 
-- **Задача:** усунути накладання active marker на першу літеру drawer navigation у 768–900px.
+- **Задача:** усунути нестабільний left marker active drawer navigation у 768–900px.
 - **Змінені файли:** `frontend/src/scss/_product-ux.scss`, `docs/progress.md`.
-- **Рішення / результат:** active pseudo-element перенесено в left gutter поза padding тексту; він не змінює layout і не накладається на назву сторінки.
+- **Рішення / результат:** left marker прибрано; active пункт показує primary color і стандартне підкреслення, без впливу на layout.
 - **Перевірки:** `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — без помилок.
 - **Нові змінні середовища:** немає.
 - **Обмеження:** потрібна ручна перевірка drawer на 768px і 900px.

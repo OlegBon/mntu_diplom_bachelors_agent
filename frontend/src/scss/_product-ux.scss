@@ -377,9 +377,9 @@ body {
       &.is-active { display: block; }
       ul { display: grid; gap: 0.25rem; }
       li a { position: relative; width: 100%; min-height: 2.75rem; border-bottom: 0; border-left: 0; padding-left: 0.75rem; }
-      // The link's left padding is the text gutter. Keep the active marker in
-      // the gutter itself so it never overlays the first character.
-      li a.is-active::before { position: absolute; top: 0; bottom: 0; left: -0.75rem; width: 2px; content: ""; background: variables.$primary-color; }
+      // The drawer uses an inline active treatment: it neither shifts text nor
+      // introduces a separate marker that can collide with narrow layouts.
+      li a.is-active { color: variables.$primary-color; text-decoration: underline; text-decoration-color: variables.$primary-color; text-decoration-thickness: 2px; text-underline-offset: 0.3rem; }
       .mobile-login { display: block; }
       .mobile-login a { color: variables.$primary-color; font-weight: 700; }
 
