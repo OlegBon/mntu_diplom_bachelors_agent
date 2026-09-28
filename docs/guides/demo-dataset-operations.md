@@ -133,31 +133,15 @@ generator відхиляє без запису. Поточна реалізац�
 
 ## Historical `DR-00001…DR-01000`
 
-Діапазон підтверджено як старий synthetic seed. Його не перейменовують у
-`DEMO-…`, щоб не пошкодити foreign keys, сумісність і попередні посилання.
-`DR-01001+` залишаються operational та не можуть бути очищені або
-перекласифіковані цим процесом.
+Historical `DR-*` лишаються operational, доки не з'являться нормальні
+operational reports або окремо погоджені test fixtures. Їх не видаляють, не
+перейменовують і не класифікують у межах 166. Діапазон не можна визначати за
+самим префіксом: `DR-01001+` теж залишаються поза будь-яким майбутнім
+allow-list.
 
-Перед будь-яким backfill необхідні всі кроки:
-
-1. Створити backup локальних `diamond_oltp` і `diamond_market` перевіреним для
-   вашого середовища інструментом MariaDB.
-2. Запустити лише читання:
-
-   ```powershell
-   .\.venv\Scripts\python.exe scripts\inventory_demo_seed.py
-   ```
-
-3. Переконатися, що `ready_for_separate_backfill_approval` має значення `true`;
-   немає missing/unexpected ID, report без Stone та orphan event у діапазоні.
-4. Окремо погодити застосування Alembic `0014_demo_dataset_isolation`.
-5. Окремо погодити й виконати classification backfill. Він може змінити лише
-   `record_scope` та `demo_dataset_id` рівно для підтверджених historical rows;
-   не змінює ID, Stone, lifecycle, valuation, event, media або public record.
-
-Rollback класифікації повертає лише ці два поля до `operational`/`NULL` після
-перевірки, що dataset не має нових generator-звітів. Schema downgrade не є
-заміною для такого контрольованого rollback.
+Доказовий dry-run, logical backup трьох local databases, disposable restore
+verification і майбутній scope-only write/rollback contract описано в
+[historical-synthetic-safety.md](./historical-synthetic-safety.md).
 
 ## Ціна у звичайному dashboard
 

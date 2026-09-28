@@ -20,6 +20,7 @@
 | [current-domain-and-report-workflow.md](./current-domain-and-report-workflow.md) | Повний актуальний шлях звіту: ролі, wizard, поля, IDC, statuses/review, private media, public passport, код/URL/QR, PDF та межі публічних даних. |
 | [idc-demo-v1-ruleset.md](./idc-demo-v1-ruleset.md) | Межі `idc-demo-v1`, матриця IDC 2013, джерела expert grades і безпечне оновлення ruleset. |
 | [demo-dataset-operations.md](./demo-dataset-operations.md) | Ізоляція synthetic demo dataset, scope, manifest, inventory, backfill і rollback межі. |
+| [historical-synthetic-safety.md](./historical-synthetic-safety.md) | Підтверджений вручну allow-list, read-only dry-run, logical backup і disposable restore перед можливим historical scope backfill. |
 | [synthetic-som-demo.md](./synthetic-som-demo.md) | Як працює ізольована SOM-карта, policy scenario, artifact, UI та межі щодо real analytics. |
 | [synthetic-demo-provider-analytics.md](./synthetic-demo-provider-analytics.md) | Ізольована analytics fictional Demo Market A/B і scope-bound контракт для майбутніх дозволених real data. |
 | [mariadb-local-recovery.md](./mariadb-local-recovery.md) | Безпечний перехід з аварійного XAMPP MariaDB у чисте локальне середовище через SQL-дампи. |
