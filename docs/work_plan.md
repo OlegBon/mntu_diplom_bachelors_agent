@@ -105,7 +105,7 @@
 - [ ] [153 — Stone analytics / SOM](./backlog/153-stone-analytics-visualization.md): descriptive admin-only сегменти після 151, без investment verdict.
 - [x] 154 — Якість експертних текстів: private explainable non-blocking signals, metadata-only admin statistics і Unicode-aware word counting; NLP/ML тільки після 151 data/privacy contract. Деталі: [гайд](./guides/narrative-quality.md).
 - [x] 155 — Operational і data-quality analytics: admin-only workflow funnel, current cohort, field completeness і delivery readiness без rating/public tracking; metadata-only navigation до порожніх текстів доповнює 154. Деталі: [гайд](./guides/operational-quality-analytics.md).
-- [ ] [173 — Фільтри повноти текстових полів](./backlog/173-report-narrative-completeness-filters.md): shared private list filters для current пустих method/conclusion/expert comment і окремої date-scoped lifecycle події без коментаря; real/demo scope не змішуються.
+- [x] 173 — Фільтри повноти текстових полів: shared private controls для current пустих method/conclusion/expert comment; operational має окрему date-scoped lifecycle подію без коментаря, а demo не підміняє відсутній event-comment фіктивною порожнечею.
 - [x] [156 — Demo dataset contract і isolation](./decisions/006-demo-dataset-isolation.md): `0014` застосована до локальної MariaDB; schema-only `operational`/`demo` scope, immutable manifest, admin-only isolated read API, RBAC і read-only inventory реалізовані. Historical classification backfill лишається окремою підтверджуваною операцією.
 - [x] [162 — Multi-provider market references](./decisions/007-multi-provider-market-references.md): `0015` нормалізує enabled provider set і nullable dashboard primary; кожен provider має незалежний immutable valuation, dashboard не робить hidden fallback, а public passport/PDF не показують provider values чи branding.
 - [x] 157 — Synthetic demo dataset generator: локально створено deterministic `synthetic-demo-v1` із 1 000 `DEMO-…`, immutable manifest, normalized fields і двома fictional demo provider references; public/operational scopes не зачеплено.
@@ -129,11 +129,10 @@
 
 ### Рекомендована черга активних задач
 
-1. `173` — рекомендована наступна задача: actionable private completeness filters для real і exact demo dataset. Вона продовжує завершені 154–155, не потребує зовнішнього дозволу й не відкриває raw text/score.
-2. `137` — незалежний технічний gate після рішення власника щодо GitHub Actions, бюджету minutes/storage і repository settings. Він не залежить від ML, але має бути green до `161`.
-3. `145` готова до запуску: її передумову `146` завершено. Рішення `160` визначатиме лише можливий поступовий TypeScript, не сам i18n contract.
-4. `151 → 152 → 153` — незмінна черга real analytics: спершу ліцензований data contract і quality gate, потім відтворюваний verified experiment, і лише за його результатом private descriptive visualization.
-5. Deployment-залежність: лише після успішного `152` виконати `160`; за готового CI gate `137` переходити до `161 → 140`. Повний ланцюг: `151 → 152 → 160`, плюс `137` до `161`, потім `161 → 140`.
+1. `137` — найближчий незалежний технічний gate після рішення власника щодо GitHub Actions, бюджету minutes/storage і repository settings. Він не залежить від ML, але має бути green до `161`.
+2. `145` готова до запуску: її передумову `146` завершено. Рішення `160` визначатиме лише можливий поступовий TypeScript, не сам i18n contract.
+3. `151 → 152 → 153` — незмінна черга real analytics: спершу ліцензований data contract і quality gate, потім відтворюваний verified experiment, і лише за його результатом private descriptive visualization.
+4. Deployment-залежність: лише після успішного `152` виконати `160`; за готового CI gate `137` переходити до `161 → 140`. Повний ланцюг: `151 → 152 → 160`, плюс `137` до `161`, потім `161 → 140`.
 
 ### Зафіксовані розбіжності з початковими нотатками
 

@@ -1,5 +1,7 @@
 extends ../layout/main
 
+include ../includes/narrative-completeness-filter
+
 block content
     .dashboard-page.account-page.demo-scope(hidden data-protected-page="true" data-demo-reports)
         .page-header
@@ -88,6 +90,7 @@ block content
                         .filter-item
                             label(for="demo-date-to") Дата створення: до
                             input#demo-date-to.form-control(type="date" name="date_to")
+                        +narrativeCompletenessFilter("demo", true)
                         .filter-actions
                             button.btn.btn-primary.btn-sm(type="submit") Застосувати
                             button.btn.btn-outline.btn-sm(type="reset") Очистити

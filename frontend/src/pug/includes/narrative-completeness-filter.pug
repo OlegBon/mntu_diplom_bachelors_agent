@@ -1,0 +1,20 @@
+mixin narrativeCompletenessFilter(prefix, isDemo = false)
+    fieldset.filter-item.filter-item--narrative
+        legend Порожні текстові поля
+        .narrative-filter-options
+            label
+                input(type="checkbox" name="empty_narrative" value="identification_method")
+                | Метод ідентифікації
+            label
+                input(type="checkbox" name="empty_narrative" value="identification_conclusion")
+                | Висновок щодо ідентифікації
+            label
+                input(type="checkbox" name="empty_narrative" value="expert_comment")
+                | Коментар експерта
+            label
+                input(type="checkbox" name="empty_narrative" value="status_transition_reason" disabled=isDemo)
+                | Подія зміни статусу без коментаря
+        if isDemo
+            p.account-help Synthetic lifecycle не має текстових коментарів, тому остання опція не моделюється.
+        else
+            p.account-help Остання опція шукає хоча б одну lifecycle-подію без коментаря у вибраному зрізі дат.

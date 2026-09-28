@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — report-narrative-completeness-filters
+
+- **Задача:** завершити 173 — додати actionable private list filters для пропущених narrative fields у operational і isolated demo reports.
+- **Змінені файли:** `backend/{crud,main,schemas}.py`, `frontend/src/{pug/{includes/narrative-completeness-filter,pages/{dashboard,demo-reports}}.pug,js/modules/{api,dashboard,demo-reports,narrative-completeness-filters}.js,scss/_ui-primitives.scss}`, `tests/api/test_narrative_completeness_filters.py`, `frontend/tests/{auth-and-api,demo-provider-analytics,page-dom}.test.mjs`, `docs/{architecture,progress,work_plan,guides/narrative-quality.md,backlog/README.md}`; active backlog file `173-report-narrative-completeness-filters.md` removed.
+- **Рішення / Результат:** «Всі звіти» і «Демо-звіти» ділять Pug checkbox primitive та URL/API contract `empty_narrative`; method/conclusion/expert comment нормалізуються server-side як у narrative analytics, а кілька selected codes працюють як OR. Operational option «Подія зміни статусу без коментаря» читає лише append-only `status_changed` event-и з порожнім `reason` у date slice. Demo ніколи не читає operational events; synthetic workflow не має comment field, отже цю опцію UI disabled і API не інтерпретує як штучну порожнечу. Доступ, existing list filters, sorting і pagination зберігаються.
+- **Перевірки:** `pytest tests/api/test_narrative_completeness_filters.py tests/api/test_narrative_quality.py tests/api/test_demo_narrative_quality.py` — 5 passed; `compileall -q backend` — OK; `cmd /c "cd frontend && npm test"` — 30 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** current narrative fields не мають revision history; event filter не включає `created`/`report_updated` або non-status events. Completeness filter не повертає raw text/reason, не є quality score і не додає synthetic lifecycle comments.
+
 ## 2026-09-28 — plan-report-narrative-completeness-filters
 
 - **Задача:** зафіксувати наступний окремий контур після завершеної 155: actionable private filters за порожніми текстовими полями для operational і demo lists.

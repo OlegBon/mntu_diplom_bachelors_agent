@@ -90,10 +90,17 @@ export const startWizardWorkSession = (payload, token) => requestApi(
 
 export const getGradeMappings = () => requestApi("/market/mappings");
 
+function listQuery(params) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (Array.isArray(value)) value.filter(Boolean).forEach((item) => query.append(key, item));
+    else if (value !== "" && value !== null && value !== undefined) query.set(key, value);
+  });
+  return query;
+}
+
 export const getReportDashboard = (params, token) => {
-  const query = new URLSearchParams(
-    Object.entries(params).filter(([, value]) => value !== "" && value !== null && value !== undefined),
-  );
+  const query = listQuery(params);
   return requestApi(`/reports?${query.toString()}`, { token });
 };
 
@@ -153,7 +160,7 @@ export const createDomainReport = (payload, token) => requestApi("/reports", { m
 
 export const getDomainReport = (reportId, token) => requestApi(`/reports/${encodeURIComponent(reportId)}`, { token });
 export const getDemoDataset = (datasetId, token) => requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}`, { token });
-export const getDemoReports = (datasetId, token, page = 1, filters = {}) => { const query = new URLSearchParams({ page }); for (const [key, value] of Object.entries(filters)) if (value) query.set(key, value); return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/reports?${query}`, { token }); };
+export const getDemoReports = (datasetId, token, page = 1, filters = {}) => { const query = listQuery({ page, ...filters }); return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/reports?${query}`, { token }); };
 export const getDemoReport = (datasetId, reportId, token) => requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/reports/${encodeURIComponent(reportId)}`, { token });
 export const getDemoWorkflowAnalytics = (datasetId, token, filters = {}) => {
   const query = new URLSearchParams();

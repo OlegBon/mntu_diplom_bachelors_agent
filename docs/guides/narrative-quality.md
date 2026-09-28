@@ -44,6 +44,20 @@ metadata contract і renderer, але доступний лише opted-in admin
 manifest-authorized isolated synthetic dataset. Він ніколи не читає operational
 звіти; посилання ведуть лише до private `demo-report-detail` цього dataset.
 
+## Робочі фільтри пропусків
+
+У «Всі звіти» та «Демо-звіти» admin може вибрати кілька current порожніх полів:
+метод, висновок або коментар експерта. Вибір працює як «хоча б одне з полів»
+та зберігається в URL як повторюваний `empty_narrative` query parameter.
+Порожність визначається тим самим server-side Unicode/whitespace
+`normalize_text`, що й analytics.
+
+Operational список має ще опцію «Подія зміни статусу без коментаря»: вона
+шукає хоча б один `status_changed` event з порожнім `reason`; за date filter
+враховуються event-и в цьому date slice. Це не current поле report. Synthetic
+`DemoWorkflowEvent` не має текстових коментарів, тому опція у demo чесно
+недоступна, а не перетворює кожну synthetic подію на «порожню».
+
 ## Семантика дат і історії
 
 Поточна схема не зберігає revision history трьох полів звіту. Тому за
