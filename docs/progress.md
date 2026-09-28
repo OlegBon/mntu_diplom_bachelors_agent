@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — plan-report-narrative-completeness-filters
+
+- **Задача:** зафіксувати наступний окремий контур після завершеної 155: actionable private filters за порожніми текстовими полями для operational і demo lists.
+- **Змінені файли:** `docs/{progress,work_plan}.md`, `docs/backlog/{README,173-report-narrative-completeness-filters.md}`.
+- **Рішення / Результат:** 173 визначає спільний server-side filter contract для current порожніх method/conclusion/expert comment та окрему опцію «Подія зміни статусу без коментаря». Кілька опцій використовують `OR`; event filter бере тільки relevant event-и у date slice. Demo лишається exact dataset-bound, opaque/admin-gated і не може читати operational records. Це list navigation, а не text score, NLP або public analytics.
+- **Перевірки:** `python scripts/check_doc_links.py` — заплановано перед merge реалізації; код не змінювався.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** не створено filter UI/API, historical text revision або backfill; це лише backlog contract.
+
 ## 2026-09-28 — operational-and-data-quality-analytics
 
 - **Задача:** завершити 155 — додати admin-only workflow/data-quality read model без performance rating, raw text/reasons або public visitor tracking.
