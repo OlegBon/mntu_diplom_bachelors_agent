@@ -45,6 +45,27 @@ def test_restricted_trial_requires_its_safety_bounds(client, db_session, experts
     assert rejected.status_code == 422
 
 
+def test_restricted_trial_assignment_is_audited(client, db_session, experts):
+    seed_provider(db_session)
+    second_admin = create_expert(db_session, username="second-admin", role="admin")
+    headers = auth_headers(client, experts["admin"].username)
+    client.put("/users/me/partner-controls-access", headers=headers, json={"enabled": True})
+    client.put("/market-data/provider-access-policies/partner-test", headers=headers, json={
+        "access_mode": "restricted_trial", "trial_expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+        "daily_request_limit": 10, "natural_only": True, "internal_only": True,
+        "public_display_allowed": False, "ml_allowed": False,
+    })
+    assigned = client.put(
+        f"/market-data/provider-access-policies/partner-test/assignments/{second_admin.expert_id}",
+        headers=headers, json={"enabled": True},
+    )
+    assert assigned.status_code == 200
+    policies = client.get("/market-data/provider-access-policies", headers=headers).json()
+    assert policies[0]["assigned_admin_ids"] == [second_admin.expert_id]
+    events = client.get("/market-data/provider-access-events?provider_code=partner-test", headers=headers).json()
+    assert {event["action"] for event in events} >= {"policy_updated", "trial_admin_assigned"}
+
+
 def test_gemologist_cannot_enable_partner_controls(client, experts):
     headers = auth_headers(client, experts["owner"].username)
     assert client.put("/users/me/partner-controls-access", headers=headers, json={"enabled": True}).status_code == 403

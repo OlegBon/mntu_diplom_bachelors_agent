@@ -285,11 +285,17 @@ function openDemoProviderDialog(dialog, content, provider, datasetId) {
   if (sample) sample.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(provider.latest_report_id)}`;
   const sampleSection = createElement("section", "analytics-review-list");
   sampleSection.append(createElement("h3", "", "Останній synthetic приклад"), sample || createElement("p", "account-help", "У цьому зрізі немає прикладу."));
+  const scenario = createElement("section", "analytics-review-list");
+  scenario.append(
+    createElement("h3", "", "Synthetic policy scenario"),
+    createElement("p", "account-help", "Режим: demo-only. Мережеві виклики вимкнені; договори, trial-призначення та журнал реальних provider-умов для цього fictional джерела не створюються."),
+  );
   content.replaceChildren(
     createElement("h3", "analytics-dialog-name", provider.provider_name),
     metrics,
     createElement("p", "account-help", provider.usage_policy),
     createElement("p", "account-help", "Ці умови описують лише demo-сценарій. Вони не є договором, ліцензією чи дозволом використовувати реальні provider data."),
+    scenario,
     sampleSection,
   );
   dialog.showModal();

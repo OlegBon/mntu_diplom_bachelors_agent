@@ -721,6 +721,12 @@ class OperationalProviderAnalyticsRow(BaseModel):
     failed_operations: int
     latest_operation_status: Optional[Literal["success", "no_change", "failed", "skipped"]]
     latest_operation_at: Optional[datetime]
+    access_mode: Optional[ProviderAccessMode]
+    trial_expires_at: Optional[datetime]
+    daily_request_limit: Optional[int]
+    assigned_admin_count: int = 0
+    last_policy_event_at: Optional[datetime]
+    last_policy_event_action: Optional[str]
     coverage: ProviderCoverageSummary
 
 

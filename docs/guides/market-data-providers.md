@@ -101,6 +101,7 @@ append-only подію із сумою, провайдером і номером
 - An administrator first enables **«Доступ до керування партнерськими даними»** only for their own account. This controls the visibility of configuration UI and direct policy endpoints; it does not grant a trial or activate a provider.
 - Each catalog provider has an access mode: `disabled`, `restricted_trial`, or `standard_internal`. The current release accepts only natural-stone, internal, non-public and non-ML use. A restricted trial additionally requires an expiry and daily request limit, plus explicit assigned administrators.
 - `market_provider_access_events` is an append-only, credential-free audit log of opt-in/out, policy changes and trial assignments. It records actor, time, target and a short reason/reference when supplied.
+- «Ринкові дані» is the writable surface: a opted-in admin can set mode, expiry, quota, terms note and checkbox assignments for active admins. «Аналітика → Провайдери» is deliberately read-only: provider detail shows mode, quota, assigned-admin count and the latest audit fact, alongside existing operations/coverage facts. Demo provider detail has only a static synthetic policy scenario and never receives real-contract audit data.
 
 Existing OpenFacet/NBU operation and snapshot flows remain unchanged. A future adapter must evaluate this policy before it performs an external request. IDEX remains disabled and has no adapter, key, network call or provider record in this task.
 

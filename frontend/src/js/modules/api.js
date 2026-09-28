@@ -94,6 +94,8 @@ export const getReferenceValues = (token) => requestApi("/reference-values", { t
 export const getMarketDataProviders = (token) => requestApi("/market-data/providers", { token });
 export const getProviderAccessPolicies = (token) => requestApi("/market-data/provider-access-policies", { token });
 export const updateProviderAccessPolicy = (providerCode, policy, token) => requestApi(`/market-data/provider-access-policies/${encodeURIComponent(providerCode)}`, { method: "PUT", token, body: policy });
+export const updateProviderAccessAssignment = (providerCode, expertId, enabled, token) => requestApi(`/market-data/provider-access-policies/${encodeURIComponent(providerCode)}/assignments/${encodeURIComponent(expertId)}`, { method: "PUT", token, body: { enabled } });
+export const getProviderAccessEvents = (providerCode, token) => requestApi(`/market-data/provider-access-events?provider_code=${encodeURIComponent(providerCode)}`, { token });
 
 export const getMarketReferencePolicy = (token) => requestApi("/market-data/policy", { token });
 

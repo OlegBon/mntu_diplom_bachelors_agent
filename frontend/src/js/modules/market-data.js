@@ -4,7 +4,9 @@ import {
   decideMarketDataSnapshot,
   fetchMarketDataCandidate,
   getCurrentUser,
+  getUsers,
   getMarketDataProviders,
+  getProviderAccessEvents,
   getProviderAccessPolicies,
   getMarketReferencePolicy,
   getMarketDataSnapshots,
@@ -14,6 +16,7 @@ import {
   refreshNbuRate,
   updateMarketProviderSchedule,
   updateMarketReferencePolicy,
+  updateProviderAccessAssignment,
   updateProviderAccessPolicy,
 } from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
@@ -106,7 +109,7 @@ function renderPolicyMarketProviders(container, providers, enabledProviderCodes,
   }
 }
 
-function renderProviderAccessPolicies(container, policies, onSave) {
+function renderProviderAccessPolicies(container, policies, administrators, onSave, onAssignment, onEvents) {
   container.replaceChildren();
   for (const policy of policies) {
     const form = document.createElement("form"); form.className = "market-data-card";
@@ -124,8 +127,18 @@ function renderProviderAccessPolicies(container, policies, onSave) {
     const termsLabel = document.createElement("label"); termsLabel.textContent = "Посилання або коротка примітка до умов";
     const terms = document.createElement("input"); terms.type = "text"; terms.maxLength = 2000; terms.name = "terms_reference"; terms.value = policy.terms_reference || "";
     const note = document.createElement("p"); note.className = "account-help"; note.textContent = "Дозволено лише природні камені, внутрішнє використання; public display і ML у цьому релізі вимкнені.";
+    const assignments = document.createElement("div"); assignments.className = "market-data-card__actions";
+    const assignmentTitle = document.createElement("p"); assignmentTitle.textContent = policy.access_mode === "restricted_trial" ? "Призначені адміністратори restricted trial:" : "Призначення доступні лише для restricted trial.";
+    assignments.append(assignmentTitle);
+    if (policy.access_mode === "restricted_trial") administrators.forEach((administrator) => {
+      const label = document.createElement("label"); label.className = "market-data-confirmation";
+      const input = document.createElement("input"); input.type = "checkbox"; input.checked = policy.assigned_admin_ids.includes(administrator.expert_id);
+      input.addEventListener("change", async () => { input.disabled = true; try { await onAssignment(policy.provider_code, administrator.expert_id, input.checked); } catch (error) { input.checked = !input.checked; throw error; } finally { input.disabled = false; } });
+      label.append(input, document.createTextNode(`${administrator.last_name || ""} ${administrator.first_name || ""} (${administrator.username})`.trim())); assignments.append(label);
+    });
+    const eventsButton = document.createElement("button"); eventsButton.type = "button"; eventsButton.className = "btn btn-outline"; eventsButton.textContent = "Показати журнал умов"; eventsButton.addEventListener("click", () => onEvents(policy.provider_code));
     const button = document.createElement("button"); button.type = "submit"; button.className = "btn btn-primary"; button.textContent = "Зберегти умови";
-    form.append(title, modeLabel, mode, limitLabel, limit, expiryLabel, expiry, termsLabel, terms, note, button);
+    form.append(title, modeLabel, mode, limitLabel, limit, expiryLabel, expiry, termsLabel, terms, note, assignments, eventsButton, button);
     form.addEventListener("submit", async (event) => {
       event.preventDefault(); button.disabled = true;
       try { await onSave(policy.provider_code, { access_mode: mode.value, daily_request_limit: limit.value ? Number(limit.value) : null, trial_expires_at: expiry.value ? new Date(expiry.value).toISOString() : null, terms_reference: terms.value.trim() || null, natural_only: true, internal_only: true, public_display_allowed: false, ml_allowed: false }); }
@@ -264,6 +277,7 @@ export async function initMarketData() {
   const decisionReason = document.getElementById("market-decision-reason");
   const decisionSubmit = document.getElementById("market-decision-submit");
   let currentSnapshots = [];
+  let administrators = [];
   let pendingDecision = null;
   const closeDecisionDialog = () => { pendingDecision = null; decisionForm.reset(); decisionDialog.close(); };
   const openDecisionDialog = (snapshotId, action) => {
@@ -323,9 +337,18 @@ export async function initMarketData() {
     renderOperations(operations, operationRows);
     if (accessRows) {
       accessControls.hidden = false;
-      renderProviderAccessPolicies(accessPolicies, accessRows, async (providerCode, payload) => {
+      renderProviderAccessPolicies(accessPolicies, accessRows, administrators, async (providerCode, payload) => {
         try { await updateProviderAccessPolicy(providerCode, payload, token); setStatus(status, "Умови provider-а збережено."); await refresh(); }
         catch (error) { setStatus(status, error.message || "Не вдалося зберегти умови provider-а.", true); }
+      }, async (providerCode, expertId, enabled) => {
+        try { await updateProviderAccessAssignment(providerCode, expertId, enabled, token); setStatus(status, "Призначення restricted trial оновлено."); await refresh(); }
+        catch (error) { setStatus(status, error.message || "Не вдалося змінити призначення.", true); throw error; }
+      }, async (providerCode) => {
+        try {
+          const events = await getProviderAccessEvents(providerCode, token);
+          const lines = events.map((item) => `${formatDate(item.created_at)} — ${item.action}${item.reason ? `: ${item.reason}` : ""}`);
+          setStatus(status, lines.length ? lines.join("\n") : "Для provider-а ще немає подій умов.");
+        } catch (error) { setStatus(status, error.message || "Не вдалося завантажити журнал умов.", true); }
       });
     } else accessControls.hidden = true;
     updateApprovedSnapshotOptions(snapshotSelect, snapshotRows);
@@ -333,6 +356,10 @@ export async function initMarketData() {
   try {
     const user = await getCurrentUser(token);
     if (user.role !== "admin") throw new Error("Ця сторінка доступна лише адміністратору.");
+    if (user.partner_controls_enabled) {
+      const users = await getUsers({ page: 1, page_size: 100 }, token);
+      administrators = users.items.filter((item) => item.role === "admin" && item.is_active);
+    }
     await refresh();
   } catch (error) {
     setStatus(status, error instanceof ApiRequestError && error.status === 401 ? "Потрібно увійти знову." : error.message, true);

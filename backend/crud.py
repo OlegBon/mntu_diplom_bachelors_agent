@@ -2080,6 +2080,13 @@ def get_operational_provider_analytics(
 
     rows: list[schemas.OperationalProviderAnalyticsRow] = []
     for provider in providers:
+        access_policy = db.get(models.MarketProviderAccessPolicy, provider.provider_code)
+        assigned_admin_count = db.query(models.MarketProviderAccessAssignment).filter(
+            models.MarketProviderAccessAssignment.provider_code == provider.provider_code,
+        ).count()
+        last_policy_event = db.query(models.MarketProviderAccessEvent).filter(
+            models.MarketProviderAccessEvent.provider_code == provider.provider_code,
+        ).order_by(models.MarketProviderAccessEvent.created_at.desc(), models.MarketProviderAccessEvent.event_id.desc()).first()
         snapshots = (
             db.query(models.MarketDataSnapshot)
             .filter(models.MarketDataSnapshot.provider_code == provider.provider_code)
@@ -2145,6 +2152,12 @@ def get_operational_provider_analytics(
             failed_operations=sum(item.status == "failed" for item in operations),
             latest_operation_status=latest_operation.status if latest_operation else None,
             latest_operation_at=latest_operation.completed_at if latest_operation else None,
+            access_mode=access_policy.access_mode if access_policy else None,
+            trial_expires_at=access_policy.trial_expires_at if access_policy else None,
+            daily_request_limit=access_policy.daily_request_limit if access_policy else None,
+            assigned_admin_count=assigned_admin_count,
+            last_policy_event_at=last_policy_event.created_at if last_policy_event else None,
+            last_policy_event_action=last_policy_event.action if last_policy_event else None,
             coverage=schemas.ProviderCoverageSummary(
                 candidate_draft_reports=len(drafts), covered_draft_reports=len(covered_reports),
                 excluded_non_natural_reports=len(non_natural), missing_characteristics_reports=len(characteristic_missing),
