@@ -23,6 +23,15 @@
 - **Нові змінні середовища:** немає.
 - **Обмеження:** browser visual QA у цьому середовищі недоступний; потрібна коротка ручна перевірка трьох breakpoint-ів у локальному браузері.
 
+## 2026-09-28 — compact-header-navigation
+
+- **Задача:** прибрати перенесення desktop navigation і зсув active item на tablet у межах UI follow-up 141.
+- **Змінені файли:** `frontend/src/scss/{_product-ux,_ui-primitives}.scss`, `docs/progress.md`.
+- **Рішення / результат:** desktop header переходить у navigation drawer до 1280px, до того як сім пунктів і account actions почнуть переноситися; active marker у drawer використовує inset shadow, тому не зміщує текст на 768–900px.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** потрібна ручна браузерна перевірка close/open drawer на 1280px, 1024px, 900px і 768px.
+
 ## 2026-09-28 — provider-operations-and-coverage-analytics
 
 - **Задача:** завершити 163 — додати admin-only operational facts про freshness, provider operations і draft coverage без змішування demo або оцінювання provider-ів.

@@ -360,7 +360,10 @@ body {
   }
 }
 
-@media (max-width: 900px) {
+// The authenticated desktop navigation has seven labels plus account actions.
+// Switch before labels compete for a second line; the drawer is intentional at
+// compact desktop/tablet widths, not a fallback for an already broken header.
+@media (max-width: 1280px) {
   .main-header {
     .header-content { height: 4.25rem; min-height: 4.25rem; gap: 0.8rem; }
     .main-nav {
@@ -376,8 +379,8 @@ body {
 
       &.is-active { display: block; }
       ul { display: grid; gap: 0.25rem; }
-      li a { width: 100%; min-height: 2.75rem; border-bottom: 0; border-left: 2px solid transparent; }
-      li a.is-active { border-left-color: variables.$primary-color; }
+      li a { width: 100%; min-height: 2.75rem; border-bottom: 0; border-left: 0; padding-left: 0.75rem; }
+      li a.is-active { box-shadow: inset 2px 0 0 variables.$primary-color; }
       .mobile-login { display: block; }
       .mobile-login a { color: variables.$primary-color; font-weight: 700; }
 
