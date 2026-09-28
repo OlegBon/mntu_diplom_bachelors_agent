@@ -88,7 +88,7 @@
 - [ ] [137 — GitHub Actions CI](./backlog/137-github-actions-continuous-integration.md): до переходу на `main` відтворити backend, ephemeral MariaDB/Alembic, frontend, mock/real E2E та docs checks у GitHub без deploy або secrets.
 - [x] 141 — Provider-neutral restricted access: `0021_provider_restricted_access` застосовано локально; self opt-in admin controls, `disabled`/`restricted_trial`/`standard_internal` policy, expiry/quota, trial assignments і credential-free append-only audit реалізовано. Live IDEX/OpenFacet activation, key, adapter, branding/logo і network calls залишаються поза scope до окремого письмового approval і staging.
 - [x] 146 — Незбережене введення майстра: versioned per-tab/per-user `sessionStorage`, явний restore або start-new, confirmed clear, leave protection і очищення лише після успішного `POST /reports`; файли та credentials не серіалізуються. Це передумова i18n.
-- [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після 146 та рішення 160.
+- [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; 146 завершено, а рішення 160 впливає лише на можливий поступовий TypeScript, не блокує i18n contract.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
 
@@ -132,7 +132,7 @@
 2. `154 → 155` — незалежні P2-контури: почати з малих explainable rules-based checks тексту без NLP, далі розширювати operational/data-quality analytics. NLP/ML-частина `154` все одно залежить від `151`.
 3. `151 → 152 → 153` — незмінна черга real analytics: спершу ліцензований data contract і quality gate, потім відтворюваний verified experiment, і лише за його результатом private descriptive visualization.
 4. Deployment-залежність: лише після успішного `152` виконати `160`; за готового CI gate `137` переходити до `161 → 140`. Повний ланцюг: `151 → 152 → 160`, плюс `137` до `161`, потім `161 → 140`.
-5. `145` залишається заблокованою завершенням `146`; рішення `160` визначатиме лише можливий поступовий TypeScript, не сам i18n contract.
+5. `145` готова до запуску: її передумову `146` завершено. Рішення `160` визначатиме лише можливий поступовий TypeScript, не сам i18n contract.
 
 ### Зафіксовані розбіжності з початковими нотатками
 

@@ -23,6 +23,15 @@
 - **Нові змінні середовища:** немає.
 - **Обмеження:** це лише порядок та залежності; GitHub Actions, ML experiment, platform decision, PostgreSQL/staging і deployment не виконувалися.
 
+## 2026-09-28 — correct-i18n-queue-prerequisite
+
+- **Задача:** виправити в черзі помилкове блокування 145 незавершеною 146.
+- **Змінені файли:** `docs/{work_plan,progress}.md`.
+- **Рішення / Результат:** 146 підтверджено завершеною 25 вересня: versioned per-tab/per-user wizard state уже реалізований, її backlog-файл вилучено. 145 готова до запуску; 160 впливає лише на можливе рішення про TypeScript, не блокує i18n contract.
+- **Перевірки:** історія `progress.md`, актуальний `work_plan.md`, active backlog і Git history звірені; documentation links і `git diff --check` виконуються перед commit.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** i18n implementation цією документаційною правкою не запускається.
+
 ## 2026-09-28 — provider-restricted-access-foundation
 
 - **Задача:** завершити 141 — нейтральний механізм restricted provider access без live IDEX/OpenFacet activation.
