@@ -32,6 +32,15 @@
 - **Нові змінні середовища:** немає.
 - **Обмеження:** потрібна ручна браузерна перевірка two-row header на 901px, 1024px, 1280px, desktop на 1281px та drawer на 900px/768px.
 
+## 2026-09-28 — compact-header-separator-cleanup
+
+- **Задача:** прибрати зайві межі між шарами compact header та перед account block.
+- **Змінені файли:** `frontend/src/scss/_product-ux.scss`, `docs/progress.md`.
+- **Рішення / результат:** у 901–1280px account block не має left separator; second navigation row починається без extra margin або horizontal divider.
+- **Перевірки:** `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** потрібна коротка ручна перевірка на 901px і 1280px.
+
 ## 2026-09-28 — drawer-active-link-treatment
 
 - **Задача:** усунути нестабільний left marker active drawer navigation у 768–900px.
