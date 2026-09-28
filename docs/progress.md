@@ -41,6 +41,15 @@
 - **Нові змінні середовища:** немає.
 - **Обмеження:** потрібна коротка ручна перевірка на 901px і 1280px.
 
+## 2026-09-28 — compact-header-final-overrides
+
+- **Задача:** виправити shared style overrides для two-row header.
+- **Змінені файли:** `frontend/src/scss/_ui-primitives.scss`, `docs/progress.md`.
+- **Рішення / результат:** final shared layer встановлює `row-gap: 0.25rem` замість inherited `2rem` і остаточно вимикає left border перед account block у 901–1280px.
+- **Перевірки:** `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** потрібна коротка ручна перевірка на 901px і 1280px.
+
 ## 2026-09-28 — drawer-active-link-treatment
 
 - **Задача:** усунути нестабільний left marker active drawer navigation у 768–900px.
