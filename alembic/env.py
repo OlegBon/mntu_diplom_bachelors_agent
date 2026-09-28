@@ -9,15 +9,13 @@ from sqlalchemy.schema import BLANK_SCHEMA
 from backend import models  # noqa: F401 - imports all ORM tables into Base.metadata
 from backend.config import get_database_url
 from backend.database import Base
+from backend.database_topology import LOCAL_DEFAULT_DATABASE, MANAGED_SCHEMAS
 
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
-MANAGED_SCHEMAS = {"diamond_oltp", "diamond_market", "diamond_analytics"}
-
 
 def build_comparison_metadata() -> MetaData:
     """Normalize the connected MariaDB default database for autogenerate.
@@ -30,12 +28,12 @@ def build_comparison_metadata() -> MetaData:
     metadata = MetaData()
 
     def referred_schema_fn(table, to_schema, constraint, referred_schema):
-        if referred_schema == "diamond_oltp":
+        if referred_schema == LOCAL_DEFAULT_DATABASE:
             return BLANK_SCHEMA
         return referred_schema
 
     for table in Base.metadata.sorted_tables:
-        schema = None if table.schema == "diamond_oltp" else table.schema
+        schema = None if table.schema == LOCAL_DEFAULT_DATABASE else table.schema
         copied_table = table.to_metadata(
             metadata,
             schema=schema,
@@ -75,7 +73,7 @@ def run_migrations_offline() -> None:
         include_schemas=True,
         include_name=include_name,
         include_object=include_object,
-        version_table_schema="diamond_oltp",
+        version_table_schema=LOCAL_DEFAULT_DATABASE,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
@@ -99,7 +97,7 @@ def run_migrations_online() -> None:
             include_schemas=True,
             include_name=include_name,
             include_object=include_object,
-            version_table_schema="diamond_oltp",
+            version_table_schema=LOCAL_DEFAULT_DATABASE,
             compare_type=True,
         )
 

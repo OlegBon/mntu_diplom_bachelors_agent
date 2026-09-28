@@ -6,6 +6,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy.engine import URL, make_url
 
+from .database_topology import LOCAL_DEFAULT_DATABASE
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
@@ -45,7 +47,7 @@ def get_database_url() -> str | URL:
         password=os.getenv("DB_PASSWORD", ""),
         host=get_required_env("DB_HOST"),
         port=int(get_required_env("DB_PORT")),
-        database=os.getenv("DB_NAME", "diamond_oltp"),
+        database=os.getenv("DB_NAME", LOCAL_DEFAULT_DATABASE),
     )
 
 

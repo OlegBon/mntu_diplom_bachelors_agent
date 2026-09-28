@@ -108,7 +108,7 @@ cmd /c "cd frontend && npm run audit:api"
 | --- | --- | --- |
 | `diamond_oltp` | `experts`, `diamond_reports`: користувачі й оперативні звіти | Реалізовано |
 | `diamond_market` | `grade_mappings`, `market_price_reference`: довідники й індекс | Реалізовано |
-| `diamond_analytics` | Зарезервовані ML-результати в `ml_results` | Модель і чистий seed є; запис, читання та ML-потік ще не реалізовані |
+| `diamond_analytics` | Зарезервовані ML-результати в `ml_results` | Модель і чистий seed є; запис, читання та ML-потік ще не реалізовані. Demo SOM artifacts належать `diamond_oltp`. |
 
 ### Основні API-групи
 

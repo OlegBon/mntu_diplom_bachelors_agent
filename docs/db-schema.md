@@ -1,14 +1,15 @@
 # Схема бази даних
 
 Документ описує поточну локальну схему Diamant ID у MariaDB/XAMPP після
-Alembic code head і локальна MariaDB — `0015_multi_provider_market_references`.
+Alembic code head і локальна MariaDB — `0021_provider_restricted_access`.
 `0015` нормалізує лише майбутню policy: не класифікує historical records і не переписує valuation.
 Це карта даних для розробки, API та
 майбутньої PostgreSQL-міграції, а не інструкція з відновлення чи ручної зміни
 таблиць.
 
 Джерела істини: SQLAlchemy-моделі у `backend/models.py` і відстежувані Alembic
-revisions у `alembic/versions/`. Не створюйте таблиці через `create_all` і не
+revisions у `alembic/versions/`. Physical mapping local MariaDB ↔ future PostgreSQL,
+права ролей і порядок migration/restore зафіксовані у [database topology guide](./guides/database-topology.md). Не створюйте таблиці через `create_all` і не
 редагуйте їх вручну: зміна схеми завжди потребує окремої revision.
 
 ## Логічні бази MariaDB

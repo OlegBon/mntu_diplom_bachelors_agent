@@ -50,7 +50,7 @@ def get_db():
 
 Наприклад `0020_demo_provider_analytics_eligibility` змінює лише synthetic manifests через `UPDATE diamond_oltp.demo_datasets ... WHERE provenance LIKE 'synthetic-demo-v%'`. Міграція не повинна переписувати historical reports, valuations чи events. `seed_db.py` руйнівно перестворює всі три local databases.
 
-Карта таблиць: [db schema](../db-schema.md). Backup/recovery: [local start](../local-start.md), [MariaDB recovery](./mariadb-local-recovery.md). Майбутня topology: [172 backlog](../backlog/172-database-topology-and-configuration-contract.md).
+Карта таблиць: [db schema](../db-schema.md). Повний topology/configuration contract: [database topology](./database-topology.md). Backup/recovery: [local start](../local-start.md), [MariaDB recovery](./mariadb-local-recovery.md).
 
 ## Перед зміною даних
 

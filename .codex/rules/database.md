@@ -2,7 +2,7 @@
 
 ## Поточне середовище
 
-- Локальна runtime-БД — MariaDB/XAMPP: `diamond_oltp` і `diamond_market`; `diamond_analytics` залишається запланованим шаром, якщо код не реалізує конкретну таблицю.
+- Локальна runtime-БД — MariaDB/XAMPP з трьома physical databases: `diamond_oltp`, `diamond_market`, `diamond_analytics`. ORM завжди задає logical schema явно; `diamond_analytics.ml_results` існує як порожній reserved layer, а demo SOM artifacts належать `diamond_oltp`.
 - Не розкривай рядок підключення, паролі або інші значення `.env`.
 
 ## Схема і доступ до даних

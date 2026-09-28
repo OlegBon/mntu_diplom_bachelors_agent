@@ -24,7 +24,7 @@
 
 - **OLTP (diamond_oltp)**: Зберігання транзакційних даних експертів та звітів.
 - **Market (diamond_market)**: Зберігання довідників IDC (Grade Mappings) та динамічних індексів цін.
-- **Analytics (diamond_analytics)**: Результати роботи ML-моделей та кластеризації.
+- **Analytics (diamond_analytics)**: Зарезервований шар `ml_results` для майбутнього дозволеного ML; demo SOM artifacts належать `diamond_oltp`, а не цій базі.
 
 ## 🧭 Структура репозиторію
 
