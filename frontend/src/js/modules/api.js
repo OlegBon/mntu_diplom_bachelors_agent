@@ -76,6 +76,10 @@ export const getNarrativeQualityAnalytics = (paramsOrToken, maybeToken) => analy
   "/statistics/narrative-quality", paramsOrToken, maybeToken,
 );
 
+export const getOperationalQualityAnalytics = (paramsOrToken, maybeToken) => analyticsRequest(
+  "/statistics/operational-quality", paramsOrToken, maybeToken,
+);
+
 export const signalReportWorkSession = (reportId, payload, token) => requestApi(
   `/reports/${encodeURIComponent(reportId)}/work-session`, { method: "POST", token, body: payload },
 );
@@ -168,6 +172,12 @@ export const getDemoNarrativeQualityAnalytics = (datasetId, token, filters = {})
   for (const [key, value] of Object.entries(filters)) if (value) query.set(key, value);
   const suffix = query.toString();
   return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/narrative-quality${suffix ? `?${suffix}` : ""}`, { token });
+};
+export const getDemoOperationalQualityAnalytics = (datasetId, token, filters = {}) => {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) if (value) query.set(key, value);
+  const suffix = query.toString();
+  return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/operational-quality${suffix ? `?${suffix}` : ""}`, { token });
 };
 export const getDemoSom = (datasetId, token, reportId = "") => {
   const query = reportId ? `?report_id=${encodeURIComponent(reportId)}` : "";

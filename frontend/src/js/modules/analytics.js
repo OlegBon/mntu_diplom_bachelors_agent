@@ -1,6 +1,6 @@
-import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getNarrativeQualityAnalytics, getOperationalProviderAnalytics } from "./api.js";
+import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getNarrativeQualityAnalytics, getOperationalProviderAnalytics, getOperationalQualityAnalytics } from "./api.js";
 import { logout } from "./auth.js";
-import { duration, element, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
+import { duration, element, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
 
 function fullName(row) {
   return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || "Не вказано";
@@ -183,6 +183,7 @@ function renderCurrencySources(container, snapshots, dialog, dialogContent) {
   renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatCurrencyDateTime);
 }
 
+
 export async function initAnalytics() {
   const page = document.querySelector("[data-analytics-page]");
   if (!page) return;
@@ -191,6 +192,7 @@ export async function initAnalytics() {
   const expertResults = document.getElementById("analytics-expert-results");
   const adminResults = document.getElementById("analytics-admin-results");
   const narrativeResults = document.getElementById("analytics-narrative-results");
+  const qualityResults = document.getElementById("analytics-quality-results");
   const providerResults = document.getElementById("analytics-provider-results");
   const currencyResults = document.getElementById("analytics-currency-results");
   const expertDialog = document.getElementById("analytics-expert-dialog");
@@ -225,8 +227,9 @@ export async function initAnalytics() {
     }
     status.hidden = true;
     try {
-      const [experts, narratives, admins, providers, currency] = await Promise.all([
+      const [experts, narratives, quality, admins, providers, currency] = await Promise.all([
         getExpertStatistics(period, token), getNarrativeQualityAnalytics(period, token),
+        getOperationalQualityAnalytics(period, token),
         getAdminReviewStatistics(period, token),
         getOperationalProviderAnalytics(period, token), getFxDataSnapshots(period, token),
       ]);
@@ -235,6 +238,7 @@ export async function initAnalytics() {
         reportHref: (reportId) => `/report-detail.html?id=${encodeURIComponent(reportId)}`,
         formatDateTime: dateTime,
       });
+      renderOperationalQuality(qualityResults, quality, { formatDateTime: dateTime });
       renderAdmins(adminResults, admins);
       renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
       renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);

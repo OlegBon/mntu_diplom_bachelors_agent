@@ -5,6 +5,24 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — plan-report-narrative-completeness-filters
+
+- **Задача:** зафіксувати наступний окремий контур після завершеної 155: actionable private filters за порожніми текстовими полями для operational і demo lists.
+- **Змінені файли:** `docs/{progress,work_plan}.md`, `docs/backlog/{README,173-report-narrative-completeness-filters.md}`.
+- **Рішення / Результат:** 173 визначає спільний server-side filter contract для current порожніх method/conclusion/expert comment та окрему опцію «Подія зміни статусу без коментаря». Кілька опцій використовують `OR`; event filter бере тільки relevant event-и у date slice. Demo лишається exact dataset-bound, opaque/admin-gated і не може читати operational records. Це list navigation, а не text score, NLP або public analytics.
+- **Перевірки:** `python scripts/check_doc_links.py` — заплановано перед merge реалізації; код не змінювався.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** не створено filter UI/API, historical text revision або backfill; це лише backlog contract.
+
+## 2026-09-28 — operational-and-data-quality-analytics
+
+- **Задача:** завершити 155 — додати admin-only workflow/data-quality read model без performance rating, raw text/reasons або public visitor tracking.
+- **Змінені файли:** `backend/{crud,main,schemas}.py`, `frontend/src/{pug/pages/{demo-reports,ml-analysis}.pug,js/modules/{api,analytics,analytics-ui,demo-reports}.js,scss/_ui-primitives.scss}`, `tests/api/{test_demo_operational_quality,test_narrative_quality,test_operational_quality_analytics}.py`, `frontend/tests/{auth-and-api,demo-currency-sources,demo-provider-analytics,page-dom}.test.mjs`, `docs/{architecture,progress,work_plan,guides/{README,narrative-quality,operational-quality-analytics}.md,backlog/README.md`; active backlog file `155-operational-and-data-quality-analytics.md` removed.
+- **Рішення / Результат:** `/statistics/operational-quality` — admin-only aggregate: workflow event funnel за `ReportEvent.created_at`, current statuses і coverage когорти за `DiamondReport.created_at`, current global review queue, completeness required/optional fields та private-media/passport readiness. Exact opted-in demo dataset має `/demo/datasets/{id}/operational-quality`: той самий schema/renderer, але лише `DemoWorkflowEvent` і demo reports; delivery та queue ageing явно «Не моделюється». Endpoint-и не повертають коментарі, transition reasons, excerpts, person score або visitor data. Coverage-таблиці не мають desktop horizontal scroll. «Тексти» тепер показують denominator, empty count і до трьох already-authorized private посилань на порожні значення; raw text не відкривається. «Камені» для operational даних замінили пусту заглушку двома disabled статичними SOM/benchmark surfaces: без synthetic чисел, цін, сегментів, profile або forecast; запуск залежить від 151 → 152 → 153, а не від фіксованої кількості report.
+- **Перевірки:** `pytest tests/api/test_narrative_quality.py tests/api/test_operational_quality_analytics.py` — 3 passed; `compileall -q backend` — OK; `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** немає event-category backfill, revision history text або publication visitor analytics. `reports_with_media_count` описує лише private asset metadata, а active passport — поточний state; це не оцінка content/delivery якості. Real SOM/benchmark не увімкнено й не має hard-coded threshold.
+
 ## 2026-09-28 — expert-narrative-quality-analysis
 
 - **Задача:** завершити 154 — додати пояснювані не-блокувальні сигнали заповнення текстових полів і private metadata-only admin analytics без NLP.

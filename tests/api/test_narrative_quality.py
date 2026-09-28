@@ -38,7 +38,10 @@ def test_narrative_quality_is_private_non_blocking_and_unicode_aware(client, exp
     assert fields["identification_method"]["non_empty_count"] == 1
     assert fields["identification_method"]["shortest"][0]["report_id"] == report_id
     assert "text" not in fields["identification_method"]["shortest"][0]
+    assert fields["identification_method"]["candidate_count"] == 1
     assert fields["identification_conclusion"]["non_empty_count"] == 0
+    assert fields["identification_conclusion"]["empty_count"] == 1
+    assert fields["identification_conclusion"]["empty_samples"][0]["report_id"] == report_id
 
 
 @pytest.mark.api
