@@ -360,7 +360,7 @@ body {
   }
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 900px) {
   .main-header {
     .header-content { height: 4.25rem; min-height: 4.25rem; gap: 0.8rem; }
     .main-nav {
@@ -412,6 +412,39 @@ body {
 
   .dashboard-page .filters-bar { grid-template-columns: 1fr 1fr; }
   .dashboard-page .search-group { grid-column: 1 / -1; }
+}
+
+// Compact desktop: reserve a whole second header row for navigation rather
+// than opening a sparse full-width drawer. Labels remain single-line.
+@media (min-width: 901px) and (max-width: 1280px) {
+  .main-header {
+    .header-content {
+      height: auto;
+      min-height: 0;
+      flex-wrap: wrap;
+      gap: 0;
+      padding: 0.75rem 0 0;
+    }
+
+    .logo { margin-right: auto; }
+    .header-right { margin-left: auto; }
+
+    .main-nav {
+      order: 3;
+      flex: 0 0 100%;
+      height: 3.25rem;
+      margin: 0.75rem 0 0;
+      border-top: 1px solid variables.$border-color;
+
+      ul {
+        justify-content: space-between;
+        gap: 0.75rem;
+        height: 100%;
+      }
+
+      li a { height: 100%; white-space: nowrap; font-size: 0.88rem; }
+    }
+  }
 }
 
 
