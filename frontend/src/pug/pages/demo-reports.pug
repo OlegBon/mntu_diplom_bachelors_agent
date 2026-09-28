@@ -84,10 +84,10 @@ block content
                             .range-inputs
                                 input#demo-price-min.form-control(type="number" name="price_min" min="0" step="0.01" placeholder="Від")
                                 input#demo-price-max.form-control(type="number" name="price_max" min="0" step="0.01" placeholder="До")
-                        .filter-item
+                        .filter-item.filter-item--date
                             label(for="demo-date-from") Дата створення: від
                             input#demo-date-from.form-control(type="date" name="date_from")
-                        .filter-item
+                        .filter-item.filter-item--date
                             label(for="demo-date-to") Дата створення: до
                             input#demo-date-to.form-control(type="date" name="date_to")
                         +narrativeCompletenessFilter("demo", true)

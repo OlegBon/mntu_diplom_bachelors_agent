@@ -17,6 +17,6 @@ mixin narrativeCompletenessFilter(prefix, isDemo = false)
                     input(type="checkbox" name="empty_narrative" value="status_transition_reason" disabled=isDemo)
                     | Подія зміни статусу без коментаря
             if isDemo
-                p.account-help Synthetic lifecycle не має текстових коментарів, тому остання опція не моделюється.
+                p.account-help Synthetic lifecycle не має текстових коментарів; цю опцію не моделюємо.
             else
-                p.account-help Остання опція шукає хоча б одну lifecycle-подію без коментаря у вибраному зрізі дат.
+                p.account-help Є lifecycle-подія без коментаря у вибраному зрізі дат.
