@@ -39,6 +39,15 @@ block content
                         span Увімкнути доступ до «Демо» для мого облікового запису
                     .form-actions
                         button.btn.btn-primary(type="submit") Зберегти доступ
+            section#partner-controls-surface.account-surface(hidden)
+                h2 Доступ до керування партнерськими даними
+                p.account-help Цей режим відкриває лише внутрішні інструменти керування умовами provider-ів. Він не вмикає жодного зовнішнього provider-а, не видає ключів і не надає trial-доступу.
+                form#partner-controls-form
+                    label.checkbox-field(for="profile-partner-controls")
+                        input#profile-partner-controls(type="checkbox" name="partner_controls_enabled")
+                        span Увімкнути доступ до керування партнерськими даними для мого облікового запису
+                    .form-actions
+                        button.btn.btn-primary(type="submit") Зберегти доступ
             section.account-surface
                 h2 Змінити пароль
                 form#password-form

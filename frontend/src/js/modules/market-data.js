@@ -5,6 +5,7 @@ import {
   fetchMarketDataCandidate,
   getCurrentUser,
   getMarketDataProviders,
+  getProviderAccessPolicies,
   getMarketReferencePolicy,
   getMarketDataSnapshots,
   getFxDataSnapshots,
@@ -13,6 +14,7 @@ import {
   refreshNbuRate,
   updateMarketProviderSchedule,
   updateMarketReferencePolicy,
+  updateProviderAccessPolicy,
 } from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 
@@ -101,6 +103,35 @@ function renderPolicyMarketProviders(container, providers, enabledProviderCodes,
     primaryText.textContent = " Основний для списку звітів";
     label.append(input, text, primary, primaryText);
     container.append(label);
+  }
+}
+
+function renderProviderAccessPolicies(container, policies, onSave) {
+  container.replaceChildren();
+  for (const policy of policies) {
+    const form = document.createElement("form"); form.className = "market-data-card";
+    const title = document.createElement("h3"); title.textContent = policy.provider_code;
+    const modeLabel = document.createElement("label"); modeLabel.textContent = "Режим доступу";
+    const mode = document.createElement("select"); mode.name = "access_mode";
+    [["disabled", "Вимкнено"], ["restricted_trial", "Обмежений trial"], ["standard_internal", "Внутрішній стандартний"]].forEach(([value, text]) => {
+      const option = document.createElement("option"); option.value = value; option.textContent = text; option.selected = value === policy.access_mode; mode.append(option);
+    });
+    const limitLabel = document.createElement("label"); limitLabel.textContent = "Денний ліміт запитів";
+    const limit = document.createElement("input"); limit.type = "number"; limit.min = "1"; limit.name = "daily_request_limit"; limit.value = policy.daily_request_limit || "";
+    const expiryLabel = document.createElement("label"); expiryLabel.textContent = "Trial діє до (UTC)";
+    const expiry = document.createElement("input"); expiry.type = "datetime-local"; expiry.name = "trial_expires_at";
+    expiry.value = policy.trial_expires_at ? new Date(policy.trial_expires_at).toISOString().slice(0, 16) : "";
+    const termsLabel = document.createElement("label"); termsLabel.textContent = "Посилання або коротка примітка до умов";
+    const terms = document.createElement("input"); terms.type = "text"; terms.maxLength = 2000; terms.name = "terms_reference"; terms.value = policy.terms_reference || "";
+    const note = document.createElement("p"); note.className = "account-help"; note.textContent = "Дозволено лише природні камені, внутрішнє використання; public display і ML у цьому релізі вимкнені.";
+    const button = document.createElement("button"); button.type = "submit"; button.className = "btn btn-primary"; button.textContent = "Зберегти умови";
+    form.append(title, modeLabel, mode, limitLabel, limit, expiryLabel, expiry, termsLabel, terms, note, button);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault(); button.disabled = true;
+      try { await onSave(policy.provider_code, { access_mode: mode.value, daily_request_limit: limit.value ? Number(limit.value) : null, trial_expires_at: expiry.value ? new Date(expiry.value).toISOString() : null, terms_reference: terms.value.trim() || null, natural_only: true, internal_only: true, public_display_allowed: false, ml_allowed: false }); }
+      finally { button.disabled = false; }
+    });
+    container.append(form);
   }
 }
 
@@ -221,6 +252,8 @@ export async function initMarketData() {
   const snapshots = document.getElementById("market-data-snapshots");
   const schedules = document.getElementById("market-provider-schedules");
   const operations = document.getElementById("market-provider-operations");
+  const accessControls = document.getElementById("provider-access-controls");
+  const accessPolicies = document.getElementById("market-provider-access-policies");
   const form = document.getElementById("market-reference-attach-form");
   const referenceStatus = document.getElementById("market-reference-status");
   const snapshotSelect = document.getElementById("market-reference-snapshot");
@@ -246,9 +279,10 @@ export async function initMarketData() {
     decisionReason.focus();
   };
   const refresh = async () => {
-    const [providerRows, policy, snapshotRows, fxSnapshotRows, scheduleRows, operationRows] = await Promise.all([
+    const [providerRows, policy, snapshotRows, fxSnapshotRows, scheduleRows, operationRows, accessRows] = await Promise.all([
       getMarketDataProviders(token), getMarketReferencePolicy(token), getMarketDataSnapshots(token), getFxDataSnapshots(token),
       getMarketProviderSchedules(token).catch(() => []), getMarketProviderOperations(token).catch(() => []),
+      getProviderAccessPolicies(token).catch(() => null),
     ]);
     currentSnapshots = snapshotRows;
     renderPolicyMarketProviders(
@@ -287,6 +321,13 @@ export async function initMarketData() {
       } catch (error) { setStatus(status, error.message || "Не вдалося зберегти графік.", true); }
     });
     renderOperations(operations, operationRows);
+    if (accessRows) {
+      accessControls.hidden = false;
+      renderProviderAccessPolicies(accessPolicies, accessRows, async (providerCode, payload) => {
+        try { await updateProviderAccessPolicy(providerCode, payload, token); setStatus(status, "Умови provider-а збережено."); await refresh(); }
+        catch (error) { setStatus(status, error.message || "Не вдалося зберегти умови provider-а.", true); }
+      });
+    } else accessControls.hidden = true;
     updateApprovedSnapshotOptions(snapshotSelect, snapshotRows);
   };
   try {

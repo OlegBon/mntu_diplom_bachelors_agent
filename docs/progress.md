@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — provider-restricted-access-foundation
+
+- **Задача:** розпочати 141 — нейтральний механізм restricted provider access без live IDEX/OpenFacet activation.
+- **Змінені файли:** `backend/{models,schemas,crud,main}.py`, `alembic/versions/0021_provider_restricted_access.py`, `frontend/src/{pug/pages/{profile,market-data}.pug,js/modules/{api,profile,market-data}.js}`, `tests/api/test_provider_restricted_access.py`, `docs/{progress,work_plan,guides/market-data-providers}.md`.
+- **Рішення / результат:** admin self opt-in відкриває керування partner data; policy з режимами `disabled`/`restricted_trial`/`standard_internal`, expiry/quota і assignment-ready schema має credential-free append-only audit. Нормальний OpenFacet/NBU flow не змінено; IDEX не створено й не активовано.
+- **Перевірки:** `pytest tests/api/test_provider_restricted_access.py tests/api/test_demo_access_opt_in.py -q` — 4 passed; `compileall backend` — OK; `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — OK.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** міграція `0021` лише підготовлена; її застосування до локальної MariaDB потребує окремого підтвердження. Assignment UI, analytics read-only policy/audit projection та sanitized English mock-up — наступні логічні кроки 141.
+
 ## 2026-09-28 — provider-operations-and-coverage-analytics
 
 - **Задача:** завершити 163 — додати admin-only operational facts про freshness, provider operations і draft coverage без змішування demo або оцінювання provider-ів.

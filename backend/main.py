@@ -157,6 +157,17 @@ def update_my_demo_access(
     return crud.update_own_demo_access(db, current_user, enabled=payload.enabled)
 
 
+@app.put("/users/me/partner-controls-access", response_model=schemas.ExpertBase)
+def update_my_partner_controls_access(
+    payload: schemas.PartnerControlsAccessUpdate,
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    """Enable only this administrator's provider-governance controls."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Partner controls are available only to administrators")
+    return crud.update_own_partner_controls_access(db, current_user, enabled=payload.enabled)
+
+
 @app.put("/users/me/password", status_code=status.HTTP_204_NO_CONTENT)
 def update_my_password(
     password_update: schemas.PasswordUpdate,
@@ -200,6 +211,12 @@ def require_demo_admin(current_user: models.Expert) -> None:
     """Keep every demo route opaque unless its administrator explicitly opted in."""
     if current_user.role != "admin" or not current_user.demo_access_enabled:
         raise HTTPException(status_code=404, detail="Demo dataset not found")
+
+
+def require_partner_controls(current_user: models.Expert) -> None:
+    require_admin(current_user)
+    if not current_user.partner_controls_enabled:
+        raise HTTPException(status_code=403, detail="Enable partner-data controls in your profile first")
 
 
 def _attach_system_market_reference_when_available(
@@ -1152,6 +1169,48 @@ def read_market_data_providers(
 ):
     require_admin(current_user)
     return crud.get_market_data_providers(db)
+
+
+@app.get("/market-data/provider-access-policies", response_model=List[schemas.MarketProviderAccessPolicyResponse])
+def read_provider_access_policies(
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_partner_controls(current_user)
+    return [crud.get_provider_access_policy_response(db, policy) for policy in crud.get_provider_access_policies(db)]
+
+
+@app.put("/market-data/provider-access-policies/{provider_code}", response_model=schemas.MarketProviderAccessPolicyResponse)
+def update_provider_access_policy(
+    provider_code: str, payload: schemas.MarketProviderAccessPolicyUpdate,
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_partner_controls(current_user)
+    try:
+        policy = crud.update_provider_access_policy(db, provider_code=provider_code, payload=payload, actor=current_user)
+        return crud.get_provider_access_policy_response(db, policy)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.put("/market-data/provider-access-policies/{provider_code}/assignments/{expert_id}", response_model=schemas.MarketProviderAccessAssignmentResponse | None)
+def update_provider_access_assignment(
+    provider_code: str, expert_id: int, payload: schemas.PartnerControlsAccessUpdate,
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_partner_controls(current_user)
+    try:
+        return crud.set_provider_access_assignment(db, provider_code=provider_code, expert_id=expert_id, actor=current_user, enabled=payload.enabled)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.get("/market-data/provider-access-events", response_model=List[schemas.MarketProviderAccessEventResponse])
+def read_provider_access_events(
+    provider_code: Optional[str] = Query(default=None, max_length=32),
+    db: Session = Depends(get_db), current_user: models.Expert = Depends(get_current_user),
+):
+    require_partner_controls(current_user)
+    return crud.get_provider_access_events(db, provider_code=provider_code)
 
 
 @app.get("/market-data/policy", response_model=schemas.MarketReferencePolicyResponse)

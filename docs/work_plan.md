@@ -86,7 +86,7 @@
 - [x] 135 — Реальний browser E2E і контракт паспорта: stale mock синхронізовано з `{ passport: ... }`; disposable SQLite runtime виконує реальний workflow без MariaDB, user records або `seed_db.py`.
 - [x] 136 — SQLAlchemy/Pydantic deprecation cleanup: modern API без зміни schema, request/response JSON або доменної логіки; ORM→Pydantic v2 serialization має окремий regression test.
 - [ ] [137 — GitHub Actions CI](./backlog/137-github-actions-continuous-integration.md): до переходу на `main` відтворити backend, ephemeral MariaDB/Alembic, frontend, mock/real E2E та docs checks у GitHub без deploy або secrets.
-- [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial.
+- [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): provider-neutral restricted-access governance (`0021` prepared, not applied), English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial. Live IDEX/OpenFacet activation remains out of scope.
 - [x] 146 — Незбережене введення майстра: versioned per-tab/per-user `sessionStorage`, явний restore або start-new, confirmed clear, leave protection і очищення лише після успішного `POST /reports`; файли та credentials не серіалізуються. Це передумова i18n.
 - [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після 146 та рішення 160.
 

@@ -29,6 +29,7 @@ export const getCurrentUser = (token) => requestApi("/users/me", { token });
 
 export const updateMyProfile = (profile, token) => requestApi("/users/me/profile", { method: "PUT", token, body: profile });
 export const updateMyDemoAccess = (enabled, token) => requestApi("/users/me/demo-access", { method: "PUT", token, body: { enabled } });
+export const updateMyPartnerControlsAccess = (enabled, token) => requestApi("/users/me/partner-controls-access", { method: "PUT", token, body: { enabled } });
 
 export const updateMyPassword = (passwords, token) => requestApi("/users/me/password", { method: "PUT", token, body: passwords });
 
@@ -91,6 +92,8 @@ export const getReportDashboard = (params, token) => {
 export const getReferenceValues = (token) => requestApi("/reference-values", { token });
 
 export const getMarketDataProviders = (token) => requestApi("/market-data/providers", { token });
+export const getProviderAccessPolicies = (token) => requestApi("/market-data/provider-access-policies", { token });
+export const updateProviderAccessPolicy = (providerCode, policy, token) => requestApi(`/market-data/provider-access-policies/${encodeURIComponent(providerCode)}`, { method: "PUT", token, body: policy });
 
 export const getMarketReferencePolicy = (token) => requestApi("/market-data/policy", { token });
 

@@ -94,6 +94,16 @@ append-only подію із сумою, провайдером і номером
 письмового дозволу IDEX. Public passport і PDF не показують provider values чи
 брендинг без окремого рішення про disclosure/licensing.
 
+## Restricted partner access
+
+`0021_provider_restricted_access` adds a provider-neutral governance layer. It is separate from immutable snapshots, scheduled operations and the normal market-reference policy: it stores no API keys, provider responses or credentials.
+
+- An administrator first enables **«Доступ до керування партнерськими даними»** only for their own account. This controls the visibility of configuration UI and direct policy endpoints; it does not grant a trial or activate a provider.
+- Each catalog provider has an access mode: `disabled`, `restricted_trial`, or `standard_internal`. The current release accepts only natural-stone, internal, non-public and non-ML use. A restricted trial additionally requires an expiry and daily request limit, plus explicit assigned administrators.
+- `market_provider_access_events` is an append-only, credential-free audit log of opt-in/out, policy changes and trial assignments. It records actor, time, target and a short reason/reference when supplied.
+
+Existing OpenFacet/NBU operation and snapshot flows remain unchanged. A future adapter must evaluate this policy before it performs an external request. IDEX remains disabled and has no adapter, key, network call or provider record in this task.
+
 ## Admin analytics provider-ів
 
 Вкладка «Аналітика → Провайдери» використовує лише `record_scope=operational`

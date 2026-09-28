@@ -16,6 +16,7 @@ class Expert(Base):
     role = Column(Enum('admin', 'gemologist'), default='gemologist')
     is_active = Column(Boolean, nullable=False, default=True, server_default="1")
     demo_access_enabled = Column(Boolean, nullable=False, default=False, server_default="0")
+    partner_controls_enabled = Column(Boolean, nullable=False, default=False, server_default="0")
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 class DiamondReport(Base):
@@ -517,6 +518,52 @@ class MarketReferencePolicyProvider(Base):
     display_order = Column(Integer, nullable=False, default=0, server_default="0")
     updated_by_id = Column(Integer, nullable=True)
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+
+class MarketProviderAccessPolicy(Base):
+    """Provider-neutral access and use constraints; never stores provider credentials."""
+
+    __tablename__ = "market_provider_access_policies"
+    __table_args__ = {"schema": "diamond_market"}
+
+    provider_code = Column(String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), primary_key=True)
+    access_mode = Column(String(32), nullable=False, default="standard_internal", server_default="standard_internal")
+    trial_expires_at = Column(DateTime, nullable=True)
+    daily_request_limit = Column(Integer, nullable=True)
+    natural_only = Column(Boolean, nullable=False, default=True, server_default="1")
+    internal_only = Column(Boolean, nullable=False, default=True, server_default="1")
+    public_display_allowed = Column(Boolean, nullable=False, default=False, server_default="0")
+    ml_allowed = Column(Boolean, nullable=False, default=False, server_default="0")
+    terms_reference = Column(Text, nullable=True)
+    updated_by_id = Column(Integer, nullable=True)
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+
+class MarketProviderAccessAssignment(Base):
+    __tablename__ = "market_provider_access_assignments"
+    __table_args__ = (UniqueConstraint("provider_code", "expert_id", name="uq_market_provider_access_assignment"), {"schema": "diamond_market"})
+
+    assignment_id = Column(Integer, primary_key=True)
+    provider_code = Column(String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=False)
+    expert_id = Column(Integer, ForeignKey("diamond_oltp.experts.expert_id"), nullable=False)
+    granted_by_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class MarketProviderAccessEvent(Base):
+    """Append-only, credential-free audit trail for partner access governance."""
+
+    __tablename__ = "market_provider_access_events"
+    __table_args__ = {"schema": "diamond_market"}
+
+    event_id = Column(Integer, primary_key=True)
+    provider_code = Column(String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=True, index=True)
+    action = Column(String(64), nullable=False)
+    actor_id = Column(Integer, nullable=True)
+    subject_expert_id = Column(Integer, nullable=True)
+    reason = Column(Text, nullable=True)
+    state_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
 
 
 class MarketDataSnapshot(Base):
