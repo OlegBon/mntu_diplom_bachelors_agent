@@ -7,12 +7,12 @@
 
 ## 2026-09-28 — provider-restricted-access-foundation
 
-- **Задача:** розпочати 141 — нейтральний механізм restricted provider access без live IDEX/OpenFacet activation.
+- **Задача:** завершити 141 — нейтральний механізм restricted provider access без live IDEX/OpenFacet activation.
 - **Змінені файли:** `backend/{models,schemas,crud,main}.py`, `alembic/versions/0021_provider_restricted_access.py`, `frontend/src/{pug/pages/{profile,market-data}.pug,js/modules/{api,profile,market-data}.js}`, `tests/api/test_provider_restricted_access.py`, `docs/{progress,work_plan,guides/market-data-providers}.md`.
 - **Рішення / результат:** admin self opt-in відкриває керування partner data; policy з режимами `disabled`/`restricted_trial`/`standard_internal`, expiry/quota і персональними trial assignments має credential-free append-only audit. «Ринкові дані» — write surface, «Аналітика → Провайдери» — read-only projection policy/audit поруч із technical operations; demo показує тільки static synthetic scenario. Нормальний OpenFacet/NBU flow не змінено; IDEX не створено й не активовано.
 - **Перевірки:** `pytest tests/api/test_provider_restricted_access.py tests/api/test_provider_operations_analytics.py -q` — 5 passed; `compileall backend` — OK; `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — OK.
 - **Нові змінні середовища:** немає.
-- **Обмеження:** `0021_provider_restricted_access` застосовано до локальної MariaDB після явного підтвердження; Alembic head підтверджено. Assignment UI, analytics read-only policy/audit projection та sanitized English mock-up — наступні логічні кроки 141.
+- **Обмеження:** `0021_provider_restricted_access` застосовано до локальної MariaDB після явного підтвердження; Alembic head підтверджено. Live IDEX/OpenFacet activation, key, adapter, network call, actual logo/branding, English provider sample і staging залишаються окремими майбутніми рішеннями після письмового approval; вони не є невиконаною частиною 141.
 
 ## 2026-09-28 — provider-access-ui-layout
 
