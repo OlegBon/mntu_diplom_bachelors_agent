@@ -167,6 +167,44 @@ class AdminReviewStatisticsResponse(BaseModel):
     pending_review_count: int
     oldest_review_started_at: Optional[datetime]
 
+
+class NarrativeQualityWarning(BaseModel):
+    field_key: str
+    label: str
+    code: Literal["empty", "placeholder", "too_short", "repetition", "very_long", "status_context"]
+    message: str
+
+
+class NarrativeQualityReportResponse(BaseModel):
+    report_id: str
+    warnings: list[NarrativeQualityWarning] = Field(default_factory=list)
+
+
+class NarrativeTextSample(BaseModel):
+    report_id: str
+    occurred_at: datetime
+    word_count: int
+    non_whitespace_char_count: int
+
+
+class NarrativeTextFieldStatistics(BaseModel):
+    field_key: str
+    label: str
+    source_semantics: str
+    non_empty_count: int
+    median_word_count: Optional[float]
+    average_word_count: Optional[float]
+    median_non_whitespace_char_count: Optional[float]
+    average_non_whitespace_char_count: Optional[float]
+    shortest: list[NarrativeTextSample] = Field(default_factory=list)
+    longest: list[NarrativeTextSample] = Field(default_factory=list)
+
+
+class NarrativeQualityAnalyticsResponse(BaseModel):
+    date_from: Optional[date]
+    date_to: Optional[date]
+    fields: list[NarrativeTextFieldStatistics]
+
 # Схема для токена (JWT)
 class Token(BaseModel):
     access_token: str
