@@ -9,7 +9,7 @@
 
 - **Задача:** зафіксувати наступний окремий контур після завершеної 155: actionable private filters за порожніми текстовими полями для operational і demo lists.
 - **Змінені файли:** `docs/{progress,work_plan}.md`, `docs/backlog/{README,173-report-narrative-completeness-filters.md}`.
-- **Рішення / Результат:** 173 визначає спільний server-side filter contract для current порожніх method/conclusion/expert comment та окрему опцію «Подія зміни статусу без коментаря». Кілька опцій використовують `OR`; event filter бере тільки relevant event-и у date slice. Demo лишається exact dataset-bound, opaque/admin-gated і не може читати operational records. Це list navigation, а не text score, NLP або public analytics.
+- **Рішення / Результат:** 173 визначає спільний server-side filter contract для current порожніх method/conclusion/expert comment та окрему опцію «Подія зміни статусу без коментаря». Кілька опцій використовують `OR`; event filter бере тільки relevant event-и у date slice. Demo лишається exact dataset-bound, opaque/admin-gated і не може читати operational records. Це list navigation, а не text score, NLP або public analytics. Після 155 задача 173 зафіксована як рекомендована наступна: вона не залежить від зовнішнього permission і перетворює analytics finding на private робочий список.
 - **Перевірки:** `python scripts/check_doc_links.py` — заплановано перед merge реалізації; код не змінювався.
 - **Нові змінні середовища:** немає.
 - **Обмеження:** не створено filter UI/API, historical text revision або backfill; це лише backlog contract.
