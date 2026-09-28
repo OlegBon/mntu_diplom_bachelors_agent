@@ -67,6 +67,10 @@ export const getAdminReviewStatistics = (paramsOrToken, maybeToken) => analytics
   "/statistics/admin-review-performance", paramsOrToken, maybeToken,
 );
 
+export const getOperationalProviderAnalytics = (paramsOrToken, maybeToken) => analyticsRequest(
+  "/statistics/provider-operations", paramsOrToken, maybeToken,
+);
+
 export const signalReportWorkSession = (reportId, payload, token) => requestApi(
   `/reports/${encodeURIComponent(reportId)}/work-session`, { method: "POST", token, body: payload },
 );

@@ -1,4 +1,4 @@
-import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics } from "./api.js";
+import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getOperationalProviderAnalytics } from "./api.js";
 import { logout } from "./auth.js";
 import { duration, element, periodSummary, renderTable } from "./analytics-ui.js";
 
@@ -118,6 +118,55 @@ function renderAdmins(container, snapshot) {
   container.replaceChildren(fragment);
 }
 
+function providerFreshnessLabel(value) {
+  return { fresh: "Актуальний", warning: "Потребує уваги", stale: "Застарілий", missing: "Немає знімка" }[value] || value;
+}
+
+function openProviderDialog(dialog, content, provider) {
+  const coverage = provider.coverage;
+  const fragment = document.createDocumentFragment();
+  fragment.append(element("h3", "analytics-dialog-name", provider.display_name));
+  const metrics = element("dl", "analytics-metrics");
+  [
+    ["Стан freshness", providerFreshnessLabel(provider.freshness_status)],
+    ["Останній затверджений знімок", provider.latest_snapshot_id ? `#${provider.latest_snapshot_id}` : "Немає"],
+    ["Усього знімків", provider.snapshots_total], ["Кандидати", provider.snapshots_candidate],
+    ["Затверджено", provider.snapshots_approved], ["Відхилено", provider.snapshots_rejected],
+    ["Усього спроб", provider.operations_total], ["За графіком", provider.scheduled_operations],
+    ["Вручну", provider.manual_operations], ["Повторні спроби", provider.retry_operations],
+    ["Невдалі спроби", provider.failed_operations], ["Чернеток у зрізі", coverage.candidate_draft_reports],
+    ["Покрито орієнтиром", coverage.covered_draft_reports], ["Виключено за origin", coverage.excluded_non_natural_reports],
+    ["Бракує характеристик", coverage.missing_characteristics_reports],
+    ["Немає актуального знімка", coverage.snapshot_unavailable_reports], ["Не покрито quote", coverage.quote_not_covered_reports],
+  ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
+  fragment.append(metrics, element("p", "account-help", provider.scope_note));
+  if (coverage.covered_report_ids.length) {
+    const links = element("p", "account-help", "Приклади покритих звітів: ");
+    coverage.covered_report_ids.forEach((reportId, index) => {
+      if (index) links.append(document.createTextNode(", "));
+      const link = element("a", "", reportId); link.href = `/report-detail.html?id=${encodeURIComponent(reportId)}`; links.append(link);
+    });
+    fragment.append(links);
+  }
+  content.replaceChildren(fragment); dialog.showModal();
+}
+
+function renderProviders(container, providers, dialog, dialogContent) {
+  renderTable(container, ["Провайдер", "Freshness", "Знімки", "Спроби", "Coverage чернеток"], providers.map((provider) => {
+    const button = element("button", "analytics-expert-button", provider.display_name);
+    button.type = "button"; button.addEventListener("click", () => openProviderDialog(dialog, dialogContent, provider));
+    const coverage = provider.coverage;
+    return [button, providerFreshnessLabel(provider.freshness_status), `${provider.snapshots_approved}/${provider.snapshots_total} затверджено`, `${provider.failed_operations} failed · ${provider.retry_operations} retry`, `${coverage.covered_draft_reports}/${coverage.candidate_draft_reports} покрито`];
+  }), "Активних ринкових provider-ів поки немає.");
+}
+
+function renderCurrencySources(container, snapshots) {
+  renderTable(container, ["Джерело", "Офіційна дата", "USD/UAH", "Отримано"], snapshots.map((snapshot) => [
+    "НБУ", new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${snapshot.rate_date}T00:00:00`)),
+    String(snapshot.rate), dateTime(snapshot.retrieved_at),
+  ]), "Знімків НБУ за цим зрізом поки немає.");
+}
+
 export async function initAnalytics() {
   const page = document.querySelector("[data-analytics-page]");
   if (!page) return;
@@ -125,11 +174,16 @@ export async function initAnalytics() {
   const token = localStorage.getItem("token");
   const expertResults = document.getElementById("analytics-expert-results");
   const adminResults = document.getElementById("analytics-admin-results");
+  const providerResults = document.getElementById("analytics-provider-results");
+  const currencyResults = document.getElementById("analytics-currency-results");
   const expertDialog = document.getElementById("analytics-expert-dialog");
   const expertDialogContent = document.getElementById("analytics-expert-dialog-content");
   const periodForm = document.getElementById("analytics-period-form");
   const periodReset = document.getElementById("analytics-period-reset");
   const periodSummaryNode = document.getElementById("analytics-period-summary");
+  const periodControls = document.getElementById("analytics-period-controls");
+  const providerDialog = document.getElementById("analytics-provider-dialog");
+  const providerDialogContent = document.getElementById("analytics-provider-dialog-content");
   const panels = Object.fromEntries([...page.querySelectorAll(".analytics-panel")].map((panel) => [panel.id.replace("analytics-", ""), panel]));
 
   page.querySelectorAll("[data-analytics-tab]").forEach((tab) => tab.addEventListener("click", () => {
@@ -140,9 +194,11 @@ export async function initAnalytics() {
       item.setAttribute("aria-selected", String(active));
     });
     Object.entries(panels).forEach(([name, panel]) => { panel.hidden = name !== selected; });
+    periodControls.hidden = selected === "stones";
   }));
   expertDialog?.addEventListener("cancel", () => expertDialogContent.replaceChildren());
   expertDialog?.addEventListener("close", () => expertDialogContent.replaceChildren());
+  providerDialog?.addEventListener("close", () => providerDialogContent.replaceChildren());
   const loadAnalytics = async () => {
     const period = Object.fromEntries(new FormData(periodForm).entries());
     if (period.date_from && period.date_to && period.date_from > period.date_to) {
@@ -152,11 +208,14 @@ export async function initAnalytics() {
     }
     status.hidden = true;
     try {
-      const [experts, admins] = await Promise.all([
+      const [experts, admins, providers, currency] = await Promise.all([
         getExpertStatistics(period, token), getAdminReviewStatistics(period, token),
+        getOperationalProviderAnalytics(period, token), getFxDataSnapshots(period, token),
       ]);
       renderExperts(expertResults, experts, expertDialog, expertDialogContent);
       renderAdmins(adminResults, admins);
+      renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
+      renderCurrencySources(currencyResults, currency);
       periodSummaryNode.textContent = periodSummary(period);
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
