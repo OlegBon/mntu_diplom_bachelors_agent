@@ -12,7 +12,7 @@
 - **Рішення / результат:** admin self opt-in відкриває керування partner data; policy з режимами `disabled`/`restricted_trial`/`standard_internal`, expiry/quota і assignment-ready schema має credential-free append-only audit. Нормальний OpenFacet/NBU flow не змінено; IDEX не створено й не активовано.
 - **Перевірки:** `pytest tests/api/test_provider_restricted_access.py tests/api/test_demo_access_opt_in.py -q` — 4 passed; `compileall backend` — OK; `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — OK.
 - **Нові змінні середовища:** немає.
-- **Обмеження:** міграція `0021` лише підготовлена; її застосування до локальної MariaDB потребує окремого підтвердження. Assignment UI, analytics read-only policy/audit projection та sanitized English mock-up — наступні логічні кроки 141.
+- **Обмеження:** `0021_provider_restricted_access` застосовано до локальної MariaDB після явного підтвердження; Alembic head підтверджено. Assignment UI, analytics read-only policy/audit projection та sanitized English mock-up — наступні логічні кроки 141.
 
 ## 2026-09-28 — provider-operations-and-coverage-analytics
 
