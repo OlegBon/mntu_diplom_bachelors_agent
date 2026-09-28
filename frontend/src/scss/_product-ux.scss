@@ -429,7 +429,7 @@ body {
     .logo { margin-right: auto; }
     .header-right { margin-left: auto; }
     .header-session-name:not([hidden]) { margin-left: 0; border-left: 0; padding-left: 0; }
-    .header-session-action { margin-left: 0; border-left: 0; padding-left: 1rem; }
+    .header-session-action { margin-left: 0.75rem; border-left: 1px solid variables.$border-color; padding-left: 1rem; }
 
     .main-nav {
       order: 3;
