@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — database-topology-configuration-contract
+
+- **Задача:** завершити 172 — прибрати неоднозначність local database configuration і зафіксувати перевірений вхід до майбутньої PostgreSQL/staging задачі 161.
+- **Змінені файли:** `.env.example`, `backend/{database_topology,config,database}.py`, `alembic/env.py`, `scripts/{bootstrap_mariadb_databases,check_database_topology}.py`, `docs/{architecture,db-schema,local-start,progress,work_plan,guides/{README,database-guide,database-topology}.md,backlog/{README,161-postgresql-migration-and-staging}.md}`; active backlog file `172-database-topology-and-configuration-contract.md` removed.
+- **Рішення / Результат:** один canonical Python contract задає `diamond_oltp`, `diamond_market`, `diamond_analytics` та local default `diamond_oltp`; його спільно використовують config, SQLite test translation, Alembic і MariaDB bootstrap. `DB_NAME` лишається compatibility variable для default MariaDB URL, а не вибором єдиної database; runtime user потребує rights на всі три. New guide описує local MariaDB ↔ one PostgreSQL database/three schemas, ownership demo SOM versus reserved `ml_results`, least-privilege roles, Alembic/backup/restore/rollback boundaries і конкретний порядок disposable PostgreSQL перевірки в 161.
+- **Перевірки:** `python scripts/check_database_topology.py` — OK без читання private `.env` або connection; `pytest tests/unit/test_schema_metadata.py tests/unit/test_migration_foundation.py -q` — 10 passed; `python scripts/check_doc_links.py` — OK; `compileall` змінених Python-модулів — OK; `git diff --check` — OK. Read-only `alembic check` не пройшов через доіснуючий schema drift local MariaDB: named indexes `market_provider_access_events` і cross-schema FK `market_provider_access_assignments`; 172 не створює migration для цього drift, його слід перевірити на disposable PostgreSQL у 161.
+- **Нові змінні середовища:** немає; `.env.example` лише пояснює чинний `DB_NAME`.
+- **Обмеження:** PostgreSQL server/schema/roles не створювалися, Alembic upgrade/downgrade, seed, backup/restore і data migration не запускалися. Read-only repository check не замінює future runtime compatibility smoke-test.
+
 ## 2026-09-28 — provider-restricted-access-foundation
 
 - **Задача:** завершити 141 — нейтральний механізм restricted provider access без live IDEX/OpenFacet activation.
@@ -112,15 +121,6 @@
 - **Перевірки:** `python -m pytest tests/unit/test_security_access_token.py tests/api/test_auth_and_experts.py -q` — 5 passed; `cmd /c "cd frontend && npm test"` — 27 passed; `python -m compileall -q backend`; `python scripts/check_doc_links.py` — OK; `git diff --check` — без помилок.
 - **Нові змінні середовища:** `ACCESS_TOKEN_EXPIRE_MINUTES` — local-only TTL access JWT, типово `480`, допустимо `15–720`.
 - **Обмеження:** не додано refresh token, cookie session, server-side revoke/device inventory, production CORS/TLS/rate limit чи зміни RBAC. Перед Stage B потрібен окремий security review.
-
-## 2026-09-27 — database-topology-configuration-planning
-
-- **Задача:** зафіксувати 172 після уточнення local MariaDB та майбутньої PostgreSQL/cloud topology.
-- **Змінені файли:** `docs/{work_plan,progress}.md`, `docs/backlog/{README,172-database-topology-and-configuration-contract}.md`.
-- **Рішення / Результат:** local MariaDB складається з трьох databases `diamond_oltp`, `diamond_market`, `diamond_analytics`; `DB_NAME=diamond_oltp` лише задає default connection database, а schema-qualified SQLAlchemy models вимагають права на всі три. Цільовий PostgreSQL/cloud контур — одна physical database з трьома schemas з цими самими назвами, не всі таблиці в `public`. Demo SOM artifacts лишаються в `diamond_oltp`; reserved `diamond_analytics.ml_results` не є demo SOM storage. 172 готує configuration/grants/Alembic/backup contract перед 161, але не виконує migration чи cloud provisioning.
-- **Перевірки:** backlog links і залежності звірені з 160/161; code, schema, env і дані не змінювалися.
-- **Нові змінні середовища:** немає.
-- **Обмеження:** конкретні PostgreSQL grants, schemas, migration order і disposable smoke-test будуть результатом 172; фактична міграція залишається 161.
 
 ## 2026-09-27 — synthetic-som-demo-finalization
 

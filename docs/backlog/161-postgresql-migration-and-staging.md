@@ -15,6 +15,13 @@
 - Інтегрувати [140](./140-cloud-deployment-and-provider-scheduler.md) як managed
   scheduler provider CLI після готової staging DB.
 
+Перед першою disposable PostgreSQL перевіркою застосувати погоджений
+[database topology contract](../guides/database-topology.md): одна physical
+database, schemas `diamond_oltp`/`diamond_market`/`diamond_analytics`, окремі
+bootstrap/migration/runtime roles, один explicit PostgreSQL `DATABASE_URL`,
+cross-schema FK/integrity test і verified backup/restore. `DB_NAME` не є
+production fallback.
+
 ## Поза межами
 
 - Переписування FastAPI або frontend framework.

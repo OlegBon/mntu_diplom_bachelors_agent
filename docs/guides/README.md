@@ -27,4 +27,5 @@
 | [frontend-guide.md](./frontend-guide.md) | Pug/SCSS/JavaScript, Gulp, API client і UI-примітиви з фрагментами коду. |
 | [backend-api-guide.md](./backend-api-guide.md) | FastAPI route → JWT/RBAC → CRUD, API boundaries та приклади коду. |
 | [database-guide.md](./database-guide.md) | SQLAlchemy schemas, Alembic lifecycle, seed і database boundaries з прикладами. |
+| [database-topology.md](./database-topology.md) | Contract трьох local MariaDB databases і однієї майбутньої PostgreSQL database з трьома schemas, grants, backup та вхід для 161. |
 | [testing-guide.md](./testing-guide.md) | Ізольовані pytest, jsdom, Playwright і verification matrix. |

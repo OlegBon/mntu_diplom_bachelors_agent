@@ -56,11 +56,11 @@ def test_bootstrap_creates_only_named_missing_databases(monkeypatch):
     assert fake_connection.closed is True
 
 
-def test_alembic_multi_provider_revision_is_the_only_committed_head():
+def test_alembic_provider_restricted_access_revision_is_the_only_committed_head():
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_heads() == ["0015_multi_provider_market_references"]
+    assert script_directory.get_heads() == ["0021_provider_restricted_access"]
 
 
 def test_multi_provider_migration_changes_policy_only_not_historical_valuations():

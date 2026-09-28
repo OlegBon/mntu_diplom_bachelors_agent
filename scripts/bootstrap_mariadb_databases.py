@@ -12,9 +12,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
 from backend.config import get_mariadb_connection_options  # noqa: E402
+from backend.database_topology import MANAGED_SCHEMAS  # noqa: E402
 
 
-DATABASES = ("diamond_oltp", "diamond_market", "diamond_analytics")
+# Backwards-compatible script-level alias; the canonical source is backend.
+DATABASES = MANAGED_SCHEMAS
 
 
 def bootstrap_databases() -> None:

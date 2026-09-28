@@ -121,20 +121,20 @@
 - [x] 163 — Provider operations і coverage analytics: admin-only operational «Провайдери»/«Валютні джерела», freshness, immutable snapshot/operation counts і draft coverage by reason; demo не змішується, без provider score/price comparison.
 - [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локального verified experiment 152 підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
 - [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 152, рішення 160 і CI gate 137 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
-- [ ] [172 — Database topology і configuration contract](./backlog/172-database-topology-and-configuration-contract.md): local `diamond_oltp`/`diamond_market`/`diamond_analytics` у MariaDB ↔ одна PostgreSQL/cloud database з трьома schemas; configuration, grants, Alembic/backup input перед 161.
+- [x] 172 — Database topology і configuration contract: local `diamond_oltp`/`diamond_market`/`diamond_analytics` у MariaDB ↔ одна PostgreSQL/cloud database з трьома schemas; `DB_NAME` лишається local compatibility default, а grants, Alembic/backup/rollback input зафіксовано в [database topology guide](./guides/database-topology.md) перед 161.
 - [ ] Перевірити PostgreSQL-діалект, перенести тестові дані та звірити кількість/цілісність записів.
 - [ ] [140 — Хмарне розгортання та scheduler ринкових даних](./backlog/140-cloud-deployment-and-provider-scheduler.md): після 152 → 160 → 137 → 161 обрати staging/cloud runtime, налаштувати deployment, secrets, managed scheduler кожні 5 хвилин для provider CLI, logs/alerts і runbook; локальний Windows Task Scheduler не є ціллю.
 - [ ] Налаштувати CORS, env secrets, health-check, домени/TLS та ручний smoke-test до публічного запуску.
 
 ### Рекомендована черга активних задач
 
-1. Найближчий технічний фундамент: `172` — database topology/configuration contract для трьох local MariaDB schemas і майбутньої однієї PostgreSQL database; це вхід до `161` і прибирає неоднозначність `.env.example`.
+1. Найближчий технічний фундамент завершено: `172` зафіксував database topology/configuration contract. Наступний infrastructure-крок — `160` (platform decision), потім `137` (CI gate), і лише тоді `161` (disposable PostgreSQL/staging).
 2. Наступні продуктові та аналітичні контури: `145` — лише після 146 і рішення
    `160`; `154` і `155` — незалежні контури; `151 → 152 → 153` — ліцензований
    data contract, верифікований експеримент і лише тоді descriptive analytics для
    реальних даних.
-3. Delivery-залежність: після локального verified experiment `152` — `172 → 160 → 137
-   → 161 → 140`: database topology/configuration contract, platform decision, CI gate, PostgreSQL/staging і managed
+3. Delivery-залежність: після локального verified experiment `152` — `160 → 137
+   → 161 → 140`: platform decision, CI gate, PostgreSQL/staging і managed
    deployment. Після цього залишаються операційні налаштування CORS, secrets,
    health-check, доменів/TLS та ручного production smoke-test.
 
