@@ -53,6 +53,51 @@ export function renderTable(container, headers, rows, emptyMessage = "Даних
   container.replaceChildren(wrapper);
 }
 
+function narrativeNumber(value) {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 2 }).format(value);
+}
+
+function renderNarrativeSamples(title, samples, reportHref, formatDateTime) {
+  const section = element("section", "analytics-review-list");
+  section.append(element("h3", "", title));
+  if (!samples.length) {
+    section.append(element("p", "account-help", "Непорожніх значень у цьому зрізі поки немає."));
+    return section;
+  }
+  const list = document.createElement("ol");
+  samples.forEach((sample) => {
+    const row = document.createElement("li");
+    const link = element("a", "", sample.report_id);
+    link.href = reportHref(sample.report_id);
+    row.append(link, document.createTextNode(`: ${sample.word_count} слів · ${sample.non_whitespace_char_count} символів без пробілів · ${formatDateTime(sample.occurred_at)}`));
+    list.append(row);
+  });
+  section.append(list);
+  return section;
+}
+
+export function renderNarrativeAnalytics(container, snapshot, { reportHref, formatDateTime }) {
+  const cards = element("div", "analytics-narrative-list");
+  snapshot.fields.forEach((field) => {
+    const card = element("article", "analytics-admin-card analytics-narrative-card");
+    card.append(element("h3", "", field.label));
+    const metrics = element("dl", "analytics-metrics");
+    [
+      ["Непорожніх значень", field.non_empty_count], ["Медіана слів", narrativeNumber(field.median_word_count)],
+      ["Середнє слів", narrativeNumber(field.average_word_count)], ["Медіана символів без пробілів", narrativeNumber(field.median_non_whitespace_char_count)],
+      ["Середнє символів без пробілів", narrativeNumber(field.average_non_whitespace_char_count)],
+    ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
+    card.append(metrics, element("p", "account-help", field.source_semantics));
+    card.append(
+      renderNarrativeSamples("Три найкоротші", field.shortest, reportHref, formatDateTime),
+      renderNarrativeSamples("Три найдовші", field.longest, reportHref, formatDateTime),
+    );
+    cards.append(card);
+  });
+  container.replaceChildren(cards);
+}
+
 export function renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatDateTime, tableClass = "") {
   container.replaceChildren();
   if (!snapshots.length) {

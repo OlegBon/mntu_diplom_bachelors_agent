@@ -1,6 +1,6 @@
-import { getDemoDataset, getDemoReports, getDemoProviderAnalytics, getDemoWorkflowAnalytics, getDemoSom, getFxDataSnapshots, getGradeMappings } from "./api.js";
+import { getDemoDataset, getDemoReports, getDemoNarrativeQualityAnalytics, getDemoProviderAnalytics, getDemoWorkflowAnalytics, getDemoSom, getFxDataSnapshots, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
-import { duration as formatDuration, element as createElement, periodSummary, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
+import { duration as formatDuration, element as createElement, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
 
 const PREFERRED_DATASET_ID = "synthetic-demo-v4";
 const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
@@ -515,6 +515,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     reports: root.querySelector("#demo-reports-panel"),
     experts: root.querySelector("#demo-experts-panel"),
     administrators: root.querySelector("#demo-administrators-panel"),
+    narratives: root.querySelector("#demo-narratives-panel"),
     providers: root.querySelector("#demo-providers-panel"),
     stones: root.querySelector("#demo-stones-panel"),
     currency: root.querySelector("#demo-currency-panel"),
@@ -524,6 +525,8 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const periodSummaryNode = root.querySelector("#demo-workflow-period-summary");
   const expertResults = root.querySelector("#demo-experts-results");
   const administratorResults = root.querySelector("#demo-administrators-results");
+  const narrativeStatus = root.querySelector("#demo-narratives-status");
+  const narrativeResults = root.querySelector("#demo-narratives-results");
   const expertStatus = root.querySelector("#demo-experts-status");
   const administratorStatus = root.querySelector("#demo-administrators-status");
   const providerStatus = root.querySelector("#demo-providers-status");
@@ -539,14 +542,14 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const dialogContent = root.querySelector("#demo-workflow-actor-dialog-content");
   const providerDialog = root.querySelector("#demo-provider-dialog");
   const providerDialogContent = root.querySelector("#demo-provider-dialog-content");
-  if (!form || !controls || !periodSummaryNode || !periodHelpNode || !expertResults || !administratorResults || !providerResults || !currencyStatus || !currencyResults || !expertStatus || !administratorStatus || !providerStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent || !providerDialog || !providerDialogContent) return;
+  if (!form || !controls || !periodSummaryNode || !periodHelpNode || !expertResults || !administratorResults || !narrativeStatus || !narrativeResults || !providerResults || !currencyStatus || !currencyResults || !expertStatus || !administratorStatus || !providerStatus || !somStatus || !somResults || !somSearchForm || !somSearchInput || !dialog || !dialogContent || !providerDialog || !providerDialogContent) return;
 
   let activeTab = "reports";
 
   const activate = (tab) => {
     activeTab = tab;
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
-    controls.hidden = !["experts", "administrators", "providers", "currency"].includes(tab);
+    controls.hidden = !["experts", "narratives", "administrators", "providers", "currency"].includes(tab);
     periodHelpNode.textContent = tab === "currency"
       ? "Зріз застосовується до офіційної дати курсу НБУ. Він не фільтрує demo-звіти, орієнтири чи SOM."
       : "Дані за весь доступний період. У demo зрізі події та тривалості формуються детерміновано; вони не є active-time, review-cycle, SLA чи оцінкою реальних людей.";
@@ -562,6 +565,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     const message = "Дата «Від» не може бути пізнішою за дату «До».";
     setStatus(expertStatus, message, "error");
     setStatus(administratorStatus, message, "error");
+    setStatus(narrativeStatus, message, "error");
     setStatus(providerStatus, message, "error");
     setStatus(currencyStatus, message, "error");
     return false;
@@ -596,6 +600,22 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       setStatus(providerStatus, "Не вдалося завантажити synthetic provider analytics.", "error");
     }
   };
+  const loadNarratives = async () => {
+    const filters = filtersForSlice();
+    if (!validateSlice(filters)) return;
+    setStatus(narrativeStatus, "Завантаження synthetic текстових метаданих…");
+    try {
+      const data = await getDemoNarrativeQualityAnalytics(datasetId, token, filters);
+      narrativeStatus.replaceChildren();
+      periodSummaryNode.textContent = periodSummary(filters);
+      renderNarrativeAnalytics(narrativeResults, data, {
+        reportHref: (reportId) => `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(reportId)}`,
+        formatDateTime,
+      });
+    } catch {
+      setStatus(narrativeStatus, "Не вдалося завантажити synthetic текстові метадані.", "error");
+    }
+  };
   const loadCurrencySources = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
@@ -624,12 +644,14 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   for (const button of tabButtons) button.addEventListener("click", () => {
     activate(button.dataset.demoTab);
     if (button.dataset.demoTab === "stones") void loadSom();
+    if (button.dataset.demoTab === "narratives") void loadNarratives();
     if (button.dataset.demoTab === "providers") void loadProviders();
     if (button.dataset.demoTab === "currency") void loadCurrencySources();
   });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (activeTab === "providers") void loadProviders();
+    if (activeTab === "narratives") void loadNarratives();
+    else if (activeTab === "providers") void loadProviders();
     else if (activeTab === "currency") void loadCurrencySources();
     else void loadWorkflow();
   });
@@ -644,7 +666,8 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     void loadSom(reportId);
   });
   form.addEventListener("reset", () => window.setTimeout(() => {
-    if (activeTab === "providers") void loadProviders();
+    if (activeTab === "narratives") void loadNarratives();
+    else if (activeTab === "providers") void loadProviders();
     else if (activeTab === "currency") void loadCurrencySources();
     else void loadWorkflow();
   }, 0));
@@ -654,6 +677,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const requestedTab = new URLSearchParams(window.location.search).get("tab");
   if (requestedTab === "stones") { activate("stones"); void loadSom(); }
   if (requestedTab === "providers") { activate("providers"); void loadProviders(); }
+  if (requestedTab === "narratives") { activate("narratives"); void loadNarratives(); }
   if (requestedTab === "currency") { activate("currency"); void loadCurrencySources(); }
 }
 

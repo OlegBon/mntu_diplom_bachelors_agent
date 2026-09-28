@@ -515,6 +515,24 @@ def read_demo_provider_analytics(
         raise HTTPException(status_code=404, detail="Demo provider analytics is unavailable") from error
 
 
+@app.get("/demo/datasets/{dataset_id}/narrative-quality", response_model=schemas.NarrativeQualityAnalyticsResponse)
+def read_demo_narrative_quality_analytics(
+    dataset_id: str,
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Read metadata-only texts from one opted-in synthetic dataset."""
+    require_demo_admin(current_user)
+    try:
+        return crud.get_demo_narrative_quality_analytics(
+            db, dataset_id=dataset_id, date_from=date_from, date_to=date_to,
+        )
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=404, detail="Demo narrative analytics is unavailable") from error
+
+
 @app.get("/demo/datasets/{dataset_id}/som", response_model=schemas.DemoSomResponse)
 def read_demo_som(
     dataset_id: str,

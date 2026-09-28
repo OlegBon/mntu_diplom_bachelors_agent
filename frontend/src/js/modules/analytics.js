@@ -1,6 +1,6 @@
 import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getNarrativeQualityAnalytics, getOperationalProviderAnalytics } from "./api.js";
 import { logout } from "./auth.js";
-import { duration, element, periodSummary, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
+import { duration, element, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
 
 function fullName(row) {
   return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || "Не вказано";
@@ -183,48 +183,6 @@ function renderCurrencySources(container, snapshots, dialog, dialogContent) {
   renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatCurrencyDateTime);
 }
 
-function numericValue(value) {
-  if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 2 }).format(value);
-}
-
-function renderNarrativeSampleList(title, samples) {
-  const section = element("section", "analytics-review-list");
-  section.append(element("h3", "", title));
-  if (!samples.length) {
-    section.append(element("p", "account-help", "Непорожніх значень у цьому зрізі поки немає."));
-    return section;
-  }
-  const list = document.createElement("ol");
-  samples.forEach((sample) => {
-    const row = document.createElement("li");
-    const link = element("a", "", sample.report_id);
-    link.href = `/report-detail.html?id=${encodeURIComponent(sample.report_id)}`;
-    row.append(link, document.createTextNode(`: ${sample.word_count} слів · ${sample.non_whitespace_char_count} символів без пробілів · ${dateTime(sample.occurred_at)}`));
-    list.append(row);
-  });
-  section.append(list);
-  return section;
-}
-
-function renderNarrativeAnalytics(container, snapshot) {
-  const cards = element("div", "analytics-narrative-list");
-  snapshot.fields.forEach((field) => {
-    const card = element("article", "analytics-admin-card analytics-narrative-card");
-    card.append(element("h3", "", field.label));
-    const metrics = element("dl", "analytics-metrics");
-    [
-      ["Непорожніх значень", field.non_empty_count], ["Медіана слів", numericValue(field.median_word_count)],
-      ["Середнє слів", numericValue(field.average_word_count)], ["Медіана символів без пробілів", numericValue(field.median_non_whitespace_char_count)],
-      ["Середнє символів без пробілів", numericValue(field.average_non_whitespace_char_count)],
-    ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
-    card.append(metrics, element("p", "account-help", field.source_semantics));
-    card.append(renderNarrativeSampleList("Три найкоротші", field.shortest), renderNarrativeSampleList("Три найдовші", field.longest));
-    cards.append(card);
-  });
-  container.replaceChildren(cards);
-}
-
 export async function initAnalytics() {
   const page = document.querySelector("[data-analytics-page]");
   if (!page) return;
@@ -273,7 +231,10 @@ export async function initAnalytics() {
         getOperationalProviderAnalytics(period, token), getFxDataSnapshots(period, token),
       ]);
       renderExperts(expertResults, experts, expertDialog, expertDialogContent);
-      renderNarrativeAnalytics(narrativeResults, narratives);
+      renderNarrativeAnalytics(narrativeResults, narratives, {
+        reportHref: (reportId) => `/report-detail.html?id=${encodeURIComponent(reportId)}`,
+        formatDateTime: dateTime,
+      });
       renderAdmins(adminResults, admins);
       renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
       renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);

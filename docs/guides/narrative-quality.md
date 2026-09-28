@@ -37,6 +37,11 @@ Diamant ID показує пояснювані сигнали заповненн
 `report_id`, дата та лічильники. Посилання у private UI ведуть до вже
 авторизованого звіту.
 
+`GET /demo/datasets/{dataset_id}/narrative-quality` використовує той самий
+metadata contract і renderer, але доступний лише opted-in admin та тільки для
+manifest-authorized isolated synthetic dataset. Він ніколи не читає operational
+звіти; посилання ведуть лише до private `demo-report-detail` цього dataset.
+
 ## Семантика дат і історії
 
 Поточна схема не зберігає revision history трьох полів звіту. Тому за
@@ -46,6 +51,9 @@ Diamant ID показує пояснювані сигнали заповненн
   створених у періоді;
 - коментар до зміни статусу — це append-only `ReportEvent.reason` для подій,
   що сталися у періоді.
+
+Для demo поточні значення беруться зі synthetic звітів, датованих у періоді;
+за наявності synthetic status event його reason фільтрується за часом події.
 
 Отже статистика не називає поточний текст historical snapshot. Якщо знадобиться
 історія редакцій, її слід проєктувати окремо з consent, retention і доступами.

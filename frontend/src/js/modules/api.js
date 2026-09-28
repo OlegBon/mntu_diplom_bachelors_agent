@@ -163,6 +163,12 @@ export const getDemoProviderAnalytics = (datasetId, token, filters = {}) => {
   const suffix = query.toString();
   return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/provider-analytics${suffix ? `?${suffix}` : ""}`, { token });
 };
+export const getDemoNarrativeQualityAnalytics = (datasetId, token, filters = {}) => {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) if (value) query.set(key, value);
+  const suffix = query.toString();
+  return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/narrative-quality${suffix ? `?${suffix}` : ""}`, { token });
+};
 export const getDemoSom = (datasetId, token, reportId = "") => {
   const query = reportId ? `?report_id=${encodeURIComponent(reportId)}` : "";
   return requestApi(`/demo/datasets/${encodeURIComponent(datasetId)}/som${query}`, { token });

@@ -457,6 +457,55 @@ def get_demo_provider_analytics(
     )
 
 
+def get_demo_narrative_quality_analytics(
+    db: Session, *, dataset_id: str, date_from: date | None, date_to: date | None,
+) -> schemas.NarrativeQualityAnalyticsResponse:
+    """Read synthetic narrative metadata without querying operational reports."""
+    require_demo_dataset_analysis_eligibility(db, dataset_id=dataset_id, scenario="demo_operations")
+    start = datetime.combine(date_from, time.min) if date_from is not None else None
+    end = datetime.combine(date_to + timedelta(days=1), time.min) if date_to is not None else None
+    reports_query = (
+        db.query(models.DiamondReport)
+        .options(joinedload(models.DiamondReport.stone))
+        .filter(
+            models.DiamondReport.record_scope == "demo",
+            models.DiamondReport.demo_dataset_id == dataset_id,
+        )
+    )
+    if start is not None:
+        reports_query = reports_query.filter(models.DiamondReport.report_date >= start)
+    if end is not None:
+        reports_query = reports_query.filter(models.DiamondReport.report_date < end)
+    reports = reports_query.order_by(models.DiamondReport.report_id).all()
+
+    reasons_query = (
+        db.query(models.ReportEvent)
+        .join(models.DiamondReport, models.ReportEvent.report_id == models.DiamondReport.report_id)
+        .filter(
+            models.DiamondReport.record_scope == "demo",
+            models.DiamondReport.demo_dataset_id == dataset_id,
+        )
+    )
+    if start is not None:
+        reasons_query = reasons_query.filter(models.ReportEvent.created_at >= start)
+    if end is not None:
+        reasons_query = reasons_query.filter(models.ReportEvent.created_at < end)
+    reasons = reasons_query.order_by(models.ReportEvent.report_id, models.ReportEvent.event_id).all()
+
+    current_semantics = "Поточне synthetic значення у demo-звітах, датованих вибраним періодом. Це не історія редагувань тексту."
+    reason_semantics = "Незмінний коментар події зміни статусу synthetic demo-звіту у вибраному періоді."
+    return schemas.NarrativeQualityAnalyticsResponse(
+        date_from=date_from,
+        date_to=date_to,
+        fields=[
+            _narrative_field_statistics(field_key="identification_method", label="Метод ідентифікації", source_semantics=current_semantics, entries=[(report.report_id, report.report_date, report.stone.identification_method if report.stone else None) for report in reports]),
+            _narrative_field_statistics(field_key="identification_conclusion", label="Висновок щодо ідентифікації", source_semantics=current_semantics, entries=[(report.report_id, report.report_date, report.stone.identification_conclusion if report.stone else None) for report in reports]),
+            _narrative_field_statistics(field_key="expert_comment", label="Коментар експерта", source_semantics=current_semantics, entries=[(report.report_id, report.report_date, report.expert_comment) for report in reports]),
+            _narrative_field_statistics(field_key="status_transition_reason", label="Коментар до зміни статусу", source_semantics=reason_semantics, entries=[(event.report_id, event.created_at, event.reason) for event in reasons]),
+        ],
+    )
+
+
 def _legacy_origin_code(origin: str) -> int:
     return {"natural": 0, "lab_grown": 1, "unknown": 2, "other": 3}[origin]
 
