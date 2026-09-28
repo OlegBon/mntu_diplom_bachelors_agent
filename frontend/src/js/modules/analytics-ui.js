@@ -70,7 +70,10 @@ function renderNarrativeSamples(title, samples, reportHref, formatDateTime) {
     const row = document.createElement("li");
     const link = element("a", "", sample.report_id);
     link.href = reportHref(sample.report_id);
-    row.append(link, document.createTextNode(`: ${sample.word_count} слів · ${sample.non_whitespace_char_count} символів без пробілів · ${formatDateTime(sample.occurred_at)}`));
+    const description = sample.word_count === 0 && sample.non_whitespace_char_count === 0
+      ? `: порожнє значення · ${formatDateTime(sample.occurred_at)}`
+      : `: ${sample.word_count} слів · ${sample.non_whitespace_char_count} символів без пробілів · ${formatDateTime(sample.occurred_at)}`;
+    row.append(link, document.createTextNode(description));
     list.append(row);
   });
   section.append(list);
@@ -84,7 +87,8 @@ export function renderNarrativeAnalytics(container, snapshot, { reportHref, form
     card.append(element("h3", "", field.label));
     const metrics = element("dl", "analytics-metrics");
     [
-      ["Непорожніх значень", field.non_empty_count], ["Медіана слів", narrativeNumber(field.median_word_count)],
+      ["Усього у зрізі", field.candidate_count], ["Непорожніх значень", field.non_empty_count],
+      ["Порожніх значень", field.empty_count], ["Медіана слів", narrativeNumber(field.median_word_count)],
       ["Середнє слів", narrativeNumber(field.average_word_count)], ["Медіана символів без пробілів", narrativeNumber(field.median_non_whitespace_char_count)],
       ["Середнє символів без пробілів", narrativeNumber(field.average_non_whitespace_char_count)],
     ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
@@ -92,6 +96,7 @@ export function renderNarrativeAnalytics(container, snapshot, { reportHref, form
     card.append(
       renderNarrativeSamples("Три найкоротші", field.shortest, reportHref, formatDateTime),
       renderNarrativeSamples("Три найдовші", field.longest, reportHref, formatDateTime),
+      renderNarrativeSamples("До трьох порожніх", field.empty_samples, reportHref, formatDateTime),
     );
     cards.append(card);
   });

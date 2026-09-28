@@ -1559,6 +1559,14 @@ def _narrative_field_statistics(
         for report_id, occurred_at, value in entries
         if narrative_quality.normalize_text(value)
     ]
+    empty_samples = [
+        schemas.NarrativeTextSample(
+            report_id=report_id, occurred_at=occurred_at,
+            word_count=0, non_whitespace_char_count=0,
+        )
+        for report_id, occurred_at, value in entries
+        if not narrative_quality.normalize_text(value)
+    ]
     words = [item[2] for item in measured]
     characters = [item[3] for item in measured]
     samples = [
@@ -1572,12 +1580,13 @@ def _narrative_field_statistics(
     longest = sorted(samples, key=lambda item: (-item.non_whitespace_char_count, item.report_id, item.occurred_at))[:3]
     return schemas.NarrativeTextFieldStatistics(
         field_key=field_key, label=label, source_semantics=source_semantics,
-        non_empty_count=len(measured),
+        candidate_count=len(entries), non_empty_count=len(measured), empty_count=len(empty_samples),
         median_word_count=float(median(words)) if words else None,
         average_word_count=round(sum(words) / len(words), 2) if words else None,
         median_non_whitespace_char_count=float(median(characters)) if characters else None,
         average_non_whitespace_char_count=round(sum(characters) / len(characters), 2) if characters else None,
         shortest=shortest, longest=longest,
+        empty_samples=sorted(empty_samples, key=lambda item: (item.report_id, item.occurred_at))[:3],
     )
 
 
@@ -1625,6 +1634,93 @@ def get_narrative_quality_analytics(
             _narrative_field_statistics(field_key="expert_comment", label="Коментар експерта", source_semantics=current_semantics, entries=[(report_id, occurred_at, report.expert_comment) for report_id, occurred_at, report in report_entries]),
             _narrative_field_statistics(field_key="status_transition_reason", label="Коментар до зміни статусу", source_semantics=reason_semantics, entries=[(event.report_id, event.created_at, event.reason) for event in reasons]),
         ],
+    )
+
+
+def get_operational_quality_analytics(
+    db: Session, *, date_from: date | None = None, date_to: date | None = None,
+) -> schemas.OperationalQualityAnalyticsResponse:
+    """Describe operational workflow and data completeness without scoring people."""
+    start, end = _period_bounds(date_from, date_to)
+    reports_query = (
+        db.query(models.DiamondReport)
+        .options(joinedload(models.DiamondReport.stone))
+        .filter(models.DiamondReport.record_scope == "operational")
+    )
+    if start is not None:
+        reports_query = reports_query.filter(models.DiamondReport.created_at >= start)
+    if end is not None:
+        reports_query = reports_query.filter(models.DiamondReport.created_at < end)
+    reports = reports_query.order_by(models.DiamondReport.report_id).all()
+
+    def coverage(key: str, label: str, predicate) -> schemas.OperationalCoverageMetric:
+        filled = sum(bool(predicate(report)) for report in reports)
+        return schemas.OperationalCoverageMetric(
+            key=key, label=label, applicable_count=len(reports), filled_count=filled,
+            missing_count=len(reports) - filled,
+        )
+
+    status_counts = {status: sum(report.status == status for report in reports) for status in ("draft", "review", "issued", "void")}
+    required = [
+        coverage("shape", "Форма", lambda report: bool(report.stone and report.stone.shape)),
+        coverage("carat_weight", "Вага", lambda report: bool(report.stone and report.stone.carat_weight is not None)),
+        coverage("color_grade", "Колір", lambda report: bool(report.stone and report.stone.color_grade is not None)),
+        coverage("clarity_grade", "Чистота", lambda report: bool(report.stone and report.stone.clarity_grade is not None)),
+        coverage("geometry", "Геометрія", lambda report: bool(report.stone and all(value is not None for value in (report.stone.table_percent, report.stone.depth_percent, report.stone.crown_angle, report.stone.pavilion_angle)))),
+    ]
+    optional = [
+        coverage("origin_assessed", "Походження визначено", lambda report: bool(report.stone and report.stone.origin != "unknown")),
+        coverage("treatment_assessed", "Ознаки обробки оцінено", lambda report: bool(report.stone and report.stone.treatment_status != "not_assessed")),
+        coverage("identification_method", "Метод ідентифікації", lambda report: bool(report.stone and narrative_quality.normalize_text(report.stone.identification_method))),
+        coverage("identification_conclusion", "Висновок ідентифікації", lambda report: bool(report.stone and narrative_quality.normalize_text(report.stone.identification_conclusion))),
+        coverage("expert_comment", "Коментар експерта", lambda report: bool(narrative_quality.normalize_text(report.expert_comment))),
+    ]
+
+    events_query = (
+        db.query(models.ReportEvent)
+        .join(models.DiamondReport, models.ReportEvent.report_id == models.DiamondReport.report_id)
+        .filter(models.DiamondReport.record_scope == "operational")
+    )
+    if start is not None:
+        events_query = events_query.filter(models.ReportEvent.created_at >= start)
+    if end is not None:
+        events_query = events_query.filter(models.ReportEvent.created_at < end)
+    events = events_query.order_by(models.ReportEvent.report_id, models.ReportEvent.event_id).all()
+    return_events = [event for event in events if event.from_status == "review" and event.to_status == "draft"]
+    return_counts: dict[str, int] = {}
+    for event in return_events:
+        return_counts[event.report_id] = return_counts.get(event.report_id, 0) + 1
+
+    cohort_ids = [report.report_id for report in reports]
+    media_report_ids = {
+        report_id for (report_id,) in db.query(models.MediaAsset.report_id)
+        .filter(models.MediaAsset.report_id.in_(cohort_ids)).distinct().all()
+    } if cohort_ids else set()
+    active_passport_ids = {
+        report_id for (report_id,) in db.query(models.PublicPassport.report_id)
+        .filter(models.PublicPassport.report_id.in_(cohort_ids), models.PublicPassport.is_active.is_(True)).all()
+    } if cohort_ids else set()
+    current_reviews = db.query(models.DiamondReport).filter(
+        models.DiamondReport.record_scope == "operational", models.DiamondReport.status == "review",
+    ).all()
+    review_starts = [
+        event.created_at for event in db.query(models.ReportEvent)
+        .filter(models.ReportEvent.report_id.in_([report.report_id for report in current_reviews]), models.ReportEvent.to_status == "review")
+        .all() if event.created_at is not None
+    ] if current_reviews else []
+    return schemas.OperationalQualityAnalyticsResponse(
+        date_from=date_from, date_to=date_to, report_cohort_count=len(reports),
+        current_status_counts=status_counts, required_field_coverage=required, optional_field_coverage=optional,
+        workflow_created_count=sum(event.action == "created" for event in events),
+        workflow_sent_to_review_count=sum(event.to_status == "review" for event in events),
+        workflow_issued_count=sum(event.to_status == "issued" for event in events),
+        workflow_returned_to_draft_count=len(return_events),
+        workflow_voided_count=sum(event.to_status == "void" for event in events),
+        workflow_repeat_return_count=sum(count - 1 for count in return_counts.values() if count > 1),
+        current_review_count=len(current_reviews),
+        oldest_current_review_started_at=min(review_starts) if review_starts else None,
+        reports_with_media_count=len(media_report_ids), active_public_passport_count=len(active_passport_ids),
+        issued_without_active_passport_count=sum(report.status == "issued" and report.report_id not in active_passport_ids for report in reports),
     )
 
 

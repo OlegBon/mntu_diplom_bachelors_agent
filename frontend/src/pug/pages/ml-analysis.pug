@@ -11,6 +11,7 @@ block content
             button.analytics-tabs__tab.is-active(type="button" role="tab" aria-selected="true" aria-controls="analytics-stones" id="analytics-tab-stones" data-analytics-tab="stones") Камені
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-experts" id="analytics-tab-experts" data-analytics-tab="experts") Експерти
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-narratives" id="analytics-tab-narratives" data-analytics-tab="narratives") Тексти
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-quality" id="analytics-tab-quality" data-analytics-tab="quality") Операції та якість
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-admins" id="analytics-tab-admins" data-analytics-tab="admins") Адміністратори
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-providers" id="analytics-tab-providers" data-analytics-tab="providers") Провайдери
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-currency" id="analytics-tab-currency" data-analytics-tab="currency") Валютні джерела
@@ -26,10 +27,51 @@ block content
                     button.btn.btn-primary(type="submit") Застосувати період
                     button#analytics-period-reset.btn.btn-outline(type="button") За весь час
             p#analytics-period-summary.analytics-period-summary(role="status" aria-live="polite") Поточний зріз: за весь доступний час.
-            p#analytics-period-help.account-help Дані за весь доступний період. Статуси — для звітів, створених у періоді; active-time — для завершених сесій; review-cycle — для рішень admin. Текстові поля — поточні значення звітів, створених у періоді, а коментарі до зміни статусу — події у періоді. Для provider coverage беруться operational чернетки, змінені у вибраному періоді; для НБУ — офіційна дата курсу.
+            p#analytics-period-help.account-help Дані за весь доступний період. Статуси — для звітів, створених у періоді; active-time — для завершених сесій; review-cycle — для рішень admin. Текстові поля — поточні значення звітів, створених у періоді, а коментарі до зміни статусу — події у періоді. «Операції та якість»: когорта — за створенням звіту, workflow — за датою події, поточна черга — без історичного зрізу. Для provider coverage беруться operational чернетки, змінені у вибраному періоді; для НБУ — офіційна дата курсу.
         section#analytics-stones.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-stones")
             h2 Аналітика каменів
-            p.account-help Розподіли параметрів, карти Кохонена та інші ML-візуалізації потребують окремого перевіреного джерела даних і моделі. У цьому зрізі не показуються умовні графіки або demo-метрики.
+            p.account-help Real SOM і benchmark-карта ще не запускаються: у поточному operational наборі немає підтвердженого дозволеного data contract та верифікованого аналізу. Нижче — структура майбутньої поверхні без synthetic чисел, сегментів чи цін.
+            .analytics-stone-preview
+                section.analytics-stone-preview__map
+                    h3 Карта сегментів (SOM)
+                    .analytics-stone-preview__grid-scroll
+                        .analytics-stone-preview__grid(role="img" aria-label="Недоступна карта сегментів: даних для запуску немає")
+                            - for (let cell = 0; cell < 100; cell += 1)
+                                span.analytics-stone-preview__cell(aria-hidden="true") —
+                    .analytics-stone-preview__legend
+                        p
+                            strong Сегменти
+                            |  — недоступні
+                        p Клітинки будуть показувати кількість каменів лише після дозволеного та перевіреного запуску.
+                aside.analytics-stone-preview__profile
+                    h3 SOM недоступна
+                    p.account-help Наразі немає підстав формувати карту, профіль каменю або сусідство.
+                    h4 Що потрібно для запуску
+                    ul
+                        li Письмово дозволені дані та зафіксований data contract.
+                        li Достатнє покриття характеристик і дозволених reference values.
+                        li Завершений quality gate 151 та верифікований experiment 152.
+                    p.account-help Порогова кількість звітів сама по собі не є гарантією коректності.
+            .analytics-stone-preview
+                section.analytics-stone-preview__map
+                    h3 Карта benchmark сегментів · USD/ct
+                    .analytics-stone-preview__grid-scroll
+                        .analytics-stone-preview__grid(role="img" aria-label="Недоступна benchmark-карта: немає дозволених орієнтирів")
+                            - for (let cell = 0; cell < 100; cell += 1)
+                                span.analytics-stone-preview__cell(aria-hidden="true") —
+                    .analytics-stone-preview__legend
+                        p
+                            strong Benchmark-квартилі
+                            |  — недоступні
+                        p USD/ct з’явиться лише для дозволених і методологічно верифікованих reference values.
+                aside.analytics-stone-preview__profile
+                    h3 Чому немає benchmark
+                    p.account-help Без дозволеного провайдерного набору жодні ціни, діапазони, категорії чи marker не генеруються.
+                    h4 Межі поточного стану
+                    ul
+                        li Це не forecast, valuation, market value або investment category.
+                        li Demo Market A/B не переноситься в operational аналітику.
+                        li Реальний запуск належить задачі 153 після 151 → 152.
         section#analytics-experts.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-experts" hidden)
             h2 Експерти та звіти
             p.account-help Статуси показують поточний стан звітів, створених у вибраному періоді. Активний час — лише серверно зафіксовані завершені сесії автора чернетки.
@@ -38,6 +80,10 @@ block content
             h2 Текстові поля у звітах
             p.account-help Лише metadata: лічильники та довжина, без текстів, фрагментів або оцінки експерта. Довжина не є нормою якості чи рейтингом.
             #analytics-narrative-results(aria-live="polite")
+        section#analytics-quality.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-quality" hidden)
+            h2 Операції та повнота даних
+            p.account-help Лише агреговані workflow facts і покриття полів. Це не оцінка експертів, не рейтинг якості текстів і не аналітика відвідувачів публічних паспортів.
+            #analytics-quality-results(aria-live="polite")
         section#analytics-admins.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-admins" hidden)
             h2 Перевірки адміністраторів
             p.account-help Тривалість етапу перевірки: від передачі звіту на перевірку до рішення admin. Це не вимір фактичного активного часу людини.

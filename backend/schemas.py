@@ -191,19 +191,50 @@ class NarrativeTextFieldStatistics(BaseModel):
     field_key: str
     label: str
     source_semantics: str
+    candidate_count: int
     non_empty_count: int
+    empty_count: int
     median_word_count: Optional[float]
     average_word_count: Optional[float]
     median_non_whitespace_char_count: Optional[float]
     average_non_whitespace_char_count: Optional[float]
     shortest: list[NarrativeTextSample] = Field(default_factory=list)
     longest: list[NarrativeTextSample] = Field(default_factory=list)
+    empty_samples: list[NarrativeTextSample] = Field(default_factory=list)
 
 
 class NarrativeQualityAnalyticsResponse(BaseModel):
     date_from: Optional[date]
     date_to: Optional[date]
     fields: list[NarrativeTextFieldStatistics]
+
+
+class OperationalCoverageMetric(BaseModel):
+    key: str
+    label: str
+    applicable_count: int
+    filled_count: int
+    missing_count: int
+
+
+class OperationalQualityAnalyticsResponse(BaseModel):
+    date_from: Optional[date]
+    date_to: Optional[date]
+    report_cohort_count: int
+    current_status_counts: dict[str, int]
+    required_field_coverage: list[OperationalCoverageMetric]
+    optional_field_coverage: list[OperationalCoverageMetric]
+    workflow_created_count: int
+    workflow_sent_to_review_count: int
+    workflow_issued_count: int
+    workflow_returned_to_draft_count: int
+    workflow_voided_count: int
+    workflow_repeat_return_count: int
+    current_review_count: int
+    oldest_current_review_started_at: Optional[datetime]
+    reports_with_media_count: int
+    active_public_passport_count: int
+    issued_without_active_passport_count: int
 
 # Схема для токена (JWT)
 class Token(BaseModel):

@@ -15,7 +15,7 @@
 | `/experts/` | Залишити: авторизований список не-admin експертів працює. |
 | `/reports` | Єдиний private API звітів; legacy `/diamonds/*` вилучено в 085 без міграції historical даних. |
 | `/market/*` | Compatibility mappings і технічний demo-індекс; не використовувати як authorative market data. Контрольовані provider snapshot-и належать `/market-data/*`. |
-| `/statistics/expert-performance`, `/statistics/admin-review-performance`, `/statistics/provider-operations` | Admin-only operational analytics: status counts за датою створення report, завершені server-timed active sessions, review-cycle за датою admin-рішення та provider freshness/operation/coverage за `updated_at` operational drafts. |
+| `/statistics/expert-performance`, `/statistics/admin-review-performance`, `/statistics/narrative-quality`, `/statistics/operational-quality`, `/statistics/provider-operations` | Admin-only operational analytics: status/coverage cohort за датою створення report, append-only workflow за часом event, завершені server-timed active sessions, review-cycle за рішенням admin та provider coverage за `updated_at` operational drafts. Поточна review queue не є historical metric; raw text/reasons і public visitor tracking не повертаються. |
 
 Повних дублікатів endpoint-ів не лишилося. Dashboard, wizard і detail/edit працюють через `/reports`; legacy `/diamonds/*`, unreachable handler, demo `MLService` і небезпечний `scripts/recalc_grades.py` вилучено. Historical projection-колонки лишаються compatibility-даними без cleanup/backfill; `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як порожню зарезервовану SQLAlchemy-модель.
 
@@ -104,7 +104,7 @@
 - [ ] [152 — Верифікований ML-експеримент](./backlog/152-verified-ml-experiment.md): baseline, validation, artifact, uncertainty і private result provenance після 151.
 - [ ] [153 — Stone analytics / SOM](./backlog/153-stone-analytics-visualization.md): descriptive admin-only сегменти після 151, без investment verdict.
 - [x] 154 — Якість експертних текстів: private explainable non-blocking signals, metadata-only admin statistics і Unicode-aware word counting; NLP/ML тільки після 151 data/privacy contract. Деталі: [гайд](./guides/narrative-quality.md).
-- [ ] [155 — Operational і data-quality analytics](./backlog/155-operational-and-data-quality-analytics.md): workflow funnel, completeness і publication readiness без rating/public tracking; provider metrics — 163.
+- [x] 155 — Operational і data-quality analytics: admin-only workflow funnel, current cohort, field completeness і delivery readiness без rating/public tracking; metadata-only navigation до порожніх текстів доповнює 154. Деталі: [гайд](./guides/operational-quality-analytics.md).
 - [x] [156 — Demo dataset contract і isolation](./decisions/006-demo-dataset-isolation.md): `0014` застосована до локальної MariaDB; schema-only `operational`/`demo` scope, immutable manifest, admin-only isolated read API, RBAC і read-only inventory реалізовані. Historical classification backfill лишається окремою підтверджуваною операцією.
 - [x] [162 — Multi-provider market references](./decisions/007-multi-provider-market-references.md): `0015` нормалізує enabled provider set і nullable dashboard primary; кожен provider має незалежний immutable valuation, dashboard не робить hidden fallback, а public passport/PDF не показують provider values чи branding.
 - [x] 157 — Synthetic demo dataset generator: локально створено deterministic `synthetic-demo-v1` із 1 000 `DEMO-…`, immutable manifest, normalized fields і двома fictional demo provider references; public/operational scopes не зачеплено.
@@ -129,10 +129,9 @@
 ### Рекомендована черга активних задач
 
 1. `137` — найближчий незалежний технічний gate, коли власник репозиторію погодить GitHub Actions, бюджет minutes/storage і потрібні repository settings. Він не залежить від ML, але має бути green до `161`.
-2. `155` — наступний незалежний P2-контур operational/data-quality analytics. Реалізований 154 обмежується explainable text signals без NLP; будь-яке NLP/ML продовження все одно залежить від `151`.
-3. `151 → 152 → 153` — незмінна черга real analytics: спершу ліцензований data contract і quality gate, потім відтворюваний verified experiment, і лише за його результатом private descriptive visualization.
-4. Deployment-залежність: лише після успішного `152` виконати `160`; за готового CI gate `137` переходити до `161 → 140`. Повний ланцюг: `151 → 152 → 160`, плюс `137` до `161`, потім `161 → 140`.
-5. `145` готова до запуску: її передумову `146` завершено. Рішення `160` визначатиме лише можливий поступовий TypeScript, не сам i18n contract.
+2. `151 → 152 → 153` — незмінна черга real analytics: спершу ліцензований data contract і quality gate, потім відтворюваний verified experiment, і лише за його результатом private descriptive visualization.
+3. Deployment-залежність: лише після успішного `152` виконати `160`; за готового CI gate `137` переходити до `161 → 140`. Повний ланцюг: `151 → 152 → 160`, плюс `137` до `161`, потім `161 → 140`.
+4. `145` готова до запуску: її передумову `146` завершено. Рішення `160` визначатиме лише можливий поступовий TypeScript, не сам i18n contract.
 
 ### Зафіксовані розбіжності з початковими нотатками
 

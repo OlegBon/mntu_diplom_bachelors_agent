@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — operational-and-data-quality-analytics
+
+- **Задача:** завершити 155 — додати admin-only workflow/data-quality read model без performance rating, raw text/reasons або public visitor tracking.
+- **Змінені файли:** `backend/{crud,main,schemas}.py`, `frontend/src/{pug/pages/ml-analysis.pug,js/modules/{api,analytics,analytics-ui}.js,scss/_ui-primitives.scss}`, `tests/api/{test_narrative_quality,test_operational_quality_analytics}.py`, `frontend/tests/{auth-and-api,page-dom}.test.mjs`, `docs/{architecture,progress,work_plan,guides/{README,narrative-quality,operational-quality-analytics}.md,backlog/README.md`; active backlog file `155-operational-and-data-quality-analytics.md` removed.
+- **Рішення / Результат:** `/statistics/operational-quality` — admin-only aggregate: workflow event funnel за `ReportEvent.created_at`, current statuses і coverage когорти за `DiamondReport.created_at`, current global review queue, completeness required/optional fields та private-media/passport readiness. Endpoint не повертає коментарі, transition reasons, excerpts, person score або visitor data. «Аналітика → Операції та якість» явно пояснює ці date semantics. «Тексти» тепер показують denominator, empty count і до трьох already-authorized private посилань на порожні значення; raw text не відкривається. «Камені» для operational даних замінили пусту заглушку двома disabled статичними SOM/benchmark surfaces: без synthetic чисел, цін, сегментів, profile або forecast; запуск залежить від 151 → 152 → 153, а не від фіксованої кількості report.
+- **Перевірки:** `pytest tests/api/test_narrative_quality.py tests/api/test_operational_quality_analytics.py` — 3 passed; `compileall -q backend` — OK; `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** немає event-category backfill, revision history text або publication visitor analytics. `reports_with_media_count` описує лише private asset metadata, а active passport — поточний state; це не оцінка content/delivery якості. Real SOM/benchmark не увімкнено й не має hard-coded threshold.
+
 ## 2026-09-28 — expert-narrative-quality-analysis
 
 - **Задача:** завершити 154 — додати пояснювані не-блокувальні сигнали заповнення текстових полів і private metadata-only admin analytics без NLP.
