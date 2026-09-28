@@ -40,7 +40,6 @@
 
 | Пріоритет | Файл | Тема |
 | --- | --- | --- |
-| P2 | [166-synthetic-demo-backup-and-historical-reclassification.md](./166-synthetic-demo-backup-and-historical-reclassification.md) | Backup, restore verification і контрольована класифікація historical synthetic `DR-*`. |
 | P2 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
 | P2 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
 | P2 | [163-provider-operations-and-coverage-analytics.md](./163-provider-operations-and-coverage-analytics.md) | Admin tab operations, freshness і coverage provider-ів. |
