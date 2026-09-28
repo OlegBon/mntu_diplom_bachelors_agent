@@ -25,6 +25,19 @@ $shadow-md: 0 12px 28px rgba(15, 23, 42, 0.08);
 $container-width: 1280px;
 $spacer: 1rem;
 
+// --- Spacing scale ---
+// Use these steps for component rhythm instead of page-specific magic values.
+$space-1: 0.25rem;
+$space-2: 0.5rem;
+$space-3: 0.75rem;
+$space-4: 1rem;
+$space-6: 1.5rem;
+$space-8: 2rem;
+
+// --- Shared control metrics ---
+$control-height: 2.75rem;
+$control-height-compact: 2.25rem;
+
 // --- Fonts ---
 $font-main:
   "Inter",
