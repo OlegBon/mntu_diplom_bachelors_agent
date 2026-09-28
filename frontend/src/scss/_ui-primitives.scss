@@ -842,7 +842,8 @@ input[type="number"]::-webkit-outer-spin-button {
   .demo-scope__showcase .btn { width: 100%; }
 }
 
-@media (max-width: 900px) {
+// Override legacy desktop rules from main.scss for the full drawer range.
+@media (max-width: 1280px) {
   .main-header {
     .main-nav {
       display: none !important;
