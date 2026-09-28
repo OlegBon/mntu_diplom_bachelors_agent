@@ -52,3 +52,39 @@ export function renderTable(container, headers, rows, emptyMessage = "Даних
   wrapper.append(table);
   container.replaceChildren(wrapper);
 }
+
+export function renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatDateTime, tableClass = "") {
+  container.replaceChildren();
+  if (!snapshots.length) {
+    container.append(element("p", "account-help", "Знімків офіційного курсу НБУ за цим зрізом поки немає."));
+    return;
+  }
+  const latest = snapshots[0];
+  const rate = Number(latest.rate).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const sourceButton = element("button", "analytics-expert-button", "Національний банк України (НБУ)");
+  sourceButton.type = "button";
+  sourceButton.addEventListener("click", () => {
+    const metrics = element("dl", "analytics-metrics");
+    [
+      ["Тип джерела", "Офіційний валютний провайдер"], ["Походження даних", "Офіційний сервіс НБУ"],
+      ["Тип значень", `${latest.base_currency_code}/${latest.quote_currency_code} official FX rate`],
+      ["Кількість знімків", snapshots.length], ["Останній курс", `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`],
+      ["Офіційна дата курсу", formatDateTime(`${latest.rate_date}T00:00:00`).date],
+      ["Останнє отримання", `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`],
+    ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
+    dialogContent.replaceChildren(
+      element("h3", "analytics-dialog-name", "Національний банк України (НБУ)"), metrics,
+      element("p", "account-help", "FX-знімки зберігаються immutable. Вони застосовуються лише для окремої USD/UAH-конвертації дозволених орієнтирів і не є ціною, оцінкою або аналітикою каменю."),
+    );
+    dialog.showModal();
+  });
+  const tableHost = element("div", tableClass || "analytics-currency-sources");
+  renderTable(tableHost, ["Валютне джерело", "Пара", "Останній курс", "Офіційна дата", "Отримано", "Знімків"], [[
+    sourceButton, `${latest.base_currency_code}/${latest.quote_currency_code}`,
+    `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`,
+    formatDateTime(`${latest.rate_date}T00:00:00`).date,
+    `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`,
+    String(snapshots.length),
+  ]]);
+  container.append(tableHost);
+}

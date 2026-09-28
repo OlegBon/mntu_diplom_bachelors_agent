@@ -1,6 +1,6 @@
 import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getOperationalProviderAnalytics } from "./api.js";
 import { logout } from "./auth.js";
-import { duration, element, periodSummary, renderTable } from "./analytics-ui.js";
+import { duration, element, periodSummary, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
 
 function fullName(row) {
   return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || "Не вказано";
@@ -160,11 +160,15 @@ function renderProviders(container, providers, dialog, dialogContent) {
   }), "Активних ринкових provider-ів поки немає.");
 }
 
-function renderCurrencySources(container, snapshots) {
-  renderTable(container, ["Джерело", "Офіційна дата", "USD/UAH", "Отримано"], snapshots.map((snapshot) => [
-    "НБУ", new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${snapshot.rate_date}T00:00:00`)),
-    String(snapshot.rate), dateTime(snapshot.retrieved_at),
-  ]), "Знімків НБУ за цим зрізом поки немає.");
+function renderCurrencySources(container, snapshots, dialog, dialogContent) {
+  const formatCurrencyDateTime = (value) => {
+    const parsed = new Date(value);
+    return {
+      date: new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(parsed),
+      time: new Intl.DateTimeFormat("uk-UA", { timeStyle: "short" }).format(parsed),
+    };
+  };
+  renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatCurrencyDateTime);
 }
 
 export async function initAnalytics() {
@@ -215,7 +219,7 @@ export async function initAnalytics() {
       renderExperts(expertResults, experts, expertDialog, expertDialogContent);
       renderAdmins(adminResults, admins);
       renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
-      renderCurrencySources(currencyResults, currency);
+      renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);
       periodSummaryNode.textContent = periodSummary(period);
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
