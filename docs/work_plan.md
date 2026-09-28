@@ -86,7 +86,7 @@
 - [x] 135 — Реальний browser E2E і контракт паспорта: stale mock синхронізовано з `{ passport: ... }`; disposable SQLite runtime виконує реальний workflow без MariaDB, user records або `seed_db.py`.
 - [x] 136 — SQLAlchemy/Pydantic deprecation cleanup: modern API без зміни schema, request/response JSON або доменної логіки; ORM→Pydantic v2 serialization має окремий regression test.
 - [ ] [137 — GitHub Actions CI](./backlog/137-github-actions-continuous-integration.md): до переходу на `main` відтворити backend, ephemeral MariaDB/Alembic, frontend, mock/real E2E та docs checks у GitHub без deploy або secrets.
-- [ ] [141 — IDEX Online trial readiness](./backlog/141-idex-online-trial-readiness-and-mockup.md): provider-neutral restricted-access governance (`0021` prepared, not applied), English mock-up, attribution/branding boundary, private provider contract і staging-ready activation 30-day trial. Live IDEX/OpenFacet activation remains out of scope.
+- [x] 141 — Provider-neutral restricted access: `0021_provider_restricted_access` застосовано локально; self opt-in admin controls, `disabled`/`restricted_trial`/`standard_internal` policy, expiry/quota, trial assignments і credential-free append-only audit реалізовано. Live IDEX/OpenFacet activation, key, adapter, branding/logo і network calls залишаються поза scope до окремого письмового approval і staging.
 - [x] 146 — Незбережене введення майстра: versioned per-tab/per-user `sessionStorage`, явний restore або start-new, confirmed clear, leave protection і очищення лише після успішного `POST /reports`; файли та credentials не серіалізуються. Це передумова i18n.
 - [ ] [145 — Контракт мультимовності](./backlog/145-internationalization-contract.md): English-first/Ukraine presentation layer без втрати form state чи зміни доменних даних; реалізація після 146 та рішення 160.
 
@@ -128,13 +128,12 @@
 
 ### Рекомендована черга активних задач
 
-2. Provider-напрям: `141` може готувати English IDEX mock-up паралельно, але
-   не відкриває live IDEX без письмового approval.
-3. Наступні продуктові та аналітичні контури: `145` — лише після 146 і рішення
+1. Найближчий технічний фундамент: `172` — database topology/configuration contract для трьох local MariaDB schemas і майбутньої однієї PostgreSQL database; це вхід до `161` і прибирає неоднозначність `.env.example`.
+2. Наступні продуктові та аналітичні контури: `145` — лише після 146 і рішення
    `160`; `154` і `155` — незалежні контури; `151 → 152 → 153` — ліцензований
    data contract, верифікований експеримент і лише тоді descriptive analytics для
    реальних даних.
-5. Delivery-залежність: після локального verified experiment `152` — `172 → 160 → 137
+3. Delivery-залежність: після локального verified experiment `152` — `172 → 160 → 137
    → 161 → 140`: database topology/configuration contract, platform decision, CI gate, PostgreSQL/staging і managed
    deployment. Після цього залишаються операційні налаштування CORS, secrets,
    health-check, доменів/TLS та ручного production smoke-test.

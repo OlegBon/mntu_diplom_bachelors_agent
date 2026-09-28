@@ -18,4 +18,4 @@
 ## Поза межами
 
 - Переписування FastAPI або frontend framework.
-- ІDEX activation до 141 і готового isolated staging.
+- IDEX activation без окремого письмового provider approval і готового isolated staging.
