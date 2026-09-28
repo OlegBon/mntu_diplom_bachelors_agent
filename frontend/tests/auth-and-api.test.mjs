@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   getAdminReviewStatistics,
   getExpertStatistics,
+  getNarrativeQualityAnalytics,
   getMarketDataProviders,
   getMarketReferencePolicy,
   getMarketDataSnapshots,
@@ -126,10 +127,12 @@ test("analytics APIs use protected administrator endpoints", async () => {
 
   await getExpertStatistics("test-token");
   await getAdminReviewStatistics("test-token");
+  await getNarrativeQualityAnalytics("test-token");
 
   assert.deepEqual(paths, [
     ["http://127.0.0.1:8000/statistics/expert-performance", "Bearer test-token"],
     ["http://127.0.0.1:8000/statistics/admin-review-performance", "Bearer test-token"],
+    ["http://127.0.0.1:8000/statistics/narrative-quality", "Bearer test-token"],
   ]);
 });
 

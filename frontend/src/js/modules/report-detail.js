@@ -5,6 +5,7 @@ import {
   getGradeMappings,
   getReferenceValues,
   getReportEvents,
+  getReportNarrativeQuality,
   getReportMedia,
   getReportMediaContentUrl,
   updateReportMediaPublication,
@@ -180,6 +181,21 @@ function renderEvents(container, events) {
     item.append(title, details);
     container.append(item);
   }
+}
+
+function renderNarrativeQuality(container, snapshot) {
+  container.replaceChildren();
+  if (!snapshot.warnings.length) {
+    container.append(document.createTextNode("Пояснюваних сигналів заповнення зараз немає."));
+    return;
+  }
+  snapshot.warnings.forEach((warning) => {
+    const item = document.createElement("li");
+    const title = document.createElement("strong");
+    title.textContent = `${warning.label}: `;
+    item.append(title, document.createTextNode(warning.message));
+    container.append(item);
+  });
 }
 
 function renderMedia(container, report, assets, currentUser, token, onRequestPublication) {
@@ -490,8 +506,9 @@ export async function initReportDetail() {
   };
   const refresh = async () => {
     try {
-      const [freshReport, events, media] = await Promise.all([
+      const [freshReport, events, media, narrativeQuality] = await Promise.all([
         getDomainReport(reportId, token), getReportEvents(reportId, token), getReportMedia(reportId, token),
+        getReportNarrativeQuality(reportId, token),
       ]);
       report = freshReport;
       populateForm(form, report, gradeLabels);
@@ -509,6 +526,7 @@ export async function initReportDetail() {
         : gradeLabels.get(`cut:${report.expert_cut_grade}`) || String(report.expert_cut_grade);
       document.getElementById("detail-expert-summary").textContent = `Експертні grades: Proportions ${confirmedProportions}, підсумковий Cut ${confirmedCut}.`;
       renderEvents(document.getElementById("detail-events"), events);
+      renderNarrativeQuality(document.getElementById("detail-narrative-quality"), narrativeQuality);
       renderMedia(
         document.getElementById("detail-media"), report, media, currentUser, token, openMediaPublicationDialog,
       );

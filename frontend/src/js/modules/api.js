@@ -72,6 +72,10 @@ export const getOperationalProviderAnalytics = (paramsOrToken, maybeToken) => an
   "/statistics/provider-operations", paramsOrToken, maybeToken,
 );
 
+export const getNarrativeQualityAnalytics = (paramsOrToken, maybeToken) => analyticsRequest(
+  "/statistics/narrative-quality", paramsOrToken, maybeToken,
+);
+
 export const signalReportWorkSession = (reportId, payload, token) => requestApi(
   `/reports/${encodeURIComponent(reportId)}/work-session`, { method: "POST", token, body: payload },
 );
@@ -210,6 +214,10 @@ export const getReportPassportPdf = async (reportId, publicUrl, token) => {
 };
 
 export const updateDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}`, { method: "PUT", token, body: payload });
+
+export const getReportNarrativeQuality = (reportId, token) => requestApi(
+  `/reports/${encodeURIComponent(reportId)}/narrative-quality`, { token },
+);
 
 export const transitionDomainReport = (reportId, payload, token) => requestApi(`/reports/${encodeURIComponent(reportId)}/transitions`, { method: "POST", token, body: payload });
 

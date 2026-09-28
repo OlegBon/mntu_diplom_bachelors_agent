@@ -103,7 +103,7 @@
 - [ ] [151 — Контракт даних і якість](./backlog/151-analytics-data-contract-and-quality.md): ліцензії, dataset, target, quality report і reproducible splits до ML-коду.
 - [ ] [152 — Верифікований ML-експеримент](./backlog/152-verified-ml-experiment.md): baseline, validation, artifact, uncertainty і private result provenance після 151.
 - [ ] [153 — Stone analytics / SOM](./backlog/153-stone-analytics-visualization.md): descriptive admin-only сегменти після 151, без investment verdict.
-- [ ] [154 — Якість експертних текстів](./backlog/154-expert-narrative-quality-analysis.md): explainable form-quality checks; NLP/ML тільки після окремого data/privacy contract.
+- [x] 154 — Якість експертних текстів: private explainable non-blocking signals, metadata-only admin statistics і Unicode-aware word counting; NLP/ML тільки після 151 data/privacy contract. Деталі: [гайд](./guides/narrative-quality.md).
 - [ ] [155 — Operational і data-quality analytics](./backlog/155-operational-and-data-quality-analytics.md): workflow funnel, completeness і publication readiness без rating/public tracking; provider metrics — 163.
 - [x] [156 — Demo dataset contract і isolation](./decisions/006-demo-dataset-isolation.md): `0014` застосована до локальної MariaDB; schema-only `operational`/`demo` scope, immutable manifest, admin-only isolated read API, RBAC і read-only inventory реалізовані. Historical classification backfill лишається окремою підтверджуваною операцією.
 - [x] [162 — Multi-provider market references](./decisions/007-multi-provider-market-references.md): `0015` нормалізує enabled provider set і nullable dashboard primary; кожен provider має незалежний immutable valuation, dashboard не робить hidden fallback, а public passport/PDF не показують provider values чи branding.
@@ -129,7 +129,7 @@
 ### Рекомендована черга активних задач
 
 1. `137` — найближчий незалежний технічний gate, коли власник репозиторію погодить GitHub Actions, бюджет minutes/storage і потрібні repository settings. Він не залежить від ML, але має бути green до `161`.
-2. `154 → 155` — незалежні P2-контури: почати з малих explainable rules-based checks тексту без NLP, далі розширювати operational/data-quality analytics. NLP/ML-частина `154` все одно залежить від `151`.
+2. `155` — наступний незалежний P2-контур operational/data-quality analytics. Реалізований 154 обмежується explainable text signals без NLP; будь-яке NLP/ML продовження все одно залежить від `151`.
 3. `151 → 152 → 153` — незмінна черга real analytics: спершу ліцензований data contract і quality gate, потім відтворюваний verified experiment, і лише за його результатом private descriptive visualization.
 4. Deployment-залежність: лише після успішного `152` виконати `160`; за готового CI gate `137` переходити до `161 → 140`. Повний ланцюг: `151 → 152 → 160`, плюс `137` до `161`, потім `161 → 140`.
 5. `145` готова до запуску: її передумову `146` завершено. Рішення `160` визначатиме лише можливий поступовий TypeScript, не сам i18n contract.

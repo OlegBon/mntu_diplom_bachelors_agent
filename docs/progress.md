@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — expert-narrative-quality-analysis
+
+- **Задача:** завершити 154 — додати пояснювані не-блокувальні сигнали заповнення текстових полів і private metadata-only admin analytics без NLP.
+- **Змінені файли:** `backend/{narrative_quality,crud,main,schemas}.py`, `frontend/src/{pug/pages/{ml-analysis,report-detail}.pug,js/modules/{api,analytics,report-detail}.js,scss/_ui-primitives.scss}`, `tests/api/test_narrative_quality.py`, `frontend/tests/{auth-and-api,page-dom}.test.mjs`, `docs/{architecture,progress,work_plan,guides/narrative-quality}.md`; active backlog file `154-expert-narrative-quality-analysis.md` removed.
+- **Рішення / Результат:** `GET /reports/{id}/narrative-quality` повертає already-authorized користувачу server-side signals (empty, placeholder, short, repetition, very long, confirmed-without-conclusion), але нічого не відхиляє й не записує. Admin-only `/statistics/narrative-quality` повертає для чотирьох полів лише non-empty count, median/average Unicode-aware words і non-whitespace characters, plus three shortest/longest `report_id`/date/length facts — без raw text/excerpts. Current report fields фільтруються за `DiamondReport.created_at`; status-transition reason є append-only event, фільтрований за `ReportEvent.created_at`; UI прямо пояснює різницю. Звіт показує private signal list, а «Аналітика → Тексти» — metadata cards; ні паспорт, ні PDF, ні demo, ні expert ranking не змінені.
+- **Перевірки:** `pytest tests/api/test_narrative_quality.py` — 2 passed; `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — без помилок. In-app browser під час QA повернув `No browser is available`; натомість frontend build і jsdom DOM/API checks пройшли.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** пороги є консервативними explainable review signals, не quality rubric. Немає revision history для current narrative fields, отже немає historical text provenance. Не виконується tone analysis, truth classification, NLP/ML, external LLM call або public disclosure; будь-яке продовження залежить від 151 consent/data contract.
+
 ## 2026-09-28 — database-topology-configuration-contract
 
 - **Задача:** завершити 172 — прибрати неоднозначність local database configuration і зафіксувати перевірений вхід до майбутньої PostgreSQL/staging задачі 161.
