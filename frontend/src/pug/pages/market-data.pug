@@ -18,7 +18,8 @@ block content
                     input#market-policy-use-fx(type="checkbox")
                     span Додавати еквівалент у UAH за офіційним курсом НБУ
                 p.account-help#market-policy-fx-note Курс НБУ фіксується лише разом із новим орієнтиром.
-                button#market-reference-policy-submit.btn.btn-primary(type="submit") Зберегти налаштування
+                .form-actions
+                    button#market-reference-policy-submit.btn.btn-primary(type="submit") Зберегти налаштування
         section.account-surface.account-surface--wide
             h2 Автоматичне оновлення
             p.account-help Планувальник середовища запускає безпечну команду за розкладом. Звіти ніколи не виконують зовнішній запит самостійно: вони беруть лише вже збережені актуальні знімки.
@@ -54,7 +55,8 @@ block content
                 label.market-data-confirmation(for="market-reference-confirmed")
                     input#market-reference-confirmed(type="checkbox" required)
                     span Підтверджую, що цей орієнтир застосовується лише як довідкове зіставлення, а не як експертна чи продажна ціна.
-                button.btn.btn-primary(type="submit") Прикріпити ринковий орієнтир
+                .form-actions
+                    button.btn.btn-primary(type="submit") Прикріпити ринковий орієнтир
         dialog#market-decision-dialog.account-dialog(aria-labelledby="market-decision-dialog-title")
             form#market-decision-form
                 .account-dialog__header

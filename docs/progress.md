@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — ui-spacing-and-layout-consistency
+
+- **Задача:** завершити 169 — уніфікувати сутності інтерфейсу, вертикальний ритм і responsive поведінку без зміни flows, API чи доменних даних.
+- **Змінені файли:** `frontend/src/{scss/{_variables,_ui-primitives}.scss,pug/pages/{login,profile,experts,market-data}.pug}`, `docs/{progress,work_plan}.md`; active backlog file `169-ui-spacing-and-layout-consistency.md` removed.
+- **Рішення / Результат:** у `_variables.scss` зафіксовано повторно вживану шкалу `0.25/0.5/0.75/1/1.5/2rem` та висоти normal/compact controls. `_ui-primitives.scss` застосовує її до кнопок, форм, account/analytics layouts, filter rows, таблиць і SOM search: плоскі великі поверхні та 2px controls збережені відповідно до `DESIGN.md`. Новий `.form-actions` замінив локальні відступи між control group і primary action на login, profile, admin experts та market-data forms; він природно переносить кілька дій, а на вузьких екранах кнопки стають на всю ширину. Checkbox label отримав одинковий читаємий gap; date/filter actions, tabs, cards і таблиці використовують ті самі кроки ритму. Не змінювалися кольори, тексти, endpoint-и, permissions, data model і сценарії.
+- **Перевірки:** `cmd /c "cd frontend && npm run build"` — passed; `cmd /c "cd frontend && npm test"` — 29 passed; `cmd /c "cd frontend && npm run test:e2e"` — 22 passed (login, responsive navigation, profile/admin, dashboard, analytics, market data, wizard, report detail та public passport); `git diff --check` — без помилок. In-app Browser у цьому середовищі повернув `No browser is available`, тому знімки/ручний browser QA не виконувалися; застосовано локальний Playwright regression suite.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це систематичний UX polish, а не redesign або нова component library. Visual QA у звичайному локальному браузері на фактичних даних лишається доречною перед merge; не створює окремих data/API risks.
+
 ## 2026-09-27 — synthetic-demo-provider-analytics
 
 - **Задача:** завершити 165 — показати isolated analytics fictional Demo Market A/B без читання чи змішування real provider data.

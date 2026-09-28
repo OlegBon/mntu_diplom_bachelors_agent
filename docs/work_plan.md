@@ -112,7 +112,7 @@
 - [x] 167 — Synthetic demo dataset date-boundary renewal: після verified backup/restore виконано транзакційну заміну v1 на `synthetic-demo-v2`; збережені ті самі `DEMO-…` ID, межі `03.01.2023` … `31.12.2025`, 1 000 reports, 2 000 events/valuations і нуль public passports. Historical `DR-*` не зачіпались.
 - [x] 164 — Synthetic demo actors і workflow analytics: `synthetic-demo-v4` містить 5 virtual gemologists, 3 administrators, 3 220 isolated workflow events, нерівні deterministic quotas/тривалості та 950 issued / 50 void outcomes; admin-only вкладки «Експерти»/«Адміністратори» мають спільний date slice без productivity/SLA/rating claims. `0016`/`0017` застосовані, historical `DR-*` та operational analytics не зачіпалися.
 - [x] 168 — Opt-in доступ адміністратора до «Демо»: `0018` додає persisted `demo_access_enabled=false`; admin змінює лише власний opt-in у профілі, всі `/demo/*` мають opaque `404` gate, а header і protected demo page чекають resolved `/users/me` без flash/flicker.
-- [ ] [169 — UI spacing і layout consistency](./backlog/169-ui-spacing-and-layout-consistency.md): системно вирівняти відступи, action rows і responsive layout на всіх сторінках без зміни UX flows чи API.
+- [x] 169 — UI spacing і layout consistency: спільна spacing scale, normal/compact control heights та reusable `.form-actions`; уніфіковано ритм форм, checkbox/radio labels, action rows, filter/analytics blocks, tabs і tables без зміни UX flows чи API.
 - [x] 159 — Synthetic SOM demo: reproducible admin-only SOM у вкладці «Камені»: policy-gated immutable artifact, report selection, пояснюваний profile і друга thematic карта медіанного дозволеного synthetic `USD/ct` за тими самими координатами. Не заміна 151–153.
 - [x] 171 — Session resilience і production auth: local MVP не скидає сесію на transient API failure; production refresh-session flow лишається окремим наступним етапом.
 - [ ] [170 — Guides information architecture](./backlog/170-guides-information-architecture.md): поступово винести актуальні пояснення сценаріїв у `docs/guides/`, лишивши ADR/architecture/backlog/progress їхніми джерелами істини.
@@ -128,8 +128,8 @@
 
 ### Рекомендована черга активних задач
 
-2. Незалежні контури, які можна планувати окремо: `169` (UI spacing/layout),
-   `170` (information architecture для guides), `166` (P2 safety gate перед
+2. Незалежні контури, які можна планувати окремо: `170` (information architecture для guides),
+   `166` (P2 safety gate перед
    будь-якою historical synthetic reclassification `DR-*`). `166` не є неявною
    частиною demo-аналітики.
 3. Provider-напрям: `163` — operations/coverage для наявних real і demo provider
