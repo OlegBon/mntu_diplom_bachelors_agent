@@ -204,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
       burgerBtn.setAttribute("aria-expanded", String(mainNav.classList.contains("is-active")));
     });
     window.addEventListener("resize", () => {
-      if (window.innerWidth > 900) closeNavigationDrawer();
+      if (window.innerWidth > 1280) closeNavigationDrawer();
     });
   }
 

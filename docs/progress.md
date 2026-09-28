@@ -27,10 +27,10 @@
 
 - **Задача:** прибрати перенесення desktop navigation і зсув active item на tablet у межах UI follow-up 141.
 - **Змінені файли:** `frontend/src/scss/{_product-ux,_ui-primitives}.scss`, `docs/progress.md`.
-- **Рішення / результат:** desktop header лишається desktop від 901px, але стискає gaps, account meta й font без перенесення labels до 1280px; drawer починається лише до 900px. При resize вище 900px JS закриває його stale state, а active marker у drawer є absolute pseudo-element і не зміщує текст на 768–900px.
+- **Рішення / результат:** navigation drawer застосовується до 1280px, включно з compact desktop; desktop-nav з’являється лише понад 1280px. Header показує компактний username, а drawer — повний account block із роллю. При resize вище 1280px JS закриває stale drawer state; active пункт drawer показує primary text і underline без left marker.
 - **Перевірки:** `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — без помилок.
 - **Нові змінні середовища:** немає.
-- **Обмеження:** потрібна ручна браузерна перевірка close/open drawer на 1280px, 1024px, 901px, 900px і 768px.
+- **Обмеження:** потрібна ручна браузерна перевірка close/open drawer на 1280px, 1281px, 1024px, 900px і 768px.
 
 ## 2026-09-28 — drawer-active-link-treatment
 

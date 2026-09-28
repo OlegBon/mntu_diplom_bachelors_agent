@@ -821,7 +821,7 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1280px) {
   .dashboard-page {
     .filter-control--quick { min-width: 0; }
     .filters-bar .filter-control--quick { flex: 1 1 10rem; }
