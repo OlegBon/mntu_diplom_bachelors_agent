@@ -42,7 +42,6 @@
 | --- | --- | --- |
 | P2 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
 | P2 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
-| P2 | [163-provider-operations-and-coverage-analytics.md](./163-provider-operations-and-coverage-analytics.md) | Admin tab operations, freshness і coverage provider-ів. |
 | P2 | [154-expert-narrative-quality-analysis.md](./154-expert-narrative-quality-analysis.md) | Explainable quality checks експертних текстів; NLP лише після policy. |
 | P2 | [155-operational-and-data-quality-analytics.md](./155-operational-and-data-quality-analytics.md) | Workflow і data-quality analytics без rating або public tracking. |
 | P2 | [151-analytics-data-contract-and-quality.md](./151-analytics-data-contract-and-quality.md) | Ліцензії, dataset, target, quality і reproducible splits. |
