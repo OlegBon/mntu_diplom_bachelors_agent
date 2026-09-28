@@ -559,10 +559,16 @@ input[type="number"]::-webkit-outer-spin-button {
     font-weight: 700;
   }
 
-  .advanced-filters .narrative-filter-options {
+  .advanced-filters .narrative-filter-layout {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: variables.$space-2 variables.$space-4;
+    gap: variables.$space-4;
+  }
+
+  .advanced-filters .narrative-filter-options {
+    display: grid;
+    align-content: start;
+    gap: variables.$space-2;
   }
 
   .advanced-filters .narrative-filter-options label {
@@ -581,12 +587,12 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 
   .advanced-filters .filter-item--narrative .account-help {
-    margin: variables.$space-3 0 0;
+    margin: 0;
   }
 
   @media (max-width: 600px) {
     .advanced-filters .filters-grid .filter-item--narrative { grid-column: span 1; }
-    .advanced-filters .narrative-filter-options { grid-template-columns: 1fr; }
+    .advanced-filters .narrative-filter-layout { grid-template-columns: 1fr; }
   }
 
   .filters-container { border-color: variables.$border-color; }
