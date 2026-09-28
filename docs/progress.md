@@ -14,6 +14,15 @@
 - **Нові змінні середовища:** немає; `.env.example` лише пояснює чинний `DB_NAME`.
 - **Обмеження:** PostgreSQL server/schema/roles не створювалися, Alembic upgrade/downgrade, seed, backup/restore і data migration не запускалися. Read-only repository check не замінює future runtime compatibility smoke-test.
 
+## 2026-09-28 — work-plan-queue-alignment-after-172
+
+- **Задача:** прибрати з recommended queue застарілий висновок, ніби `160` можна запускати до verified experiment `152`.
+- **Змінені файли:** `docs/{work_plan,progress}.md`.
+- **Рішення / Результат:** `137` визначено як незалежний CI gate після окремого рішення власника щодо GitHub Actions; `154 → 155` лишаються окремими P2-контрами; real analytics рухається тільки `151 → 152 → 153`. Deployment має явний contract: після `152` — `160`, CI `137` completed до `161`, потім `161 → 140`. `145` лишається blocked задачею 146.
+- **Перевірки:** documentation links і `git diff --check` виконуються перед commit.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це лише порядок та залежності; GitHub Actions, ML experiment, platform decision, PostgreSQL/staging і deployment не виконувалися.
+
 ## 2026-09-28 — provider-restricted-access-foundation
 
 - **Задача:** завершити 141 — нейтральний механізм restricted provider access без live IDEX/OpenFacet activation.

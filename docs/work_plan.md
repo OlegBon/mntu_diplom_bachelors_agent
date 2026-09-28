@@ -128,15 +128,11 @@
 
 ### Рекомендована черга активних задач
 
-1. Найближчий технічний фундамент завершено: `172` зафіксував database topology/configuration contract. Наступний infrastructure-крок — `160` (platform decision), потім `137` (CI gate), і лише тоді `161` (disposable PostgreSQL/staging).
-2. Наступні продуктові та аналітичні контури: `145` — лише після 146 і рішення
-   `160`; `154` і `155` — незалежні контури; `151 → 152 → 153` — ліцензований
-   data contract, верифікований експеримент і лише тоді descriptive analytics для
-   реальних даних.
-3. Delivery-залежність: після локального verified experiment `152` — `160 → 137
-   → 161 → 140`: platform decision, CI gate, PostgreSQL/staging і managed
-   deployment. Після цього залишаються операційні налаштування CORS, secrets,
-   health-check, доменів/TLS та ручного production smoke-test.
+1. `137` — найближчий незалежний технічний gate, коли власник репозиторію погодить GitHub Actions, бюджет minutes/storage і потрібні repository settings. Він не залежить від ML, але має бути green до `161`.
+2. `154 → 155` — незалежні P2-контури: почати з малих explainable rules-based checks тексту без NLP, далі розширювати operational/data-quality analytics. NLP/ML-частина `154` все одно залежить від `151`.
+3. `151 → 152 → 153` — незмінна черга real analytics: спершу ліцензований data contract і quality gate, потім відтворюваний verified experiment, і лише за його результатом private descriptive visualization.
+4. Deployment-залежність: лише після успішного `152` виконати `160`; за готового CI gate `137` переходити до `161 → 140`. Повний ланцюг: `151 → 152 → 160`, плюс `137` до `161`, потім `161 → 140`.
+5. `145` залишається заблокованою завершенням `146`; рішення `160` визначатиме лише можливий поступовий TypeScript, не сам i18n contract.
 
 ### Зафіксовані розбіжності з початковими нотатками
 
