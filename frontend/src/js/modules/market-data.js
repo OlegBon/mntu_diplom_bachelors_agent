@@ -4,7 +4,10 @@ import {
   decideMarketDataSnapshot,
   fetchMarketDataCandidate,
   getCurrentUser,
+  getUsers,
   getMarketDataProviders,
+  getProviderAccessEvents,
+  getProviderAccessPolicies,
   getMarketReferencePolicy,
   getMarketDataSnapshots,
   getFxDataSnapshots,
@@ -13,6 +16,8 @@ import {
   refreshNbuRate,
   updateMarketProviderSchedule,
   updateMarketReferencePolicy,
+  updateProviderAccessAssignment,
+  updateProviderAccessPolicy,
 } from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 
@@ -101,6 +106,54 @@ function renderPolicyMarketProviders(container, providers, enabledProviderCodes,
     primaryText.textContent = " Основний для списку звітів";
     label.append(input, text, primary, primaryText);
     container.append(label);
+  }
+}
+
+function renderProviderAccessPolicies(container, policies, administrators, onSave, onAssignment, onEvents) {
+  container.replaceChildren();
+  for (const policy of policies) {
+    const form = document.createElement("form"); form.className = "market-data-card";
+    const providerNames = { nbu: "Національний банк України (НБУ)", openfacet: "OpenFacet" };
+    const title = document.createElement("h3"); title.textContent = providerNames[policy.provider_code] || policy.provider_code;
+    const modeGroup = document.createElement("div"); modeGroup.className = "form-group";
+    const modeLabel = document.createElement("label"); modeLabel.textContent = "Режим доступу";
+    const mode = document.createElement("select"); mode.name = "access_mode"; mode.className = "form-control";
+    [["disabled", "Вимкнено"], ["restricted_trial", "Обмежений trial"], ["standard_internal", "Внутрішній стандартний"]].forEach(([value, text]) => {
+      const option = document.createElement("option"); option.value = value; option.textContent = text; option.selected = value === policy.access_mode; mode.append(option);
+    });
+    modeLabel.append(mode); modeGroup.append(modeLabel);
+    const limitGroup = document.createElement("div"); limitGroup.className = "form-group";
+    const limitLabel = document.createElement("label"); limitLabel.textContent = "Денний ліміт запитів";
+    const limit = document.createElement("input"); limit.type = "number"; limit.min = "1"; limit.name = "daily_request_limit"; limit.className = "form-control"; limit.value = policy.daily_request_limit || ""; limitLabel.append(limit); limitGroup.append(limitLabel);
+    const expiryGroup = document.createElement("div"); expiryGroup.className = "form-group";
+    const expiryLabel = document.createElement("label"); expiryLabel.textContent = "Trial діє до (UTC)";
+    const expiry = document.createElement("input"); expiry.type = "datetime-local"; expiry.name = "trial_expires_at"; expiry.className = "form-control";
+    expiry.value = policy.trial_expires_at ? new Date(policy.trial_expires_at).toISOString().slice(0, 16) : "";
+    expiryLabel.append(expiry); expiryGroup.append(expiryLabel);
+    const termsGroup = document.createElement("div"); termsGroup.className = "form-group";
+    const termsLabel = document.createElement("label"); termsLabel.textContent = "Посилання або коротка примітка до умов";
+    const terms = document.createElement("input"); terms.type = "text"; terms.maxLength = 2000; terms.name = "terms_reference"; terms.className = "form-control"; terms.value = policy.terms_reference || ""; termsLabel.append(terms); termsGroup.append(termsLabel);
+    const note = document.createElement("p"); note.className = "account-help"; note.textContent = "Дозволено лише природні камені, внутрішнє використання; public display і ML у цьому релізі вимкнені.";
+    const assignments = document.createElement("div"); assignments.className = "market-data-card__actions";
+    const assignmentTitle = document.createElement("p"); assignmentTitle.textContent = policy.access_mode === "restricted_trial" ? "Призначені адміністратори restricted trial:" : "Призначення доступні лише для restricted trial.";
+    assignments.append(assignmentTitle);
+    if (policy.access_mode === "restricted_trial") administrators.forEach((administrator) => {
+      const label = document.createElement("label"); label.className = "market-data-confirmation";
+      const input = document.createElement("input"); input.type = "checkbox"; input.checked = policy.assigned_admin_ids.includes(administrator.expert_id);
+      input.addEventListener("change", async () => { input.disabled = true; try { await onAssignment(policy.provider_code, administrator.expert_id, input.checked); } catch (error) { input.checked = !input.checked; throw error; } finally { input.disabled = false; } });
+      label.append(input, document.createTextNode(`${administrator.last_name || ""} ${administrator.first_name || ""} (${administrator.username})`.trim())); assignments.append(label);
+    });
+    const actions = document.createElement("div"); actions.className = "form-actions";
+    const eventsButton = document.createElement("button"); eventsButton.type = "button"; eventsButton.className = "btn btn-outline"; eventsButton.textContent = "Показати журнал умов"; eventsButton.addEventListener("click", () => onEvents(policy.provider_code));
+    const button = document.createElement("button"); button.type = "submit"; button.className = "btn btn-primary"; button.textContent = "Зберегти умови";
+    actions.append(eventsButton, button);
+    form.append(title, modeGroup, limitGroup, expiryGroup, termsGroup, note, assignments, actions);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault(); button.disabled = true;
+      try { await onSave(policy.provider_code, { access_mode: mode.value, daily_request_limit: limit.value ? Number(limit.value) : null, trial_expires_at: expiry.value ? new Date(expiry.value).toISOString() : null, terms_reference: terms.value.trim() || null, natural_only: true, internal_only: true, public_display_allowed: false, ml_allowed: false }); }
+      finally { button.disabled = false; }
+    });
+    container.append(form);
   }
 }
 
@@ -221,6 +274,8 @@ export async function initMarketData() {
   const snapshots = document.getElementById("market-data-snapshots");
   const schedules = document.getElementById("market-provider-schedules");
   const operations = document.getElementById("market-provider-operations");
+  const accessControls = document.getElementById("provider-access-controls");
+  const accessPolicies = document.getElementById("market-provider-access-policies");
   const form = document.getElementById("market-reference-attach-form");
   const referenceStatus = document.getElementById("market-reference-status");
   const snapshotSelect = document.getElementById("market-reference-snapshot");
@@ -231,6 +286,7 @@ export async function initMarketData() {
   const decisionReason = document.getElementById("market-decision-reason");
   const decisionSubmit = document.getElementById("market-decision-submit");
   let currentSnapshots = [];
+  let administrators = [];
   let pendingDecision = null;
   const closeDecisionDialog = () => { pendingDecision = null; decisionForm.reset(); decisionDialog.close(); };
   const openDecisionDialog = (snapshotId, action) => {
@@ -246,9 +302,10 @@ export async function initMarketData() {
     decisionReason.focus();
   };
   const refresh = async () => {
-    const [providerRows, policy, snapshotRows, fxSnapshotRows, scheduleRows, operationRows] = await Promise.all([
+    const [providerRows, policy, snapshotRows, fxSnapshotRows, scheduleRows, operationRows, accessRows] = await Promise.all([
       getMarketDataProviders(token), getMarketReferencePolicy(token), getMarketDataSnapshots(token), getFxDataSnapshots(token),
       getMarketProviderSchedules(token).catch(() => []), getMarketProviderOperations(token).catch(() => []),
+      getProviderAccessPolicies(token).catch(() => null),
     ]);
     currentSnapshots = snapshotRows;
     renderPolicyMarketProviders(
@@ -287,11 +344,31 @@ export async function initMarketData() {
       } catch (error) { setStatus(status, error.message || "Не вдалося зберегти графік.", true); }
     });
     renderOperations(operations, operationRows);
+    if (accessRows) {
+      accessControls.hidden = false;
+      renderProviderAccessPolicies(accessPolicies, accessRows, administrators, async (providerCode, payload) => {
+        try { await updateProviderAccessPolicy(providerCode, payload, token); setStatus(status, "Умови provider-а збережено."); await refresh(); }
+        catch (error) { setStatus(status, error.message || "Не вдалося зберегти умови provider-а.", true); }
+      }, async (providerCode, expertId, enabled) => {
+        try { await updateProviderAccessAssignment(providerCode, expertId, enabled, token); setStatus(status, "Призначення restricted trial оновлено."); await refresh(); }
+        catch (error) { setStatus(status, error.message || "Не вдалося змінити призначення.", true); throw error; }
+      }, async (providerCode) => {
+        try {
+          const events = await getProviderAccessEvents(providerCode, token);
+          const lines = events.map((item) => `${formatDate(item.created_at)} — ${item.action}${item.reason ? `: ${item.reason}` : ""}`);
+          setStatus(status, lines.length ? lines.join("\n") : "Для provider-а ще немає подій умов.");
+        } catch (error) { setStatus(status, error.message || "Не вдалося завантажити журнал умов.", true); }
+      });
+    } else accessControls.hidden = true;
     updateApprovedSnapshotOptions(snapshotSelect, snapshotRows);
   };
   try {
     const user = await getCurrentUser(token);
     if (user.role !== "admin") throw new Error("Ця сторінка доступна лише адміністратору.");
+    if (user.partner_controls_enabled) {
+      const users = await getUsers({ page: 1, page_size: 100 }, token);
+      administrators = users.items.filter((item) => item.role === "admin" && item.is_active);
+    }
     await refresh();
   } catch (error) {
     setStatus(status, error instanceof ApiRequestError && error.status === 401 ? "Потрібно увійти знову." : error.message, true);

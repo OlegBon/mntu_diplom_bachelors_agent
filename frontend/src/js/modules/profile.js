@@ -1,4 +1,4 @@
-import { getCurrentUser, updateMyDemoAccess, updateMyPassword, updateMyProfile } from "./api.js";
+import { getCurrentUser, updateMyDemoAccess, updateMyPartnerControlsAccess, updateMyPassword, updateMyProfile } from "./api.js";
 
 function setStatus(element, message, isError = false) {
   element.textContent = message;
@@ -13,6 +13,7 @@ export async function initProfile() {
   const profileForm = document.getElementById("profile-form");
   const passwordForm = document.getElementById("password-form");
   const demoAccessForm = document.getElementById("demo-access-form");
+  const partnerControlsForm = document.getElementById("partner-controls-form");
   const status = document.getElementById("profile-status");
   let currentUser;
   try {
@@ -26,7 +27,9 @@ export async function initProfile() {
     }
     if (currentUser.role === "admin") {
       document.getElementById("demo-access-surface").hidden = false;
+      document.getElementById("partner-controls-surface").hidden = false;
       demoAccessForm.elements.demo_access_enabled.checked = currentUser.demo_access_enabled;
+      partnerControlsForm.elements.partner_controls_enabled.checked = currentUser.partner_controls_enabled;
     }
   } catch (error) {
     setStatus(status, error.message, true);
@@ -64,6 +67,16 @@ export async function initProfile() {
     } finally {
       button.disabled = false;
     }
+  });
+  if (partnerControlsForm) partnerControlsForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = partnerControlsForm.querySelector("button[type='submit']"); button.disabled = true;
+    try {
+      const saved = await updateMyPartnerControlsAccess(partnerControlsForm.elements.partner_controls_enabled.checked, token);
+      currentUser = saved;
+      setStatus(status, saved.partner_controls_enabled ? "Доступ до керування партнерськими даними увімкнено." : "Доступ до керування партнерськими даними вимкнено.");
+    } catch (error) { setStatus(status, error.message, true); }
+    finally { button.disabled = false; }
   });
   passwordForm.addEventListener("submit", async (event) => {
     event.preventDefault();

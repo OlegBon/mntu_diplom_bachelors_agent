@@ -5,6 +5,60 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — provider-restricted-access-foundation
+
+- **Задача:** розпочати 141 — нейтральний механізм restricted provider access без live IDEX/OpenFacet activation.
+- **Змінені файли:** `backend/{models,schemas,crud,main}.py`, `alembic/versions/0021_provider_restricted_access.py`, `frontend/src/{pug/pages/{profile,market-data}.pug,js/modules/{api,profile,market-data}.js}`, `tests/api/test_provider_restricted_access.py`, `docs/{progress,work_plan,guides/market-data-providers}.md`.
+- **Рішення / результат:** admin self opt-in відкриває керування partner data; policy з режимами `disabled`/`restricted_trial`/`standard_internal`, expiry/quota і персональними trial assignments має credential-free append-only audit. «Ринкові дані» — write surface, «Аналітика → Провайдери» — read-only projection policy/audit поруч із technical operations; demo показує тільки static synthetic scenario. Нормальний OpenFacet/NBU flow не змінено; IDEX не створено й не активовано.
+- **Перевірки:** `pytest tests/api/test_provider_restricted_access.py tests/api/test_provider_operations_analytics.py -q` — 5 passed; `compileall backend` — OK; `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — OK.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** `0021_provider_restricted_access` застосовано до локальної MariaDB після явного підтвердження; Alembic head підтверджено. Assignment UI, analytics read-only policy/audit projection та sanitized English mock-up — наступні логічні кроки 141.
+
+## 2026-09-28 — provider-access-ui-layout
+
+- **Задача:** виправити семантичний порядок профілю та responsive controls provider-access у межах 141.
+- **Змінені файли:** `frontend/src/{pug/pages/profile.pug,js/modules/market-data.js}`, `docs/progress.md`.
+- **Рішення / результат:** wide profile grid має пари «Дані профілю / Змінити пароль» і «Демо / керування партнерськими даними»; mobile зберігає цей порядок. Динамічні provider policy forms використовують shared `form-group`, `form-control` і `form-actions`: читабельні локалізовані назви провайдерів, стандартні поля, розділені кнопки та їхнє наявне full-width mobile правило.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** browser visual QA у цьому середовищі недоступний; потрібна коротка ручна перевірка трьох breakpoint-ів у локальному браузері.
+
+## 2026-09-28 — compact-header-navigation
+
+- **Задача:** прибрати перенесення desktop navigation і зсув active item на tablet у межах UI follow-up 141.
+- **Змінені файли:** `frontend/src/scss/{_product-ux,_ui-primitives}.scss`, `docs/progress.md`.
+- **Рішення / результат:** drawer застосовується лише до 900px. У 901–1280px header має два рівні: logo/account зверху та single-line desktop navigation на всю ширину нижче; це прибирає sparse drawer і word wrap. Понад 1280px повертається однорядкова desktop-навігація. При resize вище 900px JS закриває stale drawer state; active пункт drawer показує primary text і underline без left marker.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 29 passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** потрібна ручна браузерна перевірка two-row header на 901px, 1024px, 1280px, desktop на 1281px та drawer на 900px/768px.
+
+## 2026-09-28 — compact-header-separator-cleanup
+
+- **Задача:** прибрати зайві межі між шарами compact header та перед account block.
+- **Змінені файли:** `frontend/src/scss/_product-ux.scss`, `docs/progress.md`.
+- **Рішення / результат:** у 901–1280px account block не має left separator; second navigation row починається без extra margin або horizontal divider.
+- **Перевірки:** `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** потрібна коротка ручна перевірка на 901px і 1280px.
+
+## 2026-09-28 — compact-header-final-overrides
+
+- **Задача:** виправити shared style overrides для two-row header.
+- **Змінені файли:** `frontend/src/scss/_ui-primitives.scss`, `docs/progress.md`.
+- **Рішення / результат:** final shared layer встановлює `row-gap: 0.25rem` замість inherited `2rem` і остаточно вимикає left border перед account block у 901–1280px.
+- **Перевірки:** `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** потрібна коротка ручна перевірка на 901px і 1280px.
+
+## 2026-09-28 — drawer-active-link-treatment
+
+- **Задача:** усунути нестабільний left marker active drawer navigation у 768–900px.
+- **Змінені файли:** `frontend/src/scss/_product-ux.scss`, `docs/progress.md`.
+- **Рішення / результат:** left marker прибрано; active пункт показує primary color і стандартне підкреслення, без впливу на layout.
+- **Перевірки:** `cmd /c "cd frontend && npm run build"` — passed; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** потрібна ручна перевірка drawer на 768px і 900px.
+
 ## 2026-09-28 — provider-operations-and-coverage-analytics
 
 - **Задача:** завершити 163 — додати admin-only operational facts про freshness, provider operations і draft coverage без змішування demo або оцінювання provider-ів.

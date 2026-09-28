@@ -140,6 +140,18 @@ function openProviderDialog(dialog, content, provider) {
     ["Немає актуального знімка", coverage.snapshot_unavailable_reports], ["Не покрито quote", coverage.quote_not_covered_reports],
   ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
   fragment.append(metrics, element("p", "account-help", provider.scope_note));
+  const policy = element("section", "analytics-review-list");
+  policy.append(element("h3", "", "Доступ і умови provider-а"));
+  const policyMetrics = element("dl", "analytics-metrics");
+  [
+    ["Режим", { disabled: "Вимкнено", restricted_trial: "Обмежений trial", standard_internal: "Внутрішній стандартний" }[provider.access_mode] || "Не налаштовано"],
+    ["Trial діє до", dateTime(provider.trial_expires_at) || "Не застосовується"],
+    ["Денний ліміт", provider.daily_request_limit || "Не застосовується"],
+    ["Призначено адміністраторів", provider.assigned_admin_count],
+    ["Остання зміна умов", provider.last_policy_event_at ? `${dateTime(provider.last_policy_event_at)} · ${provider.last_policy_event_action}` : "Подій ще немає"],
+  ].forEach(([label, value]) => policyMetrics.append(element("dt", "", label), element("dd", "", String(value))));
+  policy.append(policyMetrics, element("p", "account-help", "Це read-only факт конфігурації. Керування умовами доступне лише в «Ринкових даних» для admin-а, який увімкнув відповідний доступ у профілі."));
+  fragment.append(policy);
   if (coverage.covered_report_ids.length) {
     const links = element("p", "account-help", "Приклади покритих звітів: ");
     coverage.covered_report_ids.forEach((reportId, index) => {

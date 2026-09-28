@@ -193,10 +193,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const burgerBtn = document.getElementById("burger-btn");
   const mainNav = document.getElementById("main-nav");
   if (burgerBtn && mainNav) {
+    const closeNavigationDrawer = () => {
+      burgerBtn.classList.remove("is-active");
+      mainNav.classList.remove("is-active");
+      burgerBtn.setAttribute("aria-expanded", "false");
+    };
     burgerBtn.addEventListener("click", () => {
       burgerBtn.classList.toggle("is-active");
       mainNav.classList.toggle("is-active");
       burgerBtn.setAttribute("aria-expanded", String(mainNav.classList.contains("is-active")));
+    });
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 900) closeNavigationDrawer();
     });
   }
 

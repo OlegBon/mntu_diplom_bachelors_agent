@@ -63,6 +63,10 @@ class DemoAccessUpdate(BaseModel):
 
     enabled: bool
 
+
+class PartnerControlsAccessUpdate(BaseModel):
+    enabled: bool
+
 # Схема для експерта (дані, що ми віддаємо на фронт)
 class ExpertBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -75,6 +79,7 @@ class ExpertBase(BaseModel):
     role: str
     is_active: bool
     demo_access_enabled: bool
+    partner_controls_enabled: bool
 
 class ExpertListResponse(BaseModel):
     items: list[ExpertBase]
@@ -229,6 +234,57 @@ class MarketReferencePolicyUpdate(BaseModel):
     market_provider_code: Optional[str] = Field(default=None, max_length=32)
     use_fx_conversion: bool
     fx_provider_code: Optional[str] = Field(default=None, max_length=32)
+
+
+ProviderAccessMode = Literal["disabled", "restricted_trial", "standard_internal"]
+
+
+class MarketProviderAccessPolicyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    provider_code: str
+    access_mode: ProviderAccessMode
+    trial_expires_at: Optional[datetime]
+    daily_request_limit: Optional[int]
+    natural_only: bool
+    internal_only: bool
+    public_display_allowed: bool
+    ml_allowed: bool
+    terms_reference: Optional[str]
+    updated_by_id: Optional[int]
+    updated_at: datetime
+    assigned_admin_ids: list[int] = Field(default_factory=list)
+
+
+class MarketProviderAccessPolicyUpdate(BaseModel):
+    access_mode: ProviderAccessMode
+    trial_expires_at: Optional[datetime] = None
+    daily_request_limit: Optional[int] = Field(default=None, ge=1, le=10_000)
+    natural_only: bool = True
+    internal_only: bool = True
+    public_display_allowed: bool = False
+    ml_allowed: bool = False
+    terms_reference: Optional[str] = Field(default=None, max_length=2_000)
+    reason: Optional[str] = Field(default=None, max_length=1_000)
+
+
+class MarketProviderAccessAssignmentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    assignment_id: int
+    provider_code: str
+    expert_id: int
+    granted_by_id: Optional[int]
+    created_at: datetime
+
+
+class MarketProviderAccessEventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    event_id: int
+    provider_code: Optional[str]
+    action: str
+    actor_id: Optional[int]
+    subject_expert_id: Optional[int]
+    reason: Optional[str]
+    created_at: datetime
 
 
 class MarketDataSnapshotResponse(BaseModel):
@@ -665,6 +721,12 @@ class OperationalProviderAnalyticsRow(BaseModel):
     failed_operations: int
     latest_operation_status: Optional[Literal["success", "no_change", "failed", "skipped"]]
     latest_operation_at: Optional[datetime]
+    access_mode: Optional[ProviderAccessMode]
+    trial_expires_at: Optional[datetime]
+    daily_request_limit: Optional[int]
+    assigned_admin_count: int = 0
+    last_policy_event_at: Optional[datetime]
+    last_policy_event_action: Optional[str]
     coverage: ProviderCoverageSummary
 
 

@@ -30,15 +30,6 @@ block content
                         input#profile-middle-name.form-control(type="text" name="middle_name" maxlength="50")
                     .form-actions
                         button.btn.btn-primary(type="submit") Зберегти дані
-            section#demo-access-surface.account-surface(hidden)
-                h2 Доступ до «Демо»
-                p.account-help Ізольований synthetic dataset для внутрішньої демонстрації. Він не містить реальних звітів, ринкових даних або публічних паспортів.
-                form#demo-access-form
-                    label.checkbox-field(for="profile-demo-access")
-                        input#profile-demo-access(type="checkbox" name="demo_access_enabled")
-                        span Увімкнути доступ до «Демо» для мого облікового запису
-                    .form-actions
-                        button.btn.btn-primary(type="submit") Зберегти доступ
             section.account-surface
                 h2 Змінити пароль
                 form#password-form
@@ -53,3 +44,21 @@ block content
                         input#profile-confirm-password.form-control(type="password" name="confirm_password" minlength="8" autocomplete="new-password" required)
                     .form-actions
                         button.btn.btn-primary(type="submit") Змінити пароль
+            section#demo-access-surface.account-surface(hidden)
+                h2 Доступ до «Демо»
+                p.account-help Ізольований synthetic dataset для внутрішньої демонстрації. Він не містить реальних звітів, ринкових даних або публічних паспортів.
+                form#demo-access-form
+                    label.checkbox-field(for="profile-demo-access")
+                        input#profile-demo-access(type="checkbox" name="demo_access_enabled")
+                        span Увімкнути доступ до «Демо» для мого облікового запису
+                    .form-actions
+                        button.btn.btn-primary(type="submit") Зберегти доступ
+            section#partner-controls-surface.account-surface(hidden)
+                h2 Доступ до керування партнерськими даними
+                p.account-help Цей режим відкриває лише внутрішні інструменти керування умовами провайдерів. Він не вмикає зовнішнього провайдера, не видає ключів і не надає trial-доступу.
+                form#partner-controls-form
+                    label.checkbox-field(for="profile-partner-controls")
+                        input#profile-partner-controls(type="checkbox" name="partner_controls_enabled")
+                        span Увімкнути доступ до керування партнерськими даними для мого облікового запису
+                    .form-actions
+                        button.btn.btn-primary(type="submit") Зберегти доступ

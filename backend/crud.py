@@ -1362,6 +1362,99 @@ def update_own_demo_access(db: Session, user: models.Expert, *, enabled: bool) -
     return user
 
 
+def _record_provider_access_event(
+    db: Session, *, action: str, actor_id: int | None, provider_code: str | None = None,
+    subject_expert_id: int | None = None, reason: str | None = None, state: dict | None = None,
+) -> None:
+    """Write a credential-free, append-only governance event."""
+    db.add(models.MarketProviderAccessEvent(
+        provider_code=provider_code, action=action, actor_id=actor_id,
+        subject_expert_id=subject_expert_id, reason=reason,
+        state_json=json.dumps(state, sort_keys=True) if state else None,
+    ))
+
+
+def update_own_partner_controls_access(db: Session, user: models.Expert, *, enabled: bool) -> models.Expert:
+    user.partner_controls_enabled = enabled if user.role == "admin" else False
+    _record_provider_access_event(
+        db, action="partner_controls_opted_in" if user.partner_controls_enabled else "partner_controls_opted_out",
+        actor_id=user.expert_id, subject_expert_id=user.expert_id,
+    )
+    db.commit(); db.refresh(user)
+    return user
+
+
+def get_provider_access_policies(db: Session) -> list[models.MarketProviderAccessPolicy]:
+    return db.query(models.MarketProviderAccessPolicy).order_by(models.MarketProviderAccessPolicy.provider_code).all()
+
+
+def get_provider_access_policy_response(db: Session, policy: models.MarketProviderAccessPolicy) -> schemas.MarketProviderAccessPolicyResponse:
+    assigned_ids = [row.expert_id for row in db.query(models.MarketProviderAccessAssignment).filter(
+        models.MarketProviderAccessAssignment.provider_code == policy.provider_code,
+    ).order_by(models.MarketProviderAccessAssignment.expert_id)]
+    return schemas.MarketProviderAccessPolicyResponse(
+        provider_code=policy.provider_code, access_mode=policy.access_mode,
+        trial_expires_at=policy.trial_expires_at, daily_request_limit=policy.daily_request_limit,
+        natural_only=policy.natural_only, internal_only=policy.internal_only,
+        public_display_allowed=policy.public_display_allowed, ml_allowed=policy.ml_allowed,
+        terms_reference=policy.terms_reference, updated_by_id=policy.updated_by_id,
+        updated_at=policy.updated_at, assigned_admin_ids=assigned_ids,
+    )
+
+
+def update_provider_access_policy(
+    db: Session, *, provider_code: str, payload: schemas.MarketProviderAccessPolicyUpdate, actor: models.Expert,
+) -> models.MarketProviderAccessPolicy:
+    provider = db.get(models.MarketDataProvider, provider_code)
+    if provider is None:
+        raise ReportDomainError("Market-data provider was not found")
+    if payload.access_mode == "restricted_trial" and (payload.trial_expires_at is None or payload.daily_request_limit is None):
+        raise ReportDomainError("Restricted trial requires an expiration and daily request limit")
+    if not payload.natural_only or not payload.internal_only or payload.public_display_allowed or payload.ml_allowed:
+        raise ReportDomainError("This release permits only natural, internal, non-public, non-ML provider use")
+    policy = db.get(models.MarketProviderAccessPolicy, provider_code)
+    if policy is None:
+        policy = models.MarketProviderAccessPolicy(provider_code=provider_code)
+        db.add(policy)
+    for field in ("access_mode", "trial_expires_at", "daily_request_limit", "natural_only", "internal_only", "public_display_allowed", "ml_allowed", "terms_reference"):
+        setattr(policy, field, getattr(payload, field))
+    policy.updated_by_id = actor.expert_id
+    _record_provider_access_event(
+        db, provider_code=provider_code, action="policy_updated", actor_id=actor.expert_id,
+        reason=payload.reason, state={"access_mode": payload.access_mode, "daily_request_limit": payload.daily_request_limit, "trial_expires_at": payload.trial_expires_at.isoformat() if payload.trial_expires_at else None},
+    )
+    db.commit(); db.refresh(policy)
+    return policy
+
+
+def set_provider_access_assignment(
+    db: Session, *, provider_code: str, expert_id: int, actor: models.Expert, enabled: bool,
+) -> models.MarketProviderAccessAssignment | None:
+    policy = db.get(models.MarketProviderAccessPolicy, provider_code)
+    expert = db.get(models.Expert, expert_id)
+    if policy is None or expert is None or expert.role != "admin":
+        raise ReportDomainError("Provider or administrator was not found")
+    if policy.access_mode != "restricted_trial":
+        raise ReportDomainError("Administrator assignments are used only for restricted trial access")
+    assignment = db.query(models.MarketProviderAccessAssignment).filter_by(provider_code=provider_code, expert_id=expert_id).one_or_none()
+    if enabled and assignment is None:
+        assignment = models.MarketProviderAccessAssignment(provider_code=provider_code, expert_id=expert_id, granted_by_id=actor.expert_id)
+        db.add(assignment)
+        _record_provider_access_event(db, provider_code=provider_code, action="trial_admin_assigned", actor_id=actor.expert_id, subject_expert_id=expert_id)
+    elif not enabled and assignment is not None:
+        db.delete(assignment)
+        _record_provider_access_event(db, provider_code=provider_code, action="trial_admin_removed", actor_id=actor.expert_id, subject_expert_id=expert_id)
+    db.commit()
+    return assignment if enabled else None
+
+
+def get_provider_access_events(db: Session, provider_code: str | None = None) -> list[models.MarketProviderAccessEvent]:
+    query = db.query(models.MarketProviderAccessEvent)
+    if provider_code:
+        query = query.filter(models.MarketProviderAccessEvent.provider_code == provider_code)
+    return query.order_by(models.MarketProviderAccessEvent.created_at.desc(), models.MarketProviderAccessEvent.event_id.desc()).limit(100).all()
+
+
 def update_own_password(db: Session, user: models.Expert, password_update: schemas.PasswordUpdate) -> bool:
     if not verify_password(password_update.current_password, user.password_hash):
         return False
@@ -1987,6 +2080,13 @@ def get_operational_provider_analytics(
 
     rows: list[schemas.OperationalProviderAnalyticsRow] = []
     for provider in providers:
+        access_policy = db.get(models.MarketProviderAccessPolicy, provider.provider_code)
+        assigned_admin_count = db.query(models.MarketProviderAccessAssignment).filter(
+            models.MarketProviderAccessAssignment.provider_code == provider.provider_code,
+        ).count()
+        last_policy_event = db.query(models.MarketProviderAccessEvent).filter(
+            models.MarketProviderAccessEvent.provider_code == provider.provider_code,
+        ).order_by(models.MarketProviderAccessEvent.created_at.desc(), models.MarketProviderAccessEvent.event_id.desc()).first()
         snapshots = (
             db.query(models.MarketDataSnapshot)
             .filter(models.MarketDataSnapshot.provider_code == provider.provider_code)
@@ -2052,6 +2152,12 @@ def get_operational_provider_analytics(
             failed_operations=sum(item.status == "failed" for item in operations),
             latest_operation_status=latest_operation.status if latest_operation else None,
             latest_operation_at=latest_operation.completed_at if latest_operation else None,
+            access_mode=access_policy.access_mode if access_policy else None,
+            trial_expires_at=access_policy.trial_expires_at if access_policy else None,
+            daily_request_limit=access_policy.daily_request_limit if access_policy else None,
+            assigned_admin_count=assigned_admin_count,
+            last_policy_event_at=last_policy_event.created_at if last_policy_event else None,
+            last_policy_event_action=last_policy_event.action if last_policy_event else None,
             coverage=schemas.ProviderCoverageSummary(
                 candidate_draft_reports=len(drafts), covered_draft_reports=len(covered_reports),
                 excluded_non_natural_reports=len(non_natural), missing_characteristics_reports=len(characteristic_missing),
