@@ -377,7 +377,9 @@ body {
       &.is-active { display: block; }
       ul { display: grid; gap: 0.25rem; }
       li a { position: relative; width: 100%; min-height: 2.75rem; border-bottom: 0; border-left: 0; padding-left: 0.75rem; }
-      li a.is-active::before { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; content: ""; background: variables.$primary-color; }
+      // The link's left padding is the text gutter. Keep the active marker in
+      // the gutter itself so it never overlays the first character.
+      li a.is-active::before { position: absolute; top: 0; bottom: 0; left: -0.75rem; width: 2px; content: ""; background: variables.$primary-color; }
       .mobile-login { display: block; }
       .mobile-login a { color: variables.$primary-color; font-weight: 700; }
 
