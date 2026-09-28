@@ -7,23 +7,29 @@ block content
                 h1.page-title Аналітика
                 p.page-subtitle Операційний огляд workflow. Дані доступні лише адміністраторам.
         p#analytics-status.account-status(role="status" aria-live="polite" hidden)
-        form#analytics-period-form.analytics-period-filter
-            .form-group
-                label(for="analytics-date-from") Від
-                input#analytics-date-from(type="date" name="date_from")
-            .form-group
-                label(for="analytics-date-to") До
-                input#analytics-date-to(type="date" name="date_to")
-            .analytics-period-filter__actions
-                button.btn.btn-primary(type="submit") Застосувати період
-                button#analytics-period-reset.btn.btn-outline(type="button") За весь час
-        p#analytics-period-summary.analytics-period-summary(role="status" aria-live="polite") Поточний зріз: за весь доступний час.
-        p#analytics-period-help.account-help Дані за весь доступний період. Статуси — для звітів, створених у періоді; active-time — для завершених сесій; review-cycle — для рішень admin.
         .analytics-tabs(role="tablist" aria-label="Розділи аналітики")
-            button.analytics-tabs__tab.is-active(type="button" role="tab" aria-selected="true" aria-controls="analytics-experts" id="analytics-tab-experts" data-analytics-tab="experts") Експерти
+            button.analytics-tabs__tab.is-active(type="button" role="tab" aria-selected="true" aria-controls="analytics-stones" id="analytics-tab-stones" data-analytics-tab="stones") Камені
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-experts" id="analytics-tab-experts" data-analytics-tab="experts") Експерти
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-admins" id="analytics-tab-admins" data-analytics-tab="admins") Адміністратори
-            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-stones" id="analytics-tab-stones" data-analytics-tab="stones") Камені
-        section#analytics-experts.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-experts")
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-providers" id="analytics-tab-providers" data-analytics-tab="providers") Провайдери
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="analytics-currency" id="analytics-tab-currency" data-analytics-tab="currency") Валютні джерела
+        #analytics-period-controls(hidden)
+            form#analytics-period-form.analytics-period-filter
+                .form-group
+                    label(for="analytics-date-from") Від
+                    input#analytics-date-from(type="date" name="date_from")
+                .form-group
+                    label(for="analytics-date-to") До
+                    input#analytics-date-to(type="date" name="date_to")
+                .analytics-period-filter__actions
+                    button.btn.btn-primary(type="submit") Застосувати період
+                    button#analytics-period-reset.btn.btn-outline(type="button") За весь час
+            p#analytics-period-summary.analytics-period-summary(role="status" aria-live="polite") Поточний зріз: за весь доступний час.
+            p#analytics-period-help.account-help Дані за весь доступний період. Статуси — для звітів, створених у періоді; active-time — для завершених сесій; review-cycle — для рішень admin. Для provider coverage беруться operational чернетки, змінені у вибраному періоді; для НБУ — офіційна дата курсу.
+        section#analytics-stones.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-stones")
+            h2 Аналітика каменів
+            p.account-help Розподіли параметрів, карти Кохонена та інші ML-візуалізації потребують окремого перевіреного джерела даних і моделі. У цьому зрізі не показуються умовні графіки або demo-метрики.
+        section#analytics-experts.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-experts" hidden)
             h2 Експерти та звіти
             p.account-help Статуси показують поточний стан звітів, створених у вибраному періоді. Активний час — лише серверно зафіксовані завершені сесії автора чернетки.
             #analytics-expert-results(aria-live="polite")
@@ -31,12 +37,23 @@ block content
             h2 Перевірки адміністраторів
             p.account-help Тривалість етапу перевірки: від передачі звіту на перевірку до рішення admin. Це не вимір фактичного активного часу людини.
             #analytics-admin-results(aria-live="polite")
-        section#analytics-stones.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-stones" hidden)
-            h2 Аналітика каменів
-            p.account-help Розподіли параметрів, карти Кохонена та інші ML-візуалізації потребують окремого перевіреного джерела даних і моделі. У цьому зрізі не показуються умовні графіки або demo-метрики.
+        section#analytics-providers.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-providers" hidden)
+            h2 Operations і coverage provider-ів
+            p.account-help Це технічні facts про freshness, snapshot-и, спроби та покриття operational чернеток. Це не рейтинг, точність чи порівняння цін provider-ів.
+            #analytics-provider-results(aria-live="polite")
+        section#analytics-currency.account-surface.analytics-panel(role="tabpanel" aria-labelledby="analytics-tab-currency" hidden)
+            h2 Валютні джерела
+            p.account-help Незмінні офіційні USD/UAH знімки НБУ. Фільтр застосовується до офіційної дати курсу, не до часу створення звіту.
+            #analytics-currency-results(aria-live="polite")
         dialog#analytics-expert-dialog.account-dialog(aria-labelledby="analytics-expert-dialog-title")
             form(method="dialog")
                 .account-dialog__header
                     h2#analytics-expert-dialog-title Деталі експерта
                     button#analytics-expert-dialog-close.account-dialog__close(type="submit" aria-label="Закрити") ×
                 #analytics-expert-dialog-content
+        dialog#analytics-provider-dialog.account-dialog(aria-labelledby="analytics-provider-dialog-title")
+            form(method="dialog")
+                .account-dialog__header
+                    h2#analytics-provider-dialog-title Деталі провайдера
+                    button.account-dialog__close(type="submit" aria-label="Закрити") ×
+                #analytics-provider-dialog-content

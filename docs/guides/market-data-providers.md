@@ -94,6 +94,25 @@ append-only подію із сумою, провайдером і номером
 письмового дозволу IDEX. Public passport і PDF не показують provider values чи
 брендинг без окремого рішення про disclosure/licensing.
 
+## Admin analytics provider-ів
+
+Вкладка «Аналітика → Провайдери» використовує лише `record_scope=operational`
+та чинний catalog `market_reference` provider-ів. Для кожного provider-а вона
+показує нейтральні facts: freshness останнього approved snapshot-а з
+configured warning/block thresholds, counts candidate/approved/rejected
+snapshot-ів, manual/scheduled/retry/failed operation-ів та coverage чернеток.
+Це не порівняння сум, точності, якості чи надійності provider-ів.
+
+Date slice для coverage застосовується до `updated_at` operational draft; він
+не змінює immutable snapshots або operations. Причини непокриття розділені на
+non-natural origin, відсутні shape/4C/carat, missing/stale snapshot і
+відсутність відповідного quote. До трьох уже покритих report ID доступні лише
+admin як private links. `DEMO-*`, fictional Demo Market A/B і synthetic
+analytics не читаються цим endpoint-ом.
+
+«Аналітика → Валютні джерела» окремо показує immutable NBU USD/UAH snapshot-и;
+її date slice фільтрує саме `rate_date`. FX не є market-reference provider-ом.
+
 ## Розширення
 
 Новий провайдер потребує окремого adapter-а, перевірки ліцензій, coverage,

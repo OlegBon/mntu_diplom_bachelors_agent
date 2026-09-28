@@ -1,6 +1,6 @@
 import { getDemoDataset, getDemoReports, getDemoProviderAnalytics, getDemoWorkflowAnalytics, getDemoSom, getFxDataSnapshots, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
-import { duration as formatDuration, element as createElement, periodSummary, renderTable } from "./analytics-ui.js";
+import { duration as formatDuration, element as createElement, periodSummary, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
 
 const PREFERRED_DATASET_ID = "synthetic-demo-v4";
 const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
@@ -296,45 +296,7 @@ function openDemoProviderDialog(dialog, content, provider, datasetId) {
 }
 
 function renderCurrencySources(container, snapshots, dialog, dialogContent) {
-  container.replaceChildren();
-  if (!snapshots.length) {
-    container.append(createElement("p", "account-help", "Знімків офіційного курсу НБУ ще немає."));
-    return;
-  }
-  const latest = snapshots[0];
-  const rate = Number(latest.rate).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-  const sourceButton = createElement("button", "analytics-expert-button", "Національний банк України (НБУ)");
-  sourceButton.type = "button";
-  sourceButton.addEventListener("click", () => {
-    const metrics = document.createElement("dl");
-    metrics.className = "analytics-metrics";
-    [
-      ["Тип джерела", "Офіційний валютний провайдер"],
-      ["Походження даних", "Офіційний сервіс НБУ"],
-      ["Тип значень", `${latest.base_currency_code}/${latest.quote_currency_code} official FX rate`],
-      ["Кількість знімків", snapshots.length],
-      ["Останній курс", `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`],
-      ["Офіційна дата курсу", formatDateTime(`${latest.rate_date}T00:00:00`).date],
-      ["Останнє отримання", `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`],
-    ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
-    dialogContent.replaceChildren(
-      createElement("h3", "", "Національний банк України (НБУ)"),
-      metrics,
-      createElement("p", "account-help", "FX-знімки зберігаються immutable. Вони застосовуються лише для окремої USD/UAH-конвертації дозволених орієнтирів і не є ціною, оцінкою або аналітикою каменю."),
-    );
-    dialog.showModal();
-  });
-  const tableHost = document.createElement("div");
-  tableHost.className = "table-container demo-provider-analytics__table";
-  renderTable(tableHost, ["Валютне джерело", "Пара", "Останній курс", "Офіційна дата", "Отримано", "Знімків"], [[
-    sourceButton,
-    `${latest.base_currency_code}/${latest.quote_currency_code}`,
-    `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`,
-    formatDateTime(`${latest.rate_date}T00:00:00`).date,
-    `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`,
-    String(snapshots.length),
-  ]]);
-  container.append(tableHost);
+  renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatDateTime, "table-container demo-provider-analytics__table");
 }
 
 function renderDemoProviderAnalytics(container, data, datasetId, dialog, dialogContent) {

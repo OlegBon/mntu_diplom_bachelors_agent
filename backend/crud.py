@@ -1942,6 +1942,126 @@ def get_market_provider_operations(
     )
 
 
+def get_operational_provider_analytics(
+    db: Session, *, date_from: date | None = None, date_to: date | None = None,
+) -> schemas.OperationalProviderAnalyticsResponse:
+    """Return provider facts for operational drafts without reading demo records.
+
+    This is deliberately descriptive: it reports imports, freshness and whether
+    drafts received a provider-specific stored reference.  It neither compares
+    provider values nor calculates an accuracy, quality or investment score.
+    """
+    # Imported lazily: market_operations imports this CRUD module for write
+    # operations, while this read model only needs its shared freshness rule.
+    from .market_operations import freshness_status
+
+    start, end = _period_bounds(date_from, date_to)
+    now = datetime.now(timezone.utc)
+    providers = (
+        db.query(models.MarketDataProvider)
+        .filter(
+            models.MarketDataProvider.provider_type == "market_reference",
+            models.MarketDataProvider.is_active.is_(True),
+        )
+        .order_by(models.MarketDataProvider.provider_code)
+        .all()
+    )
+    drafts_query = (
+        db.query(models.DiamondReport)
+        .filter(
+            models.DiamondReport.record_scope == "operational",
+            models.DiamondReport.status == "draft",
+        )
+    )
+    if start is not None:
+        drafts_query = drafts_query.filter(models.DiamondReport.updated_at >= start)
+    if end is not None:
+        drafts_query = drafts_query.filter(models.DiamondReport.updated_at < end)
+    drafts = drafts_query.order_by(models.DiamondReport.report_id).all()
+    stones = {
+        stone.stone_id: stone
+        for stone in db.query(models.Stone).filter(models.Stone.stone_id.in_([
+            report.stone_id for report in drafts if report.stone_id is not None
+        ])).all()
+    } if drafts else {}
+
+    rows: list[schemas.OperationalProviderAnalyticsRow] = []
+    for provider in providers:
+        snapshots = (
+            db.query(models.MarketDataSnapshot)
+            .filter(models.MarketDataSnapshot.provider_code == provider.provider_code)
+            .order_by(models.MarketDataSnapshot.retrieved_at.desc(), models.MarketDataSnapshot.snapshot_id.desc())
+            .all()
+        )
+        approved = [snapshot for snapshot in snapshots if snapshot.status == "approved"]
+        latest = approved[0] if approved else None
+        schedule = db.get(models.MarketProviderSchedule, provider.provider_code)
+        latest_retrieved_at = latest.retrieved_at if latest else None
+        freshness = freshness_status(
+            latest_retrieved_at=latest_retrieved_at,
+            warn_after_hours=schedule.warn_after_hours if schedule else 24,
+            block_after_hours=schedule.block_after_hours if schedule else 48,
+            now=now,
+        )
+        operations = (
+            db.query(models.MarketProviderOperation)
+            .filter(models.MarketProviderOperation.provider_code == provider.provider_code)
+            .order_by(models.MarketProviderOperation.completed_at.desc(), models.MarketProviderOperation.operation_id.desc())
+            .all()
+        )
+        valuations = (
+            db.query(models.StoneValuation)
+            .filter(
+                models.StoneValuation.market_snapshot_id.in_([snapshot.snapshot_id for snapshot in snapshots]),
+                models.StoneValuation.valuation_kind.in_(("market_reference", "system_market_reference")),
+            )
+            .all()
+        ) if snapshots else []
+        covered_stone_ids = {valuation.stone_id for valuation in valuations}
+        covered_reports = [report for report in drafts if report.stone_id in covered_stone_ids]
+        non_natural = [report for report in drafts if (stones.get(report.stone_id) is None or stones[report.stone_id].origin != "natural")]
+        characteristic_missing = [
+            report for report in drafts
+            if report not in non_natural and (
+                (stone := stones.get(report.stone_id)) is None or not all((stone.shape, stone.carat_weight, stone.color_grade is not None, stone.clarity_grade is not None))
+            )
+        ]
+        eligible = [report for report in drafts if report not in non_natural and report not in characteristic_missing]
+        unavailable = eligible if freshness in {"missing", "stale"} else []
+        quote_not_covered = [
+            report for report in eligible
+            if report not in unavailable and report not in covered_reports
+        ]
+        latest_operation = operations[0] if operations else None
+        rows.append(schemas.OperationalProviderAnalyticsRow(
+            provider_code=provider.provider_code,
+            display_name=provider.display_name,
+            scope_note=provider.scope_note,
+            schedule_enabled=schedule.enabled if schedule else None,
+            warn_after_hours=schedule.warn_after_hours if schedule else None,
+            block_after_hours=schedule.block_after_hours if schedule else None,
+            freshness_status=freshness,
+            latest_snapshot_id=latest.snapshot_id if latest else None,
+            latest_snapshot_status=latest.status if latest else None,
+            latest_retrieved_at=latest_retrieved_at,
+            snapshots_total=len(snapshots), snapshots_candidate=sum(item.status == "candidate" for item in snapshots),
+            snapshots_approved=len(approved), snapshots_rejected=sum(item.status == "rejected" for item in snapshots),
+            operations_total=len(operations), manual_operations=sum(item.trigger_type == "manual" for item in operations),
+            scheduled_operations=sum(item.trigger_type == "scheduled" for item in operations),
+            retry_operations=sum(item.attempt_number > 1 for item in operations),
+            failed_operations=sum(item.status == "failed" for item in operations),
+            latest_operation_status=latest_operation.status if latest_operation else None,
+            latest_operation_at=latest_operation.completed_at if latest_operation else None,
+            coverage=schemas.ProviderCoverageSummary(
+                candidate_draft_reports=len(drafts), covered_draft_reports=len(covered_reports),
+                excluded_non_natural_reports=len(non_natural), missing_characteristics_reports=len(characteristic_missing),
+                snapshot_unavailable_reports=len(unavailable), quote_not_covered_reports=len(quote_not_covered),
+                covered_report_ids=[report.report_id for report in covered_reports[:3]],
+            ),
+        ))
+    return schemas.OperationalProviderAnalyticsResponse(date_from=date_from, date_to=date_to, providers=rows)
+
+
 def create_market_provider_operation(
     db: Session,
     *,

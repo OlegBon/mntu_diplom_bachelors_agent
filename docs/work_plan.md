@@ -15,7 +15,7 @@
 | `/experts/` | Залишити: авторизований список не-admin експертів працює. |
 | `/reports` | Єдиний private API звітів; legacy `/diamonds/*` вилучено в 085 без міграції historical даних. |
 | `/market/*` | Compatibility mappings і технічний demo-індекс; не використовувати як authorative market data. Контрольовані provider snapshot-и належать `/market-data/*`. |
-| `/statistics/expert-performance`, `/statistics/admin-review-performance` | Admin-only operational analytics: status counts за датою створення report, завершені server-timed active sessions та review-cycle за датою admin-рішення. |
+| `/statistics/expert-performance`, `/statistics/admin-review-performance`, `/statistics/provider-operations` | Admin-only operational analytics: status counts за датою створення report, завершені server-timed active sessions, review-cycle за датою admin-рішення та provider freshness/operation/coverage за `updated_at` operational drafts. |
 
 Повних дублікатів endpoint-ів не лишилося. Dashboard, wizard і detail/edit працюють через `/reports`; legacy `/diamonds/*`, unreachable handler, demo `MLService` і небезпечний `scripts/recalc_grades.py` вилучено. Historical projection-колонки лишаються compatibility-даними без cleanup/backfill; `scripts/seed_db-start.py` вилучено, а `diamond_analytics.ml_results` формалізовано як порожню зарезервовану SQLAlchemy-модель.
 
@@ -118,7 +118,7 @@
 - [x] 171 — Session resilience і production auth: local MVP не скидає сесію на transient API failure; production refresh-session flow лишається окремим наступним етапом.
 - [x] 165 — Synthetic demo provider analytics: `Demo Market A/B` coverage/provenance у відокремленій вкладці через scope-bound read-only contract, спільний date slice лише для відповідних analytics tabs та окремий read-only таб НБУ FX snapshots; real adapter можливий лише після окремого provider permission/policy gate.
 - [x] 166 — Backup і safety gate historical synthetic: verified logical backup/restore трьох local databases, fail-closed reviewed allow-list dry-run і documented future scope-only backfill/rollback для legacy `DR-*`; самі historical records не змінено, рішення відкладено до нормальних operational reports або окремо погоджених fixtures.
-- [ ] [163 — Provider operations and coverage analytics](./backlog/163-provider-operations-and-coverage-analytics.md): admin tab freshness, operation outcome і coverage після 122/162.
+- [x] 163 — Provider operations і coverage analytics: admin-only operational «Провайдери»/«Валютні джерела», freshness, immutable snapshot/operation counts і draft coverage by reason; demo не змішується, без provider score/price comparison.
 - [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локального verified experiment 152 підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
 - [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 152, рішення 160 і CI gate 137 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
 - [ ] [172 — Database topology і configuration contract](./backlog/172-database-topology-and-configuration-contract.md): local `diamond_oltp`/`diamond_market`/`diamond_analytics` у MariaDB ↔ одна PostgreSQL/cloud database з трьома schemas; configuration, grants, Alembic/backup input перед 161.
@@ -128,8 +128,7 @@
 
 ### Рекомендована черга активних задач
 
-2. Provider-напрям: `163` — operations/coverage для наявних real і demo provider
-   records після 122/162; `141` може готувати English IDEX mock-up паралельно, але
+2. Provider-напрям: `141` може готувати English IDEX mock-up паралельно, але
    не відкриває live IDEX без письмового approval.
 3. Наступні продуктові та аналітичні контури: `145` — лише після 146 і рішення
    `160`; `154` і `155` — незалежні контури; `151 → 152 → 153` — ліцензований

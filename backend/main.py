@@ -1075,6 +1075,21 @@ def get_admin_review_stats(
         raise HTTPException(status_code=422, detail=str(error)) from error
 
 
+@app.get("/statistics/provider-operations", response_model=schemas.OperationalProviderAnalyticsResponse)
+def get_provider_operations_analytics(
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: models.Expert = Depends(get_current_user),
+):
+    """Admin-only operational provider facts; demo data is never selected."""
+    require_admin(current_user)
+    try:
+        return crud.get_operational_provider_analytics(db, date_from=date_from, date_to=date_to)
+    except crud.ReportDomainError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
 @app.post("/reports/{report_id}/work-session", response_model=schemas.ReportWorkSessionState)
 def record_report_work_session(
     report_id: str,
