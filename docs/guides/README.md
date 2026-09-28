@@ -23,16 +23,7 @@
 | [synthetic-som-demo.md](./synthetic-som-demo.md) | Як працює ізольована SOM-карта, policy scenario, artifact, UI та межі щодо real analytics. |
 | [synthetic-demo-provider-analytics.md](./synthetic-demo-provider-analytics.md) | Ізольована analytics fictional Demo Market A/B і scope-bound контракт для майбутніх дозволених real data. |
 | [mariadb-local-recovery.md](./mariadb-local-recovery.md) | Безпечний перехід з аварійного XAMPP MariaDB у чисте локальне середовище через SQL-дампи. |
-
-## Заплановані guides
-
-- `frontend-guide.md` — Pug, SCSS, JavaScript, Gulp, сторінки та API-клієнт.
-- `backend-api-guide.md` — FastAPI, JWT, RBAC, контракти й помилки API.
-- `database-guide.md` — MariaDB-схеми, seed, майбутні Alembic-міграції.
-- `testing-guide.md` — pytest, JS/DOM, Playwright і межі тестового контуру.
-
-План перенесення пояснювальних матеріалів у guides без дублювання рішень або
-архітектури — [170](../backlog/170-guides-information-architecture.md).
-
-Ці файли додаються лише тоді, коли їхній зміст буде звірено з кодом; назви не
-означають, що відповідний guide або функціонал уже реалізовано.
+| [frontend-guide.md](./frontend-guide.md) | Pug/SCSS/JavaScript, Gulp, API client і UI-примітиви з фрагментами коду. |
+| [backend-api-guide.md](./backend-api-guide.md) | FastAPI route → JWT/RBAC → CRUD, API boundaries та приклади коду. |
+| [database-guide.md](./database-guide.md) | SQLAlchemy schemas, Alembic lifecycle, seed і database boundaries з прикладами. |
+| [testing-guide.md](./testing-guide.md) | Ізольовані pytest, jsdom, Playwright і verification matrix. |
