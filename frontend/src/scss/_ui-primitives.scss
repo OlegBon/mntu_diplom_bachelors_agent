@@ -344,12 +344,23 @@ input[type="number"]::-webkit-outer-spin-button {
     gap: variables.$space-3;
   }
   .checkbox-field input[type="checkbox"] { margin-top: 0.2rem; }
-  .filter-item--narrative { min-inline-size: 0; margin: 0; padding: 0; border: 0; }
+  .filter-item--narrative {
+    grid-column: span 4;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
   .filter-item--narrative > legend { margin-bottom: 0.5rem; color: variables.$text-color; font-weight: 700; }
-  .narrative-filter-options { display: grid; gap: 0.5rem; }
+  .narrative-filter-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1rem; }
   .narrative-filter-options label { display: flex; align-items: flex-start; gap: 0.55rem; color: variables.$text-color; font-size: 0.9rem; line-height: 1.35; }
   .narrative-filter-options input { flex: 0 0 auto; margin-top: 0.18rem; }
   .filter-item--narrative .account-help { margin: 0.6rem 0 0; }
+
+  @media (max-width: 600px) {
+    .filter-item--narrative { grid-column: span 1; }
+    .narrative-filter-options { grid-template-columns: 1fr; }
+  }
   .form-group { margin-bottom: variables.$space-4; }
   .form-row { display: flex; flex-wrap: wrap; gap: variables.$space-4; }
   .form-group.half { flex: 1 1 14rem; }
