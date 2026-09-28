@@ -14,7 +14,7 @@ test("built demo page separates unsliced currency sources from date-sliced analy
 
   assert.deepEqual(
     [...document.querySelectorAll("[data-demo-tab]")].map((tab) => tab.dataset.demoTab),
-    ["reports", "stones", "experts", "narratives", "administrators", "providers", "currency"],
+    ["reports", "stones", "experts", "narratives", "quality", "administrators", "providers", "currency"],
   );
   assert.equal(document.querySelector("#demo-tab-narratives")?.getAttribute("aria-controls"), "demo-narratives-panel");
   assert.equal(document.querySelector("#demo-narratives-results")?.getAttribute("aria-live"), "polite");

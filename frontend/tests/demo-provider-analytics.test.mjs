@@ -22,3 +22,14 @@ test("built demo page exposes an enabled provider analytics tab and read-only pa
   assert.equal(document.querySelector("#demo-provider-dialog")?.tagName, "DIALOG");
   assert.equal(document.querySelector("#demo-provider-dialog-content")?.id, "demo-provider-dialog-content");
 });
+
+test("built demo page exposes synthetic operational quality with the shared period controls", async () => {
+  const html = await readFile(demoReportsPath, "utf8");
+  const document = new JSDOM(html).window.document;
+
+  assert.equal(document.querySelector("#demo-tab-quality")?.getAttribute("data-demo-tab"), "quality");
+  assert.equal(document.querySelector("#demo-tab-quality")?.getAttribute("aria-controls"), "demo-quality-panel");
+  assert.equal(document.querySelector("#demo-quality-panel")?.getAttribute("role"), "tabpanel");
+  assert.equal(document.querySelector("#demo-quality-status")?.getAttribute("role"), "status");
+  assert.equal(document.querySelector("#demo-quality-results")?.getAttribute("aria-live"), "polite");
+});

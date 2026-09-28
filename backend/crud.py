@@ -506,6 +506,77 @@ def get_demo_narrative_quality_analytics(
     )
 
 
+def _quality_status_counts(reports: list[models.DiamondReport]) -> dict[str, int]:
+    return {status: sum(report.status == status for report in reports) for status in ("draft", "review", "issued", "void")}
+
+
+def _quality_coverage(reports: list[models.DiamondReport]) -> tuple[list[schemas.OperationalCoverageMetric], list[schemas.OperationalCoverageMetric]]:
+    def coverage(key: str, label: str, predicate) -> schemas.OperationalCoverageMetric:
+        filled = sum(bool(predicate(report)) for report in reports)
+        return schemas.OperationalCoverageMetric(
+            key=key, label=label, applicable_count=len(reports), filled_count=filled,
+            missing_count=len(reports) - filled,
+        )
+
+    required = [
+        coverage("shape", "Форма", lambda report: bool(report.stone and report.stone.shape)),
+        coverage("carat_weight", "Вага", lambda report: bool(report.stone and report.stone.carat_weight is not None)),
+        coverage("color_grade", "Колір", lambda report: bool(report.stone and report.stone.color_grade is not None)),
+        coverage("clarity_grade", "Чистота", lambda report: bool(report.stone and report.stone.clarity_grade is not None)),
+        coverage("geometry", "Геометрія", lambda report: bool(report.stone and all(value is not None for value in (report.stone.table_percent, report.stone.depth_percent, report.stone.crown_angle, report.stone.pavilion_angle)))),
+    ]
+    optional = [
+        coverage("origin_assessed", "Походження визначено", lambda report: bool(report.stone and report.stone.origin != "unknown")),
+        coverage("treatment_assessed", "Ознаки обробки оцінено", lambda report: bool(report.stone and report.stone.treatment_status != "not_assessed")),
+        coverage("identification_method", "Метод ідентифікації", lambda report: bool(report.stone and narrative_quality.normalize_text(report.stone.identification_method))),
+        coverage("identification_conclusion", "Висновок ідентифікації", lambda report: bool(report.stone and narrative_quality.normalize_text(report.stone.identification_conclusion))),
+        coverage("expert_comment", "Коментар експерта", lambda report: bool(narrative_quality.normalize_text(report.expert_comment))),
+    ]
+    return required, optional
+
+
+def get_demo_operational_quality_analytics(
+    db: Session, *, dataset_id: str, date_from: date | None, date_to: date | None,
+) -> schemas.OperationalQualityAnalyticsResponse:
+    """Describe one synthetic dataset with the same aggregate contract as operational quality."""
+    require_demo_dataset_analysis_eligibility(db, dataset_id=dataset_id, scenario="demo_operations")
+    start = datetime.combine(date_from, time.min) if date_from is not None else None
+    end = datetime.combine(date_to + timedelta(days=1), time.min) if date_to is not None else None
+    reports_query = db.query(models.DiamondReport).options(joinedload(models.DiamondReport.stone)).filter(
+        models.DiamondReport.record_scope == "demo", models.DiamondReport.demo_dataset_id == dataset_id,
+    )
+    if start is not None:
+        reports_query = reports_query.filter(models.DiamondReport.report_date >= start)
+    if end is not None:
+        reports_query = reports_query.filter(models.DiamondReport.report_date < end)
+    reports = reports_query.order_by(models.DiamondReport.report_id).all()
+    required, optional = _quality_coverage(reports)
+    events_query = db.query(models.DemoWorkflowEvent).filter(models.DemoWorkflowEvent.dataset_id == dataset_id)
+    if start is not None:
+        events_query = events_query.filter(models.DemoWorkflowEvent.occurred_at >= start)
+    if end is not None:
+        events_query = events_query.filter(models.DemoWorkflowEvent.occurred_at < end)
+    events = events_query.order_by(models.DemoWorkflowEvent.workflow_event_id).all()
+    returns = [event for event in events if event.action == "review_returned"]
+    return_counts: dict[str, int] = {}
+    for event in returns:
+        return_counts[event.report_id] = return_counts.get(event.report_id, 0) + 1
+    current_reviews = db.query(models.DiamondReport).filter(
+        models.DiamondReport.record_scope == "demo", models.DiamondReport.demo_dataset_id == dataset_id,
+        models.DiamondReport.status == "review",
+    ).all()
+    return schemas.OperationalQualityAnalyticsResponse(
+        scope="demo", date_from=date_from, date_to=date_to, report_cohort_count=len(reports),
+        current_status_counts=_quality_status_counts(reports), required_field_coverage=required, optional_field_coverage=optional,
+        workflow_created_count=sum(event.action == "draft_completed" for event in events),
+        workflow_sent_to_review_count=sum(event.action == "draft_completed" for event in events),
+        workflow_issued_count=sum(event.action == "review_completed" for event in events),
+        workflow_returned_to_draft_count=len(returns), workflow_voided_count=sum(event.action == "review_voided" for event in events),
+        workflow_repeat_return_count=sum(count - 1 for count in return_counts.values() if count > 1),
+        current_review_count=len(current_reviews), oldest_current_review_started_at=None,
+        reports_with_media_count=0, active_public_passport_count=0, issued_without_active_passport_count=0,
+        delivery_is_modeled=False,
+    )
 def _legacy_origin_code(origin: str) -> int:
     return {"natural": 0, "lab_grown": 1, "unknown": 2, "other": 3}[origin]
 
@@ -1653,28 +1724,8 @@ def get_operational_quality_analytics(
         reports_query = reports_query.filter(models.DiamondReport.created_at < end)
     reports = reports_query.order_by(models.DiamondReport.report_id).all()
 
-    def coverage(key: str, label: str, predicate) -> schemas.OperationalCoverageMetric:
-        filled = sum(bool(predicate(report)) for report in reports)
-        return schemas.OperationalCoverageMetric(
-            key=key, label=label, applicable_count=len(reports), filled_count=filled,
-            missing_count=len(reports) - filled,
-        )
-
-    status_counts = {status: sum(report.status == status for report in reports) for status in ("draft", "review", "issued", "void")}
-    required = [
-        coverage("shape", "Форма", lambda report: bool(report.stone and report.stone.shape)),
-        coverage("carat_weight", "Вага", lambda report: bool(report.stone and report.stone.carat_weight is not None)),
-        coverage("color_grade", "Колір", lambda report: bool(report.stone and report.stone.color_grade is not None)),
-        coverage("clarity_grade", "Чистота", lambda report: bool(report.stone and report.stone.clarity_grade is not None)),
-        coverage("geometry", "Геометрія", lambda report: bool(report.stone and all(value is not None for value in (report.stone.table_percent, report.stone.depth_percent, report.stone.crown_angle, report.stone.pavilion_angle)))),
-    ]
-    optional = [
-        coverage("origin_assessed", "Походження визначено", lambda report: bool(report.stone and report.stone.origin != "unknown")),
-        coverage("treatment_assessed", "Ознаки обробки оцінено", lambda report: bool(report.stone and report.stone.treatment_status != "not_assessed")),
-        coverage("identification_method", "Метод ідентифікації", lambda report: bool(report.stone and narrative_quality.normalize_text(report.stone.identification_method))),
-        coverage("identification_conclusion", "Висновок ідентифікації", lambda report: bool(report.stone and narrative_quality.normalize_text(report.stone.identification_conclusion))),
-        coverage("expert_comment", "Коментар експерта", lambda report: bool(narrative_quality.normalize_text(report.expert_comment))),
-    ]
+    status_counts = _quality_status_counts(reports)
+    required, optional = _quality_coverage(reports)
 
     events_query = (
         db.query(models.ReportEvent)
@@ -1709,7 +1760,7 @@ def get_operational_quality_analytics(
         .all() if event.created_at is not None
     ] if current_reviews else []
     return schemas.OperationalQualityAnalyticsResponse(
-        date_from=date_from, date_to=date_to, report_cohort_count=len(reports),
+        scope="operational", date_from=date_from, date_to=date_to, report_cohort_count=len(reports),
         current_status_counts=status_counts, required_field_coverage=required, optional_field_coverage=optional,
         workflow_created_count=sum(event.action == "created" for event in events),
         workflow_sent_to_review_count=sum(event.to_status == "review" for event in events),
@@ -1721,6 +1772,7 @@ def get_operational_quality_analytics(
         oldest_current_review_started_at=min(review_starts) if review_starts else None,
         reports_with_media_count=len(media_report_ids), active_public_passport_count=len(active_passport_ids),
         issued_without_active_passport_count=sum(report.status == "issued" and report.report_id not in active_passport_ids for report in reports),
+        delivery_is_modeled=True,
     )
 
 

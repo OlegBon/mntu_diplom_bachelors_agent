@@ -1,6 +1,6 @@
 import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getNarrativeQualityAnalytics, getOperationalProviderAnalytics, getOperationalQualityAnalytics } from "./api.js";
 import { logout } from "./auth.js";
-import { duration, element, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderTable } from "./analytics-ui.js";
+import { duration, element, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
 
 function fullName(row) {
   return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || "Не вказано";
@@ -183,52 +183,6 @@ function renderCurrencySources(container, snapshots, dialog, dialogContent) {
   renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatCurrencyDateTime);
 }
 
-function renderCoverageTable(title, rows) {
-  const section = element("section", "analytics-quality-section");
-  section.append(element("h3", "", title));
-  const tableHost = element("div", "analytics-quality-table");
-  renderTable(tableHost, ["Поле", "Заповнено", "Немає"], rows.map((row) => [
-    row.label, `${row.filled_count} із ${row.applicable_count}`, String(row.missing_count),
-  ]));
-  section.append(tableHost);
-  return section;
-}
-
-function renderOperationalQuality(container, snapshot) {
-  const fragment = document.createDocumentFragment();
-  const workflow = element("section", "analytics-quality-section");
-  workflow.append(element("h3", "", "Workflow у вибраному періоді"));
-  const metrics = element("dl", "analytics-metrics");
-  [
-    ["Створено", snapshot.workflow_created_count], ["Передано на перевірку", snapshot.workflow_sent_to_review_count],
-    ["Повернено у чернетку", snapshot.workflow_returned_to_draft_count], ["Видано", snapshot.workflow_issued_count],
-    ["Анульовано", snapshot.workflow_voided_count], ["Повторні повернення", snapshot.workflow_repeat_return_count],
-  ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
-  workflow.append(metrics, element("p", "account-help", "Події рахуються за часом lifecycle event. Причини переходів і тексти не показуються."));
-
-  const current = element("section", "analytics-quality-section");
-  current.append(element("h3", "", "Поточний стан когорти"));
-  const currentMetrics = element("dl", "analytics-metrics");
-  [
-    ["Звітів створено у зрізі", snapshot.report_cohort_count], ["Чернетки", snapshot.current_status_counts.draft],
-    ["На перевірці", snapshot.current_status_counts.review], ["Видано", snapshot.current_status_counts.issued],
-    ["Анульовано", snapshot.current_status_counts.void], ["Поточна черга всіх operational звітів", snapshot.current_review_count],
-    ["Найдавніший початок поточної перевірки", dateTime(snapshot.oldest_current_review_started_at) || "Немає"],
-  ].forEach(([label, value]) => currentMetrics.append(element("dt", "", label), element("dd", "", String(value))));
-  current.append(currentMetrics, element("p", "account-help", "Статус належить звітам, створеним у зрізі. Черга перевірки — поточний глобальний стан, а не історичний лічильник."));
-
-  const delivery = element("section", "analytics-quality-section");
-  delivery.append(element("h3", "", "Готовність delivery"));
-  const deliveryMetrics = element("dl", "analytics-metrics");
-  [
-    ["Звіти з приватними media", snapshot.reports_with_media_count], ["Активні публічні паспорти", snapshot.active_public_passport_count],
-    ["Видані без активного паспорта", snapshot.issued_without_active_passport_count],
-  ].forEach(([label, value]) => deliveryMetrics.append(element("dt", "", label), element("dd", "", String(value))));
-  delivery.append(deliveryMetrics, element("p", "account-help", "Показано технічну готовність приватних media та поточного публічного паспорта; перегляди або відвідувачі не відстежуються."));
-
-  fragment.append(workflow, current, renderCoverageTable("Обов’язкові поля", snapshot.required_field_coverage), renderCoverageTable("Додаткові поля", snapshot.optional_field_coverage), delivery);
-  container.replaceChildren(fragment);
-}
 
 export async function initAnalytics() {
   const page = document.querySelector("[data-analytics-page]");
@@ -284,7 +238,7 @@ export async function initAnalytics() {
         reportHref: (reportId) => `/report-detail.html?id=${encodeURIComponent(reportId)}`,
         formatDateTime: dateTime,
       });
-      renderOperationalQuality(qualityResults, quality);
+      renderOperationalQuality(qualityResults, quality, { formatDateTime: dateTime });
       renderAdmins(adminResults, admins);
       renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
       renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);

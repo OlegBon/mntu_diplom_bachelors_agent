@@ -4,6 +4,12 @@
 workflow та повноти operational звітів. Вона не оцінює людей, не аналізує зміст
 коментарів, не створює rating і не відстежує відвідувачів публічного паспорта.
 
+Той самий response contract і frontend renderer використовує «Демо → Операції
+та якість», але лише для exact opted-in synthetic dataset. Там події є
+детермінованим lifecycle, а delivery (`private media`, passport, QR, PDF) та
+age поточної черги позначаються «Не моделюється» — вони не підміняються нулями
+або operational facts.
+
 ## Що показує
 
 | Блок | Що вимірює | Джерело дати / population |
@@ -53,4 +59,7 @@ SOM, benchmark, ціну, forecast чи investment category. Provider freshness 
 `backend/main.py` захищає route через `require_admin`; агрегація живе у
 `backend/crud.py:get_operational_quality_analytics`, response contract — у
 `OperationalQualityAnalyticsResponse`. Frontend використовує лише цей
-агрегований API через `getOperationalQualityAnalytics`.
+агрегований API через `getOperationalQualityAnalytics`. Demo route
+`/demo/datasets/{dataset_id}/operational-quality` має opaque opted-in admin
+gate та перевірку manifest scenario; він використовує
+`get_demo_operational_quality_analytics`, не читаючи operational records.

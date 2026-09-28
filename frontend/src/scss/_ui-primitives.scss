@@ -452,6 +452,7 @@ input[type="number"]::-webkit-outer-spin-button {
   .analytics-quality-section:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
   .analytics-quality-section h3 { margin: 0 0 variables.$space-4; color: variables.$text-strong; font-size: 1rem; }
   .analytics-quality-table { max-width: 46rem; }
+  .analytics-quality-table .analytics-table { min-width: 0; }
   .analytics-admin-card { border: 1px solid variables.$border-color; padding: 1.25rem; }
   .analytics-admin-card h3 { margin: 0 0 variables.$space-4; color: variables.$text-strong; font-size: 1rem; }
   .analytics-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: variables.$space-3 variables.$space-6; margin: 0 0 1.25rem; }

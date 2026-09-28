@@ -218,6 +218,7 @@ class OperationalCoverageMetric(BaseModel):
 
 
 class OperationalQualityAnalyticsResponse(BaseModel):
+    scope: Literal["operational", "demo"]
     date_from: Optional[date]
     date_to: Optional[date]
     report_cohort_count: int
@@ -235,6 +236,7 @@ class OperationalQualityAnalyticsResponse(BaseModel):
     reports_with_media_count: int
     active_public_passport_count: int
     issued_without_active_passport_count: int
+    delivery_is_modeled: bool
 
 # Схема для токена (JWT)
 class Token(BaseModel):

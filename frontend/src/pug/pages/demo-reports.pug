@@ -11,6 +11,7 @@ block content
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-stones-panel" id="demo-tab-stones" data-demo-tab="stones") Камені
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-experts-panel" id="demo-tab-experts" data-demo-tab="experts") Експерти
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-narratives-panel" id="demo-tab-narratives" data-demo-tab="narratives") Тексти
+            button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-quality-panel" id="demo-tab-quality" data-demo-tab="quality") Операції та якість
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-administrators-panel" id="demo-tab-administrators" data-demo-tab="administrators") Адміністратори
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-providers-panel" id="demo-tab-providers" data-demo-tab="providers") Провайдери
             button.analytics-tabs__tab(type="button" role="tab" aria-selected="false" aria-controls="demo-currency-panel" id="demo-tab-currency" data-demo-tab="currency") Валютні джерела
@@ -147,6 +148,14 @@ block content
                 |  Поточні synthetic значення беруться з demo-звітів у зрізі; коментарі подій — лише з synthetic lifecycle events у зрізі.
             #demo-narratives-status.dashboard-status(role="status" aria-live="polite")
             #demo-narratives-results(aria-live="polite")
+        section#demo-quality-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-quality")
+            h2 Synthetic операції та повнота даних
+            p.account-help Лише агреговані deterministic workflow facts і покриття synthetic полів. Це не оцінка реальних людей, не рейтинг якості текстів і не public tracking.
+            p.demo-scope__notice(role="note")
+                strong DEMO · SYNTHETIC OPERATIONS
+                |  Використовується той самий ізольований dataset і зріз дат. Private storage, public passports, QR, PDF та відвідувачі не моделюються.
+            #demo-quality-status.dashboard-status(role="status" aria-live="polite")
+            #demo-quality-results(aria-live="polite")
         section#demo-administrators-panel.account-surface.analytics-panel(hidden role="tabpanel" aria-labelledby="demo-tab-administrators")
             h2 Synthetic перевірки адміністраторів
             p.account-help Тривалість — відтворюваний synthetic інтервал перевірки, а не вимір фактичного активного часу людини.

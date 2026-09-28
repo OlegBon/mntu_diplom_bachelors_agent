@@ -103,6 +103,63 @@ export function renderNarrativeAnalytics(container, snapshot, { reportHref, form
   container.replaceChildren(cards);
 }
 
+function renderCoverageTable(title, rows) {
+  const section = element("section", "analytics-quality-section");
+  section.append(element("h3", "", title));
+  const tableHost = element("div", "analytics-quality-table");
+  renderTable(tableHost, ["Поле", "Заповнено", "Немає"], rows.map((row) => [
+    row.label, `${row.filled_count} із ${row.applicable_count}`, String(row.missing_count),
+  ]));
+  section.append(tableHost);
+  return section;
+}
+
+export function renderOperationalQuality(container, snapshot, { formatDateTime }) {
+  const isDemo = snapshot.scope === "demo";
+  const fragment = document.createDocumentFragment();
+  const workflow = element("section", "analytics-quality-section");
+  workflow.append(element("h3", "", isDemo ? "Synthetic workflow у вибраному періоді" : "Workflow у вибраному періоді"));
+  const metrics = element("dl", "analytics-metrics");
+  [
+    [isDemo ? "Завершено synthetic чернетку" : "Створено", snapshot.workflow_created_count],
+    [isDemo ? "Передано до synthetic review" : "Передано на перевірку", snapshot.workflow_sent_to_review_count],
+    ["Повернено у чернетку", snapshot.workflow_returned_to_draft_count], ["Видано", snapshot.workflow_issued_count],
+    ["Анульовано", snapshot.workflow_voided_count], ["Повторні повернення", snapshot.workflow_repeat_return_count],
+  ].forEach(([label, value]) => metrics.append(element("dt", "", label), element("dd", "", String(value))));
+  workflow.append(metrics, element("p", "account-help", isDemo
+    ? "Події — детермінований synthetic lifecycle dataset, а не робота реальних людей. Причини переходів і тексти не показуються."
+    : "Події рахуються за часом lifecycle event. Причини переходів і тексти не показуються."));
+
+  const current = element("section", "analytics-quality-section");
+  current.append(element("h3", "", "Поточний стан когорти"));
+  const currentMetrics = element("dl", "analytics-metrics");
+  [
+    [isDemo ? "Demo-звітів у зрізі" : "Звітів створено у зрізі", snapshot.report_cohort_count], ["Чернетки", snapshot.current_status_counts.draft],
+    ["На перевірці", snapshot.current_status_counts.review], ["Видано", snapshot.current_status_counts.issued],
+    ["Анульовано", snapshot.current_status_counts.void], [isDemo ? "Поточна synthetic черга" : "Поточна черга всіх operational звітів", snapshot.current_review_count],
+    ["Найдавніший початок поточної перевірки", formatDateTime(snapshot.oldest_current_review_started_at) || "Не моделюється"],
+  ].forEach(([label, value]) => currentMetrics.append(element("dt", "", label), element("dd", "", String(value))));
+  current.append(currentMetrics, element("p", "account-help", isDemo
+    ? "Статус належить synthetic звітам, датованим у зрізі. Historical queue age для demo не моделюється."
+    : "Статус належить звітам, створеним у зрізі. Черга перевірки — поточний глобальний стан, а не історичний лічильник."));
+
+  const delivery = element("section", "analytics-quality-section");
+  delivery.append(element("h3", "", "Готовність delivery"));
+  const deliveryMetrics = element("dl", "analytics-metrics");
+  if (snapshot.delivery_is_modeled) {
+    [["Звіти з приватними media", snapshot.reports_with_media_count], ["Активні публічні паспорти", snapshot.active_public_passport_count], ["Видані без активного паспорта", snapshot.issued_without_active_passport_count]]
+      .forEach(([label, value]) => deliveryMetrics.append(element("dt", "", label), element("dd", "", String(value))));
+  } else {
+    [["Private media", "Не моделюється"], ["Публічний паспорт", "Не моделюється"], ["Готовність delivery", "Не моделюється"]]
+      .forEach(([label, value]) => deliveryMetrics.append(element("dt", "", label), element("dd", "", value)));
+  }
+  delivery.append(deliveryMetrics, element("p", "account-help", snapshot.delivery_is_modeled
+    ? "Показано технічну готовність приватних media та поточного публічного паспорта; перегляди або відвідувачі не відстежуються."
+    : "Synthetic dataset не моделює private storage, public URL, QR, PDF чи відвідувачів."));
+  fragment.append(workflow, current, renderCoverageTable("Обов’язкові поля", snapshot.required_field_coverage), renderCoverageTable("Додаткові поля", snapshot.optional_field_coverage), delivery);
+  container.replaceChildren(fragment);
+}
+
 export function renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatDateTime, tableClass = "") {
   container.replaceChildren();
   if (!snapshots.length) {
