@@ -40,7 +40,6 @@
 
 | Пріоритет | Файл | Тема |
 | --- | --- | --- |
-| P3 | [170-guides-information-architecture.md](./170-guides-information-architecture.md) | Перенесення пояснювальної документації у guides без дублювання ADR/architecture/backlog. |
 | P2 | [166-synthetic-demo-backup-and-historical-reclassification.md](./166-synthetic-demo-backup-and-historical-reclassification.md) | Backup, restore verification і контрольована класифікація historical synthetic `DR-*`. |
 | P2 | [141-idex-online-trial-readiness-and-mockup.md](./141-idex-online-trial-readiness-and-mockup.md) | IDEX trial readiness, English mock-up, attribution і branding boundary. |
 | P2 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |

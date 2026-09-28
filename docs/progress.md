@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — guides-information-architecture
+
+- **Задача:** завершити 170 — зробити `docs/guides/` практичним current-state шаром без дублювання architecture, ADR, backlog або progress.
+- **Змінені файли:** `docs/guides/{README,frontend-guide,backend-api-guide,database-guide,testing-guide}.md`, `docs/{progress,work_plan}.md`, `docs/backlog/README.md`; active backlog file `170-guides-information-architecture.md` removed.
+- **Рішення / Результат:** додано короткі guides із звіреними фрагментами реального коду: central frontend API client і `.form-actions`; FastAPI dependency/RBAC/commit boundary; SQLAlchemy schema/session і Alembic scope-bound migration; SQLite-isolated pytest, jsdom і Playwright layers. Guides посилаються на architecture для системних меж, ADR/backlog для рішень і майбутньої роботи, а не копіюють їх.
+- **Перевірки:** `python scripts/check_doc_links.py` — OK; `git diff --check` — без помилок.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** документація описує лише реалізовану local-MVP поведінку; production auth, PostgreSQL/cloud і real analytics не подаються як готові.
+
 ## 2026-09-28 — ui-spacing-and-layout-consistency
 
 - **Задача:** завершити 169 — уніфікувати сутності інтерфейсу, вертикальний ритм і responsive поведінку без зміни flows, API чи доменних даних.
