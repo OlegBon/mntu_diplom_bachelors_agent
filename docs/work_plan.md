@@ -117,7 +117,7 @@
 - [x] 159 — Synthetic SOM demo: reproducible admin-only SOM у вкладці «Камені»: policy-gated immutable artifact, report selection, пояснюваний profile і друга thematic карта медіанного дозволеного synthetic `USD/ct` за тими самими координатами. Не заміна 151–153.
 - [x] 171 — Session resilience і production auth: local MVP не скидає сесію на transient API failure; production refresh-session flow лишається окремим наступним етапом.
 - [x] 165 — Synthetic demo provider analytics: `Demo Market A/B` coverage/provenance у відокремленій вкладці через scope-bound read-only contract, спільний date slice лише для відповідних analytics tabs та окремий read-only таб НБУ FX snapshots; real adapter можливий лише після окремого provider permission/policy gate.
-- [ ] [166 — Backup і historical synthetic reclassification](./backlog/166-synthetic-demo-backup-and-historical-reclassification.md): logical backup, restore verification, exact allow-list dry-run і окремо підтверджуваний scope-only backfill/rollback для legacy `DR-*`; не блокує demo-аналітику.
+- [x] 166 — Backup і safety gate historical synthetic: verified logical backup/restore трьох local databases, fail-closed reviewed allow-list dry-run і documented future scope-only backfill/rollback для legacy `DR-*`; самі historical records не змінено, рішення відкладено до нормальних operational reports або окремо погоджених fixtures.
 - [ ] [163 — Provider operations and coverage analytics](./backlog/163-provider-operations-and-coverage-analytics.md): admin tab freshness, operation outcome і coverage після 122/162.
 - [ ] [160 — Platform і stack decision](./backlog/160-platform-and-stack-decision.md): після локального verified experiment 152 підтвердити FastAPI + Gulp/Pug/JS для staging, cloud topology та критерії майбутнього Vite/TypeScript без передчасного rewrite.
 - [ ] [161 — PostgreSQL migration і staging](./backlog/161-postgresql-migration-and-staging.md): після 152, рішення 160 і CI gate 137 виконати migration, integrity/dry-run/rollback, staging runtime й інтеграцію 140 scheduler-а.
@@ -128,13 +128,10 @@
 
 ### Рекомендована черга активних задач
 
-2. Незалежні контури, які можна планувати окремо: `166` (P2 safety gate перед
-   будь-якою historical synthetic reclassification `DR-*`). `166` не є неявною
-   частиною demo-аналітики.
-3. Provider-напрям: `163` — operations/coverage для наявних real і demo provider
+2. Provider-напрям: `163` — operations/coverage для наявних real і demo provider
    records після 122/162; `141` може готувати English IDEX mock-up паралельно, але
    не відкриває live IDEX без письмового approval.
-4. Наступні продуктові та аналітичні контури: `145` — лише після 146 і рішення
+3. Наступні продуктові та аналітичні контури: `145` — лише після 146 і рішення
    `160`; `154` і `155` — незалежні контури; `151 → 152 → 153` — ліцензований
    data contract, верифікований експеримент і лише тоді descriptive analytics для
    реальних даних.

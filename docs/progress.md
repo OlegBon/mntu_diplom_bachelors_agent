@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-28 — historical-synthetic-safety
+
+- **Задача:** завершити 166 — підготувати backup/restore safety gate для legacy synthetic `DR-00001…DR-01000`, не очищаючи й не перекласифіковуючи їх.
+- **Змінені файли:** `scripts/historical_synthetic_reclassification.py`, `tests/unit/test_historical_synthetic_reclassification.py`, `docs/guides/{README,demo-dataset-operations,historical-synthetic-safety}.md`, `docs/{progress,work_plan}.md`, `docs/backlog/README.md`; active backlog file `166-synthetic-demo-backup-and-historical-reclassification.md` removed.
+- **Рішення / Результат:** додано fail-closed read-only dry-run: лише вручну reviewed manifest із тотожними `reviewed_candidate_ids` та `approved_report_ids` приймається як майбутній точний scope; префікс, дата, ціна й автор не є synthetic-евристиками. Скрипт не має DML, commit, `--apply` чи `--rollback`; він фіксує SHA-256 списку, missing/non-operational IDs, Stone completeness та кількості залежностей. Новий guide задає contract logical backup усіх трьох local databases, disposable restore parity, майбутній immutable `synthetic-legacy-v1` і вузький write/rollback лише для `record_scope`/`demo_dataset_id`. Фактичний backup створено поза Git; він відновлений у disposable MariaDB `127.0.0.1:3307`, після чого temporary data-directory видалено. Source і restore збіглися: Alembic `0020_demo_provider_analytics_eligibility`, 30 tables, 2 009 reports/Stones, 3 045 events, 2 008 valuations і 1 market snapshot. Historical rows не змінено.
+- **Перевірки:** `pytest tests/unit/test_historical_synthetic_reclassification.py tests/unit/test_demo_seed_inventory.py` — 3 passed; `compileall` нового скрипта — OK; `scripts/check_doc_links.py` — OK; `git diff --check` — без помилок. `inventory_demo_seed.py` на source і restored copy: 1 000 expected `DR-*`, без missing/unexpected IDs, records без Stone чи orphan events; 9 `DR-01001+` лишаються operational і поза scope. SHA-256 backup зафіксовано поруч із приватним SQL dump.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** reviewed manifest і будь-який backfill навмисно не створювалися: рішення про долю legacy records відкладається до появи нормальних operational reports або окремо погоджених fixtures. Майбутній apply/rollback потребує нових backup + restore + dry-run і нового явного підтвердження; ця задача не змінює production disaster-recovery policy.
+
 ## 2026-09-28 — guides-information-architecture
 
 - **Задача:** завершити 170 — зробити `docs/guides/` практичним current-state шаром без дублювання architecture, ADR, backlog або progress.
