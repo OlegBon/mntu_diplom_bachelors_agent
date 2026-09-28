@@ -735,6 +735,44 @@ def get_demo_report_domain(
     return report
 
 
+def _empty_status_transition_report_ids(
+    db: Session, *, date_from: date | None, date_to: date | None,
+) -> set[str]:
+    """Return operational status-change reports whose reason normalizes to empty."""
+    query = (
+        db.query(models.ReportEvent.report_id, models.ReportEvent.reason)
+        .join(models.DiamondReport, models.ReportEvent.report_id == models.DiamondReport.report_id)
+        .filter(
+            models.DiamondReport.record_scope == "operational",
+            models.ReportEvent.action == "status_changed",
+        )
+    )
+    if date_from is not None:
+        query = query.filter(models.ReportEvent.created_at >= datetime.combine(date_from, time.min))
+    if date_to is not None:
+        query = query.filter(models.ReportEvent.created_at < datetime.combine(date_to + timedelta(days=1), time.min))
+    return {report_id for report_id, reason in query.all() if not narrative_quality.normalize_text(reason)}
+
+
+def _filter_empty_narratives(
+    reports: list[models.DiamondReport], *, fields: set[str], empty_transition_report_ids: set[str],
+) -> list[models.DiamondReport]:
+    """Use the same whitespace normalization as narrative metadata analytics."""
+    def is_empty(value: str | None) -> bool:
+        return not narrative_quality.normalize_text(value)
+
+    def matches(report: models.DiamondReport) -> bool:
+        stone = report.stone
+        return (
+            ("identification_method" in fields and is_empty(stone.identification_method if stone else None))
+            or ("identification_conclusion" in fields and is_empty(stone.identification_conclusion if stone else None))
+            or ("expert_comment" in fields and is_empty(report.expert_comment))
+            or ("status_transition_reason" in fields and report.report_id in empty_transition_report_ids)
+        )
+
+    return [report for report in reports if matches(report)]
+
+
 def get_report_domain_list(
     db: Session,
     *,
@@ -752,6 +790,7 @@ def get_report_domain_list(
     price_max: Decimal | None,
     date_from: date | None,
     date_to: date | None,
+    empty_narrative: list[schemas.NarrativeCompletenessFilter],
     expert_id: int | None,
     search: str | None,
     sort: schemas.ReportListSort,
@@ -836,13 +875,24 @@ def get_report_domain_list(
         "market_status_asc": (asc(models.Stone.market_status), asc(models.DiamondReport.report_id)),
         "market_status_desc": (desc(models.Stone.market_status), desc(models.DiamondReport.report_id)),
     }
-    total = query.count()
-    reports = (
-        query.order_by(*sort_columns[sort])
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
-    )
+    if empty_narrative:
+        reports = _filter_empty_narratives(
+            query.order_by(*sort_columns[sort]).all(),
+            fields=set(empty_narrative),
+            empty_transition_report_ids=_empty_status_transition_report_ids(
+                db, date_from=date_from, date_to=date_to,
+            ) if "status_transition_reason" in empty_narrative else set(),
+        )
+        total = len(reports)
+        reports = reports[(page - 1) * page_size:page * page_size]
+    else:
+        total = query.count()
+        reports = (
+            query.order_by(*sort_columns[sort])
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
     _attach_latest_market_reference_summaries(db, reports)
     return reports, total
 
@@ -853,7 +903,7 @@ def get_demo_report_domain_list(
     color_grade: int | None, clarity_grade: int | None, cut_grade: int | None,
     carat_min: Decimal | None, carat_max: Decimal | None,
     price_min: Decimal | None, price_max: Decimal | None,
-    date_from: date | None, date_to: date | None, search: str | None,
+    date_from: date | None, date_to: date | None, empty_narrative: list[schemas.NarrativeCompletenessFilter], search: str | None,
     sort: schemas.ReportListSort,
 ) -> tuple[list[models.DiamondReport], int]:
     """Return one isolated demonstration dataset; never mix it with operations."""
@@ -902,7 +952,6 @@ def get_demo_report_domain_list(
         query = query.filter(models.DiamondReport.report_date < datetime.combine(date_to + timedelta(days=1), time.min))
     if search:
         query = query.filter(models.DiamondReport.report_id.ilike(f"%{search.strip()}%"))
-    total = query.count()
     sort_columns = {
         "report_date_desc": (desc(models.DiamondReport.report_date), desc(models.DiamondReport.report_id)),
         "report_date_asc": (asc(models.DiamondReport.report_date), asc(models.DiamondReport.report_id)),
@@ -925,12 +974,24 @@ def get_demo_report_domain_list(
         "market_status_asc": (asc(models.Stone.market_status), asc(models.DiamondReport.report_id)),
         "market_status_desc": (desc(models.Stone.market_status), desc(models.DiamondReport.report_id)),
     }
-    reports = (
-        query.order_by(*sort_columns[sort])
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
-    )
+    if empty_narrative:
+        reports = _filter_empty_narratives(
+            query.order_by(*sort_columns[sort]).all(),
+            fields=set(empty_narrative),
+            # DemoWorkflowEvent deliberately has no free-text reason; it must not
+            # be reinterpreted as an empty operational transition comment.
+            empty_transition_report_ids=set(),
+        )
+        total = len(reports)
+        reports = reports[(page - 1) * page_size:page * page_size]
+    else:
+        total = query.count()
+        reports = (
+            query.order_by(*sort_columns[sort])
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
     _attach_latest_market_reference_summaries(db, reports)
     return reports, total
 

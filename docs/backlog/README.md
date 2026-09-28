@@ -41,7 +41,6 @@
 | Пріоритет | Файл | Тема |
 | --- | --- | --- |
 | P2 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
-| P2 | [173-report-narrative-completeness-filters.md](./173-report-narrative-completeness-filters.md) | Shared private filters за порожніми текстовими полями для real і demo reports. |
 | P2 | [151-analytics-data-contract-and-quality.md](./151-analytics-data-contract-and-quality.md) | Ліцензії, dataset, target, quality і reproducible splits. |
 | P2 | [152-verified-ml-experiment.md](./152-verified-ml-experiment.md) | Baseline, validation, artifact та model-result provenance. |
 | P2 | [153-stone-analytics-visualization.md](./153-stone-analytics-visualization.md) | Private descriptive SOM / market segments після якісних даних. |

@@ -1,6 +1,7 @@
 import { ApiRequestError, getCurrentUser, getExperts, getGradeMappings, getReportDashboard } from "./api.js";
 import { logout } from "./auth.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
+import { applyNarrativeCompleteness, narrativeCompletenessFromUrl, readNarrativeCompleteness } from "./narrative-completeness-filters.js";
 
 const PAGE_SIZE = 25;
 const DEFAULT_SORT = "report_id_desc";
@@ -50,13 +51,15 @@ function getUrlState() {
     price_max: params.get("price_max") || "",
     date_from: params.get("date_from") || "",
     date_to: params.get("date_to") || "",
+    empty_narrative: narrativeCompletenessFromUrl(params),
   };
 }
 
 function updateUrl(state) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(state)) {
-    if (value && !(key === "page" && Number(value) === 1) && !(key === "sort" && value === DEFAULT_SORT)) params.set(key, String(value));
+    const serialized = Array.isArray(value) ? value.join(",") : String(value);
+    if (serialized && !(key === "page" && Number(serialized) === 1) && !(key === "sort" && serialized === DEFAULT_SORT)) params.set(key, serialized);
   }
   const query = params.toString();
   window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
@@ -325,7 +328,8 @@ export async function initDashboard() {
   searchInput.value = state.search;
   reportStatusSelect.value = state.report_status;
   saleStatusSelect.value = state.sold;
-  for (const control of [...form.elements].filter((element) => element.name)) control.value = state[control.name] || "";
+  for (const control of [...form.elements].filter((element) => element.name && element.name !== "empty_narrative")) control.value = state[control.name] || "";
+  applyNarrativeCompleteness(form, state.empty_narrative);
   const expertFilter = root.querySelector("#expert-filter-wrap");
   // This only prevents a visual layout shift. The API still determines the real role and access.
   if (expertFilter) expertFilter.hidden = localStorage.getItem("username") !== "admin";
@@ -393,10 +397,12 @@ export async function initDashboard() {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const advancedFilters = Object.fromEntries(new FormData(form).entries());
+    advancedFilters.empty_narrative = readNarrativeCompleteness(form);
     load({ ...state, ...advancedFilters, page: 1 });
   });
   form.addEventListener("reset", () => window.setTimeout(() => {
     const cleared = Object.fromEntries([...form.elements].filter((element) => element.name).map((element) => [element.name, ""]));
+    cleared.empty_narrative = [];
     load({ ...state, ...cleared, page: 1 });
   }, 0));
   if (toggleFilters && filtersPanel) {

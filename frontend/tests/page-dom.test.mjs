@@ -89,6 +89,8 @@ test("built dashboard exposes real list controls without mock rows", async () =>
   assert.equal(document.querySelector("#dashboard-filters")?.tagName, "FORM");
   assert.equal(document.querySelector("#report-search")?.getAttribute("type"), "search");
   assert.equal(document.querySelector("#toggle-filters")?.getAttribute("aria-controls"), "advanced-filters");
+  assert.equal(document.querySelectorAll("[name=empty_narrative]").length, 4);
+  assert.match(document.querySelector(".filter-item--narrative")?.textContent || "", /Подія зміни статусу без коментаря/);
   assert.equal(document.querySelector("#quick-report-status")?.tagName, "SELECT");
   assert.equal(document.querySelector("#quick-market-status")?.tagName, "SELECT");
   assert.equal(document.querySelector("#expert-filter-wrap")?.hasAttribute("hidden"), true);

@@ -83,12 +83,14 @@ test("getReportDashboard omits empty filters and forwards the bearer token", asy
   };
 
   await getReportDashboard(
-    { page: 1, page_size: 25, search: "", report_status: "", sort: "report_date_desc" },
+    { page: 1, page_size: 25, search: "", report_status: "", sort: "report_date_desc", empty_narrative: ["identification_method", "expert_comment"] },
     "test-token",
   );
 
   assert.match(requestedUrl, /page=1/);
   assert.doesNotMatch(requestedUrl, /search=|report_status=/);
+  assert.match(requestedUrl, /empty_narrative=identification_method/);
+  assert.match(requestedUrl, /empty_narrative=expert_comment/);
   assert.equal(requestedHeaders.Authorization, "Bearer test-token");
 });
 
