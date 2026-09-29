@@ -49,6 +49,15 @@ Backend запускають із кореня репозиторію через
 
 ---
 
+## CI межа
+
+`.github/workflows/ci.yml` запускає advisory GitHub Actions лише на pull
+request до `local-dev` або `main`, а також вручну. Він відокремлює Python,
+ephemeral MariaDB/Alembic, frontend, mock Playwright, isolated real Playwright
+і documentation jobs; не має deploy, secrets чи з'єднання з локальною або
+постійною database. Деталі flow і наступних repository settings — у
+[CI guide](./guides/continuous-integration.md).
+
 ## 3. Структура папок проєкту
 
 ```plaintext

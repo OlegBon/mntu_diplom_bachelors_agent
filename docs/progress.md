@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-29 — github-actions-ci-advisory
+
+- **Задача:** реалізувати 137 як advisory GitHub Actions gate для PR до `local-dev`/`main` до майбутнього staging.
+- **Змінені файли:** `.github/workflows/ci.yml`, `frontend/scripts/run-real-e2e.mjs`, `docs/{architecture,progress,work_plan,guides/{README,continuous-integration}.md}`.
+- **Рішення / Результат:** workflow не реагує на task-branch push; він запускається лише `pull_request` або `workflow_dispatch`, скасовує stale PR runs і має окремі jobs для Python, ephemeral MariaDB/Alembic, frontend, mock/real Playwright і docs. Немає deploy, secrets, local/production database чи provider calls. Real E2E runner приймає `PYTHON_EXECUTABLE`, тому Linux CI може використати `python`, а Windows local flow лишається незмінним. Runbook описує explicit merge-commit flow, artifacts тільки при failure і зовнішній five-run/billing/branch-protection handoff.
+- **Перевірки:** `compileall -q backend scripts` — OK; documentation links і `git diff --check` — OK. Локальний full `pytest` та Playwright flows стартували, але середовище зупиняє довгі командні виводи до їхнього фінального статусу; authoritative verification 137 — перший GitHub clean-run після push/PR. Workflow YAML перевірено структурним review; локальний YAML parser відсутній.
+- **Нові змінні середовища:** CI-only `PYTHON_EXECUTABLE=python` в job real E2E; не є `.env` або secret.
+- **Обмеження:** GitHub Actions ще не запущено, GitHub branch protection, budget alerts, spending limit і required checks навмисно не змінювалися. 137 залишається у backlog до п'яти зелених GitHub runs та окремого погодження repository settings.
+
 ## 2026-09-29 — narrative-filter-presence-mode
 
 - **Задача:** завершити 174 — дати private спискам звітів явний режим пошуку порожніх або заповнених обраних текстових полів.

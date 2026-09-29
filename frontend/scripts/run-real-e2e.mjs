@@ -11,7 +11,8 @@ const apiEnv = {
 const children = [];
 const frontendRoot = process.cwd();
 const projectRoot = path.resolve(frontendRoot, "..");
-const pythonExecutable = path.join(projectRoot, ".venv", "Scripts", "python.exe");
+const pythonExecutable = process.env.PYTHON_EXECUTABLE
+  || path.join(projectRoot, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
 const gulpExecutable = path.join(frontendRoot, "node_modules", "gulp", "bin", "gulp.js");
 const playwrightExecutable = path.join(frontendRoot, "node_modules", "@playwright", "test", "cli.js");
 const staticServer = path.join(frontendRoot, "scripts", "serve-real-e2e.mjs");
