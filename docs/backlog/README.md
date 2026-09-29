@@ -40,7 +40,6 @@
 
 | Пріоритет | Файл | Тема |
 | --- | --- | --- |
-| P1 | [174-narrative-filter-presence-mode.md](./174-narrative-filter-presence-mode.md) | Режим «Порожні / Заповнені» для private текстового фільтра та вирівняна action-зона. |
 | P2 | [145-internationalization-contract.md](./145-internationalization-contract.md) | English-first/Ukraine UI, state-preserving locale contract. |
 | P2 | [151-analytics-data-contract-and-quality.md](./151-analytics-data-contract-and-quality.md) | Ліцензії, dataset, target, quality і reproducible splits. |
 | P2 | [152-verified-ml-experiment.md](./152-verified-ml-experiment.md) | Baseline, validation, artifact та model-result provenance. |

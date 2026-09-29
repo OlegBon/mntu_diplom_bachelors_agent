@@ -437,6 +437,7 @@ ReportListSort = Literal[
 NarrativeCompletenessFilter = Literal[
     "identification_method", "identification_conclusion", "expert_comment", "status_transition_reason",
 ]
+NarrativePresence = Literal["empty", "filled"]
 
 
 class StoneDraft(BaseModel):
