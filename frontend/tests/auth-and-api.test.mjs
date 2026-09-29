@@ -22,6 +22,7 @@ import {
   updateMarketReferencePolicy,
 } from "../src/js/modules/api.js";
 import { checkAuth, logout } from "../src/js/modules/auth.js";
+import { narrativePresenceFromUrl } from "../src/js/modules/narrative-completeness-filters.js";
 
 function installBrowserStubs() {
   const storage = new Map();
@@ -83,7 +84,7 @@ test("getReportDashboard omits empty filters and forwards the bearer token", asy
   };
 
   await getReportDashboard(
-    { page: 1, page_size: 25, search: "", report_status: "", sort: "report_date_desc", empty_narrative: ["identification_method", "expert_comment"] },
+    { page: 1, page_size: 25, search: "", report_status: "", sort: "report_date_desc", empty_narrative: ["identification_method", "expert_comment"], narrative_presence: "filled" },
     "test-token",
   );
 
@@ -91,7 +92,14 @@ test("getReportDashboard omits empty filters and forwards the bearer token", asy
   assert.doesNotMatch(requestedUrl, /search=|report_status=/);
   assert.match(requestedUrl, /empty_narrative=identification_method/);
   assert.match(requestedUrl, /empty_narrative=expert_comment/);
+  assert.match(requestedUrl, /narrative_presence=filled/);
   assert.equal(requestedHeaders.Authorization, "Bearer test-token");
+});
+
+test("narrative presence URL mode defaults to empty and accepts filled", () => {
+  assert.equal(narrativePresenceFromUrl(new URLSearchParams()), "empty");
+  assert.equal(narrativePresenceFromUrl(new URLSearchParams("narrative_presence=filled")), "filled");
+  assert.equal(narrativePresenceFromUrl(new URLSearchParams("narrative_presence=other")), "empty");
 });
 
 test("wizard API reads protected references and the non-reserving next report ID", async () => {

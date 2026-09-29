@@ -33,6 +33,21 @@ def test_operational_report_list_filters_empty_current_text_and_date_scoped_tran
     db_session.query(models.DiamondReport).filter(
         models.DiamondReport.report_id == event_id,
     ).update({"report_date": datetime(2025, 2, 3, tzinfo=timezone.utc)})
+
+    event_filled = report_payload(confirmed=True)
+    event_filled["stone"]["identification_method"] = "Метод"
+    event_filled["stone"]["identification_conclusion"] = "Висновок"
+    event_filled["expert_comment"] = "Коментар"
+    event_filled_id = client.post("/reports", json=event_filled, headers=owner_headers).json()["report_id"]
+    assert client.post(
+        f"/reports/{event_filled_id}/transitions", json={"target_status": "review", "reason": "Перевірено"}, headers=owner_headers,
+    ).status_code == 200
+    db_session.query(models.ReportEvent).filter(
+        models.ReportEvent.report_id == event_filled_id, models.ReportEvent.action == "status_changed",
+    ).update({"created_at": datetime(2025, 2, 3, tzinfo=timezone.utc)})
+    db_session.query(models.DiamondReport).filter(
+        models.DiamondReport.report_id == event_filled_id,
+    ).update({"report_date": datetime(2025, 2, 3, tzinfo=timezone.utc)})
     db_session.commit()
 
     method = client.get("/reports", params=[("empty_narrative", "identification_method")], headers=owner_headers)
@@ -44,6 +59,28 @@ def test_operational_report_list_filters_empty_current_text_and_date_scoped_tran
     )
     assert event.status_code == 200
     assert [item["report_id"] for item in event.json()["items"]] == [event_id]
+
+    filled_event = client.get(
+        "/reports",
+        params=[
+            ("empty_narrative", "status_transition_reason"), ("narrative_presence", "filled"),
+            ("date_from", "2025-02-03"), ("date_to", "2025-02-03"),
+        ],
+        headers=owner_headers,
+    )
+    assert filled_event.status_code == 200
+    assert [item["report_id"] for item in filled_event.json()["items"]] == [event_filled_id]
+
+    filled_method = client.get(
+        "/reports",
+        params=[("empty_narrative", "identification_method"), ("narrative_presence", "filled")],
+        headers=admin_headers,
+    )
+    assert {item["report_id"] for item in filled_method.json()["items"]} == {event_id, event_filled_id}
+
+    assert client.get(
+        "/reports", params={"narrative_presence": "unknown"}, headers=owner_headers,
+    ).status_code == 422
 
     combined = client.get(
         "/reports", params=[("empty_narrative", "identification_method"), ("empty_narrative", "status_transition_reason")], headers=admin_headers,
@@ -69,6 +106,12 @@ def test_demo_report_list_is_dataset_bound_and_does_not_reinterpret_missing_even
     )
     assert event_only.status_code == 200
     assert event_only.json()["total"] == 0
+    filled = client.get(
+        f"/demo/datasets/{DATASET_ID}/reports",
+        params=[("empty_narrative", "identification_method"), ("narrative_presence", "filled")], headers=admin_headers,
+    )
+    assert filled.status_code == 200
+    assert filled.json()["total"] == 0
     assert client.get(
         f"/demo/datasets/{DATASET_ID}/reports", params=[("empty_narrative", "identification_method")], headers=auth_headers(client, experts["owner"].username),
     ).status_code == 404

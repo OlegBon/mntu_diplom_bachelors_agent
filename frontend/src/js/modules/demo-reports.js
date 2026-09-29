@@ -1,7 +1,7 @@
 import { getDemoDataset, getDemoReports, getDemoNarrativeQualityAnalytics, getDemoOperationalQualityAnalytics, getDemoProviderAnalytics, getDemoWorkflowAnalytics, getDemoSom, getFxDataSnapshots, getGradeMappings } from "./api.js";
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
-import { applyNarrativeCompleteness, narrativeCompletenessFromUrl, readNarrativeCompleteness } from "./narrative-completeness-filters.js";
+import { applyNarrativeCompleteness, narrativeCompletenessFromUrl, narrativePresenceFromUrl, readNarrativeCompleteness, readNarrativePresence } from "./narrative-completeness-filters.js";
 
 const PREFERRED_DATASET_ID = "synthetic-demo-v4";
 const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
@@ -31,6 +31,7 @@ function getUrlState() {
     date_from: params.get("date_from") || "",
     date_to: params.get("date_to") || "",
     empty_narrative: narrativeCompletenessFromUrl(params),
+    narrative_presence: narrativePresenceFromUrl(params),
     sort: params.get("sort") || "report_id_desc",
   };
 }
@@ -39,7 +40,7 @@ function updateUrl(state) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(state)) {
     const serialized = Array.isArray(value) ? value.join(",") : String(value);
-    if (serialized && !(key === "page" && Number(serialized) === 1)) params.set(key, serialized);
+    if (serialized && !(key === "page" && Number(serialized) === 1) && !(key === "narrative_presence" && serialized === "empty")) params.set(key, serialized);
   }
   const query = params.toString();
   window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
@@ -726,8 +727,8 @@ export async function initDemoReports() {
   search.value = state.search;
   status.value = state.report_status;
   marketStatus.value = state.market_status;
-  for (const control of [...form.elements].filter((element) => element.name && element.name !== "empty_narrative")) control.value = state[control.name] || "";
-  applyNarrativeCompleteness(form, state.empty_narrative);
+  for (const control of [...form.elements].filter((element) => element.name && !["empty_narrative", "narrative_presence"].includes(element.name))) control.value = state[control.name] || "";
+  applyNarrativeCompleteness(form, state.empty_narrative, state.narrative_presence);
 
   try {
     let dataset;
@@ -785,11 +786,13 @@ export async function initDemoReports() {
     event.preventDefault();
     const advancedFilters = Object.fromEntries(new FormData(form).entries());
     advancedFilters.empty_narrative = readNarrativeCompleteness(form);
+    advancedFilters.narrative_presence = readNarrativePresence(form);
     load({ ...state, ...advancedFilters, page: 1 });
   });
   form.addEventListener("reset", () => window.setTimeout(() => {
     const cleared = Object.fromEntries([...form.elements].filter((element) => element.name).map((element) => [element.name, ""]));
     cleared.empty_narrative = [];
+    cleared.narrative_presence = "empty";
     load({ ...state, ...cleared, page: 1 });
   }, 0));
   toggleFilters.addEventListener("click", () => {

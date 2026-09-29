@@ -384,6 +384,7 @@ def read_report_domain_list(
     date_from: Optional[date] = None,
     date_to: Optional[date] = None,
     empty_narrative: list[schemas.NarrativeCompletenessFilter] = Query(default=[]),
+    narrative_presence: schemas.NarrativePresence = "empty",
     expert_id: Optional[int] = Query(default=None, ge=1),
     search: Optional[str] = Query(default=None, min_length=1, max_length=20),
     sort: schemas.ReportListSort = "report_date_desc",
@@ -407,6 +408,7 @@ def read_report_domain_list(
         date_from=date_from,
         date_to=date_to,
         empty_narrative=empty_narrative,
+        narrative_presence=narrative_presence,
         expert_id=expert_id,
         search=search,
         sort=sort,
@@ -457,6 +459,7 @@ def read_demo_dataset_reports(
     date_from: Optional[date] = None,
     date_to: Optional[date] = None,
     empty_narrative: list[schemas.NarrativeCompletenessFilter] = Query(default=[]),
+    narrative_presence: schemas.NarrativePresence = "empty",
     search: Optional[str] = Query(default=None, min_length=1, max_length=50),
     sort: schemas.ReportListSort = "report_id_desc",
     db: Session = Depends(get_db),
@@ -471,7 +474,8 @@ def read_demo_dataset_reports(
         status=report_status, market_status=market_status, shape=shape,
         color_grade=color_grade, clarity_grade=clarity_grade, cut_grade=cut_grade,
         carat_min=carat_min, carat_max=carat_max, price_min=price_min,
-        price_max=price_max, date_from=date_from, date_to=date_to, empty_narrative=empty_narrative, search=search, sort=sort,
+        price_max=price_max, date_from=date_from, date_to=date_to, empty_narrative=empty_narrative,
+        narrative_presence=narrative_presence, search=search, sort=sort,
     )
     return schemas.ReportListResponse(
         items=reports,

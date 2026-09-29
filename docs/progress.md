@@ -5,6 +5,20 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-29 — narrative-filter-presence-mode
+
+- **Задача:** завершити 174 — дати private спискам звітів явний режим пошуку порожніх або заповнених обраних текстових полів.
+- **Змінені файли:** `backend/{crud,main,schemas}.py`, `frontend/src/{pug/includes/narrative-completeness-filter.pug,js/modules/{dashboard,demo-reports,narrative-completeness-filters}.js,scss/_ui-primitives.scss}`, `tests/api/test_narrative_completeness_filters.py`, `frontend/tests/{auth-and-api,demo-provider-analytics,page-dom}.test.mjs`, `docs/{architecture,progress,work_plan,guides/narrative-quality.md,backlog/README.md}`; active backlog file `174-narrative-filter-presence-mode.md` removed.
+- **Рішення / Результат:** shared control названо «Текстові поля» та містить явні radio «Порожні / Заповнені». `empty_narrative` лишається repeatable переліком полів, новий `narrative_presence` allow-listed як `empty|filled` і сумісно за замовчуванням має `empty`. Operational status transition перевіряє лише `status_changed.reason` у date slice; synthetic lifecycle не має comment і не підмінюється вигаданими даними. Desktop/tablet центрує кнопки, а mobile `<768px` залишає повну ширину. Жодних raw text, score, backfill або записів у БД задача не додає.
+- **Перевірки:** виконуються перед фінальним комітом: targeted pytest, Python compile, frontend test/build, link і diff checks.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** current текстові поля не мають revision history; для event-поля враховуються тільки status transitions, а не `created` чи `report_updated`.
+
+### UI уточнення після перевірки
+
+- **Змінені файли:** `frontend/src/{pug/includes/narrative-completeness-filter.pug,scss/_ui-primitives.scss}`, `docs/{progress,guides/narrative-quality}.md`.
+- **Рішення / Результат:** «Показувати:» і radio-опції розділено на два рядки; пояснення lifecycle-поля винесено під трьома колонками на всю ширину «Текстових полів» з компактним верхнім відступом. На 768–1279px filter grid має три рівні колонки, тому поля не стискаються; від 1280px зберігається повна сітка.
+
 ## 2026-09-29 — plan-narrative-filter-presence-mode
 
 - **Задача:** зафіксувати follow-up 174 після UI QA 173: знаходити як порожні, так і заповнені обрані private текстові поля.

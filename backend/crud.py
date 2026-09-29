@@ -735,10 +735,10 @@ def get_demo_report_domain(
     return report
 
 
-def _empty_status_transition_report_ids(
-    db: Session, *, date_from: date | None, date_to: date | None,
+def _status_transition_report_ids(
+    db: Session, *, date_from: date | None, date_to: date | None, presence: schemas.NarrativePresence,
 ) -> set[str]:
-    """Return operational status-change reports whose reason normalizes to empty."""
+    """Return status-change reports matching the requested normalized reason presence."""
     query = (
         db.query(models.ReportEvent.report_id, models.ReportEvent.reason)
         .join(models.DiamondReport, models.ReportEvent.report_id == models.DiamondReport.report_id)
@@ -751,23 +751,27 @@ def _empty_status_transition_report_ids(
         query = query.filter(models.ReportEvent.created_at >= datetime.combine(date_from, time.min))
     if date_to is not None:
         query = query.filter(models.ReportEvent.created_at < datetime.combine(date_to + timedelta(days=1), time.min))
-    return {report_id for report_id, reason in query.all() if not narrative_quality.normalize_text(reason)}
+    return {
+        report_id for report_id, reason in query.all()
+        if bool(narrative_quality.normalize_text(reason)) == (presence == "filled")
+    }
 
 
-def _filter_empty_narratives(
-    reports: list[models.DiamondReport], *, fields: set[str], empty_transition_report_ids: set[str],
+def _filter_narratives(
+    reports: list[models.DiamondReport], *, fields: set[str], presence: schemas.NarrativePresence,
+    transition_report_ids: set[str],
 ) -> list[models.DiamondReport]:
-    """Use the same whitespace normalization as narrative metadata analytics."""
-    def is_empty(value: str | None) -> bool:
-        return not narrative_quality.normalize_text(value)
+    """Use narrative-quality normalization for empty or filled private field navigation."""
+    def matches_presence(value: str | None) -> bool:
+        return bool(narrative_quality.normalize_text(value)) == (presence == "filled")
 
     def matches(report: models.DiamondReport) -> bool:
         stone = report.stone
         return (
-            ("identification_method" in fields and is_empty(stone.identification_method if stone else None))
-            or ("identification_conclusion" in fields and is_empty(stone.identification_conclusion if stone else None))
-            or ("expert_comment" in fields and is_empty(report.expert_comment))
-            or ("status_transition_reason" in fields and report.report_id in empty_transition_report_ids)
+            ("identification_method" in fields and matches_presence(stone.identification_method if stone else None))
+            or ("identification_conclusion" in fields and matches_presence(stone.identification_conclusion if stone else None))
+            or ("expert_comment" in fields and matches_presence(report.expert_comment))
+            or ("status_transition_reason" in fields and report.report_id in transition_report_ids)
         )
 
     return [report for report in reports if matches(report)]
@@ -791,6 +795,7 @@ def get_report_domain_list(
     date_from: date | None,
     date_to: date | None,
     empty_narrative: list[schemas.NarrativeCompletenessFilter],
+    narrative_presence: schemas.NarrativePresence,
     expert_id: int | None,
     search: str | None,
     sort: schemas.ReportListSort,
@@ -876,11 +881,12 @@ def get_report_domain_list(
         "market_status_desc": (desc(models.Stone.market_status), desc(models.DiamondReport.report_id)),
     }
     if empty_narrative:
-        reports = _filter_empty_narratives(
+        reports = _filter_narratives(
             query.order_by(*sort_columns[sort]).all(),
             fields=set(empty_narrative),
-            empty_transition_report_ids=_empty_status_transition_report_ids(
-                db, date_from=date_from, date_to=date_to,
+            presence=narrative_presence,
+            transition_report_ids=_status_transition_report_ids(
+                db, date_from=date_from, date_to=date_to, presence=narrative_presence,
             ) if "status_transition_reason" in empty_narrative else set(),
         )
         total = len(reports)
@@ -903,7 +909,8 @@ def get_demo_report_domain_list(
     color_grade: int | None, clarity_grade: int | None, cut_grade: int | None,
     carat_min: Decimal | None, carat_max: Decimal | None,
     price_min: Decimal | None, price_max: Decimal | None,
-    date_from: date | None, date_to: date | None, empty_narrative: list[schemas.NarrativeCompletenessFilter], search: str | None,
+    date_from: date | None, date_to: date | None, empty_narrative: list[schemas.NarrativeCompletenessFilter],
+    narrative_presence: schemas.NarrativePresence, search: str | None,
     sort: schemas.ReportListSort,
 ) -> tuple[list[models.DiamondReport], int]:
     """Return one isolated demonstration dataset; never mix it with operations."""
@@ -975,12 +982,13 @@ def get_demo_report_domain_list(
         "market_status_desc": (desc(models.Stone.market_status), desc(models.DiamondReport.report_id)),
     }
     if empty_narrative:
-        reports = _filter_empty_narratives(
+        reports = _filter_narratives(
             query.order_by(*sort_columns[sort]).all(),
             fields=set(empty_narrative),
+            presence=narrative_presence,
             # DemoWorkflowEvent deliberately has no free-text reason; it must not
             # be reinterpreted as an empty operational transition comment.
-            empty_transition_report_ids=set(),
+            transition_report_ids=set(),
         )
         total = len(reports)
         reports = reports[(page - 1) * page_size:page * page_size]

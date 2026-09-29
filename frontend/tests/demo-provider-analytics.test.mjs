@@ -22,6 +22,7 @@ test("built demo page exposes an enabled provider analytics tab and read-only pa
   assert.equal(document.querySelector("#demo-provider-dialog")?.tagName, "DIALOG");
   assert.equal(document.querySelector("#demo-provider-dialog-content")?.id, "demo-provider-dialog-content");
   assert.equal(document.querySelectorAll("[name=empty_narrative]").length, 4);
+  assert.equal(document.querySelectorAll("[name=narrative_presence]").length, 2);
   assert.equal(document.querySelector("[name=empty_narrative][value=status_transition_reason]")?.disabled, true);
 });
 
