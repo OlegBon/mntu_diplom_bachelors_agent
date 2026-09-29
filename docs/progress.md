@@ -14,6 +14,11 @@
 - **Нові змінні середовища:** немає.
 - **Обмеження:** current текстові поля не мають revision history; для event-поля враховуються тільки status transitions, а не `created` чи `report_updated`.
 
+### UI уточнення після перевірки
+
+- **Змінені файли:** `frontend/src/{pug/includes/narrative-completeness-filter.pug,scss/_ui-primitives.scss}`, `docs/{progress,guides/narrative-quality}.md`.
+- **Рішення / Результат:** «Показувати:» і radio-опції розділено на два рядки; пояснення lifecycle-поля винесено під трьома колонками на всю ширину «Текстових полів». На 768–1279px filter grid має три рівні колонки, тому поля не стискаються; від 1280px зберігається повна сітка.
+
 ## 2026-09-29 — plan-narrative-filter-presence-mode
 
 - **Задача:** зафіксувати follow-up 174 після UI QA 173: знаходити як порожні, так і заповнені обрані private текстові поля.

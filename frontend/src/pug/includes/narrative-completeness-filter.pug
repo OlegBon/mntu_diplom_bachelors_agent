@@ -17,15 +17,15 @@ mixin narrativeCompletenessFilter(prefix, isDemo = false)
                     input(type="checkbox" name="empty_narrative" value="status_transition_reason" disabled=isDemo)
                     | Подія зміни статусу без коментаря
             .narrative-filter-help
+                span.narrative-presence__label Показувати:
                 .narrative-presence(role="radiogroup" aria-label="Показувати текстові поля")
-                    span Показувати:
                     label
                         input(type="radio" name="narrative_presence" value="empty" checked)
                         | Порожні
                     label
                         input(type="radio" name="narrative_presence" value="filled")
                         | Заповнені
-                if isDemo
-                    p.account-help Synthetic lifecycle не має текстових коментарів; цю опцію не моделюємо.
-                else
-                    p.account-help Подія зміни статусу перевіряється у вибраному зрізі дат.
+            if isDemo
+                p.account-help.narrative-filter-note Synthetic lifecycle не має текстових коментарів; цю опцію не моделюємо.
+            else
+                p.account-help.narrative-filter-note Подія зміни статусу перевіряється у вибраному зрізі дат.
