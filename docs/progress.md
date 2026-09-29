@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-29 — plan-narrative-filter-presence-mode
+
+- **Задача:** зафіксувати follow-up 174 після UI QA 173: знаходити як порожні, так і заповнені обрані private текстові поля.
+- **Змінені файли:** `docs/{progress,work_plan}.md`, `docs/backlog/{README,174-narrative-filter-presence-mode.md}`.
+- **Рішення / Результат:** блок отримує нейтральну назву «Текстові поля» та явний режим «Порожні / Заповнені», а не неясну інверсію. `empty_narrative` лишається сумісним переліком обраних полів, а новий allow-listed режим має default `empty`; operational status-event працює у відповідному event date slice, demo не вигадує відсутній synthetic comment. Desktop/tablet action row центрується, mobile лишається у shared full-width pattern. Задача не створює quality score, raw text/excerpt, backfill або зміни report/event даних.
+- **Перевірки:** `scripts/check_doc_links.py` і `git diff --check` заплановані перед комітом плану; код не змінювався.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це лише backlog contract; UI, API, URL serialization та тести будуть реалізовані окремою task-гілкою.
+
 ## 2026-09-28 — report-narrative-completeness-filters
 
 - **Задача:** завершити 173 — додати actionable private list filters для пропущених narrative fields у operational і isolated demo reports.
