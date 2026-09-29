@@ -25,7 +25,7 @@ mixin narrativeCompletenessFilter(prefix, isDemo = false)
                     label
                         input(type="radio" name="narrative_presence" value="filled")
                         | Заповнені
-            if isDemo
-                p.account-help.narrative-filter-note Synthetic lifecycle не має текстових коментарів; цю опцію не моделюємо.
-            else
-                p.account-help.narrative-filter-note Подія зміни статусу перевіряється у вибраному зрізі дат.
+        if isDemo
+            p.account-help.narrative-filter-note Synthetic lifecycle не має текстових коментарів; цю опцію не моделюємо.
+        else
+            p.account-help.narrative-filter-note Подія зміни статусу перевіряється у вибраному зрізі дат.
