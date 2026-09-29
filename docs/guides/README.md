@@ -31,3 +31,4 @@
 | [database-guide.md](./database-guide.md) | SQLAlchemy schemas, Alembic lifecycle, seed і database boundaries з прикладами. |
 | [database-topology.md](./database-topology.md) | Contract трьох local MariaDB databases і однієї майбутньої PostgreSQL database з трьома schemas, grants, backup та вхід для 161. |
 | [testing-guide.md](./testing-guide.md) | Ізольовані pytest, jsdom, Playwright і verification matrix. |
+| [continuous-integration.md](./continuous-integration.md) | Advisory GitHub Actions CI: PR triggers, jobs, isolated MariaDB/SQLite boundaries, merge flow і наступні repository settings. |
