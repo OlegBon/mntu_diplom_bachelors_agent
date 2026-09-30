@@ -173,7 +173,7 @@ function renderCoverageTable(title, rows) {
   return section;
 }
 
-export function renderOperationalQuality(container, snapshot, { formatDateTime }) {
+function renderOperationalQualityLegacy(container, snapshot, { formatDateTime }) {
   const isDemo = snapshot.scope === "demo";
   const fragment = document.createDocumentFragment();
   const workflow = element("section", "analytics-quality-section");
@@ -219,7 +219,7 @@ export function renderOperationalQuality(container, snapshot, { formatDateTime }
   container.replaceChildren(fragment);
 }
 
-export function renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatDateTime, tableClass = "") {
+function renderNbuCurrencySourceLegacy(container, snapshots, dialog, dialogContent, formatDateTime, tableClass = "") {
   container.replaceChildren();
   if (!snapshots.length) {
     container.append(element("p", "account-help", "Знімків офіційного курсу НБУ за цим зрізом поки немає."));
@@ -252,5 +252,73 @@ export function renderNbuCurrencySource(container, snapshots, dialog, dialogCont
     `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`,
     String(snapshots.length),
   ]]);
+  container.append(tableHost);
+}
+
+function localizedCoverageTable(titleKey, rows) {
+  const section = element("section", "analytics-quality-section");
+  section.append(element("h3", "", t(titleKey)));
+  const tableHost = element("div", "analytics-quality-table");
+  renderTable(tableHost, [t("analytics.field"), t("analytics.filled"), t("analytics.missing")], rows.map((row) => [
+    row.label, `${row.filled_count} / ${row.applicable_count}`, String(row.missing_count),
+  ]));
+  section.append(tableHost);
+  return section;
+}
+
+export function renderOperationalQuality(container, snapshot, { formatDateTime }) {
+  const isDemo = snapshot.scope === "demo";
+  const buildSection = (titleKey, rows, helpKey) => {
+    const section = element("section", "analytics-quality-section");
+    const metrics = element("dl", "analytics-metrics");
+    rows.forEach(([labelKey, value]) => metrics.append(element("dt", "", t(labelKey)), element("dd", "", String(value))));
+    section.append(element("h3", "", t(titleKey)), metrics, element("p", "account-help", t(helpKey)));
+    return section;
+  };
+  const workflow = [
+    [isDemo ? "analytics.completedSyntheticDraft" : "analytics.created", snapshot.workflow_created_count],
+    [isDemo ? "analytics.sentToSyntheticReview" : "analytics.sentToReview", snapshot.workflow_sent_to_review_count],
+    ["analytics.returnedToDraft", snapshot.workflow_returned_to_draft_count], ["analytics.issued", snapshot.workflow_issued_count],
+    ["analytics.void", snapshot.workflow_voided_count], ["analytics.repeatReturns", snapshot.workflow_repeat_return_count],
+  ];
+  const cohort = [
+    [isDemo ? "analytics.demoReportsInRange" : "analytics.reportsCreatedInRange", snapshot.report_cohort_count],
+    ["analytics.drafts", snapshot.current_status_counts.draft], ["analytics.underReview", snapshot.current_status_counts.review],
+    ["analytics.issued", snapshot.current_status_counts.issued], ["analytics.void", snapshot.current_status_counts.void],
+    [isDemo ? "analytics.currentSyntheticQueue" : "analytics.currentQueue", snapshot.current_review_count],
+    ["analytics.oldestCurrentReview", formatDateTime(snapshot.oldest_current_review_started_at) || t("analytics.notModeled")],
+  ];
+  const delivery = snapshot.delivery_is_modeled
+    ? [["analytics.reportsWithPrivateMedia", snapshot.reports_with_media_count], ["analytics.activePublicPassports", snapshot.active_public_passport_count], ["analytics.issuedWithoutPassport", snapshot.issued_without_active_passport_count]]
+    : [["analytics.reportsWithPrivateMedia", t("analytics.notModeled")], ["analytics.activePublicPassports", t("analytics.notModeled")], ["analytics.deliveryReadiness", t("analytics.notModeled")]];
+  const fragment = document.createDocumentFragment();
+  fragment.append(
+    buildSection(isDemo ? "analytics.syntheticWorkflowTitle" : "analytics.workflowTitle", workflow, isDemo ? "analytics.syntheticWorkflowHelp" : "analytics.workflowHelp"),
+    buildSection("analytics.currentCohort", cohort, isDemo ? "analytics.syntheticCohortHelp" : "analytics.cohortHelp"),
+    localizedCoverageTable("analytics.requiredFields", snapshot.required_field_coverage),
+    localizedCoverageTable("analytics.optionalFields", snapshot.optional_field_coverage),
+    buildSection("analytics.deliveryReadiness", delivery, snapshot.delivery_is_modeled ? "analytics.deliveryHelp" : "analytics.syntheticDeliveryHelp"),
+  );
+  container.replaceChildren(fragment);
+}
+
+export function renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatDateTime, tableClass = "") {
+  container.replaceChildren();
+  if (!snapshots.length) {
+    container.append(element("p", "account-help", t("analytics.noCurrencySnapshots")));
+    return;
+  }
+  const latest = snapshots[0];
+  const rate = formatNumber(latest.rate, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const sourceButton = element("button", "analytics-expert-button", t("analytics.nbu"));
+  sourceButton.type = "button";
+  sourceButton.addEventListener("click", () => {
+    const metrics = element("dl", "analytics-metrics");
+    [["analytics.sourceType", t("analytics.officialCurrencyProvider")], ["analytics.dataOrigin", t("analytics.officialNbuService")], ["analytics.valueType", `${latest.base_currency_code}/${latest.quote_currency_code} ${t("analytics.officialFxRate")}`], ["analytics.snapshotCount", snapshots.length], ["analytics.latestRate", `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`], ["analytics.officialRateDate", formatDateTime(`${latest.rate_date}T00:00:00`).date], ["analytics.retrieved", `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`]].forEach(([label, value]) => metrics.append(element("dt", "", t(label)), element("dd", "", String(value))));
+    dialogContent.replaceChildren(element("h3", "analytics-dialog-name", t("analytics.nbu")), metrics, element("p", "account-help", t("analytics.fxHelp")));
+    dialog.showModal();
+  });
+  const tableHost = element("div", tableClass || "analytics-currency-sources");
+  renderTable(tableHost, [t("analytics.currencySource"), t("analytics.pair"), t("analytics.latestRate"), t("analytics.officialRateDate"), t("analytics.retrieved"), t("analytics.snapshotCount")], [[sourceButton, `${latest.base_currency_code}/${latest.quote_currency_code}`, `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`, formatDateTime(`${latest.rate_date}T00:00:00`).date, `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`, String(snapshots.length)]]);
   container.append(tableHost);
 }
