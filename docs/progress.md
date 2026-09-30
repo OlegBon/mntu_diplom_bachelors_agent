@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-30 — i18n-private-report-workflow
+
+- **Задача:** завершити 176 — повноцінну локалізацію private report workflow.
+- **Змінені файли:** `frontend/src/{pug/pages/{dashboard,create-report,report-detail}.pug,pug/includes/narrative-completeness-filter.pug,js/modules/{dashboard,report-wizard,report-detail,i18n}.js}`, `frontend/tests/{page-dom.test.mjs,e2e/i18n-private-workflow.spec.mjs}`, `docs/{architecture,backlog/README,progress,work_plan}.md`; active backlog `176-i18n-private-report-workflow.md` видалено.
+- **Рішення / Результат:** dashboard, wizard, private detail/edit, lifecycle, filters, dialogs і passport controls використовують complete `en`/`uk` catalog keys та centralized `Intl` formatters. URL locale, hash і filter query не губляться; locale switch не перезаписує незбережене detail edit. API/domain data, IDs, файли, експертські comment/conclusion та lifecycle reason не перекладаються.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 35 passed; `npx playwright test tests/e2e/i18n-private-workflow.spec.mjs` — 2 passed (wizard active step/form/URL і unsaved detail edit/form/URL).
+- **Нові змінні середовища:** немає.
+- **Обмеження:** admin/demo/analytics — 177; public passport/PDF і release-wide quality gate — 178. Поточні Sass/Browserslist warnings не стосуються i18n.
+
 ## 2026-09-30 — i18n-core-and-shared-shell
 
 - **Задача:** реалізувати 175 — English-first i18n core, shared shell, login і landing відповідно до ADR-008.
