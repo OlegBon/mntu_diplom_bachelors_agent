@@ -1,4 +1,5 @@
 import { getCurrentUser, updateMyDemoAccess, updateMyPartnerControlsAccess, updateMyPassword, updateMyProfile } from "./api.js";
+import { t } from "./i18n.js";
 
 function setStatus(element, message, isError = false) {
   element.textContent = message;
@@ -21,7 +22,7 @@ export async function initProfile() {
     const usernameInput = document.getElementById("profile-username");
     usernameInput.value = currentUser.username;
     usernameInput.disabled = currentUser.role !== "admin";
-    document.getElementById("profile-role").value = currentUser.role === "admin" ? "Адміністратор" : "Експерт";
+    document.getElementById("profile-role").value = currentUser.role === "admin" ? t("auth.administrator") : t("auth.gemologist");
     for (const field of ["first_name", "last_name", "middle_name"]) {
       profileForm.elements[field].value = currentUser[field] || "";
     }
@@ -45,7 +46,7 @@ export async function initProfile() {
         localStorage.clear(); window.location.replace("/login.html"); return;
       }
       localStorage.setItem("username", saved.username);
-      setStatus(status, "Дані профілю збережено.");
+      setStatus(status, t("profile.saved"));
     } catch (error) {
       setStatus(status, error.message, true);
     } finally {
@@ -61,7 +62,7 @@ export async function initProfile() {
       currentUser = saved;
       localStorage.setItem("demo_access_enabled", String(saved.demo_access_enabled));
       window.dispatchEvent(new CustomEvent("demo-access-changed", { detail: saved }));
-      setStatus(status, saved.demo_access_enabled ? "Доступ до «Демо» увімкнено." : "Доступ до «Демо» вимкнено.");
+      setStatus(status, t(saved.demo_access_enabled ? "profile.demoEnabled" : "profile.demoDisabled"));
     } catch (error) {
       setStatus(status, error.message, true);
     } finally {
@@ -74,7 +75,7 @@ export async function initProfile() {
     try {
       const saved = await updateMyPartnerControlsAccess(partnerControlsForm.elements.partner_controls_enabled.checked, token);
       currentUser = saved;
-      setStatus(status, saved.partner_controls_enabled ? "Доступ до керування партнерськими даними увімкнено." : "Доступ до керування партнерськими даними вимкнено.");
+      setStatus(status, t(saved.partner_controls_enabled ? "profile.partnerEnabled" : "profile.partnerDisabled"));
     } catch (error) { setStatus(status, error.message, true); }
     finally { button.disabled = false; }
   });
@@ -82,7 +83,7 @@ export async function initProfile() {
     event.preventDefault();
     const newPassword = passwordForm.elements.new_password.value;
     if (newPassword !== passwordForm.elements.confirm_password.value) {
-      setStatus(status, "Новий пароль і підтвердження не збігаються.", true);
+      setStatus(status, t("profile.passwordMismatch"), true);
       return;
     }
     const button = passwordForm.querySelector("button[type='submit']");
@@ -90,7 +91,7 @@ export async function initProfile() {
     try {
       await updateMyPassword({ current_password: passwordForm.elements.current_password.value, new_password: newPassword }, token);
       passwordForm.reset();
-      setStatus(status, "Пароль змінено.");
+      setStatus(status, t("profile.passwordChanged"));
     } catch (error) {
       setStatus(status, error.message, true);
     } finally {

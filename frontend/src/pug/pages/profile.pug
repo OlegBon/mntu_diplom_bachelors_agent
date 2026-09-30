@@ -4,61 +4,61 @@ block content
     .account-page(hidden data-protected-page="true" data-profile-page)
         .page-header
             div
-                h1.page-title Профіль
-                p.page-subtitle Керуйте власними даними та паролем.
+                h1.page-title(data-i18n="profile.title") Профіль
+                p.page-subtitle(data-i18n="profile.subtitle") Керуйте власними даними та паролем.
         p#profile-status.account-status(role="status" aria-live="polite" hidden)
         .account-grid
             section.account-surface
-                h2 Дані профілю
+                h2(data-i18n="profile.details") Дані профілю
                 form#profile-form
                     .form-row
                         .form-group.half
-                            label(for="profile-username") Username
+                            label(for="profile-username" data-i18n="profile.username") Username
                             input#profile-username.form-control(type="text" name="username" disabled)
                         .form-group.half
-                            label(for="profile-role") Роль
+                            label(for="profile-role" data-i18n="profile.role") Роль
                             input#profile-role.form-control(type="text" disabled)
                     .form-row
                         .form-group.half
-                            label(for="profile-first-name") Ім’я
+                            label(for="profile-first-name" data-i18n="profile.firstName") Ім’я
                             input#profile-first-name.form-control(type="text" name="first_name" maxlength="50")
                         .form-group.half
-                            label(for="profile-last-name") Прізвище
+                            label(for="profile-last-name" data-i18n="profile.lastName") Прізвище
                             input#profile-last-name.form-control(type="text" name="last_name" maxlength="50")
                     .form-group
-                        label(for="profile-middle-name") По батькові
+                        label(for="profile-middle-name" data-i18n="profile.middleName") По батькові
                         input#profile-middle-name.form-control(type="text" name="middle_name" maxlength="50")
                     .form-actions
-                        button.btn.btn-primary(type="submit") Зберегти дані
+                        button.btn.btn-primary(type="submit" data-i18n="profile.saveDetails") Зберегти дані
             section.account-surface
-                h2 Змінити пароль
+                h2(data-i18n="profile.changePassword") Змінити пароль
                 form#password-form
                     .form-group
-                        label(for="profile-current-password") Поточний пароль
+                        label(for="profile-current-password" data-i18n="profile.currentPassword") Поточний пароль
                         input#profile-current-password.form-control(type="password" name="current_password" autocomplete="current-password" required)
                     .form-group
-                        label(for="profile-new-password") Новий пароль
+                        label(for="profile-new-password" data-i18n="profile.newPassword") Новий пароль
                         input#profile-new-password.form-control(type="password" name="new_password" minlength="8" autocomplete="new-password" required)
                     .form-group
-                        label(for="profile-confirm-password") Підтвердіть новий пароль
+                        label(for="profile-confirm-password" data-i18n="profile.confirmPassword") Підтвердіть новий пароль
                         input#profile-confirm-password.form-control(type="password" name="confirm_password" minlength="8" autocomplete="new-password" required)
                     .form-actions
-                        button.btn.btn-primary(type="submit") Змінити пароль
+                        button.btn.btn-primary(type="submit" data-i18n="profile.submitPassword") Змінити пароль
             section#demo-access-surface.account-surface(hidden)
-                h2 Доступ до «Демо»
-                p.account-help Ізольований synthetic dataset для внутрішньої демонстрації. Він не містить реальних звітів, ринкових даних або публічних паспортів.
+                h2(data-i18n="profile.demoAccess") Доступ до «Демо»
+                p.account-help(data-i18n="profile.demoAccessHelp") Ізольований synthetic dataset для внутрішньої демонстрації. Він не містить реальних звітів, ринкових даних або публічних паспортів.
                 form#demo-access-form
                     label.checkbox-field(for="profile-demo-access")
                         input#profile-demo-access(type="checkbox" name="demo_access_enabled")
-                        span Увімкнути доступ до «Демо» для мого облікового запису
+                        span(data-i18n="profile.enableDemoAccess") Увімкнути доступ до «Демо» для мого облікового запису
                     .form-actions
-                        button.btn.btn-primary(type="submit") Зберегти доступ
+                        button.btn.btn-primary(type="submit" data-i18n="profile.saveAccess") Зберегти доступ
             section#partner-controls-surface.account-surface(hidden)
-                h2 Доступ до керування партнерськими даними
-                p.account-help Цей режим відкриває лише внутрішні інструменти керування умовами провайдерів. Він не вмикає зовнішнього провайдера, не видає ключів і не надає trial-доступу.
+                h2(data-i18n="profile.partnerControls") Доступ до керування партнерськими даними
+                p.account-help(data-i18n="profile.partnerControlsHelp") Цей режим відкриває лише внутрішні інструменти керування умовами провайдерів. Він не вмикає зовнішнього провайдера, не видає ключів і не надає trial-доступу.
                 form#partner-controls-form
                     label.checkbox-field(for="profile-partner-controls")
                         input#profile-partner-controls(type="checkbox" name="partner_controls_enabled")
-                        span Увімкнути доступ до керування партнерськими даними для мого облікового запису
+                        span(data-i18n="profile.enablePartnerControls") Увімкнути доступ до керування партнерськими даними для мого облікового запису
                     .form-actions
-                        button.btn.btn-primary(type="submit") Зберегти доступ
+                        button.btn.btn-primary(type="submit" data-i18n="profile.saveAccess") Зберегти доступ
