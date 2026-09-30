@@ -4,6 +4,7 @@ const SUPPORTED_LOCALES = ["en", "uk"];
 
 const catalogs = {
   en: {
+    "demo.reportActions": "Open actions for demo report {reportId}", "demo.view": "View", "demo.edit": "Edit", "demo.print": "Print", "demo.somAnalysis": "SOM analysis", "demo.readOnly": "Demo report is read-only",
     "demo.reportId": "Report ID", "demo.date": "Date", "demo.priceUsd": "Price (USD)", "demo.reportStatus": "Report status", "demo.saleStatus": "Sale status", "demo.actions": "Actions", "demo.sortBy": "Sort by {field}",
     "demo.shape": "Shape", "demo.carat": "Carat", "demo.color": "Color", "demo.clarity": "Clarity", "demo.cut": "Cut", "demo.referenceUsd": "Reference value (USD)", "demo.createdFrom": "Created from", "demo.createdTo": "Created to",
     "demo.from": "From", "demo.to": "To", "demo.applyPeriod": "Apply period", "demo.allTime": "All time",
@@ -136,6 +137,7 @@ const catalogs = {
     "narrative.fields": "Text fields", "narrative.identificationMethod": "Identification method", "narrative.identificationConclusion": "Identification conclusion", "narrative.expertComment": "Expert comment", "narrative.statusTransition": "Status-change event without a comment", "narrative.show": "Show:", "narrative.showFields": "Show text fields", "narrative.empty": "Empty", "narrative.filled": "Filled", "narrative.demoNote": "Synthetic lifecycle has no text comments, so this option is not modeled.", "narrative.realNote": "The status-change event is checked in the selected date range.",
   },
   uk: {
+    "demo.reportActions": "Відкрити дії для demo-звіту {reportId}", "demo.view": "Переглянути", "demo.edit": "Редагувати", "demo.print": "Друк", "demo.somAnalysis": "Аналіз SOM", "demo.readOnly": "Demo-звіт доступний лише для читання",
     "demo.reportId": "ID звіту", "demo.date": "Дата", "demo.priceUsd": "Ціна (USD)", "demo.reportStatus": "Статус звіту", "demo.saleStatus": "Статус продажу", "demo.actions": "Дії", "demo.sortBy": "Сортувати за {field}",
     "demo.shape": "Форма (Shape)", "demo.carat": "Вага (Carat)", "demo.color": "Колір (Color)", "demo.clarity": "Чистота (Clarity)", "demo.cut": "Якість (Cut)", "demo.referenceUsd": "Довідковий орієнтир (USD)", "demo.createdFrom": "Дата створення: від", "demo.createdTo": "Дата створення: до",
     "demo.from": "Від", "demo.to": "До", "demo.applyPeriod": "Застосувати період", "demo.allTime": "За весь час",

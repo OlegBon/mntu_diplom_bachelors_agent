@@ -175,6 +175,12 @@ function renderActions(report, datasetId) {
   print.rel = "noopener noreferrer";
   const som = createElement("a", "report-actions__item", "Аналіз SOM");
   som.href = `/demo-reports.html?tab=stones&som_report=${encodeURIComponent(report.report_id)}`;
+  toggle.setAttribute("aria-label", t("demo.reportActions", { reportId: report.report_id }));
+  detail.textContent = t("demo.view");
+  edit.textContent = t("demo.edit");
+  edit.title = t("demo.readOnly");
+  print.textContent = t("demo.print");
+  som.textContent = t("demo.somAnalysis");
   menu.append(detail, som, edit, print);
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
