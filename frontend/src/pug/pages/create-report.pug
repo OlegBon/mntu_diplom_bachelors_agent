@@ -56,106 +56,106 @@ block content
                                     option(value="" data-i18n="wizard.loadingReference") Loading reference data…
 
                     .step-content(data-step="2" role="tabpanel" hidden)
-                        h3 Розміри (Dimensions)
+                        h3(data-i18n="wizard.dimensions") Dimensions
                         .form-row.three-cols
                             .form-group
-                                label(for="measurements-length") Довжина (mm)
+                                label(for="measurements-length" data-i18n="wizard.length") Length (mm)
                                 input#measurements-length.form-control(type="number" step="0.01" min="0.01" name="measurements_length" placeholder="min. 0,01" required)
                             .form-group
-                                label(for="measurements-width") Ширина (mm)
+                                label(for="measurements-width" data-i18n="wizard.width") Width (mm)
                                 input#measurements-width.form-control(type="number" step="0.01" min="0.01" name="measurements_width" placeholder="max. 0,01" required)
                             .form-group
-                                label(for="measurements-depth") Висота (mm)
+                                label(for="measurements-depth" data-i18n="wizard.depth") Depth (mm)
                                 input#measurements-depth.form-control(type="number" step="0.01" min="0.01" name="measurements_depth" placeholder="depth" required)
 
-                        h3 Параметри огранювання (IDC)
+                        h3(data-i18n="wizard.cuttingParameters") Cutting parameters (IDC)
                         .form-row
                             .form-group.half
-                                label(for="table-percent") Table (%)
+                                label(for="table-percent" data-i18n="wizard.table") Table (%)
                                 input#table-percent.form-control(type="number" step="0.1" min="0.1" max="100" name="table_percent" placeholder="57,0" required)
                             .form-group.half
-                                label(for="depth-percent") Total Depth (%)
+                                label(for="depth-percent" data-i18n="wizard.totalDepth") Total depth (%)
                                 input#depth-percent.form-control(type="number" step="0.1" min="0.1" max="100" name="depth_percent" placeholder="61,5" required)
                         .form-row
                             .form-group.half
-                                label(for="crown-angle") Crown Angle (°)
+                                label(for="crown-angle" data-i18n="wizard.crownAngle") Crown angle (°)
                                 input#crown-angle.form-control(type="number" step="0.1" min="0.1" max="90" name="crown_angle" placeholder="34,5" required)
                             .form-group.half
-                                label(for="pavilion-angle") Pavilion Angle (°)
+                                label(for="pavilion-angle" data-i18n="wizard.pavilionAngle") Pavilion angle (°)
                                 input#pavilion-angle.form-control(type="number" step="0.1" min="0.1" max="90" name="pavilion_angle" placeholder="40,8" required)
                         .form-row
                             .form-group.half
-                                label(for="girdle-thickness") Girdle Thickness
+                                label(for="girdle-thickness" data-i18n="wizard.girdle") Girdle thickness
                                 select#girdle-thickness.form-select(data-reference-category="girdle_thickness" name="girdle_thickness" disabled)
-                                    option(value="") Не зазначено
+                                    option(value="" data-i18n="wizard.notSpecified") Not specified
                             .form-group.half
-                                label(for="culet-size") Culet Size
+                                label(for="culet-size" data-i18n="wizard.culet") Culet size
                                 select#culet-size.form-select(data-reference-category="culet_size" name="culet_size" disabled)
-                                    option(value="") Не зазначено
+                                    option(value="" data-i18n="wizard.notSpecified") Not specified
 
                     .step-content(data-step="3" role="tabpanel" hidden)
-                        h3 Якість обробки (Finish)
+                        h3(data-i18n="wizard.finish") Finish
                         .form-row
                             .form-group.half
-                                label(for="polish-grade") Polish (Поліровка)
+                                label(for="polish-grade" data-i18n="wizard.polish") Polish
                                 select#polish-grade.form-select(data-grade-category="polish" name="polish_grade" required disabled)
-                                    option(value="") Завантаження довідника…
+                                    option(value="" data-i18n="wizard.loadingReference") Loading reference data…
                             .form-group.half
-                                label(for="symmetry-grade") Symmetry (Симетрія)
+                                label(for="symmetry-grade" data-i18n="wizard.symmetry") Symmetry
                                 select#symmetry-grade.form-select(data-grade-category="symmetry" name="symmetry_grade" required disabled)
-                                    option(value="") Завантаження довідника…
+                                    option(value="" data-i18n="wizard.loadingReference") Loading reference data…
                         .form-group
-                            label(for="fluorescence-grade") Fluorescence (Флуоресценція)
+                            label(for="fluorescence-grade" data-i18n="wizard.fluorescence") Fluorescence
                             select#fluorescence-grade.form-select(data-grade-category="fluorescence" name="fluorescence_grade" required disabled)
-                                option(value="") Завантаження довідника…
+                                option(value="" data-i18n="wizard.loadingReference") Loading reference data…
 
-                        h3 Висновок експерта
+                        h3(data-i18n="wizard.expertConclusion") Expert conclusion
                         .form-row
                             .form-group.half
-                                label(for="treatment-status") Ознаки обробки
+                                label(for="treatment-status" data-i18n="wizard.treatment") Treatment indication
                                 select#treatment-status.form-select(data-reference-category="treatment_status" name="treatment_status" required disabled)
-                                    option(value="") Завантаження довідника…
+                                    option(value="" data-i18n="wizard.loadingReference") Loading reference data…
                             .form-group.half
-                                label(for="identification-status") Рівень підтвердження
+                                label(for="identification-status" data-i18n="wizard.identificationStatus") Identification confidence
                                 select#identification-status.form-select(data-reference-category="identification_status" name="identification_status" required disabled)
-                                    option(value="") Завантаження довідника…
+                                    option(value="" data-i18n="wizard.loadingReference") Loading reference data…
                         .form-group
-                            label(for="identification-method") Метод ідентифікації
+                            label(for="identification-method" data-i18n="wizard.identificationMethod") Identification method
                             input#identification-method.form-control(type="text" name="identification_method" maxlength="255" placeholder="Наприклад, гемологічна експертиза")
                         .form-group
-                            label(for="identification-conclusion") Висновок щодо ідентифікації
+                            label(for="identification-conclusion" data-i18n="wizard.identificationConclusion") Identification conclusion
                             textarea#identification-conclusion.form-control(name="identification_conclusion" rows="3")
                         .form-group
-                            label(for="expert-comment") Коментар експерта
+                            label(for="expert-comment" data-i18n="wizard.expertComment") Expert comment
                             textarea#expert-comment.form-control(name="expert_comment" rows="3" placeholder="Спостереження, включення та особливості каменю")
 
-                        h3 Медіа
+                        h3(data-i18n="wizard.media") Media
                         p.text-muted Комерційний стан не задається під час створення: нова чернетка має стан «Не виставлено на продаж». Змінити його можна буде у перегляді та редагуванні звіту.
                         .form-row
                             .form-group.half
-                                label(for="plotting-image") Схема дефектів (Plotting)
+                                label(for="plotting-image" data-i18n="wizard.plotting") Plotting diagram
                                 .media-upload-card
                                     img#plotting-preview.media-upload-preview(src="/img/plotting-placeholder.svg" alt="Схема дефектів не додана" width="320" height="180")
                                     input#plotting-image.file-input(type="file" name="plotting_image" accept="image/jpeg,image/png,image/webp")
-                                    label.btn.btn-outline.file-picker(for="plotting-image") Вибрати файл
-                                    span.file-name(data-file-name-for="plotting-image") Файл не вибрано
-                                    small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
+                                    label.btn.btn-outline.file-picker(for="plotting-image" data-i18n="wizard.chooseFile") Choose file
+                                    span.file-name(data-file-name-for="plotting-image" data-i18n="wizard.noFile") No file selected
+                                    small.media-upload-help(data-i18n="wizard.privateMediaHelp") JPEG, PNG or WebP, up to 10 MB. Stored privately.
                             .form-group.half
-                                label(for="real-image") Фото каменя
+                                label(for="real-image" data-i18n="wizard.stonePhoto") Stone photo
                                 .media-upload-card
                                     img#stone-preview.media-upload-preview(src="/img/stone-placeholder.svg" alt="Фото каменя не додано" width="320" height="180")
                                     input#real-image.file-input(type="file" name="real_image" accept="image/jpeg,image/png,image/webp")
-                                    label.btn.btn-outline.file-picker(for="real-image") Вибрати файл
-                                    span.file-name(data-file-name-for="real-image") Файл не вибрано
-                                    small.media-upload-help JPEG, PNG або WebP, до 10 MB. Зберігається приватно.
+                                    label.btn.btn-outline.file-picker(for="real-image" data-i18n="wizard.chooseFile") Choose file
+                                    span.file-name(data-file-name-for="real-image" data-i18n="wizard.noFile") No file selected
+                                    small.media-upload-help(data-i18n="wizard.privateMediaHelp") JPEG, PNG or WebP, up to 10 MB. Stored privately.
 
                     .wizard-actions
-                        button#prev-btn.btn.btn-outline(type="button" disabled) Назад
-                        button#clear-wizard-draft.btn.btn-outline(type="button" hidden) Очистити введення
+                        button#prev-btn.btn.btn-outline(type="button" disabled data-i18n="wizard.back") Back
+                        button#clear-wizard-draft.btn.btn-outline(type="button" hidden data-i18n="wizard.clearEntry") Clear entry
                         button#save-btn.btn.btn-primary(type="submit" hidden)
-                            span.save-label-desktop Зберегти чернетку
-                            span.save-label-mobile Зберегти
-                        button#next-btn.btn.btn-primary(type="button") Далі
+                            span.save-label-desktop(data-i18n="wizard.saveDraft") Save draft
+                            span.save-label-mobile(data-i18n="wizard.saveDraft") Save draft
+                        button#next-btn.btn.btn-primary(type="button" data-i18n="wizard.next") Next
 
             .calc-column
                 .calc-card
@@ -190,29 +190,29 @@ block content
         dialog#wizard-restore-dialog.account-dialog(aria-labelledby="wizard-restore-dialog-title")
             form(method="dialog")
                 .account-dialog__header
-                    h2#wizard-restore-dialog-title Відновити незбережене введення?
-                p.account-help Знайдено незбережені дані цієї вкладки. Вони не були надіслані на сервер.
-                p.account-help Вкладення не відновлюються — після відновлення додайте файли повторно.
+                    h2#wizard-restore-dialog-title(data-i18n="wizard.restoreTitle") Restore unsaved entry?
+                p.account-help(data-i18n="wizard.restoreDescription") Unsaved data for this tab was found. It was not sent to the server.
+                p.account-help(data-i18n="wizard.restoreMedia") Attachments are not restored — add files again after restoring.
                 .account-dialog__actions
-                    button#wizard-start-new.btn.btn-outline(type="button") Почати заново
-                    button#wizard-restore.btn.btn-primary(type="button") Відновити
+                    button#wizard-start-new.btn.btn-outline(type="button" data-i18n="wizard.startNew") Start over
+                    button#wizard-restore.btn.btn-primary(type="button" data-i18n="wizard.restore") Restore
 
         dialog#wizard-clear-dialog.account-dialog(aria-labelledby="wizard-clear-dialog-title")
             form(method="dialog")
                 .account-dialog__header
-                    h2#wizard-clear-dialog-title Очистити незбережене введення?
-                    button#wizard-clear-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
-                p.account-help Дані цієї вкладки буде видалено з форми й локального сховища. Це не змінить жодного збереженого звіту.
+                    h2#wizard-clear-dialog-title(data-i18n="wizard.clearTitle") Clear unsaved entry?
+                    button#wizard-clear-dialog-close.account-dialog__close(type="button" data-i18n-aria-label="wizard.close" aria-label="Close") ×
+                p.account-help(data-i18n="wizard.clearDescription") This tab's data will be removed from the form and local storage. No saved report will change.
                 .account-dialog__actions
-                    button#wizard-clear-cancel.btn.btn-outline(type="button") Скасувати
-                    button#wizard-clear-confirm.btn.btn-primary(type="button") Очистити введення
+                    button#wizard-clear-cancel.btn.btn-outline(type="button" data-i18n="wizard.cancel") Cancel
+                    button#wizard-clear-confirm.btn.btn-primary(type="button" data-i18n="wizard.clearEntry") Clear entry
 
         dialog#wizard-leave-dialog.account-dialog(aria-labelledby="wizard-leave-dialog-title")
             form(method="dialog")
                 .account-dialog__header
-                    h2#wizard-leave-dialog-title Залишити майстер?
-                    button#wizard-leave-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
+                    h2#wizard-leave-dialog-title(data-i18n="wizard.leaveTitle") Leave wizard?
+                    button#wizard-leave-dialog-close.account-dialog__close(type="button" data-i18n-aria-label="wizard.close" aria-label="Close") ×
                 p#wizard-leave-dialog-description.account-help Введені дані ще не стали чернеткою на сервері. Вони залишаться лише в цій вкладці, і після повернення їх можна буде явно відновити.
                 .account-dialog__actions
-                    button#wizard-leave-cancel.btn.btn-outline(type="button") Залишитися
-                    button#wizard-leave-confirm.btn.btn-primary(type="button") Перейти
+                    button#wizard-leave-cancel.btn.btn-outline(type="button" data-i18n="wizard.stay") Stay
+                    button#wizard-leave-confirm.btn.btn-primary(type="button" data-i18n="wizard.go") Go
