@@ -74,8 +74,40 @@ function reportStatusLabel(status) {
   return status;
 }
 
+function localizeDemoDetailShell(root) {
+  const textKeys = [
+    ["#demo-report-subtitle", "demoDetail.subtitle"],
+    [".page-header > .btn", "demoDetail.back"],
+    ["label[for=demo-date]", "demoDetail.examinationDate"],
+    ["label[for=demo-shape]", "demoDetail.shape"],
+    ["label[for=demo-carat]", "demoDetail.carat"],
+    ["label[for=demo-color]", "demoDetail.color"],
+    ["label[for=demo-clarity]", "demoDetail.clarity"],
+    ["label[for=demo-origin]", "demoDetail.origin"],
+    ["label[for=demo-treatment]", "demoDetail.treatment"],
+    ["label[for=demo-identification-status]", "demoDetail.identificationLevel"],
+    ["label[for=demo-method]", "demoDetail.identificationMethod"],
+    ["label[for=demo-conclusion]", "demoDetail.identificationConclusion"],
+    ["label[for=demo-comment]", "demoDetail.expertComment"],
+  ];
+  for (const [selector, key] of textKeys) {
+    const node = root.querySelector(selector);
+    if (node) node.textContent = t(key);
+  }
+  const formHeadings = root.querySelectorAll(".report-detail__section > h2");
+  ["demoDetail.identification", "demoDetail.geometry", "demoDetail.conclusion"].forEach((key, index) => {
+    if (formHeadings[index]) formHeadings[index].textContent = t(key);
+  });
+  const sideHeadings = root.querySelectorAll(".report-detail__side h2");
+  ["demoDetail.reportState", "demoDetail.references", "demoDetail.attachments", "demoDetail.passport", "demoDetail.history"].forEach((key, index) => {
+    if (sideHeadings[index]) sideHeadings[index].textContent = t(key);
+  });
+}
+
 export async function initDemoReportDetail() {
   const root = document.querySelector("[data-demo-report-detail]"); if (!root || localStorage.getItem("role") !== "admin") return;
+  localizeDemoDetailShell(root);
+  document.addEventListener("diamant:locale-change", () => localizeDemoDetailShell(root));
   const params = new URLSearchParams(window.location.search); const requestedDataset = params.get("dataset"); let dataset = requestedDataset || "synthetic-demo-v4"; const reportId = params.get("id"); const token = localStorage.getItem("token");
   if (!reportId) return;
   const status = document.getElementById("demo-report-status");
