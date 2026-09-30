@@ -48,6 +48,10 @@ function localizeDemoShell(root) {
     search.placeholder = t("demo.searchReports");
     search.setAttribute("aria-label", t("demo.searchReports"));
   }
+  [["#demo-quick-report-status", "demo.allReportStatuses"], ["#demo-quick-market-status", "demo.allSaleStatuses"], ["#demo-expert-filter", "demo.allExperts"]].forEach(([selector, key]) => {
+    const select = root.querySelector(selector);
+    if (select?.options[0]) select.options[0].textContent = t(key);
+  });
   for (const closeButton of root.querySelectorAll(".account-dialog__close")) closeButton.setAttribute("aria-label", t("demo.close"));
 
   const notice = root.querySelector(".demo-scope__notice");

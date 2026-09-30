@@ -4,6 +4,7 @@ const SUPPORTED_LOCALES = ["en", "uk"];
 
 const catalogs = {
   en: {
+    "demo.allReportStatuses": "All report statuses", "demo.allSaleStatuses": "All sale statuses", "demo.allExperts": "All experts",
     "demo.searchReports": "Search by demo report number", "demo.filters": "Filters", "demo.apply": "Apply", "demo.clear": "Clear",
     "analytics.completedReviews": "Completed reviews", "analytics.returned": "Returned to draft", "analytics.averageDuration": "Average duration", "analytics.medianDuration": "Median duration", "analytics.shortestReviews": "Shortest reviews", "analytics.longestReviews": "Longest reviews", "analytics.noAdministrators": "There are no administrators for this range yet.", "analytics.noCompletedReviews": "There are no completed reviews in this range yet.", "analytics.pendingReview": "Currently under review: {count}.", "analytics.noPendingReview": "There are no reports under review now.", "analytics.oldestTransferred": "Oldest transferred: {date}.",
     "analytics.expert": "Expert", "analytics.state": "State", "analytics.total": "Total", "analytics.drafts": "Drafts", "analytics.underReview": "Under review", "analytics.issued": "Issued", "analytics.void": "Voided", "analytics.activeTime": "Active time",
@@ -132,6 +133,7 @@ const catalogs = {
     "narrative.fields": "Text fields", "narrative.identificationMethod": "Identification method", "narrative.identificationConclusion": "Identification conclusion", "narrative.expertComment": "Expert comment", "narrative.statusTransition": "Status-change event without a comment", "narrative.show": "Show:", "narrative.showFields": "Show text fields", "narrative.empty": "Empty", "narrative.filled": "Filled", "narrative.demoNote": "Synthetic lifecycle has no text comments, so this option is not modeled.", "narrative.realNote": "The status-change event is checked in the selected date range.",
   },
   uk: {
+    "demo.allReportStatuses": "Усі статуси звіту", "demo.allSaleStatuses": "Усі статуси продажу", "demo.allExperts": "Усі експерти",
     "demo.searchReports": "Пошук за номером demo-звіту", "demo.filters": "Фільтри", "demo.apply": "Застосувати", "demo.clear": "Очистити",
     "analytics.completedReviews": "Завершено перевірок", "analytics.returned": "Повернуто до чернетки", "analytics.averageDuration": "Середня тривалість", "analytics.medianDuration": "Медіанна тривалість", "analytics.shortestReviews": "Найкоротші перевірки", "analytics.longestReviews": "Найдовші перевірки", "analytics.noAdministrators": "Адміністраторів для цього зрізу поки немає.", "analytics.noCompletedReviews": "Завершених перевірок у цьому зрізі поки немає.", "analytics.pendingReview": "Зараз на перевірці: {count}.", "analytics.noPendingReview": "Зараз немає звітів на перевірці.", "analytics.oldestTransferred": "Найдавніше передано: {date}.",
     "analytics.expert": "Експерт", "analytics.state": "Стан", "analytics.total": "Усього", "analytics.drafts": "Чернетки", "analytics.underReview": "На перевірці", "analytics.issued": "Видано", "analytics.void": "Анульовано", "analytics.activeTime": "Активний час",
