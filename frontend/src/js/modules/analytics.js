@@ -311,7 +311,7 @@ export async function initAnalytics() {
   const page = document.querySelector("[data-analytics-page]");
   if (!page) return;
   localizeAnalyticsShell(page);
-  document.addEventListener("diamant:locale-change", () => localizeAnalyticsShell(page));
+  window.addEventListener("diamant:locale-change", () => localizeAnalyticsShell(page));
   const status = document.getElementById("analytics-status");
   const token = localStorage.getItem("token");
   const expertResults = document.getElementById("analytics-expert-results");
@@ -381,7 +381,7 @@ export async function initAnalytics() {
       status.hidden = false;
     }
   };
-  document.addEventListener("diamant:locale-change", () => { void loadAnalytics(); });
+  window.addEventListener("diamant:locale-change", () => { void loadAnalytics(); });
   periodForm.addEventListener("submit", (event) => { event.preventDefault(); loadAnalytics(); });
   periodReset.addEventListener("click", () => { periodForm.reset(); loadAnalytics(); });
   await loadAnalytics();

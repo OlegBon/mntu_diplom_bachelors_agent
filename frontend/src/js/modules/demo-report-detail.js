@@ -107,7 +107,7 @@ function localizeDemoDetailShell(root) {
 export async function initDemoReportDetail() {
   const root = document.querySelector("[data-demo-report-detail]"); if (!root || localStorage.getItem("role") !== "admin") return;
   localizeDemoDetailShell(root);
-  document.addEventListener("diamant:locale-change", () => localizeDemoDetailShell(root));
+  window.addEventListener("diamant:locale-change", () => localizeDemoDetailShell(root));
   const params = new URLSearchParams(window.location.search); const requestedDataset = params.get("dataset"); let dataset = requestedDataset || "synthetic-demo-v4"; const reportId = params.get("id"); const token = localStorage.getItem("token");
   if (!reportId) return;
   const status = document.getElementById("demo-report-status");

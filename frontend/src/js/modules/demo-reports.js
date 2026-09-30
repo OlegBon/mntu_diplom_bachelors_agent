@@ -764,7 +764,7 @@ export async function initDemoReports() {
   const root = document.querySelector("[data-demo-reports]");
   if (!root || localStorage.getItem("role") !== "admin") return;
   localizeDemoShell(root);
-  document.addEventListener("diamant:locale-change", () => localizeDemoShell(root));
+  window.addEventListener("diamant:locale-change", () => localizeDemoShell(root));
   const token = localStorage.getItem("token");
   const tbody = root.querySelector("#demo-reports-body");
   const pagination = root.querySelector("#demo-pagination");
@@ -831,7 +831,7 @@ export async function initDemoReports() {
     }
   };
 
-  document.addEventListener("diamant:locale-change", () => { void load(state); });
+  window.addEventListener("diamant:locale-change", () => { void load(state); });
   let searchTimer;
   search.addEventListener("input", () => {
     window.clearTimeout(searchTimer);

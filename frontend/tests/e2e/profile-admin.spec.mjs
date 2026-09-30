@@ -5,13 +5,30 @@ test("locale switch keeps administrator session and profile URL state", async ({
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "admin");
     localStorage.setItem("role", "admin");
+    localStorage.setItem("demo_access_enabled", "true");
   });
-  await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
+  await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin", demo_access_enabled: true } }));
   await page.goto("/profile.html?source=locale-check#account");
   await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Ukrainian" }).click();
   await expect(page.getByRole("heading", { name: "Профіль", exact: true })).toBeVisible();
   await expect(page).toHaveURL(/profile\.html\?source=locale-check&lang=uk#account$/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("role"))).toBe("admin");
+});
+
+test("locale switch keeps demo route state and administrator access", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("token", "e2e-token");
+    localStorage.setItem("username", "admin");
+    localStorage.setItem("role", "admin");
+    localStorage.setItem("demo_access_enabled", "true");
+  });
+  await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin", demo_access_enabled: true } }));
+  await page.goto("/demo-reports.html?tab=providers#demo");
+  await expect(page.getByRole("heading", { name: "Demo", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Ukrainian" }).click();
+  await expect(page.getByRole("heading", { name: "Демо", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/demo-reports\.html\?tab=providers&lang=uk#demo$/);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("role"))).toBe("admin");
 });
 
