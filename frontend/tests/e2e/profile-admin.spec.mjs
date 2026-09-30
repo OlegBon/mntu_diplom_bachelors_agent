@@ -1,5 +1,20 @@
 import { expect, test } from "@playwright/test";
 
+test("locale switch keeps administrator session and profile URL state", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("token", "e2e-token");
+    localStorage.setItem("username", "admin");
+    localStorage.setItem("role", "admin");
+  });
+  await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
+  await page.goto("/profile.html?source=locale-check#account");
+  await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Ukrainian" }).click();
+  await expect(page.getByRole("heading", { name: "Профіль", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/profile\.html\?source=locale-check&lang=uk#account$/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("role"))).toBe("admin");
+});
+
 const expert = {
   expert_id: 2,
   username: "expert_1",
