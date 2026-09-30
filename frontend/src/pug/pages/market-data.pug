@@ -16,14 +16,14 @@ block content
             p.account-help Налаштування діють лише для майбутніх нових або змінених чернеток. Збережені орієнтири не перераховуються.
             form#market-reference-policy-form(novalidate)
                 fieldset.market-policy-fieldset
-                    legend Провайдери ринкових орієнтирів
+                    legend(data-i18n="market.providersLegend") Провайдери ринкових орієнтирів
                     #market-policy-market-providers.market-policy-options(aria-live="polite")
                 label.market-data-confirmation(for="market-policy-use-fx")
                     input#market-policy-use-fx(type="checkbox")
-                    span Додавати еквівалент у UAH за офіційним курсом НБУ
+                    span(data-i18n="market.useFx") Додавати еквівалент у UAH за офіційним курсом НБУ
                 p.account-help#market-policy-fx-note Курс НБУ фіксується лише разом із новим орієнтиром.
                 .form-actions
-                    button#market-reference-policy-submit.btn.btn-primary(type="submit") Зберегти налаштування
+                    button#market-reference-policy-submit.btn.btn-primary(type="submit" data-i18n="market.saveSettings") Зберегти налаштування
         section.account-surface.account-surface--wide
             h2(data-i18n="market.automaticRefresh") Автоматичне оновлення
             p.account-help Планувальник середовища запускає безпечну команду за розкладом. Звіти ніколи не виконують зовнішній запит самостійно: вони беруть лише вже збережені актуальні знімки.
@@ -47,29 +47,29 @@ block content
             form#market-reference-attach-form(novalidate)
                 .form-row
                     .form-group.half
-                        label(for="market-reference-report-id") Номер звіту
+                        label(for="market-reference-report-id" data-i18n="market.reportId") Номер звіту
                         input#market-reference-report-id.form-control(type="text" required maxlength="20" placeholder="DR-01001")
                     .form-group.half
-                        label(for="market-reference-snapshot") Затверджений знімок
+                        label(for="market-reference-snapshot" data-i18n="market.approvedSnapshot") Затверджений знімок
                         select#market-reference-snapshot.form-select(required disabled)
                             option(value="") Немає затверджених знімків
                 .form-group
-                    label(for="market-reference-note") Підтвердження застосовності
+                    label(for="market-reference-note" data-i18n="market.applicability") Підтвердження застосовності
                     textarea#market-reference-note.form-control(rows="3" required minlength="10" maxlength="2000" placeholder="Наприклад: перевірено природне походження та зіставність характеристик із scope джерела.")
                 label.market-data-confirmation(for="market-reference-confirmed")
                     input#market-reference-confirmed(type="checkbox" required)
-                    span Підтверджую, що цей орієнтир застосовується лише як довідкове зіставлення, а не як експертна чи продажна ціна.
+                    span(data-i18n="market.confirmAttach") Підтверджую, що цей орієнтир застосовується лише як довідкове зіставлення, а не як експертна чи продажна ціна.
                 .form-actions
-                    button.btn.btn-primary(type="submit") Прикріпити ринковий орієнтир
+                    button.btn.btn-primary(type="submit" data-i18n="market.attach") Прикріпити ринковий орієнтир
         dialog#market-decision-dialog.account-dialog(aria-labelledby="market-decision-dialog-title")
             form#market-decision-form
                 .account-dialog__header
-                    h2#market-decision-dialog-title Підтвердити рішення
+                    h2#market-decision-dialog-title(data-i18n="market.confirmDecision") Підтвердити рішення
                     button#market-decision-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
                 p#market-decision-dialog-description.account-help
                 .form-group
-                    label#market-decision-reason-label(for="market-decision-reason") Коментар
-                    textarea#market-decision-reason.form-control(rows="3" maxlength="2000" placeholder="Необов’язково")
+                    label#market-decision-reason-label(for="market-decision-reason" data-i18n="market.comment") Коментар
+                    textarea#market-decision-reason.form-control(rows="3" maxlength="2000" data-i18n-placeholder="market.optional" placeholder="Необов’язково")
                 .account-dialog__actions
-                    button#market-decision-cancel.btn.btn-outline(type="button") Скасувати
-                    button#market-decision-submit.btn.btn-primary(type="submit") Підтвердити
+                    button#market-decision-cancel.btn.btn-outline(type="button" data-i18n="market.cancel") Скасувати
+                    button#market-decision-submit.btn.btn-primary(type="submit" data-i18n="market.confirm") Підтвердити

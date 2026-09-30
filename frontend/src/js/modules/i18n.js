@@ -4,6 +4,7 @@ const SUPPORTED_LOCALES = ["en", "uk"];
 
 const catalogs = {
   en: {
+    "market.providersLegend": "Market-reference providers", "market.useFx": "Add a UAH equivalent using the official NBU rate", "market.saveSettings": "Save settings", "market.reportId": "Report number", "market.approvedSnapshot": "Approved snapshot", "market.applicability": "Applicability confirmation", "market.confirmAttach": "I confirm that this reference is used only for reference comparison, not as an expert or sale price.", "market.attach": "Attach market reference", "market.confirmDecision": "Confirm decision", "market.comment": "Comment", "market.optional": "Optional", "market.cancel": "Cancel", "market.confirm": "Confirm",
     "market.title": "Market data", "market.accessTerms": "Provider access and terms", "market.referencePolicy": "System reference policy", "market.automaticRefresh": "Automatic refresh", "market.providers": "Providers", "market.snapshotHistory": "Snapshot history", "market.operationLog": "Operation log", "market.attachReference": "Attach a reference to a report",
     "app.title": "Diamant ID",
     "brand.home": "Diamant ID home",
@@ -119,6 +120,7 @@ const catalogs = {
     "narrative.fields": "Text fields", "narrative.identificationMethod": "Identification method", "narrative.identificationConclusion": "Identification conclusion", "narrative.expertComment": "Expert comment", "narrative.statusTransition": "Status-change event without a comment", "narrative.show": "Show:", "narrative.showFields": "Show text fields", "narrative.empty": "Empty", "narrative.filled": "Filled", "narrative.demoNote": "Synthetic lifecycle has no text comments, so this option is not modeled.", "narrative.realNote": "The status-change event is checked in the selected date range.",
   },
   uk: {
+    "market.providersLegend": "Провайдери ринкових орієнтирів", "market.useFx": "Додавати еквівалент у UAH за офіційним курсом НБУ", "market.saveSettings": "Зберегти налаштування", "market.reportId": "Номер звіту", "market.approvedSnapshot": "Затверджений знімок", "market.applicability": "Підтвердження застосовності", "market.confirmAttach": "Підтверджую, що цей орієнтир застосовується лише як довідкове зіставлення, а не як експертна чи продажна ціна.", "market.attach": "Прикріпити ринковий орієнтир", "market.confirmDecision": "Підтвердити рішення", "market.comment": "Коментар", "market.optional": "Необов’язково", "market.cancel": "Скасувати", "market.confirm": "Підтвердити",
     "market.title": "Ринкові дані", "market.accessTerms": "Доступ і умови provider-ів", "market.referencePolicy": "Системний довідковий орієнтир", "market.automaticRefresh": "Автоматичне оновлення", "market.providers": "Провайдери", "market.snapshotHistory": "Історія знімків", "market.operationLog": "Журнал операцій", "market.attachReference": "Прикріпити орієнтир до звіту",
     "app.title": "Diamant ID",
     "brand.home": "Головна Diamant ID",
