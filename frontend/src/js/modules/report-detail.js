@@ -22,24 +22,18 @@ import {
 import { isConfirmedUnauthorized, logout } from "./auth.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 import { createDraftWorkSessionTracker } from "./report-work-session.js";
+import { formatCurrency, formatDate as formatLocalizedDate, formatNumber, t } from "./i18n.js";
 
-const STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
+const STATUS_LABELS = { draft: "dashboard.statusDraft", review: "dashboard.statusReview", issued: "dashboard.statusIssued", void: "dashboard.statusVoid" };
 const MEDIA_TYPE_LABELS = {
-  stone_photo: "Фото каменю",
-  plotting_diagram: "Схема огранювання (plotting)",
+  stone_photo: "detail.stonePhoto",
+  plotting_diagram: "detail.plottingDiagram",
 };
 const EVENT_LABELS = {
-  created: "Створено",
-  report_updated: "Дані чернетки оновлено",
-  status_changed: "Статус змінено",
-  passport_published: "Публічний паспорт опубліковано",
-  passport_reissued: "Публічний паспорт перевипущено",
-  passport_revoked: "Публічний паспорт відкликано",
-  media_published: "Вкладення опубліковано в паспорті",
-  media_unpublished: "Вкладення прибрано з паспорта",
-  system_market_reference_added: "Системний довідковий орієнтир додано",
-  market_reference_added: "Довідковий орієнтир підтверджено адміністратором",
-  legacy_import: "Імпортовано з попередньої бази",
+  created: "detail.eventCreated", report_updated: "detail.eventUpdated", status_changed: "detail.eventStatusChanged",
+  passport_published: "detail.eventPassportPublished", passport_reissued: "detail.eventPassportReissued", passport_revoked: "detail.eventPassportRevoked",
+  media_published: "detail.eventMediaPublished", media_unpublished: "detail.eventMediaUnpublished",
+  system_market_reference_added: "detail.eventSystemReference", market_reference_added: "detail.eventAdminReference", legacy_import: "detail.eventLegacyImport",
 };
 const DRAFT_FIELDS = ["input", "select", "textarea"];
 
@@ -50,16 +44,16 @@ function setStatus(node, message, isError = false) {
 }
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return formatLocalizedDate(new Date(value), { dateStyle: "medium", timeStyle: "short" });
 }
 
 function formatAmount(amount, currencyCode) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: currencyCode, minimumFractionDigits: 2 }).format(Number(amount));
+  return formatCurrency(Number(amount), currencyCode, { minimumFractionDigits: 2 });
 }
 
 function formatFxRate(value) {
   if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 8 }).format(Number(value));
+  return formatNumber(Number(value), { maximumFractionDigits: 8 });
 }
 
 function reportIdFromUrl() {
@@ -79,7 +73,7 @@ function numberOrNull(value) {
   return value === "" ? null : Number(value);
 }
 
-function populateGradeSelect(select, mappings, category, emptyLabel = "Не підтверджено") {
+function populateGradeSelect(select, mappings, category, emptyLabel = t("detail.notConfirmed")) {
   const selectedValue = select.value;
   select.replaceChildren(new Option(emptyLabel, ""));
   mappings
@@ -89,17 +83,17 @@ function populateGradeSelect(select, mappings, category, emptyLabel = "Не пі
 }
 
 function populateExpertGradeSelects(form, mappings) {
-  populateGradeSelect(form.querySelector("#detail-color"), mappings, "color", "Оберіть колір");
-  populateGradeSelect(form.querySelector("#detail-clarity"), mappings, "clarity", "Оберіть чистоту");
-  populateGradeSelect(form.querySelector("#detail-fluorescence"), mappings, "fluorescence", "Оберіть значення");
-  populateGradeSelect(form.querySelector("#detail-polish"), mappings, "polish", "Оберіть оцінку");
-  populateGradeSelect(form.querySelector("#detail-symmetry"), mappings, "symmetry", "Оберіть оцінку");
-  populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions", "Не задано");
+  populateGradeSelect(form.querySelector("#detail-color"), mappings, "color", t("detail.chooseColor"));
+  populateGradeSelect(form.querySelector("#detail-clarity"), mappings, "clarity", t("detail.chooseClarity"));
+  populateGradeSelect(form.querySelector("#detail-fluorescence"), mappings, "fluorescence", t("detail.chooseValue"));
+  populateGradeSelect(form.querySelector("#detail-polish"), mappings, "polish", t("detail.chooseGrade"));
+  populateGradeSelect(form.querySelector("#detail-symmetry"), mappings, "symmetry", t("detail.chooseGrade"));
+  populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions", t("detail.notSpecified"));
 }
 
 function populateReferenceSelect(select, references, category) {
   const selectedValue = select.value;
-  select.replaceChildren(new Option("Не задано", ""));
+  select.replaceChildren(new Option(t("detail.notSpecified"), ""));
   references
     .filter((entry) => entry.category === category)
     .forEach((entry) => select.add(new Option(entry.label, entry.code)));
@@ -163,19 +157,19 @@ function populateForm(form, report, gradeLabels) {
 function renderEvents(container, events) {
   container.replaceChildren();
   if (!events.length) {
-    container.textContent = "Подій ще немає.";
+    container.textContent = t("detail.noEvents");
     return;
   }
   for (const event of events) {
     const item = document.createElement("li");
     const title = document.createElement("strong");
-    title.textContent = EVENT_LABELS[event.action] || event.action;
+    title.textContent = EVENT_LABELS[event.action] ? t(EVENT_LABELS[event.action]) : event.action;
     const details = document.createElement("span");
     const transition = event.from_status || event.to_status
-      ? ` · ${STATUS_LABELS[event.from_status] || event.from_status || "—"} → ${STATUS_LABELS[event.to_status] || event.to_status || "—"}`
+      ? ` · ${STATUS_LABELS[event.from_status] ? t(STATUS_LABELS[event.from_status]) : event.from_status || "—"} → ${STATUS_LABELS[event.to_status] ? t(STATUS_LABELS[event.to_status]) : event.to_status || "—"}`
       : "";
     const reason = ["media_published", "media_unpublished"].includes(event.action) && event.reason
-      ? event.reason.replace(/^(stone_photo|plotting_diagram)(?= · |$)/, (assetType) => MEDIA_TYPE_LABELS[assetType])
+      ? event.reason.replace(/^(stone_photo|plotting_diagram)(?= · |$)/, (assetType) => t(MEDIA_TYPE_LABELS[assetType]))
       : event.reason;
     details.textContent = `${formatDate(event.created_at)}${transition}${reason ? ` · ${reason}` : ""}`;
     item.append(title, details);
