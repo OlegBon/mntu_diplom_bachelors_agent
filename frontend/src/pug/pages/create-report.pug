@@ -3,57 +3,57 @@ extends ../layout/main
 block content
     .create-report-page(hidden data-protected-page="true")
         .page-header
-            h1 Новий звіт
-            p.text-muted Створення чернетки експертного звіту про камінь.
+            h1(data-i18n="wizard.pageTitle") New report
+            p.text-muted(data-i18n="wizard.pageSubtitle") Create an expert stone-report draft.
 
         .report-grid
             .form-column
-                .stepper-tabs(role="tablist" aria-label="Кроки створення звіту")
+                .stepper-tabs(role="tablist" data-i18n-aria-label="wizard.steps" aria-label="Report creation steps")
                     button.tab.active(type="button" data-step="1" role="tab" aria-selected="true")
-                        span.mobile-text 1. Основне
-                        span.desktop-text 1. Ідентифікація та 4C
+                        span.mobile-text(data-i18n="wizard.step1Short") 1. Basics
+                        span.desktop-text(data-i18n="wizard.step1") 1. Identification and 4C
                     button.tab(type="button" data-step="2" role="tab" aria-selected="false")
-                        span.mobile-text 2. Геометрія
-                        span.desktop-text 2. Геометрія (IDC)
+                        span.mobile-text(data-i18n="wizard.step2Short") 2. Geometry
+                        span.desktop-text(data-i18n="wizard.step2") 2. Geometry (IDC)
                     button.tab(type="button" data-step="3" role="tab" aria-selected="false")
-                        span.mobile-text 3. Висновок
-                        span.desktop-text 3. Висновок та медіа
+                        span.mobile-text(data-i18n="wizard.step3Short") 3. Conclusion
+                        span.desktop-text(data-i18n="wizard.step3") 3. Conclusion and media
 
                 form#wizard-form(novalidate)
                     p#wizard-status.form-status(role="status" aria-live="polite" hidden)
 
                     .step-content.active(data-step="1" role="tabpanel")
-                        h3 Ідентифікація
+                        h3(data-i18n="wizard.identification") Identification
                         .form-group
-                            label(for="report-id-preview") Наступний номер звіту
-                            input#report-id-preview.form-control.bg-light(type="text" value="Завантаження…" disabled aria-describedby="report-id-help")
-                            small#report-id-help.form-help Номер остаточно присвоюється сервером під час збереження.
+                            label(for="report-id-preview" data-i18n="wizard.nextReportId") Next report number
+                            input#report-id-preview.form-control.bg-light(type="text" value="Loading…" disabled aria-describedby="report-id-help")
+                            small#report-id-help.form-help(data-i18n="wizard.idServerAssigned") The server assigns the final number when saving.
                         .form-row
                             .form-group.half
-                                label(for="examination-date") Дата дослідження / оцінки
+                                label(for="examination-date" data-i18n="wizard.examinationDate") Examination / assessment date
                                 input#examination-date.form-control(type="date" name="examination_date" required)
                             .form-group.half
-                                label(for="shape") Форма (Shape)
+                                label(for="shape" data-i18n="wizard.shape") Shape
                                 select#shape.form-select(data-reference-category="shape" name="shape" required disabled)
-                                    option(value="") Завантаження довідника…
+                                    option(value="" data-i18n="wizard.loadingReference") Loading reference data…
                         .form-group
-                            label(for="origin") Походження (Origin)
+                            label(for="origin" data-i18n="wizard.origin") Origin
                             select#origin.form-select(data-reference-category="origin" name="origin" required disabled)
-                                option(value="") Завантаження довідника…
+                                option(value="" data-i18n="wizard.loadingReference") Loading reference data…
 
-                        h3 Характеристики 4C
+                        h3(data-i18n="wizard.fourCs") 4C characteristics
                         .form-group
-                            label(for="carat-weight") Вага (Carat Weight)
+                            label(for="carat-weight" data-i18n="wizard.caratWeight") Carat weight
                             input#carat-weight.form-control(type="number" step="0.01" min="0.01" max="100" name="carat_weight" placeholder="ct" required)
                         .form-row
                             .form-group.half
-                                label(for="color-grade") Колір (Color)
+                                label(for="color-grade" data-i18n="wizard.color") Color
                                 select#color-grade.form-select(data-grade-category="color" name="color_grade" required disabled)
-                                    option(value="") Завантаження довідника…
+                                    option(value="" data-i18n="wizard.loadingReference") Loading reference data…
                             .form-group.half
-                                label(for="clarity-grade") Чистота (Clarity)
+                                label(for="clarity-grade" data-i18n="wizard.clarity") Clarity
                                 select#clarity-grade.form-select(data-grade-category="clarity" name="clarity_grade" required disabled)
-                                    option(value="") Завантаження довідника…
+                                    option(value="" data-i18n="wizard.loadingReference") Loading reference data…
 
                     .step-content(data-step="2" role="tabpanel" hidden)
                         h3 Розміри (Dimensions)
