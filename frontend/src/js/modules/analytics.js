@@ -229,9 +229,9 @@ export async function initAnalytics() {
     try {
       const [experts, narratives, quality, admins, providers, currency] = await Promise.all([
         getExpertStatistics(period, token), getNarrativeQualityAnalytics(period, token).catch(() => null),
-        getOperationalQualityAnalytics(period, token),
+        getOperationalQualityAnalytics(period, token).catch(() => null),
         getAdminReviewStatistics(period, token),
-        getOperationalProviderAnalytics(period, token), getFxDataSnapshots(period, token),
+        getOperationalProviderAnalytics(period, token).catch(() => null), getFxDataSnapshots(period, token).catch(() => null),
       ]);
       renderExperts(expertResults, experts, expertDialog, expertDialogContent);
       if (narratives) {
@@ -240,10 +240,13 @@ export async function initAnalytics() {
           formatDateTime: dateTime,
         });
       } else narrativeResults.textContent = "Текстові метадані тимчасово недоступні.";
-      renderOperationalQuality(qualityResults, quality, { formatDateTime: dateTime });
+      if (quality) renderOperationalQuality(qualityResults, quality, { formatDateTime: dateTime });
+      else qualityResults.textContent = "Операційні метадані тимчасово недоступні.";
       renderAdmins(adminResults, admins);
-      renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
-      renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);
+      if (providers) renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
+      else providerResults.textContent = "Метадані provider-ів тимчасово недоступні.";
+      if (currency) renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);
+      else currencyResults.textContent = "Метадані валютних джерел тимчасово недоступні.";
       periodSummaryNode.textContent = periodSummary(period);
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
