@@ -80,9 +80,9 @@ test("public lookup accepts only a public code and rejects URL or an internal re
   await page.goto("/");
   await page.locator("#search-input").fill(`http://localhost:3000/passport.html?id=${publicId}`);
   await page.locator("#public-search-form button").click();
-  await expect(page.locator("#public-search-status")).toContainText("код публічного паспорта");
+  await expect(page.locator("#public-search-status")).toContainText("public passport code");
 
   await page.locator("#search-input").fill("DR-01001");
   await page.locator("#public-search-form button").click();
-  await expect(page.locator("#public-search-status")).toContainText("Внутрішній номер звіту");
+  await expect(page.locator("#public-search-status")).toContainText("internal report number");
 });

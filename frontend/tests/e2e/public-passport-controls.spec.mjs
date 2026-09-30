@@ -33,6 +33,7 @@ test("admin does not see QR or passport actions before a report is issued", asyn
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "admin");
     localStorage.setItem("role", "admin");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
   await page.route("**/market/mappings", (route) => route.fulfill({ json: [] }));
@@ -44,7 +45,7 @@ test("admin does not see QR or passport actions before a report is issued", asyn
   await page.goto("/report-detail.html?id=DR-01001");
 
   await expect(page.locator("#detail-passport")).toBeVisible();
-  await expect(page.locator("#detail-passport-state")).toContainText("після видачі");
+  await expect(page.locator("#detail-passport-state")).toContainText("виданого звіту");
   await expect(page.locator("#detail-passport-qr")).toBeHidden();
   await expect(page.locator("#detail-passport-publish")).toBeHidden();
   await expect(page.locator("#detail-passport-reissue")).toBeHidden();

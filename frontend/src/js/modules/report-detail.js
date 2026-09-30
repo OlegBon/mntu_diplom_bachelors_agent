@@ -22,24 +22,18 @@ import {
 import { isConfirmedUnauthorized, logout } from "./auth.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 import { createDraftWorkSessionTracker } from "./report-work-session.js";
+import { formatCurrency, formatDate as formatLocalizedDate, formatNumber, t } from "./i18n.js";
 
-const STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
+const STATUS_LABELS = { draft: "dashboard.statusDraft", review: "dashboard.statusReview", issued: "dashboard.statusIssued", void: "dashboard.statusVoid" };
 const MEDIA_TYPE_LABELS = {
-  stone_photo: "Фото каменю",
-  plotting_diagram: "Схема огранювання (plotting)",
+  stone_photo: "detail.stonePhoto",
+  plotting_diagram: "detail.plottingDiagram",
 };
 const EVENT_LABELS = {
-  created: "Створено",
-  report_updated: "Дані чернетки оновлено",
-  status_changed: "Статус змінено",
-  passport_published: "Публічний паспорт опубліковано",
-  passport_reissued: "Публічний паспорт перевипущено",
-  passport_revoked: "Публічний паспорт відкликано",
-  media_published: "Вкладення опубліковано в паспорті",
-  media_unpublished: "Вкладення прибрано з паспорта",
-  system_market_reference_added: "Системний довідковий орієнтир додано",
-  market_reference_added: "Довідковий орієнтир підтверджено адміністратором",
-  legacy_import: "Імпортовано з попередньої бази",
+  created: "detail.eventCreated", report_updated: "detail.eventUpdated", status_changed: "detail.eventStatusChanged",
+  passport_published: "detail.eventPassportPublished", passport_reissued: "detail.eventPassportReissued", passport_revoked: "detail.eventPassportRevoked",
+  media_published: "detail.eventMediaPublished", media_unpublished: "detail.eventMediaUnpublished",
+  system_market_reference_added: "detail.eventSystemReference", market_reference_added: "detail.eventAdminReference", legacy_import: "detail.eventLegacyImport",
 };
 const DRAFT_FIELDS = ["input", "select", "textarea"];
 
@@ -50,16 +44,16 @@ function setStatus(node, message, isError = false) {
 }
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return formatLocalizedDate(new Date(value), { dateStyle: "medium", timeStyle: "short" });
 }
 
 function formatAmount(amount, currencyCode) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: currencyCode, minimumFractionDigits: 2 }).format(Number(amount));
+  return formatCurrency(Number(amount), currencyCode, { minimumFractionDigits: 2 });
 }
 
 function formatFxRate(value) {
   if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 8 }).format(Number(value));
+  return formatNumber(Number(value), { maximumFractionDigits: 8 });
 }
 
 function reportIdFromUrl() {
@@ -79,7 +73,7 @@ function numberOrNull(value) {
   return value === "" ? null : Number(value);
 }
 
-function populateGradeSelect(select, mappings, category, emptyLabel = "Не підтверджено") {
+function populateGradeSelect(select, mappings, category, emptyLabel = t("detail.notConfirmed")) {
   const selectedValue = select.value;
   select.replaceChildren(new Option(emptyLabel, ""));
   mappings
@@ -89,17 +83,17 @@ function populateGradeSelect(select, mappings, category, emptyLabel = "Не пі
 }
 
 function populateExpertGradeSelects(form, mappings) {
-  populateGradeSelect(form.querySelector("#detail-color"), mappings, "color", "Оберіть колір");
-  populateGradeSelect(form.querySelector("#detail-clarity"), mappings, "clarity", "Оберіть чистоту");
-  populateGradeSelect(form.querySelector("#detail-fluorescence"), mappings, "fluorescence", "Оберіть значення");
-  populateGradeSelect(form.querySelector("#detail-polish"), mappings, "polish", "Оберіть оцінку");
-  populateGradeSelect(form.querySelector("#detail-symmetry"), mappings, "symmetry", "Оберіть оцінку");
-  populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions", "Не задано");
+  populateGradeSelect(form.querySelector("#detail-color"), mappings, "color", t("detail.chooseColor"));
+  populateGradeSelect(form.querySelector("#detail-clarity"), mappings, "clarity", t("detail.chooseClarity"));
+  populateGradeSelect(form.querySelector("#detail-fluorescence"), mappings, "fluorescence", t("detail.chooseValue"));
+  populateGradeSelect(form.querySelector("#detail-polish"), mappings, "polish", t("detail.chooseGrade"));
+  populateGradeSelect(form.querySelector("#detail-symmetry"), mappings, "symmetry", t("detail.chooseGrade"));
+  populateGradeSelect(form.querySelector("#detail-expert-proportions"), mappings, "proportions", t("detail.notSpecified"));
 }
 
 function populateReferenceSelect(select, references, category) {
   const selectedValue = select.value;
-  select.replaceChildren(new Option("Не задано", ""));
+  select.replaceChildren(new Option(t("detail.notSpecified"), ""));
   references
     .filter((entry) => entry.category === category)
     .forEach((entry) => select.add(new Option(entry.label, entry.code)));
@@ -163,19 +157,19 @@ function populateForm(form, report, gradeLabels) {
 function renderEvents(container, events) {
   container.replaceChildren();
   if (!events.length) {
-    container.textContent = "Подій ще немає.";
+    container.textContent = t("detail.noEvents");
     return;
   }
   for (const event of events) {
     const item = document.createElement("li");
     const title = document.createElement("strong");
-    title.textContent = EVENT_LABELS[event.action] || event.action;
+    title.textContent = EVENT_LABELS[event.action] ? t(EVENT_LABELS[event.action]) : event.action;
     const details = document.createElement("span");
     const transition = event.from_status || event.to_status
-      ? ` · ${STATUS_LABELS[event.from_status] || event.from_status || "—"} → ${STATUS_LABELS[event.to_status] || event.to_status || "—"}`
+      ? ` · ${STATUS_LABELS[event.from_status] ? t(STATUS_LABELS[event.from_status]) : event.from_status || "—"} → ${STATUS_LABELS[event.to_status] ? t(STATUS_LABELS[event.to_status]) : event.to_status || "—"}`
       : "";
     const reason = ["media_published", "media_unpublished"].includes(event.action) && event.reason
-      ? event.reason.replace(/^(stone_photo|plotting_diagram)(?= · |$)/, (assetType) => MEDIA_TYPE_LABELS[assetType])
+      ? event.reason.replace(/^(stone_photo|plotting_diagram)(?= · |$)/, (assetType) => t(MEDIA_TYPE_LABELS[assetType]))
       : event.reason;
     details.textContent = `${formatDate(event.created_at)}${transition}${reason ? ` · ${reason}` : ""}`;
     item.append(title, details);
@@ -186,7 +180,7 @@ function renderEvents(container, events) {
 function renderNarrativeQuality(container, snapshot) {
   container.replaceChildren();
   if (!snapshot.warnings.length) {
-    container.append(document.createTextNode("Пояснюваних сигналів заповнення зараз немає."));
+    container.append(document.createTextNode(t("detail.noNarrativeWarnings")));
     return;
   }
   snapshot.warnings.forEach((warning) => {
@@ -202,7 +196,7 @@ function renderMedia(container, report, assets, currentUser, token, onRequestPub
   container.replaceChildren();
   if (!assets.length) {
     const item = document.createElement("li");
-    item.textContent = "Приватних вкладень немає.";
+    item.textContent = t("detail.noPrivateAttachments");
     container.append(item);
     return;
   }
@@ -220,7 +214,7 @@ function renderMedia(container, report, assets, currentUser, token, onRequestPub
         .then((response) => response.ok ? response.blob() : Promise.reject())
         .then((blob) => window.open(URL.createObjectURL(blob), "_blank", "noopener"));
     });
-    item.append(link, document.createTextNode(` · ${MEDIA_TYPE_LABELS[asset.asset_type] || "Вкладення"}`));
+    item.append(link, document.createTextNode(` · ${MEDIA_TYPE_LABELS[asset.asset_type] ? t(MEDIA_TYPE_LABELS[asset.asset_type]) : t("detail.attachment")}`));
     const canManagePublication = currentUser.role === "admin"
       && report.status === "issued"
       && ["stone_photo", "plotting_diagram"].includes(asset.asset_type)
@@ -229,11 +223,11 @@ function renderMedia(container, report, assets, currentUser, token, onRequestPub
       const publication = document.createElement("button");
       publication.type = "button";
       publication.className = "btn btn-outline btn--compact";
-      publication.textContent = asset.is_public ? "Прибрати з паспорта" : "Опублікувати в паспорті";
+      publication.textContent = asset.is_public ? t("detail.removeFromPassport") : t("detail.publishInPassport");
       publication.addEventListener("click", () => onRequestPublication(asset, !asset.is_public, publication));
       item.append(document.createTextNode(" "), publication);
     } else if (asset.is_public) {
-      item.append(document.createTextNode(" · Опубліковано в паспорті"));
+      item.append(document.createTextNode(` · ${t("detail.publishedInPassport")}`));
     }
     container.append(item);
   }
@@ -244,13 +238,13 @@ function renderValuations(container, helpNode, valuations) {
   const marketReferences = valuations.filter((valuation) => ["market_reference", "system_market_reference"].includes(valuation.valuation_kind));
   if (!marketReferences.length) {
     const item = document.createElement("li");
-    item.textContent = "Системного або підтвердженого ринкового орієнтира ще немає.";
+    item.textContent = t("detail.noMarketReferences");
     container.append(item);
     return;
   }
-  helpNode.textContent = "Кожен орієнтир належить окремому провайдеру та знімку. Системний орієнтир формується автоматично з останнього затвердженого знімка; підтверджений орієнтир окремо перевіряє адміністратор. Орієнтири не є експертною, продажною чи транзакційною ціною.";
+  helpNode.textContent = t("detail.marketReferenceDescription");
   if (marketReferences.length > 1) {
-    helpNode.append(document.createTextNode(" Поточний запис відкритий; попередні збережені орієнтири згорнуті."));
+    helpNode.append(document.createTextNode(` ${t("detail.previousReferencesCollapsed")}`));
   }
   for (const [index, valuation] of marketReferences.entries()) {
     const isSystemReference = valuation.valuation_kind === "system_market_reference";
@@ -264,7 +258,7 @@ function renderValuations(container, helpNode, valuations) {
     const amount = document.createElement("strong");
     amount.textContent = formatAmount(valuation.amount, valuation.currency_code);
     const label = document.createElement("span");
-    label.textContent = isSystemReference ? "Системний довідковий орієнтир" : "Підтверджений довідковий орієнтир";
+    label.textContent = t(isSystemReference ? "dashboard.referenceTypeSystem" : "dashboard.referenceTypeAdmin");
     summary.append(amount, label);
     const details = document.createElement("dl");
     details.className = "market-reference-card__details";
@@ -274,24 +268,24 @@ function renderValuations(container, helpNode, valuations) {
       const dd = document.createElement("dd"); dd.textContent = value;
       row.append(dt, dd); details.append(row);
     };
-    addDetail("Провайдер", valuation.source_name);
-    addDetail("Знімок провайдера", `#${valuation.market_snapshot_id ?? "—"}`);
-    addDetail("Отримано", formatDate(valuation.observed_at));
+    addDetail(t("dashboard.provider"), valuation.source_name);
+    addDetail(t("dashboard.providerSnapshot"), `#${valuation.market_snapshot_id ?? "—"}`);
+    addDetail(t("dashboard.observed"), formatDate(valuation.observed_at));
     if (valuation.converted_amount && valuation.converted_currency_code) {
-      const rateDate = valuation.fx_rate_date ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${valuation.fx_rate_date}T12:00:00`)) : "—";
-      addDetail("Еквівалент", formatAmount(valuation.converted_amount, valuation.converted_currency_code));
-      addDetail("Курс НБУ", `${formatFxRate(valuation.fx_rate)} UAH/USD · ${rateDate} · знімок #${valuation.fx_snapshot_id ?? "—"}`);
+      const rateDate = valuation.fx_rate_date ? formatLocalizedDate(new Date(`${valuation.fx_rate_date}T12:00:00`), { dateStyle: "medium" }) : "—";
+      addDetail(t("dashboard.equivalent"), formatAmount(valuation.converted_amount, valuation.converted_currency_code));
+      addDetail(t("dashboard.nbuRate"), t("dashboard.nbuRateValue", { rate: formatFxRate(valuation.fx_rate), date: rateDate, snapshot: valuation.fx_snapshot_id ?? "—" }));
     }
     disclosure.append(summary, details);
     if (valuation.applicability_note) {
       const note = document.createElement("p");
       note.className = "market-reference-card__note";
-      note.append(document.createTextNode("Підтвердження: "), document.createTextNode(valuation.applicability_note));
+      note.append(document.createTextNode(`${t("detail.confirmation")}: `), document.createTextNode(valuation.applicability_note));
       disclosure.append(note);
     } else if (isSystemReference) {
       const note = document.createElement("p");
       note.className = "market-reference-card__note";
-      note.textContent = `Автоматично розраховано за останнім затвердженим знімком ${valuation.source_name}; застосовність не підтверджена адміністратором.`;
+      note.textContent = t("detail.systemReferenceNote", { provider: valuation.source_name });
       disclosure.append(note);
     }
     item.append(disclosure);
@@ -319,7 +313,7 @@ async function copyText(value) {
   helper.select();
   const copied = document.execCommand("copy");
   helper.remove();
-  if (!copied) throw new Error("Не вдалося скопіювати дані");
+  if (!copied) throw new Error(t("detail.copyFailed"));
 }
 
 function downloadBlob(blob, filename) {
@@ -349,25 +343,25 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
   section.hidden = false;
   [code, link, qr, publish, copyLink, copyCode, pdf, reissue, revoke].forEach((element) => { element.hidden = true; });
   publish.disabled = false;
-  publish.textContent = "Опублікувати паспорт";
+  publish.textContent = t("detail.publishPassport");
   if (report.status !== "issued") {
-    state.textContent = "Публікація стане доступною після видачі звіту admin.";
+    state.textContent = t("detail.passportIssuedOnly");
     return;
   }
   publish.onclick = async () => {
     if (publish.dataset.submitting === "true") return;
     publish.dataset.submitting = "true";
     publish.disabled = true;
-    publish.textContent = "Публікація…";
+    publish.textContent = t("detail.publishing");
     try {
-      onStatus("Публікація паспорта…");
+      onStatus(t("detail.publishingPassport"));
       await publishReportPassport(report.report_id, token);
       await renderPassportControls({ report, currentUser, token, onStatus });
-      onStatus("Паспорт опубліковано.");
+      onStatus(t("detail.passportPublished"));
     } catch (error) {
-      onStatus(error.message || "Не вдалося опублікувати паспорт.", true);
+      onStatus(error.message || t("detail.publishPassportFailed"), true);
       publish.disabled = false;
-      publish.textContent = "Опублікувати паспорт";
+      publish.textContent = t("detail.publishPassport");
     } finally {
       delete publish.dataset.submitting;
     }
@@ -375,12 +369,12 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
   try {
     const { passport } = await getReportPassport(report.report_id, token);
     if (!passport) {
-      state.textContent = "Паспорт ще не опубліковано.";
+      state.textContent = t("detail.passportNotPublished");
       publish.hidden = false;
       return;
     }
     const url = passportUrl(passport.public_id);
-    state.textContent = "Паспорт опубліковано. Його можна перевірити за посиланням, QR або кодом; перевипуск одразу відкликає попередні дані доступу.";
+    state.textContent = t("detail.passportPublishedDescription");
     code.querySelector("code").textContent = passport.public_id;
     code.hidden = false;
     link.href = url;
@@ -397,42 +391,42 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
     qr.src = qr.dataset.objectUrl;
     qr.hidden = false;
     copyLink.onclick = async () => {
-      try { await copyText(url); onStatus("Публічне посилання скопійовано."); }
-      catch (error) { onStatus(error.message || "Не вдалося скопіювати посилання.", true); }
+      try { await copyText(url); onStatus(t("detail.publicLinkCopied")); }
+      catch (error) { onStatus(error.message || t("detail.copyLinkFailed"), true); }
     };
     copyCode.onclick = async () => {
-      try { await copyText(passport.public_id); onStatus("Код публічного паспорта скопійовано."); }
-      catch (error) { onStatus(error.message || "Не вдалося скопіювати код.", true); }
+      try { await copyText(passport.public_id); onStatus(t("detail.passportCodeCopied")); }
+      catch (error) { onStatus(error.message || t("detail.copyCodeFailed"), true); }
     };
     pdf.onclick = async () => {
       try {
-        onStatus("Формування PDF-паспорта…");
+        onStatus(t("detail.generatingPassportPdf"));
         const document = await getReportPassportPdf(report.report_id, url, token);
         downloadBlob(document, `passport-${report.report_id}.pdf`);
-        onStatus("PDF-паспорт завантажено.");
-      } catch (error) { onStatus(error.message || "Не вдалося сформувати PDF-паспорт.", true); }
+        onStatus(t("detail.passportPdfDownloaded"));
+      } catch (error) { onStatus(error.message || t("detail.passportPdfFailed"), true); }
     };
   } catch {
-    state.textContent = "Не вдалося завантажити стан публікації.";
+    state.textContent = t("detail.passportStateLoadFailed");
     return;
   }
   reissue.onclick = async () => {
-    if (!window.confirm("Перевипустити паспорт? Попередній код, посилання й QR перестануть працювати.")) return;
+    if (!window.confirm(t("detail.reissueConfirm"))) return;
     try {
-      onStatus("Перевипуск паспорта…");
+      onStatus(t("detail.reissuingPassport"));
       await reissueReportPassport(report.report_id, token);
       await renderPassportControls({ report, currentUser, token, onStatus });
-      onStatus("Створено новий код, посилання та QR-код.");
-    } catch (error) { onStatus(error.message || "Не вдалося перевипустити посилання.", true); }
+      onStatus(t("detail.passportReissued"));
+    } catch (error) { onStatus(error.message || t("detail.reissueFailed"), true); }
   };
   revoke.onclick = async () => {
-    if (!window.confirm("Відкликати публічний паспорт? Код, посилання й QR одразу перестануть працювати.")) return;
+    if (!window.confirm(t("detail.revokeConfirm"))) return;
     try {
-      onStatus("Відкликання публікації…");
+      onStatus(t("detail.revokingPassport"));
       await revokeReportPassport(report.report_id, token);
       await renderPassportControls({ report, currentUser, token, onStatus });
-      onStatus("Публікацію паспорта відкликано.");
-    } catch (error) { onStatus(error.message || "Не вдалося відкликати паспорт.", true); }
+      onStatus(t("detail.passportRevoked"));
+    } catch (error) { onStatus(error.message || t("detail.revokeFailed"), true); }
   };
 }
 
@@ -441,27 +435,27 @@ function renderTransitionControls(container, helpNode, report, currentUser, onTr
   const isAdmin = currentUser.role === "admin";
   const isOwner = currentUser.expert_id === report.expert_id;
   const options = [];
-  if (report.status === "draft" && (isOwner || isAdmin)) options.push(["review", "Передати на перевірку"]);
+  if (report.status === "draft" && (isOwner || isAdmin)) options.push(["review", t("detail.sendForReview")]);
   if (report.status === "review" && isAdmin) {
-    options.push(["draft", "Повернути в чернетку"], ["issued", "Видати звіт"], ["void", "Анулювати"]);
+    options.push(["draft", t("detail.returnToDraft")], ["issued", t("detail.issueReport")], ["void", t("detail.voidReport")]);
   }
-  if (report.status === "issued" && isAdmin) options.push(["void", "Анулювати"]);
+  if (report.status === "issued" && isAdmin) options.push(["void", t("detail.voidReport")]);
   for (const [targetStatus, label] of options) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = targetStatus === "issued" ? "btn btn-primary" : "btn btn-outline";
     button.textContent = label;
     button.disabled = targetStatus === "issued" && report.expert_proportions_grade === null;
-    if (button.disabled) button.title = "Для видачі потрібна експертна оцінка Proportions.";
+    if (button.disabled) button.title = t("detail.issueNeedsProportions");
     button.addEventListener("click", () => onTransition(targetStatus));
     container.append(button);
   }
   if (report.status === "review" && report.expert_proportions_grade === null) {
-    helpNode.textContent = "Для видачі поверніть звіт у чернетку та оберіть експертну оцінку Proportions.";
+    helpNode.textContent = t("detail.reviewNeedsProportions");
   } else {
     helpNode.textContent = report.status === "draft"
-      ? "Чернетку може редагувати її автор або admin."
-      : "Після передачі на перевірку поля звіту заблоковані; переходи контролює сервер.";
+      ? t("detail.draftEditHelp")
+      : t("detail.lockedAfterReview");
   }
 }
 
@@ -478,7 +472,7 @@ export async function initReportDetail() {
   const mediaPublicationStatus = document.getElementById("media-publication-status");
   const mediaPublicationSubmit = document.getElementById("media-publication-submit");
   if (!token || !reportId || !form) {
-    setStatus(status, "Не вказано номер звіту.", true);
+    setStatus(status, t("detail.reportIdMissing"), true);
     return;
   }
   let report;
@@ -499,9 +493,9 @@ export async function initReportDetail() {
     pendingMediaPublication = { asset, isPublic };
     mediaPublicationTrigger = trigger;
     mediaPublicationDescription.textContent = isPublic
-      ? "Зображення стане доступним у публічному паспорті лише за чинним посиланням або QR-кодом. Воно не потрапляє до PDF."
-      : "Зображення перестане відображатися у публічному паспорті. Приватне вкладення у звіті буде збережено.";
-    mediaPublicationSubmit.textContent = isPublic ? "Опублікувати в паспорті" : "Прибрати з паспорта";
+      ? t("detail.publishAttachmentDescription")
+      : t("detail.unpublishAttachmentDescription");
+    mediaPublicationSubmit.textContent = isPublic ? t("detail.publishInPassport") : t("detail.removeFromPassport");
     mediaPublicationStatus.hidden = true;
     mediaPublicationDialog.showModal();
   };
@@ -514,22 +508,22 @@ export async function initReportDetail() {
       report = freshReport;
       populateForm(form, report, gradeLabels);
       document.getElementById("report-detail-title").textContent = report.report_id;
-      document.getElementById("report-detail-subtitle").textContent = `Створено: ${formatDate(report.created_at || report.report_date)}`;
+      document.getElementById("report-detail-subtitle").textContent = t("detail.createdAt", { date: formatDate(report.created_at || report.report_date) });
       const badge = document.getElementById("detail-status-badge");
-      badge.textContent = STATUS_LABELS[report.status] || report.status;
+      badge.textContent = STATUS_LABELS[report.status] ? t(STATUS_LABELS[report.status]) : report.status;
       badge.dataset.status = report.status;
-      document.getElementById("detail-system-summary").textContent = `Системний IDC: Proportions ${report.system_proportions_grade ?? "—"}, Final Cut ${report.system_cut_grade ?? "—"}.`;
+      document.getElementById("detail-system-summary").textContent = t("detail.systemSummary", { proportions: report.system_proportions_grade ?? "—", cut: report.system_cut_grade ?? "—" });
       const confirmedProportions = report.expert_proportions_grade === null
-        ? "не задано"
+        ? t("detail.notSpecified")
         : gradeLabels.get(`proportions:${report.expert_proportions_grade}`) || String(report.expert_proportions_grade);
       const confirmedCut = report.expert_cut_grade === null
-        ? "не задано"
+        ? t("detail.notSpecified")
         : gradeLabels.get(`cut:${report.expert_cut_grade}`) || String(report.expert_cut_grade);
-      document.getElementById("detail-expert-summary").textContent = `Експертні grades: Proportions ${confirmedProportions}, підсумковий Cut ${confirmedCut}.`;
+      document.getElementById("detail-expert-summary").textContent = t("detail.expertSummary", { proportions: confirmedProportions, cut: confirmedCut });
       renderEvents(document.getElementById("detail-events"), events);
       const narrativeNode = document.getElementById("detail-narrative-quality");
       if (narrativeQuality) renderNarrativeQuality(narrativeNode, narrativeQuality);
-      else narrativeNode.textContent = "Текстові метадані тимчасово недоступні.";
+      else narrativeNode.textContent = t("detail.narrativeUnavailable");
       renderMedia(
         document.getElementById("detail-media"), report, media, currentUser, token, openMediaPublicationDialog,
       );
@@ -537,17 +531,17 @@ export async function initReportDetail() {
         const valuations = await getReportValuations(reportId, token);
         renderValuations(document.getElementById("detail-valuations"), document.getElementById("detail-valuations-help"), valuations);
       } catch {
-        document.getElementById("detail-valuations").textContent = "Не вдалося завантажити ринковий орієнтир.";
+        document.getElementById("detail-valuations").textContent = t("detail.marketReferencesLoadFailed");
       }
       await renderPassportControls({ report, currentUser, token, onStatus: (message, isError) => setStatus(status, message, isError) });
       renderTransitionControls(document.getElementById("detail-transitions"), document.getElementById("detail-transition-help"), report, currentUser, async (targetStatus) => {
         try {
-          setStatus(status, "Зміна статусу…");
+          setStatus(status, t("detail.statusChanging"));
           const reason = document.getElementById("detail-transition-reason").value.trim();
           await transitionDomainReport(reportId, { target_status: targetStatus, reason: reason || null }, token);
-          setStatus(status, "Статус звіту оновлено.");
+          setStatus(status, t("detail.statusUpdated"));
           await refresh();
-        } catch (error) { setStatus(status, error.message || "Не вдалося змінити статус.", true); }
+        } catch (error) { setStatus(status, error.message || t("detail.statusUpdateFailed"), true); }
       });
       const canEdit = report.status === "draft" && (currentUser.role === "admin" || currentUser.expert_id === report.expert_id);
       const canTrack = report.status === "draft" && currentUser.role === "gemologist" && currentUser.expert_id === report.expert_id;
@@ -560,7 +554,7 @@ export async function initReportDetail() {
       }
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
-      setStatus(status, error.status === 403 ? "У вас немає доступу до цього звіту." : "Не вдалося завантажити приватний звіт.", true);
+      setStatus(status, error.status === 403 ? t("detail.reportForbidden") : t("detail.reportLoadFailed"), true);
     }
   };
   try {
@@ -575,7 +569,7 @@ export async function initReportDetail() {
       logout("/login.html");
       return;
     }
-    setStatus(status, "Не вдалося підготувати сторінку звіту. Сеанс збережено — оновіть сторінку після відновлення API.", true);
+    setStatus(status, t("detail.pagePreparationFailed"), true);
     return;
   }
   workSessionTracker = createDraftWorkSessionTracker({ reportId, token, form });
@@ -597,13 +591,13 @@ export async function initReportDetail() {
         report.report_id, pendingMediaPublication.asset.media_id, pendingMediaPublication.isPublic, token,
       );
       const message = pendingMediaPublication.isPublic
-        ? "Вкладення опубліковано в паспорті."
-        : "Вкладення прибрано з паспорта.";
+        ? t("detail.attachmentPublished")
+        : t("detail.attachmentUnpublished");
       closeMediaPublicationDialog();
       setStatus(status, message);
       await refresh();
     } catch (error) {
-      setStatus(mediaPublicationStatus, error.message || "Не вдалося змінити видимість вкладення.", true);
+      setStatus(mediaPublicationStatus, error.message || t("detail.attachmentVisibilityFailed"), true);
     } finally {
       mediaPublicationSubmit.disabled = false;
     }
@@ -626,14 +620,19 @@ export async function initReportDetail() {
     event.preventDefault();
     if (!form.reportValidity()) return;
     try {
-      setStatus(status, "Збереження змін…");
+      setStatus(status, t("detail.savingChanges"));
       await workSessionTracker.checkpointSave();
       await updateDomainReport(reportId, payloadFromForm(form), token);
       isEditing = false;
-      setStatus(status, "Зміни чернетки збережено.");
+      setStatus(status, t("detail.changesSaved"));
       await refresh();
-    } catch (error) { setStatus(status, error.message || "Не вдалося зберегти зміни.", true); }
+    } catch (error) { setStatus(status, error.message || t("detail.saveChangesFailed"), true); }
   });
   await refresh();
   registerVisibleDataRefresh(refresh, { canRefresh: () => form.querySelector("#detail-save").hidden });
+  window.addEventListener("diamant:locale-change", () => {
+    // Static labels are translated centrally. Do not refresh an active edit: that would overwrite
+    // unsaved field values. Read-only detail data can be rerendered in the new locale.
+    if (!isEditing) void refresh();
+  });
 }

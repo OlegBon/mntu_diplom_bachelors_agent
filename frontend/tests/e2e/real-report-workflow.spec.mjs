@@ -55,13 +55,13 @@ test("real isolated API flow creates, issues and publishes a passport", async ({
   await page.locator("#detail-expert-proportions").selectOption("0");
   await page.locator("#detail-save").click();
   await expect(page.locator("#detail-edit")).toBeVisible();
-  await page.getByRole("button", { name: "Передати на перевірку" }).click();
-  await expect(page.locator("#detail-status-badge")).toHaveText("На перевірці");
-  await page.getByRole("button", { name: "Вийти" }).click();
+  await page.getByRole("button", { name: "Send for review" }).click();
+  await expect(page.locator("#detail-status-badge")).toHaveText("In review");
+  await page.getByRole("button", { name: "Sign out" }).click();
   await login(page, "e2e-admin", "E2eAdmin123");
   await page.goto(`/report-detail.html?id=${reportId}`);
-  await page.getByRole("button", { name: "Видати звіт" }).click();
-  await expect(page.locator("#detail-status-badge")).toHaveText("Видано");
+  await page.getByRole("button", { name: "Issue report" }).click();
+  await expect(page.locator("#detail-status-badge")).toHaveText("Issued");
   await page.locator("#detail-passport-publish").click();
   await expect(page.locator("#detail-passport-code")).toBeVisible();
   const publicId = await page.locator("#detail-passport-code code").textContent();

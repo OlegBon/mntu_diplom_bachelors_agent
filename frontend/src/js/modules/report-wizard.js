@@ -10,6 +10,7 @@ import {
 import { logout } from "./auth.js";
 import { createWizardDraftStorage } from "./wizard-draft-storage.js";
 import { createWizardWorkSessionTracker } from "./wizard-work-session.js";
+import { formatNumber, t } from "./i18n.js";
 
 const requiredPreviewNames = ["table_percent", "depth_percent", "crown_angle", "pavilion_angle", "polish_grade", "symmetry_grade"];
 const implicitSubmitInputTypes = new Set(["date", "email", "number", "password", "search", "tel", "text", "url"]);
@@ -22,7 +23,7 @@ function setStatus(element, message, isError = false) {
 
 function setOptions(select, entries, valueKey, labelKey, includeBlank = false) {
   select.replaceChildren();
-  if (includeBlank) select.add(new Option("Не зазначено", ""));
+  if (includeBlank) select.add(new Option(t("wizard.notSpecified"), ""));
   entries.forEach((entry) => select.add(new Option(entry[labelKey], String(entry[valueKey]))));
   select.disabled = false;
 }
@@ -107,7 +108,7 @@ export async function initReportWizard() {
     const invalidField = active.querySelector(":invalid");
     if (!invalidField) return true;
     invalidField.setAttribute("aria-invalid", "true");
-    setStatus(status, `Заповніть коректно обов’язкові поля кроку ${currentStep}.`, true);
+    setStatus(status, t("wizard.requiredStep", { step: currentStep }), true);
     invalidField.reportValidity();
     return false;
   };
@@ -163,7 +164,7 @@ export async function initReportWizard() {
     renderInitialFinish();
     currentUserId = currentUser.expert_id;
     draftStorage = createWizardDraftStorage({ userId: currentUserId });
-  } catch (error) { setStatus(status, `Не вдалося завантажити довідники: ${error.message}`, true); return; }
+  } catch (error) { setStatus(status, t("wizard.referencesFailed", { message: error.message }), true); return; }
 
   workSessionTracker = createWizardWorkSessionTracker({ form, token, userId: currentUserId });
 
@@ -171,7 +172,7 @@ export async function initReportWizard() {
     const input = document.getElementById(inputId);
     input.addEventListener("change", () => {
       const file = input.files[0];
-      document.querySelector(`[data-file-name-for="${inputId}"]`).textContent = file ? file.name : "Файл не вибрано";
+      document.querySelector(`[data-file-name-for="${inputId}"]`).textContent = file ? file.name : t("wizard.noFile");
       if (file) document.getElementById(previewId).src = URL.createObjectURL(file);
     });
   });
@@ -195,12 +196,12 @@ export async function initReportWizard() {
         const providerMarkers = { openfacet: "of" };
         price.textContent = preview.system_market_reference_usd === null
           ? "--"
-          : `USD ${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(preview.system_market_reference_usd)}`;
+          : `USD ${formatNumber(preview.system_market_reference_usd, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         priceMarker.hidden = preview.system_market_reference_usd === null;
         priceMarker.textContent = providerMarkers[preview.market_reference_provider_code] || preview.market_reference_provider_code || "";
         priceSource.textContent = preview.system_market_reference_usd === null
-          ? "Немає доступного системного орієнтиру для введених характеристик."
-          : `${providerNames[preview.market_reference_provider_code] || preview.market_reference_provider_code} · знімок #${preview.market_reference_snapshot_id}. Значення буде зафіксовано під час збереження чернетки.`;
+          ? t("wizard.noMarketReference")
+          : t("wizard.referenceSnapshot", { provider: providerNames[preview.market_reference_provider_code] || preview.market_reference_provider_code, snapshot: preview.market_reference_snapshot_id });
         const references = preview.system_market_references || [];
         referenceList.replaceChildren();
         referenceList.hidden = references.length < 2;
@@ -211,7 +212,7 @@ export async function initReportWizard() {
           item.append(
             name,
             document.createTextNode(
-              `${reference.currency_code} ${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(reference.amount)} · знімок #${reference.market_snapshot_id}`,
+              t("wizard.snapshotValue", { currency: reference.currency_code, amount: formatNumber(reference.amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), snapshot: reference.market_snapshot_id }),
             ),
           );
           referenceList.append(item);
@@ -226,7 +227,7 @@ export async function initReportWizard() {
     [["plotting-image", "plotting-preview", "/img/plotting-placeholder.svg"], ["real-image", "stone-preview", "/img/stone-placeholder.svg"]].forEach(([inputId, previewId, placeholder]) => {
       const input = document.getElementById(inputId);
       input.value = "";
-      document.querySelector(`[data-file-name-for="${inputId}"]`).textContent = "Файл не вибрано";
+      document.querySelector(`[data-file-name-for="${inputId}"]`).textContent = t("wizard.noFile");
       document.getElementById(previewId).src = placeholder;
     });
   };
@@ -254,7 +255,7 @@ export async function initReportWizard() {
     hasUnsavedDraft = false;
     resetForm();
     updateClearDraftButton();
-    setStatus(status, "Почато нове незбережене введення.");
+    setStatus(status, t("wizard.startedNew"));
   };
   const restoreDraft = (draft) => {
     suppressDraftPersistence = true;
@@ -267,7 +268,7 @@ export async function initReportWizard() {
     suppressDraftPersistence = false;
     updateClearDraftButton();
     schedulePreview();
-    setStatus(status, "Незбережене введення відновлено. Вкладення додайте повторно.");
+    setStatus(status, t("wizard.restored"));
   };
   const storedDraft = draftStorage.read();
   if (storedDraft) {
@@ -311,8 +312,8 @@ export async function initReportWizard() {
     if (logoutButton) event.stopPropagation();
     if (logoutButton) {
       pendingLeaveAction = { type: "logout" };
-      leaveDescription.textContent = "Введені дані ще не стали чернеткою на сервері. Після виходу вони залишаться лише в цій вкладці та будуть доступні для явного відновлення лише після повторного входу цим самим обліковим записом.";
-      leaveConfirm.textContent = "Вийти";
+      leaveDescription.textContent = t("wizard.leaveLogout");
+      leaveConfirm.textContent = t("wizard.signOut");
       event.preventDefault();
       leaveDialog.showModal();
       return;
@@ -321,8 +322,8 @@ export async function initReportWizard() {
     if (destination.href === window.location.href || !["http:", "https:"].includes(destination.protocol)) return;
     event.preventDefault();
     pendingLeaveAction = { type: "navigation", url: destination.href };
-    leaveDescription.textContent = "Введені дані ще не стали чернеткою на сервері. Вони залишаться лише в цій вкладці, і після повернення їх можна буде явно відновити.";
-    leaveConfirm.textContent = "Перейти";
+    leaveDescription.textContent = t("wizard.leaveNavigation");
+    leaveConfirm.textContent = t("wizard.go");
     leaveDialog.showModal();
   }, true);
   window.addEventListener("beforeunload", (event) => {
@@ -333,7 +334,7 @@ export async function initReportWizard() {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!validateCurrentStep() || !form.reportValidity()) return;
-    save.disabled = true; setStatus(status, "Збереження чернетки…");
+    save.disabled = true; setStatus(status, t("wizard.saving"));
     try {
       const data = new FormData(form);
       const wizardSessionId = await workSessionTracker.getOrStart();
@@ -348,7 +349,7 @@ export async function initReportWizard() {
       workSessionTracker.clear();
       for (const [id, type] of [["plotting-image", "plotting_diagram"], ["real-image", "stone_photo"]]) { const file = document.getElementById(id).files[0]; if (file) await uploadReportMedia(created.report_id, type, file, token); }
       window.location.assign(`/dashboard.html?created=${encodeURIComponent(created.report_id)}`);
-    } catch (error) { setStatus(status, `Не вдалося зберегти чернетку: ${error.message}`, true); save.disabled = false; }
+    } catch (error) { setStatus(status, t("wizard.saveFailed", { message: error.message }), true); save.disabled = false; }
   });
   updateStep();
 }

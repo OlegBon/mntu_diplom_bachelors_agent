@@ -33,6 +33,7 @@ test("expert selects proportions while final cut remains server-derived", async 
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 2, username: "expert_1", role: "gemologist" } }));
   await page.route("**/reference-values", (route) => route.fulfill({ json: [

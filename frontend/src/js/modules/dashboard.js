@@ -2,11 +2,12 @@ import { ApiRequestError, getCurrentUser, getExperts, getGradeMappings, getRepor
 import { logout } from "./auth.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
 import { applyNarrativeCompleteness, narrativeCompletenessFromUrl, narrativePresenceFromUrl, readNarrativeCompleteness, readNarrativePresence } from "./narrative-completeness-filters.js";
+import { formatDate, formatNumber, t } from "./i18n.js";
 
 const PAGE_SIZE = 25;
 const DEFAULT_SORT = "report_id_desc";
-const REPORT_STATUS_LABELS = { draft: "Чернетка", review: "На перевірці", issued: "Видано", void: "Анульовано" };
-const SALE_STATUS_LABELS = { false: "Не продано", true: "Продано" };
+const REPORT_STATUS_LABELS = { draft: "dashboard.statusDraft", review: "dashboard.statusReview", issued: "dashboard.statusIssued", void: "dashboard.statusVoid" };
+const SALE_STATUS_LABELS = { false: "dashboard.notSold", true: "dashboard.sold" };
 
 function createElement(tagName, className, textContent) {
   const element = document.createElement(tagName);
@@ -18,14 +19,14 @@ function createElement(tagName, className, textContent) {
 export function formatDateTime(value) {
   const date = new Date(value);
   return {
-    date: new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(date),
-    time: new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit" }).format(date),
+    date: formatDate(date, { dateStyle: "medium" }),
+    time: formatDate(date, { hour: "2-digit", minute: "2-digit" }),
   };
 }
 
 export function formatPrice(value) {
   if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 2 }).format(Number(value));
+  return formatNumber(Number(value), { maximumFractionDigits: 2 });
 }
 
 function setStatus(container, message, kind = "info") {
@@ -57,13 +58,14 @@ function getUrlState() {
 }
 
 function updateUrl(state) {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams(window.location.search);
   for (const [key, value] of Object.entries(state)) {
+    params.delete(key);
     const serialized = Array.isArray(value) ? value.join(",") : String(value);
     if (serialized && !(key === "page" && Number(serialized) === 1) && !(key === "sort" && serialized === DEFAULT_SORT) && !(key === "narrative_presence" && serialized === "empty")) params.set(key, serialized);
   }
   const query = params.toString();
-  window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+  window.history.replaceState(window.history.state, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
 }
 
 export function closeReportOverlays() {
@@ -76,23 +78,23 @@ function renderActions(report) {
   const wrapper = createElement("div", "report-actions");
   const toggle = createElement("button", "report-actions__toggle", "⋮");
   toggle.type = "button";
-  toggle.setAttribute("aria-label", `Відкрити дії для звіту ${reportId}`);
+  toggle.setAttribute("aria-label", t("dashboard.openActions", { reportId }));
   toggle.setAttribute("aria-expanded", "false");
   const menu = createElement("div", "report-actions__menu");
   menu.hidden = true;
-  const detail = createElement("a", "report-actions__item", "Переглянути");
+  const detail = createElement("a", "report-actions__item", t("dashboard.view"));
   detail.href = `/report-detail.html?id=${encodeURIComponent(reportId)}`;
   const edit = status === "draft"
-    ? createElement("a", "report-actions__item", "Редагувати")
-    : createElement("button", "report-actions__item", "Редагувати");
+    ? createElement("a", "report-actions__item", t("dashboard.edit"))
+    : createElement("button", "report-actions__item", t("dashboard.edit"));
   if (status === "draft") {
     edit.href = `/report-detail.html?id=${encodeURIComponent(reportId)}&edit=1`;
   } else {
     edit.type = "button";
     edit.disabled = true;
-    edit.title = "Редагування доступне лише для чернетки";
+    edit.title = t("dashboard.editDraftOnly");
   }
-  const print = createElement("a", "report-actions__item", "Друк");
+  const print = createElement("a", "report-actions__item", t("dashboard.print"));
   print.href = `/report-detail.html?id=${encodeURIComponent(reportId)}&print=1`;
   print.target = "_blank";
   print.rel = "noopener noreferrer";
@@ -115,12 +117,12 @@ function renderPrice(report) {
 
 function formatFxRate(value) {
   if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 8 }).format(Number(value));
+  return formatNumber(Number(value), { maximumFractionDigits: 8 });
 }
 
 function formatDateOnly(value) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${value}T12:00:00`));
+  return formatDate(new Date(`${value}T12:00:00`), { dateStyle: "medium" });
 }
 
 export function renderMarketReferencePrice(report) {
@@ -129,15 +131,15 @@ export function renderMarketReferencePrice(report) {
   const isDemoReference = reference.valuation_kind === "synthetic_demo_reference";
   const isSystemReference = reference.valuation_kind === "system_market_reference";
   const typeMarker = isDemoReference ? "DEMO" : (isSystemReference ? "SYS" : "ADM");
-  const referenceType = isDemoReference
-    ? "Демонстраційний орієнтир"
+  const referenceType = t(isDemoReference
+    ? "dashboard.referenceTypeDemo"
     : isSystemReference
-    ? "Системний довідковий орієнтир"
-    : "Підтверджений довідковий орієнтир";
+    ? "dashboard.referenceTypeSystem"
+    : "dashboard.referenceTypeAdmin");
   const wrapper = createElement("div", "report-price");
   const toggle = createElement("button", "report-price__toggle");
   toggle.type = "button";
-  toggle.setAttribute("aria-label", `Пояснення ринкового орієнтира звіту ${report.report_id}`);
+  toggle.setAttribute("aria-label", t("dashboard.referenceExplanation", { reportId: report.report_id }));
   toggle.setAttribute("aria-expanded", "false");
   const amount = createElement("span", "report-price__amount", `USD ${formatPrice(reference.amount)}`);
   const metadata = createElement("span", "report-price__metadata");
@@ -153,22 +155,22 @@ export function renderMarketReferencePrice(report) {
   const observed = formatDateTime(reference.observed_at);
   const details = isDemoReference
     ? [
-      ["Тип", referenceType],
-      ["Провайдер", reference.source_name],
-      ["Знімок провайдера", "Не передбачено для synthetic demo"],
-      ["Отримано", observed.date],
-      ["Еквівалент", "Не розраховується для synthetic demo"],
-      ["Курс НБУ", "Не застосовується для synthetic demo"],
+      [t("dashboard.referenceType"), referenceType],
+      [t("dashboard.provider"), reference.source_name],
+      [t("dashboard.providerSnapshot"), t("dashboard.notAvailableForDemo")],
+      [t("dashboard.observed"), observed.date],
+      [t("dashboard.equivalent"), t("dashboard.notCalculatedForDemo")],
+      [t("dashboard.nbuRate"), t("dashboard.notApplicableForDemo")],
     ]
     : [
-      ["Тип", referenceType],
-      ["Провайдер", reference.source_name],
-      ["Знімок провайдера", `#${reference.market_snapshot_id ?? "—"}`],
-      ["Отримано", observed.date],
+      [t("dashboard.referenceType"), referenceType],
+      [t("dashboard.provider"), reference.source_name],
+      [t("dashboard.providerSnapshot"), `#${reference.market_snapshot_id ?? "—"}`],
+      [t("dashboard.observed"), observed.date],
     ];
   if (reference.converted_amount && reference.converted_currency_code) {
-    details.push(["Еквівалент", `${reference.converted_currency_code} ${formatPrice(reference.converted_amount)}`]);
-    details.push(["Курс НБУ", `${formatFxRate(reference.fx_rate)} UAH/USD · ${formatDateOnly(reference.fx_rate_date)} · знімок #${reference.fx_snapshot_id ?? "—"}`]);
+    details.push([t("dashboard.equivalent"), `${reference.converted_currency_code} ${formatPrice(reference.converted_amount)}`]);
+    details.push([t("dashboard.nbuRate"), t("dashboard.nbuRateValue", { rate: formatFxRate(reference.fx_rate), date: formatDateOnly(reference.fx_rate_date), snapshot: reference.fx_snapshot_id ?? "—" })]);
   }
   for (const [label, value] of details) {
     const row = createElement("p", "report-price__detail");
@@ -177,7 +179,7 @@ export function renderMarketReferencePrice(report) {
   }
   if (references.length > 1) {
     const alternatives = createElement("div", "report-price__alternatives");
-    alternatives.append(createElement("strong", "", "Інші доступні орієнтири:"));
+    alternatives.append(createElement("strong", "", t("dashboard.otherReferences")));
     const list = document.createElement("ul");
     for (const item of references.filter((item) => item.provider_code !== reference.provider_code)) {
       list.append(createElement("li", "", `${item.source_name}: USD ${formatPrice(item.amount)}`));
@@ -189,10 +191,10 @@ export function renderMarketReferencePrice(report) {
     "p",
     "report-price__warning",
     isDemoReference
-      ? "Синтетичне демонстраційне значення; не є ринковою, експертною, продажною чи транзакційною ціною."
+      ? t("dashboard.demoReferenceWarning")
       : isSystemReference
-      ? "Розраховано системою за останнім затвердженим знімком; не є експертною, продажною чи транзакційною ціною."
-      : "Застосовність підтверджена адміністратором; не є експертною, продажною чи транзакційною ціною.",
+      ? t("dashboard.systemReferenceWarning")
+      : t("dashboard.adminReferenceWarning"),
   ));
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -230,7 +232,7 @@ function renderRows(tbody, reports, labelFor) {
     const idCell = document.createElement("td");
     const idLink = createElement("a", "id-link", report.report_id);
     idLink.href = `/report-detail.html?id=${encodeURIComponent(report.report_id)}`;
-    idLink.title = "Відкрити приватний перегляд звіту";
+    idLink.title = t("dashboard.openPrivateReport");
     idCell.append(idLink);
     row.append(idCell);
     const dateCell = document.createElement("td");
@@ -247,11 +249,11 @@ function renderRows(tbody, reports, labelFor) {
     priceCell.append(renderPrice(report));
     row.append(priceCell);
     const reportStatusCell = document.createElement("td");
-    reportStatusCell.append(createBadge(REPORT_STATUS_LABELS[report.status] || report.status, report.status));
+    reportStatusCell.append(createBadge(REPORT_STATUS_LABELS[report.status] ? t(REPORT_STATUS_LABELS[report.status]) : report.status, report.status));
     row.append(reportStatusCell);
     const saleStatusCell = document.createElement("td");
     const isSold = report.stone.market_status === "sold";
-    saleStatusCell.append(createBadge(SALE_STATUS_LABELS[String(isSold)], `sale-${isSold ? "sold" : "not-sold"}`));
+    saleStatusCell.append(createBadge(t(SALE_STATUS_LABELS[String(isSold)]), `sale-${isSold ? "sold" : "not-sold"}`));
     row.append(saleStatusCell);
     const actionsCell = document.createElement("td");
     actionsCell.append(renderActions(report));
@@ -276,8 +278,8 @@ function renderPagination(container, page, totalPages, onPageChange) {
   const appendPage = (targetPage, context = false) => container.append(makeButton(String(targetPage), targetPage, { active: targetPage === page, context }));
 
   container.append(
-    makeButton("«", 1, { disabled: page === 1, icon: true, ariaLabel: "На першу сторінку" }),
-    makeButton("‹", page - 1, { disabled: page === 1, icon: true, ariaLabel: "На попередню сторінку" }),
+    makeButton("«", 1, { disabled: page === 1, icon: true, ariaLabel: t("dashboard.firstPage") }),
+    makeButton("‹", page - 1, { disabled: page === 1, icon: true, ariaLabel: t("dashboard.previousPage") }),
   );
   appendPage(1);
   const start = Math.max(2, page - 1);
@@ -287,8 +289,8 @@ function renderPagination(container, page, totalPages, onPageChange) {
   if (end < totalPages - 1) appendEllipsis();
   if (totalPages > 1) appendPage(totalPages);
   container.append(
-    makeButton("›", page + 1, { disabled: page === totalPages, icon: true, ariaLabel: "На наступну сторінку" }),
-    makeButton("»", totalPages, { disabled: page === totalPages, icon: true, ariaLabel: "На останню сторінку" }),
+    makeButton("›", page + 1, { disabled: page === totalPages, icon: true, ariaLabel: t("dashboard.nextPage") }),
+    makeButton("»", totalPages, { disabled: page === totalPages, icon: true, ariaLabel: t("dashboard.lastPage") }),
   );
 }
 
@@ -365,14 +367,14 @@ export async function initDashboard() {
     updateUrl(state);
     updateSortIndicators(root, state.sort);
     if (!silent) {
-      setStatus(stateNode, "Завантаження звітів…");
+      setStatus(stateNode, t("dashboard.loading"));
       tbody.replaceChildren();
       pagination.replaceChildren();
     }
     try {
       const result = await getReportDashboard({ ...state, page_size: PAGE_SIZE }, token);
       if (result.items.length === 0) {
-        setStatus(stateNode, "Звітів за поточними умовами не знайдено.");
+        setStatus(stateNode, t("dashboard.empty"));
         return;
       }
       stateNode.replaceChildren();
@@ -383,7 +385,7 @@ export async function initDashboard() {
         logout("/login.html");
         return;
       }
-      setStatus(stateNode, "Не вдалося завантажити звіти. Оновіть сторінку або спробуйте пізніше.", "error");
+      setStatus(stateNode, t("dashboard.loadFailed"), "error");
     }
   };
 
@@ -421,4 +423,5 @@ export async function initDashboard() {
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeReportOverlays(); });
   await load(state);
   registerVisibleDataRefresh(() => load(state, { silent: true }));
+  window.addEventListener("diamant:locale-change", () => load(state, { silent: true }));
 }

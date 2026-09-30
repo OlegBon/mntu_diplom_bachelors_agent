@@ -18,6 +18,7 @@ async function mockWizardDependencies(page) {
     sessionStorage.setItem("wizard-draft-e2e-auth-initialized", "true");
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 2, username: "expert_1", role: "gemologist" } }));
   await page.route("**/reference-values", (route) => route.fulfill({ json: references }));

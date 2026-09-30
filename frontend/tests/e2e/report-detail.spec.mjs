@@ -49,6 +49,7 @@ test("owner edits a draft and sees the recorded private history", async ({ page 
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 2, username: "expert_1", role: "gemologist" } }));
   await page.route("**/reference-values", (route) => route.fulfill({ json: [
@@ -124,6 +125,7 @@ test("admin confirms passport-media publication in a project dialog", async ({ p
   await page.addInitScript(() => {
     localStorage.setItem("token", "admin-e2e-token");
     localStorage.setItem("username", "admin");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
   await page.route("**/reference-values", (route) => route.fulfill({ json: [] }));

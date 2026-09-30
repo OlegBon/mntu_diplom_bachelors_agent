@@ -90,7 +90,7 @@
 - [x] 146 — Незбережене введення майстра: versioned per-tab/per-user `sessionStorage`, явний restore або start-new, confirmed clear, leave protection і очищення лише після успішного `POST /reports`; файли та credentials не серіалізуються. Це передумова i18n.
 - [x] [145 — Контракт мультимовності](./decisions/008-i18n-presentation-contract.md): English-first/Ukraine presentation locale contract зафіксовано без втрати form state чи зміни domain data. TypeScript і зовнішня i18n-бібліотека не плануються; реалізацію розділено на 175–178.
 - [x] 175 — i18n core і shared shell: canonical complete `en`/`uk` catalogs with parity test, no-reload History API locale state, shared shell, login і landing. Locale switch зберігає route/hash/інші query parameters та public lookup input; API/domain data не локалізуються.
-- [ ] [176 — i18n private report workflow](./backlog/176-i18n-private-report-workflow.md): dashboard, wizard і detail/edit зі збереженням незбереженого введення.
+- [x] 176 — i18n private report workflow: dashboard, wizard і detail/edit локалізовані через complete `en`/`uk` catalogs; перемикач не скидає URL/filter state, active wizard step чи незбережені detail edits. Авторські тексти, lifecycle reasons, IDs і файли не перекладаються.
 - [ ] [177 — i18n admin, demo та analytics](./backlog/177-i18n-admin-demo-and-analytics.md): authenticated admin/synthetic surfaces без зміни RBAC, provenance чи URL state.
 - [ ] [178 — i18n public/PDF і release quality](./backlog/178-i18n-public-pdf-and-release-quality.md): public passport, PDF locale allow-list та загальний regression/accessibility gate.
 
@@ -135,7 +135,7 @@
 ### Рекомендована черга активних задач
 
 1. `137` — найближчий незалежний технічний gate після рішення власника щодо GitHub Actions, бюджету minutes/storage і repository settings. Він не залежить від ML, але має бути green до `161`.
-2. `175` — наступний product increment: повноцінне i18n ядро та shared/public shell. Далі `176 → 177 → 178`; TypeScript не є залежністю цього ланцюга.
+2. `175` і `176` завершені: English-first core/shared shell та state-preserving private workflow locales. Далі `177 → 178`; TypeScript не є залежністю цього ланцюга.
 3. `151 → 152 → 153` — незмінна черга real analytics: спершу ліцензований data contract і quality gate, потім відтворюваний verified experiment, і лише за його результатом private descriptive visualization.
 4. Deployment-залежність: лише після успішного `152` виконати `160`; за готового CI gate `137` переходити до `161 → 140`. Повний ланцюг: `151 → 152 → 160`, плюс `137` до `161`, потім `161 → 140`.
 
