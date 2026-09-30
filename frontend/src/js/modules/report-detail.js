@@ -180,7 +180,7 @@ function renderEvents(container, events) {
 function renderNarrativeQuality(container, snapshot) {
   container.replaceChildren();
   if (!snapshot.warnings.length) {
-    container.append(document.createTextNode("Пояснюваних сигналів заповнення зараз немає."));
+    container.append(document.createTextNode(t("detail.noNarrativeWarnings")));
     return;
   }
   snapshot.warnings.forEach((warning) => {
@@ -196,7 +196,7 @@ function renderMedia(container, report, assets, currentUser, token, onRequestPub
   container.replaceChildren();
   if (!assets.length) {
     const item = document.createElement("li");
-    item.textContent = "Приватних вкладень немає.";
+    item.textContent = t("detail.noPrivateAttachments");
     container.append(item);
     return;
   }
@@ -238,13 +238,13 @@ function renderValuations(container, helpNode, valuations) {
   const marketReferences = valuations.filter((valuation) => ["market_reference", "system_market_reference"].includes(valuation.valuation_kind));
   if (!marketReferences.length) {
     const item = document.createElement("li");
-    item.textContent = "Системного або підтвердженого ринкового орієнтира ще немає.";
+    item.textContent = t("detail.noMarketReferences");
     container.append(item);
     return;
   }
-  helpNode.textContent = "Кожен орієнтир належить окремому провайдеру та знімку. Системний орієнтир формується автоматично з останнього затвердженого знімка; підтверджений орієнтир окремо перевіряє адміністратор. Орієнтири не є експертною, продажною чи транзакційною ціною.";
+  helpNode.textContent = t("detail.marketReferenceDescription");
   if (marketReferences.length > 1) {
-    helpNode.append(document.createTextNode(" Поточний запис відкритий; попередні збережені орієнтири згорнуті."));
+    helpNode.append(document.createTextNode(` ${t("detail.previousReferencesCollapsed")}`));
   }
   for (const [index, valuation] of marketReferences.entries()) {
     const isSystemReference = valuation.valuation_kind === "system_market_reference";
@@ -258,7 +258,7 @@ function renderValuations(container, helpNode, valuations) {
     const amount = document.createElement("strong");
     amount.textContent = formatAmount(valuation.amount, valuation.currency_code);
     const label = document.createElement("span");
-    label.textContent = isSystemReference ? "Системний довідковий орієнтир" : "Підтверджений довідковий орієнтир";
+    label.textContent = t(isSystemReference ? "dashboard.referenceTypeSystem" : "dashboard.referenceTypeAdmin");
     summary.append(amount, label);
     const details = document.createElement("dl");
     details.className = "market-reference-card__details";
@@ -268,24 +268,24 @@ function renderValuations(container, helpNode, valuations) {
       const dd = document.createElement("dd"); dd.textContent = value;
       row.append(dt, dd); details.append(row);
     };
-    addDetail("Провайдер", valuation.source_name);
-    addDetail("Знімок провайдера", `#${valuation.market_snapshot_id ?? "—"}`);
-    addDetail("Отримано", formatDate(valuation.observed_at));
+    addDetail(t("dashboard.provider"), valuation.source_name);
+    addDetail(t("dashboard.providerSnapshot"), `#${valuation.market_snapshot_id ?? "—"}`);
+    addDetail(t("dashboard.observed"), formatDate(valuation.observed_at));
     if (valuation.converted_amount && valuation.converted_currency_code) {
-      const rateDate = valuation.fx_rate_date ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${valuation.fx_rate_date}T12:00:00`)) : "—";
-      addDetail("Еквівалент", formatAmount(valuation.converted_amount, valuation.converted_currency_code));
-      addDetail("Курс НБУ", `${formatFxRate(valuation.fx_rate)} UAH/USD · ${rateDate} · знімок #${valuation.fx_snapshot_id ?? "—"}`);
+      const rateDate = valuation.fx_rate_date ? formatLocalizedDate(new Date(`${valuation.fx_rate_date}T12:00:00`), { dateStyle: "medium" }) : "—";
+      addDetail(t("dashboard.equivalent"), formatAmount(valuation.converted_amount, valuation.converted_currency_code));
+      addDetail(t("dashboard.nbuRate"), t("dashboard.nbuRateValue", { rate: formatFxRate(valuation.fx_rate), date: rateDate, snapshot: valuation.fx_snapshot_id ?? "—" }));
     }
     disclosure.append(summary, details);
     if (valuation.applicability_note) {
       const note = document.createElement("p");
       note.className = "market-reference-card__note";
-      note.append(document.createTextNode("Підтвердження: "), document.createTextNode(valuation.applicability_note));
+      note.append(document.createTextNode(`${t("detail.confirmation")}: `), document.createTextNode(valuation.applicability_note));
       disclosure.append(note);
     } else if (isSystemReference) {
       const note = document.createElement("p");
       note.className = "market-reference-card__note";
-      note.textContent = `Автоматично розраховано за останнім затвердженим знімком ${valuation.source_name}; застосовність не підтверджена адміністратором.`;
+      note.textContent = t("detail.systemReferenceNote", { provider: valuation.source_name });
       disclosure.append(note);
     }
     item.append(disclosure);
@@ -313,7 +313,7 @@ async function copyText(value) {
   helper.select();
   const copied = document.execCommand("copy");
   helper.remove();
-  if (!copied) throw new Error("Не вдалося скопіювати дані");
+  if (!copied) throw new Error(t("detail.copyFailed"));
 }
 
 function downloadBlob(blob, filename) {
@@ -374,7 +374,7 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
       return;
     }
     const url = passportUrl(passport.public_id);
-    state.textContent = "Паспорт опубліковано. Його можна перевірити за посиланням, QR або кодом; перевипуск одразу відкликає попередні дані доступу.";
+    state.textContent = t("detail.passportPublishedDescription");
     code.querySelector("code").textContent = passport.public_id;
     code.hidden = false;
     link.href = url;
@@ -407,7 +407,7 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
       } catch (error) { onStatus(error.message || t("detail.passportPdfFailed"), true); }
     };
   } catch {
-    state.textContent = "Не вдалося завантажити стан публікації.";
+    state.textContent = t("detail.passportStateLoadFailed");
     return;
   }
   reissue.onclick = async () => {
@@ -472,7 +472,7 @@ export async function initReportDetail() {
   const mediaPublicationStatus = document.getElementById("media-publication-status");
   const mediaPublicationSubmit = document.getElementById("media-publication-submit");
   if (!token || !reportId || !form) {
-    setStatus(status, "Не вказано номер звіту.", true);
+    setStatus(status, t("detail.reportIdMissing"), true);
     return;
   }
   let report;
@@ -493,9 +493,9 @@ export async function initReportDetail() {
     pendingMediaPublication = { asset, isPublic };
     mediaPublicationTrigger = trigger;
     mediaPublicationDescription.textContent = isPublic
-      ? "Зображення стане доступним у публічному паспорті лише за чинним посиланням або QR-кодом. Воно не потрапляє до PDF."
-      : "Зображення перестане відображатися у публічному паспорті. Приватне вкладення у звіті буде збережено.";
-    mediaPublicationSubmit.textContent = isPublic ? "Опублікувати в паспорті" : "Прибрати з паспорта";
+      ? t("detail.publishAttachmentDescription")
+      : t("detail.unpublishAttachmentDescription");
+    mediaPublicationSubmit.textContent = isPublic ? t("detail.publishInPassport") : t("detail.removeFromPassport");
     mediaPublicationStatus.hidden = true;
     mediaPublicationDialog.showModal();
   };
@@ -508,22 +508,22 @@ export async function initReportDetail() {
       report = freshReport;
       populateForm(form, report, gradeLabels);
       document.getElementById("report-detail-title").textContent = report.report_id;
-      document.getElementById("report-detail-subtitle").textContent = `Створено: ${formatDate(report.created_at || report.report_date)}`;
+      document.getElementById("report-detail-subtitle").textContent = t("detail.createdAt", { date: formatDate(report.created_at || report.report_date) });
       const badge = document.getElementById("detail-status-badge");
-      badge.textContent = STATUS_LABELS[report.status] || report.status;
+      badge.textContent = STATUS_LABELS[report.status] ? t(STATUS_LABELS[report.status]) : report.status;
       badge.dataset.status = report.status;
-      document.getElementById("detail-system-summary").textContent = `Системний IDC: Proportions ${report.system_proportions_grade ?? "—"}, Final Cut ${report.system_cut_grade ?? "—"}.`;
+      document.getElementById("detail-system-summary").textContent = t("detail.systemSummary", { proportions: report.system_proportions_grade ?? "—", cut: report.system_cut_grade ?? "—" });
       const confirmedProportions = report.expert_proportions_grade === null
-        ? "не задано"
+        ? t("detail.notSpecified")
         : gradeLabels.get(`proportions:${report.expert_proportions_grade}`) || String(report.expert_proportions_grade);
       const confirmedCut = report.expert_cut_grade === null
-        ? "не задано"
+        ? t("detail.notSpecified")
         : gradeLabels.get(`cut:${report.expert_cut_grade}`) || String(report.expert_cut_grade);
-      document.getElementById("detail-expert-summary").textContent = `Експертні grades: Proportions ${confirmedProportions}, підсумковий Cut ${confirmedCut}.`;
+      document.getElementById("detail-expert-summary").textContent = t("detail.expertSummary", { proportions: confirmedProportions, cut: confirmedCut });
       renderEvents(document.getElementById("detail-events"), events);
       const narrativeNode = document.getElementById("detail-narrative-quality");
       if (narrativeQuality) renderNarrativeQuality(narrativeNode, narrativeQuality);
-      else narrativeNode.textContent = "Текстові метадані тимчасово недоступні.";
+      else narrativeNode.textContent = t("detail.narrativeUnavailable");
       renderMedia(
         document.getElementById("detail-media"), report, media, currentUser, token, openMediaPublicationDialog,
       );
@@ -531,17 +531,17 @@ export async function initReportDetail() {
         const valuations = await getReportValuations(reportId, token);
         renderValuations(document.getElementById("detail-valuations"), document.getElementById("detail-valuations-help"), valuations);
       } catch {
-        document.getElementById("detail-valuations").textContent = "Не вдалося завантажити ринковий орієнтир.";
+        document.getElementById("detail-valuations").textContent = t("detail.marketReferencesLoadFailed");
       }
       await renderPassportControls({ report, currentUser, token, onStatus: (message, isError) => setStatus(status, message, isError) });
       renderTransitionControls(document.getElementById("detail-transitions"), document.getElementById("detail-transition-help"), report, currentUser, async (targetStatus) => {
         try {
-          setStatus(status, "Зміна статусу…");
+          setStatus(status, t("detail.statusChanging"));
           const reason = document.getElementById("detail-transition-reason").value.trim();
           await transitionDomainReport(reportId, { target_status: targetStatus, reason: reason || null }, token);
-          setStatus(status, "Статус звіту оновлено.");
+          setStatus(status, t("detail.statusUpdated"));
           await refresh();
-        } catch (error) { setStatus(status, error.message || "Не вдалося змінити статус.", true); }
+        } catch (error) { setStatus(status, error.message || t("detail.statusUpdateFailed"), true); }
       });
       const canEdit = report.status === "draft" && (currentUser.role === "admin" || currentUser.expert_id === report.expert_id);
       const canTrack = report.status === "draft" && currentUser.role === "gemologist" && currentUser.expert_id === report.expert_id;
@@ -554,7 +554,7 @@ export async function initReportDetail() {
       }
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
-      setStatus(status, error.status === 403 ? "У вас немає доступу до цього звіту." : "Не вдалося завантажити приватний звіт.", true);
+      setStatus(status, error.status === 403 ? t("detail.reportForbidden") : t("detail.reportLoadFailed"), true);
     }
   };
   try {
@@ -569,7 +569,7 @@ export async function initReportDetail() {
       logout("/login.html");
       return;
     }
-    setStatus(status, "Не вдалося підготувати сторінку звіту. Сеанс збережено — оновіть сторінку після відновлення API.", true);
+    setStatus(status, t("detail.pagePreparationFailed"), true);
     return;
   }
   workSessionTracker = createDraftWorkSessionTracker({ reportId, token, form });
@@ -591,13 +591,13 @@ export async function initReportDetail() {
         report.report_id, pendingMediaPublication.asset.media_id, pendingMediaPublication.isPublic, token,
       );
       const message = pendingMediaPublication.isPublic
-        ? "Вкладення опубліковано в паспорті."
-        : "Вкладення прибрано з паспорта.";
+        ? t("detail.attachmentPublished")
+        : t("detail.attachmentUnpublished");
       closeMediaPublicationDialog();
       setStatus(status, message);
       await refresh();
     } catch (error) {
-      setStatus(mediaPublicationStatus, error.message || "Не вдалося змінити видимість вкладення.", true);
+      setStatus(mediaPublicationStatus, error.message || t("detail.attachmentVisibilityFailed"), true);
     } finally {
       mediaPublicationSubmit.disabled = false;
     }
@@ -620,14 +620,19 @@ export async function initReportDetail() {
     event.preventDefault();
     if (!form.reportValidity()) return;
     try {
-      setStatus(status, "Збереження змін…");
+      setStatus(status, t("detail.savingChanges"));
       await workSessionTracker.checkpointSave();
       await updateDomainReport(reportId, payloadFromForm(form), token);
       isEditing = false;
-      setStatus(status, "Зміни чернетки збережено.");
+      setStatus(status, t("detail.changesSaved"));
       await refresh();
-    } catch (error) { setStatus(status, error.message || "Не вдалося зберегти зміни.", true); }
+    } catch (error) { setStatus(status, error.message || t("detail.saveChangesFailed"), true); }
   });
   await refresh();
   registerVisibleDataRefresh(refresh, { canRefresh: () => form.querySelector("#detail-save").hidden });
+  window.addEventListener("diamant:locale-change", () => {
+    // Static labels are translated centrally. Do not refresh an active edit: that would overwrite
+    // unsaved field values. Read-only detail data can be rerendered in the new locale.
+    if (!isEditing) void refresh();
+  });
 }
