@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-30 — i18n-contract-decomposition
+
+- **Задача:** завершити 145 як повноцінний English-first/Ukrainian presentation contract і розкласти реалізацію на безпечні незалежні інкременти.
+- **Змінені файли:** `docs/decisions/008-i18n-presentation-contract.md`, `docs/backlog/{README,145-internationalization-contract (видалено),175-i18n-core-and-shared-shell,176-i18n-private-report-workflow,177-i18n-admin-demo-and-analytics,178-i18n-public-pdf-and-release-quality}.md`, `docs/{architecture,work_plan,progress}.md`.
+- **Рішення / Результат:** `en`/`uk` мають бути повними release locales, не набором fallback-рядків: для кожного catalog key обов'язкові обидва переклади, а missing key блокує release test. Locale precedence — valid `?lang` → preference → `en`; switch не робить reload, зберігає route/hash/інші query parameters та form state. API/domain data, QR/token, IDs, permissions, precision і авторські тексти не перекладаються; formatting централізовано через `Intl`. Реалізацію розділено: 175 core/shell, 176 private report workflow, 177 admin/demo/analytics, 178 public/PDF і release QA. TypeScript і стороння i18n-бібліотека не плануються.
+- **Перевірки:** `scripts/check_doc_links.py` і `git diff --check` виконуються перед commit.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** це contract/decomposition без runtime i18n-коду й без зміни API, PDF чи збережених даних; повноцінний двомовний UI починається з 175.
+
 ## 2026-09-30 — github-actions-ci-follow-up-fixes
 
 - **Задача:** усунути підтверджені GitHub CI failures після першого виконаного run task 137.
