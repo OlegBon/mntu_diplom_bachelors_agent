@@ -4,9 +4,9 @@ block content
     .account-page(hidden data-protected-page="true" data-reference-catalog-page)
         .page-header
             div
-                h1.page-title Довідники
-                p.page-subtitle Поточні значення, які сервер надає формам звітів.
+                h1.page-title(data-i18n="references.title") Довідники
+                p.page-subtitle(data-i18n="references.subtitle") Поточні значення, які сервер надає формам звітів.
         p#reference-catalog-status.account-status(role="status" aria-live="polite" hidden)
         section.account-surface.account-surface--wide
-            p.account-help Редагування з причиною, документом-джерелом і версіями для нових звітів заплановане окремою задачею 105. Поточні дані лише для перегляду.
+            p.account-help(data-i18n="references.help") Редагування з причиною, документом-джерелом і версіями для нових звітів заплановане окремою задачею 105. Поточні дані лише для перегляду.
             #reference-catalog.reference-catalog(aria-live="polite")
