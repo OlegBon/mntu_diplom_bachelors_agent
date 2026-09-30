@@ -49,6 +49,13 @@ function localizeDemoShell(root) {
     ["#demo-stones-panel h2", "demo.somTitle"],
     ["#demo-workflow-actor-dialog-title", "demo.workflowDialogTitle"],
     ["#demo-provider-dialog-title", "demo.providerDialogTitle"],
+    ["#demo-currency-panel > .account-help", "demo.currencyHelp"],
+    ["#demo-experts-panel > .account-help", "demo.expertsHelp"],
+    ["#demo-narratives-panel > .account-help", "demo.textsHelp"],
+    ["#demo-quality-panel > .account-help", "demo.qualityHelp"],
+    ["#demo-administrators-panel > .account-help", "demo.administratorsHelp"],
+    ["#demo-providers-panel > .account-help", "demo.providersHelp"],
+    ["#demo-stones-panel > .account-help", "demo.somHelp"],
   ];
   for (const [selector, key] of textKeys) {
     const element = root.querySelector(selector);
