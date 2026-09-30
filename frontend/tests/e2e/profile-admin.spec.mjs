@@ -15,6 +15,7 @@ test("profile renders immutable account metadata and saves own name", async ({ p
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
     localStorage.setItem("role", "gemologist");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: expert }));
   await page.route("**/users/me/profile", (route) => route.fulfill({ json: { ...expert, first_name: "Updated" } }));
@@ -32,6 +33,7 @@ test("admin can open account management without a fake reference editor", async 
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "admin");
     localStorage.setItem("role", "admin");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: admin }));
   await page.route("**/users/?**", (route) => route.fulfill({ json: { items: [admin, expert], total: 2, page: 1, page_size: 10, total_pages: 1 } }));
