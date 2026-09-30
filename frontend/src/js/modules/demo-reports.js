@@ -22,6 +22,9 @@ function localizeDemoShell(root) {
     ["#demo-tab-administrators", "demo.administrators"],
     ["#demo-tab-providers", "demo.providers"],
     ["#demo-tab-currency", "demo.currencySources"],
+    ["#demo-toggle-filters", "demo.filters"],
+    ["#demo-dashboard-filters button[type=submit]", "demo.apply"],
+    ["#demo-dashboard-filters button[type=reset]", "demo.clear"],
     [".demo-scope__showcase strong", "demo.previewTitle"],
     [".demo-scope__showcase p", "demo.previewDescription"],
     [".demo-scope__showcase a", "demo.openPreview"],
@@ -40,6 +43,11 @@ function localizeDemoShell(root) {
     if (element) element.textContent = t(key);
   }
   root.querySelector(".analytics-tabs")?.setAttribute("aria-label", t("demo.tabs"));
+  const search = root.querySelector("#demo-report-search");
+  if (search) {
+    search.placeholder = t("demo.searchReports");
+    search.setAttribute("aria-label", t("demo.searchReports"));
+  }
   for (const closeButton of root.querySelectorAll(".account-dialog__close")) closeButton.setAttribute("aria-label", t("demo.close"));
 
   const notice = root.querySelector(".demo-scope__notice");
