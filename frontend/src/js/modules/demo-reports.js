@@ -57,6 +57,16 @@ function createBadge(value, kind) {
   return createElement("span", `status-badge status-badge--${kind}`, value);
 }
 
+function reportStatusLabel(status) {
+  if (status === "issued") return t("dashboard.statusIssued");
+  if (status === "void") return t("dashboard.statusVoid");
+  return status;
+}
+
+function saleStatusLabel(status) {
+  return status === "not_for_sale" ? t("dashboard.notSold") : status;
+}
+
 function getUrlState() {
   const params = new URLSearchParams(window.location.search);
   return {
@@ -172,10 +182,10 @@ function renderRows(tbody, reports, labelFor, datasetId) {
     price.append(renderMarketReferencePrice(report));
     row.append(price);
     const reportStatus = document.createElement("td");
-    reportStatus.append(createBadge(REPORT_STATUS_LABELS[report.status] || report.status, report.status));
+    reportStatus.append(createBadge(reportStatusLabel(report.status), report.status));
     row.append(reportStatus);
     const saleStatus = document.createElement("td");
-    saleStatus.append(createBadge(SALE_STATUS_LABELS[report.stone.market_status] || report.stone.market_status, "sale-not-sold"));
+    saleStatus.append(createBadge(saleStatusLabel(report.stone.market_status), "sale-not-sold"));
     row.append(saleStatus);
     const actions = document.createElement("td");
     actions.append(renderActions(report, datasetId));
