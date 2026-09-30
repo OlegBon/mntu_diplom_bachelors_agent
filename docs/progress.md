@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-30 — i18n-core-and-shared-shell
+
+- **Задача:** реалізувати 175 — English-first i18n core, shared shell, login і landing відповідно до ADR-008.
+- **Змінені файли:** `frontend/src/{js/main.js,js/modules/i18n.js,pug/layout/main.pug,pug/pages/{index,login}.pug,scss/_product-ux.scss}`, `frontend/{package.json,tests/{i18n,page-dom}.test.mjs,tests/e2e/i18n-shell.spec.mjs}`, `docs/{progress,work_plan}.md`.
+- **Рішення / Результат:** додано централізований catalog runtime лише для `en`/`uk`: full key parity обов'язкова, missing value є developer error, default — `en`. Locale precedence: valid URL `lang` → `localStorage` preference → `en`; switch не викликає reload, оновлює тільки `lang` через History API та dispatch-ить presentation event. Shared shell, landing, login, auth navigation і public passport lookup мають catalog keys; `Intl` date/number/currency helpers доступні для наступних surfaces. API/domain values, IDs, QR/token і авторські тексти не змінювалися.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 35 passed; targeted `npx playwright test -c playwright.config.mjs tests/e2e/i18n-shell.spec.mjs` — 1 passed (locale switch зберігає input, route/query/hash). Інтегрований browser у цій сесії недоступний, тому окремий in-app screenshot QA не виконано.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** локалізовано лише 175 scope. Private workflow — 176, admin/demo/analytics — 177, public passport detail/PDF і full release gate — 178. Поточні Sass/Browserslist warnings не пов'язані з i18n.
+
 ## 2026-09-30 — i18n-contract-decomposition
 
 - **Задача:** завершити 145 як повноцінний English-first/Ukrainian presentation contract і розкласти реалізацію на безпечні незалежні інкременти.

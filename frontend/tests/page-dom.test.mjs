@@ -30,9 +30,10 @@ test("built anonymous navigation has no retired home menu fallback", async () =>
   const document = new JSDOM(html).window.document;
 
   assert.equal(document.querySelector("#nav-list > li > a[href='/']"), null);
-  assert.equal(document.querySelector("#nav-list > li > a[href='/#public-passport']")?.textContent.trim(), "Перевірити паспорт");
-  assert.equal(document.querySelector("#nav-list > li.mobile-login > a[href='/login.html']")?.textContent.trim(), "Увійти");
-  assert.equal(document.querySelector("#auth-block > a.header-login[href='/login.html']")?.textContent.trim(), "Увійти");
+  assert.equal(document.querySelector("#nav-list > li > a[href='/#public-passport']")?.textContent.trim(), "Verify passport");
+  assert.equal(document.querySelector("#nav-list > li.mobile-login > a[href='/login.html']")?.textContent.trim(), "Sign in");
+  assert.equal(document.querySelector("#auth-block > a.header-login[href='/login.html']")?.textContent.trim(), "Sign in");
+  assert.equal(document.querySelectorAll("[data-locale-switch]").length, 2);
 });
 
 test("footer links lead to substantive public privacy and passport guidance pages", async () => {
@@ -43,8 +44,8 @@ test("footer links lead to substantive public privacy and passport guidance page
   const privacy = new JSDOM(privacyHtml).window.document;
   const documentation = new JSDOM(documentationHtml).window.document;
 
-  assert.equal(home.querySelector(".footer-links a[href='/privacy.html']")?.textContent.trim(), "Політика конфіденційності");
-  assert.equal(home.querySelector(".footer-links a[href='/documentation.html']")?.textContent.trim(), "Документація");
+  assert.equal(home.querySelector(".footer-links a[href='/privacy.html']")?.textContent.trim(), "Privacy policy");
+  assert.equal(home.querySelector(".footer-links a[href='/documentation.html']")?.textContent.trim(), "Documentation");
   assert.match(privacy.querySelector("main")?.textContent || "", /локальн/);
   assert.match(documentation.querySelector("main")?.textContent || "", /QR/);
   assert.match(documentation.querySelector("main")?.textContent || "", /не є кодом перевірки/);

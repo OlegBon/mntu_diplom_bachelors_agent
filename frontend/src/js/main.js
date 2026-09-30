@@ -12,8 +12,9 @@ import { initMarketData } from "./modules/market-data.js";
 import { initPasswordVisibility } from "./modules/password-visibility.js";
 import { initDemoReports } from "./modules/demo-reports.js";
 import { initDemoReportDetail } from "./modules/demo-report-detail.js";
+import { initializeI18n, setLocale, t } from "./modules/i18n.js";
 
-function createNavigationLink(href, label, className = "") {
+function createNavigationLink(href, labelKey, className = "") {
   const item = document.createElement("li");
   if (className) item.className = className;
   const link = document.createElement("a");
@@ -22,17 +23,17 @@ function createNavigationLink(href, label, className = "") {
     link.classList.add("is-active");
     link.setAttribute("aria-current", "page");
   }
-  link.textContent = label;
+  link.textContent = t(labelKey);
   item.append(link);
   return item;
 }
 
 function publicPassportIdFromLookup(value) {
   if (/^DR-\d+/i.test(value)) {
-    throw new Error("Внутрішній номер звіту не є кодом публічного паспорта.");
+    throw new Error(t("passport.invalidInternalNumber"));
   }
   if (/^[A-Za-z0-9_-]{20,128}$/.test(value)) return value;
-  throw new Error("Введіть код публічного паспорта зі сторінки звіту.");
+  throw new Error(t("passport.invalidCode"));
 }
 
 function applyApprovedNavigation(isAuthenticated, user = null) {
@@ -46,18 +47,18 @@ function applyApprovedNavigation(isAuthenticated, user = null) {
   navList.hidden = false;
   authBlock.hidden = false;
   if (!isAuthenticated) {
-    navList.append(createNavigationLink("/#public-passport", "Перевірити паспорт"));
-    navList.append(createNavigationLink("/login.html", "Увійти", "mobile-login"));
+    navList.append(createNavigationLink("/#public-passport", "navigation.verifyPassport"));
+    navList.append(createNavigationLink("/login.html", "navigation.signIn", "mobile-login"));
     const loginLink = document.createElement("a");
     loginLink.className = "header-session-action header-login";
     loginLink.href = "/login.html";
-    loginLink.textContent = "Увійти";
+    loginLink.textContent = t("navigation.signIn");
     authBlock.append(loginLink);
     sessionName.hidden = true;
     return;
   }
 
-  const username = user?.username || localStorage.getItem("username") || "Користувач";
+  const username = user?.username || localStorage.getItem("username") || t("auth.user");
   const isAdmin = user?.role === "admin";
   const demoAccessEnabled = isAdmin && user?.demo_access_enabled === true;
   const createReportAction = document.getElementById("create-report-action");
@@ -69,14 +70,14 @@ function applyApprovedNavigation(isAuthenticated, user = null) {
   sessionUsername.textContent = username;
   const sessionRole = document.createElement("span");
   sessionRole.className = "header-session-role";
-  sessionRole.textContent = isAdmin ? "Адміністратор" : "Експерт";
+  sessionRole.textContent = isAdmin ? t("auth.administrator") : t("auth.gemologist");
   sessionName.append(sessionUsername, sessionRole);
   sessionName.hidden = false;
 
   const links = isAdmin
-    ? [["/dashboard.html", "Всі звіти"], ...(demoAccessEnabled ? [["/demo-reports.html", "Демо"]] : []), ["/experts.html", "Експерти"], ["/references.html", "Довідники"], ["/market-data.html", "Ринкові дані"], ["/ml-analysis.html", "Аналітика"], ["/profile.html", "Профіль"]]
-    : [["/dashboard.html", "Всі звіти"], ["/create-report.html", "Новий звіт"], ["/profile.html", "Профіль"]];
-  for (const [href, label] of links) navList.append(createNavigationLink(href, label));
+    ? [["/dashboard.html", "navigation.allReports"], ...(demoAccessEnabled ? [["/demo-reports.html", "navigation.demo"]] : []), ["/experts.html", "navigation.experts"], ["/references.html", "navigation.references"], ["/market-data.html", "navigation.marketData"], ["/ml-analysis.html", "navigation.analytics"], ["/profile.html", "navigation.profile"]]
+    : [["/dashboard.html", "navigation.allReports"], ["/create-report.html", "navigation.newReport"], ["/profile.html", "navigation.profile"]];
+  for (const [href, labelKey] of links) navList.append(createNavigationLink(href, labelKey));
 
   const mobileAccount = document.createElement("li");
   mobileAccount.className = "mobile-account";
@@ -85,11 +86,11 @@ function applyApprovedNavigation(isAuthenticated, user = null) {
   accountName.textContent = username;
   const accountRole = document.createElement("span");
   accountRole.className = "mobile-account-role";
-  accountRole.textContent = isAdmin ? "Адміністратор" : "Експерт";
+  accountRole.textContent = isAdmin ? t("auth.administrator") : t("auth.gemologist");
   const mobileLogout = document.createElement("button");
   mobileLogout.type = "button";
   mobileLogout.className = "mobile-logout";
-  mobileLogout.textContent = "Вийти";
+  mobileLogout.textContent = t("auth.signOut");
   mobileLogout.addEventListener("click", logout);
   mobileAccount.append(accountName, accountRole, mobileLogout);
   navList.append(mobileAccount);
@@ -97,7 +98,7 @@ function applyApprovedNavigation(isAuthenticated, user = null) {
   const logoutButton = document.createElement("button");
   logoutButton.type = "button";
   logoutButton.className = "header-session-action header-logout";
-  logoutButton.textContent = "Вийти";
+  logoutButton.textContent = t("auth.signOut");
   logoutButton.addEventListener("click", logout);
   authBlock.append(logoutButton);
 }
@@ -116,6 +117,7 @@ function initializeAuthenticatedPage(currentPath, isCreateReportPage) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initializeI18n();
   initPasswordVisibility();
   const isAuthenticated = checkAuth();
   const isAdmin = localStorage.getItem("role") === "admin";
@@ -142,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (retryState) retryState.hidden = true;
   };
   const showRetryState = () => {
-    if (retryMessage) retryMessage.textContent = "Сеанс збережено. API тимчасово недоступний — спробуйте знову за мить.";
+    if (retryMessage) retryMessage.textContent = t("session.saved");
     if (retryState) retryState.hidden = false;
   };
   const bootstrapAuthenticatedSession = async () => {
@@ -183,6 +185,17 @@ document.addEventListener("DOMContentLoaded", () => {
     retryButton?.addEventListener("click", () => void bootstrapAuthenticatedSession());
   }
 
+  document.querySelectorAll("[data-locale-switch]").forEach((button) => {
+    button.addEventListener("click", () => setLocale(button.dataset.localeSwitch));
+  });
+  window.addEventListener("diamant:locale-change", () => {
+    applyApprovedNavigation(isAuthenticated, isAuthenticated ? {
+      username: localStorage.getItem("username"),
+      role: localStorage.getItem("role"),
+      demo_access_enabled: localStorage.getItem("demo_access_enabled") === "true",
+    } : null);
+  });
+
   window.addEventListener("demo-access-changed", (event) => {
     const user = event.detail;
     applyApprovedNavigation(true, user);
@@ -222,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.removeItem("role");
           window.location.href = "/";
         } catch (error) {
-          errorMessage.textContent = `Помилка: ${error.message}`;
+          errorMessage.textContent = t("login.error", { message: error.message });
           errorMessage.style.display = "block";
         }
       });

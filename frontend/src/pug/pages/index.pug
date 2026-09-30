@@ -4,31 +4,31 @@ block content
     .public-home
         section.hero-section
             .hero-copy
-                h1 Ідентифікація та оцінювання діамантів
-                p Надійна перевірка паспортів та експертні звіти про діаманти — в одному робочому середовищі.
+                h1(data-i18n="landing.title") Diamond identification and assessment
+                p(data-i18n="landing.subtitle") Reliable passport verification and expert diamond reports in one workspace.
                 .hero-actions
-                    a.btn.btn-primary(href="#public-passport") Перевірити паспорт
-                    a#home-login-cta.text-action(href="/login.html") Увійти для роботи зі звітами
-            img.hero-image(src="img/diamond-inspection-hero.png" alt="Діамант у гемологічному пінцеті" width="1792" height="896")
+                    a.btn.btn-primary(href="#public-passport" data-i18n="landing.verifyPassport") Verify passport
+                    a#home-login-cta.text-action(href="/login.html" data-i18n="landing.signIn") Sign in to work with reports
+            img.hero-image(src="img/diamond-inspection-hero.png" data-i18n-alt="landing.heroAlt" alt="Diamond held in gemological tweezers" width="1792" height="896")
 
         section#public-passport.public-passport
             .passport-intro
-                h2 Перевірка, якій можна довіряти
-                p Публічний паспорт відкривається за прямим посиланням, посиланням із QR-коду або кодом зі сторінки звіту. Тут введіть лише код; внутрішній номер звіту для цього не використовується.
+                h2(data-i18n="landing.passportTitle") Verification you can trust
+                p(data-i18n="landing.passportDescription") A public passport opens from a direct link, a QR-code link, or a code on the report page. Enter only the code here; an internal report number is not used for this.
             form#public-search-form.passport-search
-                label(for="search-input") Код публічного паспорта
+                label(for="search-input" data-i18n="landing.passportCode") Public passport code
                 .passport-search-controls
-                    input#search-input(type="search" placeholder="Введіть код зі сторінки звіту" required autocomplete="off")
-                    button.btn.btn-primary(type="submit") Перевірити
+                    input#search-input(type="search" data-i18n-placeholder="landing.passportPlaceholder" placeholder="Enter the code from the report page" required autocomplete="off")
+                    button.btn.btn-primary(type="submit" data-i18n="landing.verify") Verify
                 p#public-search-status.form-status(role="status" aria-live="polite" hidden)
 
-        section.public-principles(aria-label="Можливості Diamant ID")
+        section.public-principles(data-i18n-aria-label="landing.principles" aria-label="Diamant ID capabilities")
             article
-                h2 Експертні звіти
-                p Послідовна фіксація характеристик каменю та результатів оцінювання.
+                h2(data-i18n="landing.expertReports") Expert reports
+                p(data-i18n="landing.expertReportsText") Consistent recording of stone characteristics and assessment results.
             article
-                h2 Контроль даних
-                p Чітке розмежування експертного висновку й розрахункового результату системи.
+                h2(data-i18n="landing.dataControl") Data control
+                p(data-i18n="landing.dataControlText") A clear distinction between an expert conclusion and a calculated system result.
             article
-                h2 Перевірка паспорта
-                p Окремий публічний маршрут для виданих звітів — після реалізації паспорта й QR.
+                h2(data-i18n="landing.passportVerification") Passport verification
+                p(data-i18n="landing.passportVerificationText") A dedicated public route for issued reports after passport and QR issuance.
