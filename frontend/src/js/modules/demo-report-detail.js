@@ -101,6 +101,8 @@ function localizeDemoDetailShell(root) {
     ["label[for=demo-method]", "demoDetail.identificationMethod"],
     ["label[for=demo-conclusion]", "demoDetail.identificationConclusion"],
     ["label[for=demo-comment]", "demoDetail.expertComment"],
+    ["#demo-demo-status-help", "demoDetail.statusHelp"],
+    ["#demo-valuations-help", "demoDetail.referencesHelp"],
   ];
   for (const [selector, key] of textKeys) {
     const node = root.querySelector(selector);
