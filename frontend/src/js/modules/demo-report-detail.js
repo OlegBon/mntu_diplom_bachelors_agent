@@ -154,6 +154,11 @@ export async function initDemoReportDetail() {
     statusBadge.dataset.status = report.status;
     document.getElementById("demo-status-event").textContent = `Чернетка → ${statusLabel} · змодельована системна подія`;
     document.getElementById("demo-system-summary").textContent = `Системний IDC: Proportions ${label("proportions", report.system_proportions_grade)}, Final Cut ${label("cut", report.system_cut_grade)}.`;
+    document.getElementById("demo-status-event").textContent = t("demoDetail.statusEvent", { status: statusLabel });
+    document.getElementById("demo-system-summary").textContent = t("demoDetail.systemIdc", {
+      proportions: label("proportions", report.system_proportions_grade),
+      cut: label("cut", report.system_cut_grade),
+    });
     const values = {
       "demo-date": report.examination_date,
       "demo-shape": report.stone.shape,
