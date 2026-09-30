@@ -65,7 +65,7 @@ function dateTime(value) {
   return formatDate(new Date(value), { dateStyle: "medium", timeStyle: "short" });
 }
 
-function openExpertDialog(dialog, dialogContent, row) {
+function openExpertDialogLegacy(dialog, dialogContent, row) {
   const fragment = document.createDocumentFragment();
   fragment.append(element("h3", "analytics-dialog-name", `${fullName(row)} (${row.expert_username})`));
   const metrics = element("dl", "analytics-metrics");
@@ -87,6 +87,48 @@ function openExpertDialog(dialog, dialogContent, row) {
   fragment.append(renderWorkSessionList("Три найкоротші активні сесії", row.shortest_work_sessions), renderWorkSessionList("Три найдовші активні сесії", row.longest_work_sessions));
   dialogContent.replaceChildren(fragment);
   dialog.showModal();
+}
+
+function openExpertDialog(dialog, dialogContent, row) {
+  const fragment = document.createDocumentFragment();
+  fragment.append(element("h3", "analytics-dialog-name", `${fullName(row)} (${row.expert_username})`));
+  const metrics = element("dl", "analytics-metrics");
+  [
+    ["analytics.accountState", row.is_active ? t("analytics.active") : t("analytics.inactive")],
+    ["analytics.total", row.total_reports], ["analytics.drafts", row.draft_reports], ["analytics.underReview", row.review_reports], ["analytics.issued", row.issued_reports], ["analytics.void", row.void_reports],
+    ["analytics.completedSessions", row.completed_work_sessions], ["analytics.activeTime", duration(row.total_active_seconds)],
+    ["analytics.averageActiveSession", duration(row.avg_active_seconds)], ["analytics.medianActiveSession", duration(row.median_active_seconds)],
+    ["analytics.firstSaveMeasurements", row.completed_first_save_timings], ["analytics.timeToFirstSave", duration(row.total_time_to_first_save_seconds)],
+    ["analytics.averageTimeToFirstSave", duration(row.avg_time_to_first_save_seconds)], ["analytics.medianTimeToFirstSave", duration(row.median_time_to_first_save_seconds)],
+  ].forEach(([key, value]) => metrics.append(element("dt", "", t(key)), element("dd", "", String(value))));
+  fragment.append(
+    metrics,
+    element("p", "account-help", t("analytics.activeTimeHelp")),
+    element("p", "account-help", t("analytics.firstSaveHelp")),
+    renderLocalizedWorkSessionList("analytics.shortestActiveSessions", row.shortest_work_sessions),
+    renderLocalizedWorkSessionList("analytics.longestActiveSessions", row.longest_work_sessions),
+  );
+  dialogContent.replaceChildren(fragment);
+  dialog.showModal();
+}
+
+function renderLocalizedWorkSessionList(titleKey, items = []) {
+  const section = element("section", "analytics-review-list");
+  section.append(element("h3", "", t(titleKey)));
+  if (!items.length) {
+    section.append(element("p", "account-help", t("analytics.noActiveSessions")));
+    return section;
+  }
+  const list = document.createElement("ol");
+  items.forEach((item) => {
+    const row = document.createElement("li");
+    const reportLink = element("a", "", item.report_id);
+    reportLink.href = `/report-detail.html?id=${encodeURIComponent(item.report_id)}`;
+    row.append(reportLink, document.createTextNode(`: ${duration(item.duration_seconds)} · ${dateTime(item.finished_at)}`));
+    list.append(row);
+  });
+  section.append(list);
+  return section;
 }
 
 function renderWorkSessionList(title, items = []) {
