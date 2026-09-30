@@ -19,6 +19,7 @@ test("gemologist creates a draft through the three-step wizard", async ({ page }
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 2, username: "expert_1", role: "gemologist" } }));
   await page.route("**/reference-values", (route) => route.fulfill({ json: references }));
@@ -57,7 +58,7 @@ test("gemologist creates a draft through the three-step wizard", async ({ page }
   await page.locator("#pavilion-angle").fill("40.8");
   await page.locator("#girdle-thickness").selectOption("medium");
   await page.locator("#culet-size").selectOption("none");
-  await expect(page.locator("#res-price")).toContainText("USD 10,029.23");
+  await expect(page.locator("#res-price")).toContainText(/USD 10[\s\u00A0]029,23/);
   await expect(page.locator("#price-provider-marker")).toHaveText("of");
   await expect(page.locator("#market-reference-preview-source")).toContainText("OpenFacet · знімок #17");
   await page.locator("#next-btn").click();

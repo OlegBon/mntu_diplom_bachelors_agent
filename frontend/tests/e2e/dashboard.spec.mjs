@@ -108,6 +108,7 @@ test("dashboard renders the private report page and its row action menu", async 
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "expert_1");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 2, username: "expert_1", first_name: "Test", last_name: "Expert", role: "gemologist" } }));
   await page.route("**/market/mappings", (route) => route.fulfill({ json: [

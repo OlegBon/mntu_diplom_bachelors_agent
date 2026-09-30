@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-30 — i18n-ci-e2e-fixture-alignment
+
+- **Задача:** синхронізувати E2E fixtures з English-first default після 175–176 та усунути CI failures перед злиттям.
+- **Змінені файли:** `frontend/tests/e2e/{dashboard,public-passport-controls,public-passport-delivery,real-report-workflow,report-detail-confirmation-grades,report-detail,report-wizard,wizard-draft-continuity}.spec.mjs`, `docs/progress.md`.
+- **Рішення / Результат:** public та real isolated flow перевіряють англійський default; legacy mock-сценарії, що перевіряють український copy, явно фіксують `diamant_locale=uk`. Український формат суми перевіряється locale-safe регулярним виразом.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 35 passed; `cmd /c "cd frontend && npm run test:e2e"` — 25 passed; `cmd /c "cd frontend && npm run test:e2e:real"` — сценарій 1 passed. Локальний wrapper real-E2E не завершив cleanup-процес після успішного сценарію та був перерваний вручну.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** потрібен новий ручний GitHub Actions CI run уже після злиття; Sass/Browserslist та GitHub Node 20/Ubuntu notices не є помилками цього виправлення.
+
 ## 2026-09-30 — i18n-private-report-workflow
 
 - **Задача:** завершити 176 — повноцінну локалізацію private report workflow.
