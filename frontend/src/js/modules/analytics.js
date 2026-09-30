@@ -94,7 +94,7 @@ function renderWorkSessionList(title, items = []) {
   return section;
 }
 
-function renderExperts(container, rows, dialog, dialogContent) {
+function renderExpertsLegacy(container, rows, dialog, dialogContent) {
   renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано", "Активний час"], rows.map((row) => [
     (() => {
       const button = element("button", "analytics-expert-button", `${fullName(row)} (${row.expert_username})`);
@@ -105,6 +105,23 @@ function renderExperts(container, rows, dialog, dialogContent) {
     String(row.total_reports), String(row.draft_reports), String(row.review_reports),
     String(row.issued_reports), String(row.void_reports), duration(row.total_active_seconds),
   ]));
+}
+
+function renderExperts(container, rows, dialog, dialogContent) {
+  renderTable(container, [
+    t("analytics.expert"), t("analytics.state"), t("analytics.total"), t("analytics.drafts"),
+    t("analytics.underReview"), t("analytics.issued"), t("analytics.void"), t("analytics.activeTime"),
+  ], rows.map((row) => {
+    const button = element("button", "analytics-expert-button", `${fullName(row)} (${row.expert_username})`);
+    button.type = "button";
+    button.addEventListener("click", () => openExpertDialog(dialog, dialogContent, row));
+    return [
+      button,
+      row.is_active ? t("experts.active") : t("experts.inactive"),
+      String(row.total_reports), String(row.draft_reports), String(row.review_reports),
+      String(row.issued_reports), String(row.void_reports), duration(row.total_active_seconds),
+    ];
+  }));
 }
 
 function renderReviewList(title, items) {
