@@ -831,6 +831,7 @@ export async function initDemoReports() {
     }
   };
 
+  document.addEventListener("diamant:locale-change", () => { void load(state); });
   let searchTimer;
   search.addEventListener("input", () => {
     window.clearTimeout(searchTimer);

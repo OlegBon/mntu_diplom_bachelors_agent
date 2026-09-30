@@ -292,6 +292,7 @@ export async function initAnalytics() {
       status.hidden = false;
     }
   };
+  document.addEventListener("diamant:locale-change", () => { void loadAnalytics(); });
   periodForm.addEventListener("submit", (event) => { event.preventDefault(); loadAnalytics(); });
   periodReset.addEventListener("click", () => { periodForm.reset(); loadAnalytics(); });
   await loadAnalytics();
