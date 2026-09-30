@@ -88,7 +88,7 @@ function renderNarrativeSamples(title, samples, reportHref, formatDateTime) {
   return section;
 }
 
-export function renderNarrativeAnalytics(container, snapshot, { reportHref, formatDateTime }) {
+function renderNarrativeAnalyticsLegacy(container, snapshot, { reportHref, formatDateTime }) {
   const cards = element("div", "analytics-narrative-list");
   snapshot.fields.forEach((field) => {
     const card = element("article", "analytics-admin-card analytics-narrative-card");
@@ -108,6 +108,57 @@ export function renderNarrativeAnalytics(container, snapshot, { reportHref, form
     );
     cards.append(card);
   });
+  container.replaceChildren(cards);
+}
+
+function localizedSampleDate(value, formatDateTime) {
+  const formatted = formatDateTime(value);
+  return typeof formatted === "string" ? formatted : `${formatted.date} ${formatted.time}`;
+}
+
+function renderLocalizedNarrativeSamples(titleKey, samples, reportHref, formatDateTime) {
+  const section = element("section", "analytics-review-list");
+  section.append(element("h3", "", t(titleKey)));
+  if (!samples.length) {
+    section.append(element("p", "account-help", t("analytics.noValues")));
+    return section;
+  }
+  const list = document.createElement("ol");
+  for (const sample of samples) {
+    const row = document.createElement("li");
+    const link = element("a", "", sample.report_id);
+    link.href = reportHref(sample.report_id);
+    const date = localizedSampleDate(sample.occurred_at, formatDateTime);
+    const description = sample.word_count === 0 && sample.non_whitespace_char_count === 0
+      ? `: ${t("analytics.emptyValue")} · ${date}`
+      : `: ${t("analytics.sampleMetrics", { words: sample.word_count, characters: sample.non_whitespace_char_count, date })}`;
+    row.append(link, document.createTextNode(description));
+    list.append(row);
+  }
+  section.append(list);
+  return section;
+}
+
+export function renderNarrativeAnalytics(container, snapshot, { reportHref, formatDateTime }) {
+  const cards = element("div", "analytics-narrative-list");
+  for (const field of snapshot.fields) {
+    const card = element("article", "analytics-admin-card analytics-narrative-card");
+    card.append(element("h3", "", field.label));
+    const metrics = element("dl", "analytics-metrics");
+    [
+      ["analytics.totalInRange", field.candidate_count], ["analytics.nonEmptyValues", field.non_empty_count],
+      ["analytics.emptyValues", field.empty_count], ["analytics.medianWords", narrativeNumber(field.median_word_count)],
+      ["analytics.averageWords", narrativeNumber(field.average_word_count)], ["analytics.medianCharacters", narrativeNumber(field.median_non_whitespace_char_count)],
+      ["analytics.averageCharacters", narrativeNumber(field.average_non_whitespace_char_count)],
+    ].forEach(([labelKey, value]) => metrics.append(element("dt", "", t(labelKey)), element("dd", "", String(value))));
+    card.append(metrics, element("p", "account-help", field.source_semantics));
+    card.append(
+      renderLocalizedNarrativeSamples("analytics.shortest", field.shortest, reportHref, formatDateTime),
+      renderLocalizedNarrativeSamples("analytics.longest", field.longest, reportHref, formatDateTime),
+      renderLocalizedNarrativeSamples("analytics.emptySamples", field.empty_samples, reportHref, formatDateTime),
+    );
+    cards.append(card);
+  }
   container.replaceChildren(cards);
 }
 
