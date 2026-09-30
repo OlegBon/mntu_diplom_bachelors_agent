@@ -299,6 +299,10 @@ export async function initMarketData() {
     decisionReasonLabel.textContent = isApproval ? "Коментар до затвердження" : "Причина відхилення";
     decisionReason.placeholder = isApproval ? "Необов’язково" : "Необов’язково";
     decisionSubmit.textContent = isApproval ? "Затвердити знімок" : "Відхилити знімок";
+    decisionDescription.textContent = t(isApproval ? "market.decisionApproveDescription" : "market.decisionRejectDescription");
+    decisionReasonLabel.textContent = t(isApproval ? "market.approvalComment" : "market.rejectionReason");
+    decisionReason.placeholder = t("market.optional");
+    decisionSubmit.textContent = t(isApproval ? "market.approveSnapshot" : "market.rejectSnapshot");
     decisionDialog.showModal();
     decisionReason.focus();
   };
