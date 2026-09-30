@@ -1,4 +1,5 @@
 import { getDemoPassportPreviewPdf, getDemoReport, getGradeMappings } from "./api.js";
+import { formatCurrency, formatDate as formatLocalizedDate, t } from "./i18n.js";
 
 const ORIGIN_LABELS = { natural: "Природний", lab_grown: "Лабораторно вирощений", other: "Інше", unknown: "Не визначено" };
 const TREATMENT_LABELS = { not_assessed: "Не оцінено", none_detected: "Не виявлено", disclosed: "Заявлено", confirmed: "Підтверджено" };
@@ -16,10 +17,12 @@ function download(blob, filename) {
 }
 
 function formatAmount(value, currency = "USD") {
+  return formatCurrency(Number(value), currency, { maximumFractionDigits: 2 });
   return `${currency} ${new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 2 }).format(Number(value))}`;
 }
 
 function formatDate(value) {
+  return formatLocalizedDate(new Date(value), { dateStyle: "medium", timeStyle: "short" });
   return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
@@ -64,6 +67,13 @@ function createElement(tagName, className, textContent) {
   if (textContent !== undefined) element.textContent = textContent;
   return element;
 }
+
+function reportStatusLabel(status) {
+  if (status === "issued") return t("dashboard.statusIssued");
+  if (status === "void") return t("dashboard.statusVoid");
+  return status;
+}
+
 export async function initDemoReportDetail() {
   const root = document.querySelector("[data-demo-report-detail]"); if (!root || localStorage.getItem("role") !== "admin") return;
   const params = new URLSearchParams(window.location.search); const requestedDataset = params.get("dataset"); let dataset = requestedDataset || "synthetic-demo-v4"; const reportId = params.get("id"); const token = localStorage.getItem("token");
@@ -95,7 +105,7 @@ export async function initDemoReportDetail() {
     const isShowcase = report.report_id === SHOWCASE_REPORT_ID;
     document.getElementById("demo-showcase-media-event").hidden = !isShowcase;
     const statusBadge = document.getElementById("demo-status-badge");
-    const statusLabel = REPORT_STATUS_LABELS[report.status] || report.status;
+    const statusLabel = reportStatusLabel(report.status);
     statusBadge.textContent = statusLabel;
     statusBadge.dataset.status = report.status;
     document.getElementById("demo-status-event").textContent = `Чернетка → ${statusLabel} · змодельована системна подія`;
