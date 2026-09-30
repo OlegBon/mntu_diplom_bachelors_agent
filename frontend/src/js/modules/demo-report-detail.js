@@ -132,6 +132,16 @@ function localizeDemoDetailShell(root) {
   ["demoDetail.publishPassport", "demoDetail.openPassport", "demoDetail.copyLink", "demoDetail.downloadPdf"].forEach((key, index) => {
     if (passportButtons[index]) passportButtons[index].textContent = t(key);
   });
+  const events = root.querySelectorAll("#demo-events > li");
+  if (events[0]) {
+    events[0].querySelector("strong").textContent = t("demoDetail.created");
+    events[0].querySelector("span").textContent = t("demoDetail.simulatedSystemEvent");
+  }
+  if (events[1]) events[1].querySelector("strong").textContent = t("demoDetail.statusChanged");
+  if (events[2]) {
+    events[2].querySelector("strong").textContent = t("demoDetail.showcaseMediaAdded");
+    events[2].querySelector("span").textContent = t("demoDetail.showcaseMediaHelp");
+  }
 }
 
 export async function initDemoReportDetail() {
