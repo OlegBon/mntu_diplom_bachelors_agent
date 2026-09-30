@@ -1,6 +1,36 @@
 import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getNarrativeQualityAnalytics, getOperationalProviderAnalytics, getOperationalQualityAnalytics } from "./api.js";
 import { logout } from "./auth.js";
 import { duration, element, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
+import { t } from "./i18n.js";
+
+function localizeAnalyticsShell(page) {
+  const textKeys = [
+    [".page-title", "analytics.title"],
+    [".page-subtitle", "analytics.subtitle"],
+    ["#analytics-tab-stones", "analytics.stones"],
+    ["#analytics-tab-experts", "analytics.experts"],
+    ["#analytics-tab-narratives", "analytics.texts"],
+    ["#analytics-tab-quality", "analytics.quality"],
+    ["#analytics-tab-admins", "analytics.administrators"],
+    ["#analytics-tab-providers", "analytics.providers"],
+    ["#analytics-tab-currency", "analytics.currencySources"],
+    ["#analytics-stones > h2", "analytics.stonesTitle"],
+    ["#analytics-experts > h2", "analytics.expertsTitle"],
+    ["#analytics-narratives > h2", "analytics.textsTitle"],
+    ["#analytics-quality > h2", "analytics.qualityTitle"],
+    ["#analytics-admins > h2", "analytics.administratorsTitle"],
+    ["#analytics-providers > h2", "analytics.providersTitle"],
+    ["#analytics-currency > h2", "analytics.currencyTitle"],
+    ["#analytics-expert-dialog-title", "analytics.expertDialogTitle"],
+    ["#analytics-provider-dialog-title", "analytics.providerDialogTitle"],
+  ];
+  for (const [selector, key] of textKeys) {
+    const element = page.querySelector(selector);
+    if (element) element.textContent = t(key);
+  }
+  page.querySelector(".analytics-tabs")?.setAttribute("aria-label", t("analytics.tabs"));
+  for (const closeButton of page.querySelectorAll(".account-dialog__close")) closeButton.setAttribute("aria-label", t("analytics.close"));
+}
 
 function fullName(row) {
   return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || "Не вказано";
@@ -187,6 +217,8 @@ function renderCurrencySources(container, snapshots, dialog, dialogContent) {
 export async function initAnalytics() {
   const page = document.querySelector("[data-analytics-page]");
   if (!page) return;
+  localizeAnalyticsShell(page);
+  document.addEventListener("diamant:locale-change", () => localizeAnalyticsShell(page));
   const status = document.getElementById("analytics-status");
   const token = localStorage.getItem("token");
   const expertResults = document.getElementById("analytics-expert-results");
