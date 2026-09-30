@@ -1,3 +1,5 @@
+import { formatDate, formatNumber, t } from "./i18n.js";
+
 export function element(tagName, className, text) {
   const node = document.createElement(tagName);
   if (className) node.className = className;
@@ -16,10 +18,15 @@ export function duration(value) {
 }
 
 export function formatPeriodDate(value) {
+  return formatDate(new Date(`${value}T00:00:00`), { dateStyle: "medium" });
   return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${value}T00:00:00`));
 }
 
 export function periodSummary(period) {
+  if (period.date_from && period.date_to) return t("analytics.periodRange", { from: formatPeriodDate(period.date_from), to: formatPeriodDate(period.date_to) });
+  if (period.date_from) return t("analytics.periodFrom", { from: formatPeriodDate(period.date_from) });
+  if (period.date_to) return t("analytics.periodTo", { to: formatPeriodDate(period.date_to) });
+  return t("analytics.periodAll");
   if (period.date_from && period.date_to) return `Поточний зріз: з ${formatPeriodDate(period.date_from)} до ${formatPeriodDate(period.date_to)}`;
   if (period.date_from) return `Поточний зріз: від ${formatPeriodDate(period.date_from)}`;
   if (period.date_to) return `Поточний зріз: до ${formatPeriodDate(period.date_to)}`;
@@ -54,6 +61,7 @@ export function renderTable(container, headers, rows, emptyMessage = "Даних
 }
 
 function narrativeNumber(value) {
+  if (value !== null && value !== undefined) return formatNumber(value, { maximumFractionDigits: 2 });
   if (value === null || value === undefined) return "—";
   return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 2 }).format(value);
 }
