@@ -228,16 +228,18 @@ export async function initAnalytics() {
     status.hidden = true;
     try {
       const [experts, narratives, quality, admins, providers, currency] = await Promise.all([
-        getExpertStatistics(period, token), getNarrativeQualityAnalytics(period, token),
+        getExpertStatistics(period, token), getNarrativeQualityAnalytics(period, token).catch(() => null),
         getOperationalQualityAnalytics(period, token),
         getAdminReviewStatistics(period, token),
         getOperationalProviderAnalytics(period, token), getFxDataSnapshots(period, token),
       ]);
       renderExperts(expertResults, experts, expertDialog, expertDialogContent);
-      renderNarrativeAnalytics(narrativeResults, narratives, {
-        reportHref: (reportId) => `/report-detail.html?id=${encodeURIComponent(reportId)}`,
-        formatDateTime: dateTime,
-      });
+      if (narratives) {
+        renderNarrativeAnalytics(narrativeResults, narratives, {
+          reportHref: (reportId) => `/report-detail.html?id=${encodeURIComponent(reportId)}`,
+          formatDateTime: dateTime,
+        });
+      } else narrativeResults.textContent = "Текстові метадані тимчасово недоступні.";
       renderOperationalQuality(qualityResults, quality, { formatDateTime: dateTime });
       renderAdmins(adminResults, admins);
       renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
