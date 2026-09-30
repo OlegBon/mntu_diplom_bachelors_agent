@@ -27,6 +27,12 @@ function localizeAnalyticsShell(page) {
     ["label[for=analytics-date-to]", "analytics.to"],
     ["#analytics-period-form button[type=submit]", "analytics.applyPeriod"],
     ["#analytics-period-reset", "analytics.allTime"],
+    ["#analytics-experts > .account-help", "analytics.expertsHelp"],
+    ["#analytics-narratives > .account-help", "analytics.textsHelp"],
+    ["#analytics-quality > .account-help", "analytics.qualityHelp"],
+    ["#analytics-admins > .account-help", "analytics.administratorsHelp"],
+    ["#analytics-providers > .account-help", "analytics.providersHelp"],
+    ["#analytics-currency > .account-help", "analytics.currencyHelp"],
   ];
   for (const [selector, key] of textKeys) {
     const element = page.querySelector(selector);
