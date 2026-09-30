@@ -40,6 +40,13 @@ function fullName(row) {
   return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || "Не вказано";
 }
 
+function decisionLabel(value) {
+  if (value === "draft") return t("dashboard.statusDraft");
+  if (value === "issued") return t("dashboard.statusIssued");
+  if (value === "void") return t("dashboard.statusVoid");
+  return value;
+}
+
 const decisionLabels = {
   draft: "Повернено у чернетку",
   issued: "Видано",
@@ -143,7 +150,7 @@ function renderReviewList(title, items) {
   return section;
 }
 
-function renderAdmins(container, snapshot) {
+function renderAdminsLegacy(container, snapshot) {
   const fragment = document.createDocumentFragment();
   const queueText = snapshot.pending_review_count
     ? `Зараз на перевірці: ${snapshot.pending_review_count}.`
@@ -166,6 +173,49 @@ function renderAdmins(container, snapshot) {
   });
   if (snapshot.admins.length) fragment.append(cards);
   else fragment.append(element("p", "account-help", "Адміністраторів для цього зрізу поки немає."));
+  container.replaceChildren(fragment);
+}
+
+function renderLocalizedReviewList(titleKey, items) {
+  const section = element("section", "analytics-review-list");
+  section.append(element("h3", "", t(titleKey)));
+  if (!items.length) {
+    section.append(element("p", "account-help", t("analytics.noCompletedReviews")));
+    return section;
+  }
+  const list = document.createElement("ol");
+  for (const item of items) {
+    const row = document.createElement("li");
+    const reportLink = element("a", "", item.report_id);
+    reportLink.href = `/report-detail.html?id=${encodeURIComponent(item.report_id)}`;
+    row.append(reportLink, document.createTextNode(`: ${duration(item.duration_seconds)} · ${decisionLabel(item.decision)}`));
+    list.append(row);
+  }
+  section.append(list);
+  return section;
+}
+
+function renderAdmins(container, snapshot) {
+  const fragment = document.createDocumentFragment();
+  const queueText = snapshot.pending_review_count
+    ? t("analytics.pendingReview", { count: snapshot.pending_review_count })
+    : t("analytics.noPendingReview");
+  const oldest = dateTime(snapshot.oldest_review_started_at);
+  fragment.append(element("p", "analytics-queue", oldest ? `${queueText} ${t("analytics.oldestTransferred", { date: oldest })}` : queueText));
+  const cards = element("div", "analytics-admin-list");
+  for (const admin of snapshot.admins) {
+    const card = element("article", "analytics-admin-card");
+    card.append(element("h3", "", `${fullName(admin)} (${admin.admin_username})`));
+    const metrics = element("dl", "analytics-metrics");
+    [
+      ["analytics.completedReviews", admin.completed_reviews], ["analytics.issued", admin.issued_reports],
+      ["analytics.returned", admin.returned_to_draft], ["analytics.void", admin.voided_reports],
+      ["analytics.averageDuration", duration(admin.avg_review_duration_seconds)], ["analytics.medianDuration", duration(admin.median_review_duration_seconds)],
+    ].forEach(([key, value]) => metrics.append(element("dt", "", t(key)), element("dd", "", String(value))));
+    card.append(metrics, renderLocalizedReviewList("analytics.shortestReviews", admin.shortest_reviews), renderLocalizedReviewList("analytics.longestReviews", admin.longest_reviews));
+    cards.append(card);
+  }
+  fragment.append(snapshot.admins.length ? cards : element("p", "account-help", t("analytics.noAdministrators")));
   container.replaceChildren(fragment);
 }
 
