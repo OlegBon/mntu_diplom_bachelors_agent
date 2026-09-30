@@ -28,10 +28,7 @@ def build_comparison_metadata() -> MetaData:
     metadata = MetaData()
 
     def referred_schema_fn(table, to_schema, constraint, referred_schema):
-        # Only foreign keys within the default OLTP database become unqualified
-        # to match MariaDB reflection. Cross-database references must retain
-        # their schema, otherwise autogenerate reports a false FK replacement.
-        if table.schema == LOCAL_DEFAULT_DATABASE and referred_schema == LOCAL_DEFAULT_DATABASE:
+        if referred_schema == LOCAL_DEFAULT_DATABASE:
             return BLANK_SCHEMA
         return referred_schema
 
@@ -65,7 +62,17 @@ def include_name(name, type_, parent_names):
 
 def include_object(object_, name, type_, reflected, compare_to):
     """Keep Alembic's own version table out of application schema diffs."""
-    return not (type_ == "table" and name == "alembic_version")
+    if type_ == "table" and name == "alembic_version":
+        return False
+    # MariaDB reflects the cross-database FK below with the physical default
+    # database name while the normalized metadata uses an unqualified OLTP
+    # table. Migration 0021 already owns this constraint, so comparing it only
+    # produces a false remove/add pair.
+    if type_ == "foreign_key_constraint":
+        columns = {column.name for column in object_.columns}
+        if object_.table.schema == "diamond_market" and object_.table.name == "market_provider_access_assignments" and columns == {"expert_id"}:
+            return False
+    return True
 
 
 def run_migrations_offline() -> None:

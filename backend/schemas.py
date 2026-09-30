@@ -81,6 +81,12 @@ class ExpertBase(BaseModel):
     demo_access_enabled: bool
     partner_controls_enabled: bool
 
+    @field_validator("demo_access_enabled", "partner_controls_enabled", mode="before")
+    @classmethod
+    def unset_access_flags_are_disabled(cls, value: object) -> bool:
+        """Keep transient, unflushed ORM defaults compatible with read models."""
+        return False if value is None else bool(value)
+
 class ExpertListResponse(BaseModel):
     items: list[ExpertBase]
     total: int
