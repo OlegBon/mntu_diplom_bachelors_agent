@@ -554,16 +554,20 @@ class MarketProviderAccessEvent(Base):
     """Append-only, credential-free audit trail for partner access governance."""
 
     __tablename__ = "market_provider_access_events"
-    __table_args__ = {"schema": "diamond_market"}
+    __table_args__ = (
+        Index("ix_market_provider_access_events_provider_code", "provider_code"),
+        Index("ix_market_provider_access_events_created_at", "created_at"),
+        {"schema": "diamond_market"},
+    )
 
     event_id = Column(Integer, primary_key=True)
-    provider_code = Column(String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=True, index=True)
+    provider_code = Column(String(32), ForeignKey("diamond_market.market_data_providers.provider_code"), nullable=True)
     action = Column(String(64), nullable=False)
     actor_id = Column(Integer, nullable=True)
     subject_expert_id = Column(Integer, nullable=True)
     reason = Column(Text, nullable=True)
     state_json = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
 class MarketDataSnapshot(Base):

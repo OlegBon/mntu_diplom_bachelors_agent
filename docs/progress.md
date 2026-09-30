@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-09-30 — github-actions-ci-first-run-fixes
+
+- **Задача:** усунути перші реальні CI-падіння task 137 після того, як GitHub-hosted runners стали доступними.
+- **Змінені файли:** `.github/workflows/ci.yml`, `alembic/env.py`, `backend/models.py`, `frontend/src/js/modules/{analytics,report-detail}.js`, `docs/guides/continuous-integration.md`, `docs/{progress,work_plan}.md`.
+- **Рішення / Результат:** backend pytest job отримує явний disposable `DATABASE_URL=sqlite://` лише для імпорту application engine; MariaDB comparison metadata не втрачає cross-database FK, а access-event indexes мають ті самі явні імена, що й migration 0021. Відсутній або тимчасово недоступний narrative metadata endpoint більше не блокує основний report detail чи operational analytics; редагування чернетки не губиться через гонку між натисканням «Редагувати» та initial refresh.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 31 passed; CI-подібний `from backend.main import app` з `DATABASE_URL=sqlite://` — OK; `git diff --check` — OK. Local full pytest та Playwright були запущені, але їхній процес перевищив ліміт інтерактивного shell; наступний GitHub run є authoritative verification для цих job і MariaDB service.
+- **Нові змінні середовища:** CI-only `DATABASE_URL=sqlite://` у job `Backend tests`; не є `.env`-змінною та не містить секретів.
+- **Обмеження:** 137 не завершена до green GitHub runs. Sass `@import`, outdated Browserslist, Node 20 action-runtime notice та future `ubuntu-latest` migration — warnings runner/toolchain, не причини current failures.
+
 ## 2026-09-29 — github-actions-ci-advisory
 
 - **Задача:** реалізувати 137 як advisory GitHub Actions gate для PR до `local-dev`/`main` до майбутнього staging.

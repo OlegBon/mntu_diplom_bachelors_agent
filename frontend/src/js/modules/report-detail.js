@@ -488,6 +488,7 @@ export async function initReportDetail() {
   let workSessionTracker;
   let pendingMediaPublication;
   let mediaPublicationTrigger;
+  let isEditing = new URLSearchParams(window.location.search).get("edit") === "1";
   const closeMediaPublicationDialog = () => {
     pendingMediaPublication = undefined;
     mediaPublicationStatus.hidden = true;
@@ -508,7 +509,7 @@ export async function initReportDetail() {
     try {
       const [freshReport, events, media, narrativeQuality] = await Promise.all([
         getDomainReport(reportId, token), getReportEvents(reportId, token), getReportMedia(reportId, token),
-        getReportNarrativeQuality(reportId, token),
+        getReportNarrativeQuality(reportId, token).catch(() => null),
       ]);
       report = freshReport;
       populateForm(form, report, gradeLabels);
@@ -526,7 +527,9 @@ export async function initReportDetail() {
         : gradeLabels.get(`cut:${report.expert_cut_grade}`) || String(report.expert_cut_grade);
       document.getElementById("detail-expert-summary").textContent = `Експертні grades: Proportions ${confirmedProportions}, підсумковий Cut ${confirmedCut}.`;
       renderEvents(document.getElementById("detail-events"), events);
-      renderNarrativeQuality(document.getElementById("detail-narrative-quality"), narrativeQuality);
+      const narrativeNode = document.getElementById("detail-narrative-quality");
+      if (narrativeQuality) renderNarrativeQuality(narrativeNode, narrativeQuality);
+      else narrativeNode.textContent = "Текстові метадані тимчасово недоступні.";
       renderMedia(
         document.getElementById("detail-media"), report, media, currentUser, token, openMediaPublicationDialog,
       );
@@ -548,9 +551,8 @@ export async function initReportDetail() {
       });
       const canEdit = report.status === "draft" && (currentUser.role === "admin" || currentUser.expert_id === report.expert_id);
       const canTrack = report.status === "draft" && currentUser.role === "gemologist" && currentUser.expert_id === report.expert_id;
-      setEditable(form, false);
+      setEditable(form, isEditing && canEdit);
       form.querySelector("#detail-edit").hidden = !canEdit;
-      if (new URLSearchParams(window.location.search).get("edit") === "1" && canEdit) setEditable(form, true);
       workSessionTracker?.setEnabled(canTrack && !form.querySelector("#detail-save").hidden, { pauseOnDisable: report.status === "draft" });
       if (new URLSearchParams(window.location.search).get("print") === "1" && !printStarted) {
         printStarted = true;
@@ -607,10 +609,12 @@ export async function initReportDetail() {
     }
   });
   form.querySelector("#detail-edit").addEventListener("click", () => {
+    isEditing = true;
     setEditable(form, true);
     workSessionTracker.setEnabled(currentUser.role === "gemologist" && currentUser.expert_id === report.expert_id);
   });
   form.querySelector("#detail-cancel").addEventListener("click", () => {
+    isEditing = false;
     populateForm(form, report, gradeLabels);
     setEditable(form, false);
     workSessionTracker.setEnabled(false);
@@ -625,6 +629,7 @@ export async function initReportDetail() {
       setStatus(status, "Збереження змін…");
       await workSessionTracker.checkpointSave();
       await updateDomainReport(reportId, payloadFromForm(form), token);
+      isEditing = false;
       setStatus(status, "Зміни чернетки збережено.");
       await refresh();
     } catch (error) { setStatus(status, error.message || "Не вдалося зберегти зміни.", true); }
