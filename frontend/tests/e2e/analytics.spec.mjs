@@ -72,6 +72,7 @@ test("administrator sees operational analytics without a fake stone chart", asyn
 
   await page.goto("/ml-analysis.html");
 
+  await page.getByRole("tab", { name: "Експерти" }).click();
   await expect(page.getByRole("heading", { name: "Експерти та звіти" })).toBeVisible();
   await expect(page.getByRole("cell", { name: /Експерт Іван/ })).toBeVisible();
   await page.getByRole("button", { name: /Експерт Іван/ }).click();
@@ -83,7 +84,8 @@ test("administrator sees operational analytics without a fake stone chart", asyn
   await expect(page.getByText("Адміністраторка Друга")).toBeVisible();
   await expect(page.getByRole("link", { name: "DR-00011" })).toHaveAttribute("href", "/report-detail.html?id=DR-00011");
   await page.getByRole("tab", { name: "Камені" }).click();
-  await expect(page.getByText(/не показуються умовні графіки/)).toBeVisible();
+  await expect(page.getByText(/Real SOM і benchmark-карта ще не запускаються/)).toBeVisible();
+  await page.getByRole("tab", { name: "Експерти" }).click();
   await page.locator("#analytics-date-from").fill("2026-09-01");
   await page.locator("#analytics-date-to").fill("2026-09-30");
   await page.getByRole("button", { name: "Застосувати період" }).click();

@@ -83,6 +83,27 @@ const dashboardResponse = {
   total_pages: 50,
 };
 
+const demoMarketReference = {
+  amount: "6931.00",
+  currency_code: "USD",
+  provider_code: "demo_market_a",
+  valuation_kind: "synthetic_demo_reference",
+  source_name: "Demo Market A",
+  market_snapshot_id: null,
+  observed_at: "2026-09-15T10:00:00Z",
+  converted_amount: null,
+  converted_currency_code: null,
+  fx_snapshot_id: null,
+  fx_rate: null,
+  fx_rate_date: null,
+  available_provider_count: 1,
+};
+
+for (const report of dashboardResponse.items) {
+  report.market_reference = demoMarketReference;
+  report.market_references = [demoMarketReference];
+}
+
 test("dashboard renders the private report page and its row action menu", async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("token", "e2e-token");
@@ -101,10 +122,11 @@ test("dashboard renders the private report page and its row action menu", async 
   await expect(page.getByRole("heading", { name: "Всі звіти" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "DR-00042", exact: true })).toBeVisible();
   const draftRow = page.locator("tr", { hasText: "DR-00042" });
-  await draftRow.getByRole("button", { name: "Пояснення demo-ціни звіту DR-00042" }).click();
-  await expect(draftRow.getByText("diamonds_dataset.csv")).toBeVisible();
+  await draftRow.getByRole("button", { name: "Пояснення ринкового орієнтира звіту DR-00042" }).click();
+  const pricePopover = draftRow.locator(".report-price__popover");
+  await expect(pricePopover.getByText("Провайдер: Demo Market A")).toBeVisible();
   await page.getByRole("heading", { name: "Всі звіти" }).click();
-  await expect(draftRow.getByText("diamonds_dataset.csv")).toBeHidden();
+  await expect(pricePopover).toBeHidden();
   await page.getByRole("button", { name: "Відкрити дії для звіту DR-00042" }).click();
   await expect(page.getByRole("link", { name: "Переглянути" })).toHaveAttribute("href", "/report-detail.html?id=DR-00042");
   await expect(page.getByRole("link", { name: "Друк" })).toHaveAttribute("href", "/report-detail.html?id=DR-00042&print=1");
@@ -119,9 +141,9 @@ test("dashboard renders the private report page and its row action menu", async 
 
   await page.getByLabel("Статус звіту").selectOption("draft");
   await expect(page).toHaveURL(/report_status=draft/);
-  await page.getByRole("button", { name: "Сортувати за ціною" }).click();
+  await page.getByRole("button", { name: "Сортувати за довідковим орієнтиром" }).click();
   await expect(page).toHaveURL(/sort=price_asc/);
-  await expect(page.getByRole("columnheader", { name: "Сортувати за ціною" })).toHaveAttribute("aria-sort", "ascending");
+  await expect(page.getByRole("columnheader", { name: "Сортувати за довідковим орієнтиром" })).toHaveAttribute("aria-sort", "ascending");
   await page.getByLabel("На останню сторінку").click();
   await expect(page).toHaveURL(/page=50/);
 });

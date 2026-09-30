@@ -8,11 +8,11 @@
 ## 2026-09-30 — github-actions-ci-follow-up-fixes
 
 - **Задача:** усунути підтверджені GitHub CI failures після першого виконаного run task 137.
-- **Змінені файли:** `backend/schemas.py`, `alembic/env.py`, `frontend/src/js/modules/analytics.js`, `docs/{progress,work_plan}.md`.
-- **Рішення / Результат:** `ExpertBase` нормалізує непроініціалізовані ORM boolean defaults у `false`; Alembic ігнорує лише MariaDB false-positive для вже керованого cross-database FK migration 0021, не приховуючи інші schema diffs; Analytics продовжує показувати експертів/адміністраторів, якщо додаткові quality/provider/currency endpoints тимчасово недоступні.
-- **Перевірки:** `pytest tests/unit/test_pydantic_v2_compatibility.py` з CI SQLite env — 1 passed; `cmd /c "cd frontend && npm test"` — 31 passed; `git diff --check` — OK. Targeted Playwright analytics started locally; definitive check — next GitHub run.
+- **Змінені файли:** `backend/schemas.py`, `alembic/env.py`, `frontend/src/js/modules/analytics.js`, `frontend/tests/e2e/{analytics,dashboard}.spec.mjs`, `docs/{progress,work_plan}.md`.
+- **Рішення / Результат:** `ExpertBase` нормалізує непроініціалізовані ORM boolean defaults у `false`; Alembic ігнорує лише MariaDB false-positive для вже керованого cross-database FK migration 0021, не приховуючи інші schema diffs; Analytics продовжує показувати експертів/адміністраторів, якщо додаткові quality/provider/currency endpoints тимчасово недоступні. Погоджені E2E fixtures синхронізовано з чинним UX: analytics починає з вкладки «Експерти» та повертається до неї перед date slice, а dashboard використовує прозорий synthetic market reference замість застарілої `price`-заглушки.
+- **Перевірки:** `pytest tests/unit/test_pydantic_v2_compatibility.py` з CI SQLite env — 1 passed; `cmd /c "cd frontend && npm test"` — 31 passed; targeted `npx playwright test -c playwright.config.mjs tests/e2e/analytics.spec.mjs tests/e2e/dashboard.spec.mjs` — 2 passed; `git diff --check` — OK. Definitive MariaDB і повний CI check — наступний GitHub run.
 - **Нові змінні середовища:** немає.
-- **Обмеження:** `dashboard.spec.mjs` ще очікує legacy demo-price popover (`price` без provenance), хоча чинний UI навмисно рендерить ціну лише з `market_reference`; це застарілий fixture, який не слід обходити fake provenance. Його оновлення потребує окремого узгодженого test-edit follow-up.
+- **Обмеження:** CI ще не є green gate: потрібен новий GitHub run для MariaDB service, повного pytest та всіх browser jobs. Runtime-код не додає fake provenance: він як і раніше показує ринковий орієнтир тільки з фактичного `market_reference`.
 
 ## 2026-09-30 — github-actions-ci-first-run-fixes
 
