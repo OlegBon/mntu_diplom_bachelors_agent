@@ -214,7 +214,7 @@ function renderMedia(container, report, assets, currentUser, token, onRequestPub
         .then((response) => response.ok ? response.blob() : Promise.reject())
         .then((blob) => window.open(URL.createObjectURL(blob), "_blank", "noopener"));
     });
-    item.append(link, document.createTextNode(` · ${MEDIA_TYPE_LABELS[asset.asset_type] || "Вкладення"}`));
+    item.append(link, document.createTextNode(` · ${MEDIA_TYPE_LABELS[asset.asset_type] ? t(MEDIA_TYPE_LABELS[asset.asset_type]) : t("detail.attachment")}`));
     const canManagePublication = currentUser.role === "admin"
       && report.status === "issued"
       && ["stone_photo", "plotting_diagram"].includes(asset.asset_type)
@@ -223,11 +223,11 @@ function renderMedia(container, report, assets, currentUser, token, onRequestPub
       const publication = document.createElement("button");
       publication.type = "button";
       publication.className = "btn btn-outline btn--compact";
-      publication.textContent = asset.is_public ? "Прибрати з паспорта" : "Опублікувати в паспорті";
+      publication.textContent = asset.is_public ? t("detail.removeFromPassport") : t("detail.publishInPassport");
       publication.addEventListener("click", () => onRequestPublication(asset, !asset.is_public, publication));
       item.append(document.createTextNode(" "), publication);
     } else if (asset.is_public) {
-      item.append(document.createTextNode(" · Опубліковано в паспорті"));
+      item.append(document.createTextNode(` · ${t("detail.publishedInPassport")}`));
     }
     container.append(item);
   }
@@ -343,25 +343,25 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
   section.hidden = false;
   [code, link, qr, publish, copyLink, copyCode, pdf, reissue, revoke].forEach((element) => { element.hidden = true; });
   publish.disabled = false;
-  publish.textContent = "Опублікувати паспорт";
+  publish.textContent = t("detail.publishPassport");
   if (report.status !== "issued") {
-    state.textContent = "Публікація стане доступною після видачі звіту admin.";
+    state.textContent = t("detail.passportIssuedOnly");
     return;
   }
   publish.onclick = async () => {
     if (publish.dataset.submitting === "true") return;
     publish.dataset.submitting = "true";
     publish.disabled = true;
-    publish.textContent = "Публікація…";
+    publish.textContent = t("detail.publishing");
     try {
-      onStatus("Публікація паспорта…");
+      onStatus(t("detail.publishingPassport"));
       await publishReportPassport(report.report_id, token);
       await renderPassportControls({ report, currentUser, token, onStatus });
-      onStatus("Паспорт опубліковано.");
+      onStatus(t("detail.passportPublished"));
     } catch (error) {
-      onStatus(error.message || "Не вдалося опублікувати паспорт.", true);
+      onStatus(error.message || t("detail.publishPassportFailed"), true);
       publish.disabled = false;
-      publish.textContent = "Опублікувати паспорт";
+      publish.textContent = t("detail.publishPassport");
     } finally {
       delete publish.dataset.submitting;
     }
@@ -369,7 +369,7 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
   try {
     const { passport } = await getReportPassport(report.report_id, token);
     if (!passport) {
-      state.textContent = "Паспорт ще не опубліковано.";
+      state.textContent = t("detail.passportNotPublished");
       publish.hidden = false;
       return;
     }
@@ -391,42 +391,42 @@ async function renderPassportControls({ report, currentUser, token, onStatus }) 
     qr.src = qr.dataset.objectUrl;
     qr.hidden = false;
     copyLink.onclick = async () => {
-      try { await copyText(url); onStatus("Публічне посилання скопійовано."); }
-      catch (error) { onStatus(error.message || "Не вдалося скопіювати посилання.", true); }
+      try { await copyText(url); onStatus(t("detail.publicLinkCopied")); }
+      catch (error) { onStatus(error.message || t("detail.copyLinkFailed"), true); }
     };
     copyCode.onclick = async () => {
-      try { await copyText(passport.public_id); onStatus("Код публічного паспорта скопійовано."); }
-      catch (error) { onStatus(error.message || "Не вдалося скопіювати код.", true); }
+      try { await copyText(passport.public_id); onStatus(t("detail.passportCodeCopied")); }
+      catch (error) { onStatus(error.message || t("detail.copyCodeFailed"), true); }
     };
     pdf.onclick = async () => {
       try {
-        onStatus("Формування PDF-паспорта…");
+        onStatus(t("detail.generatingPassportPdf"));
         const document = await getReportPassportPdf(report.report_id, url, token);
         downloadBlob(document, `passport-${report.report_id}.pdf`);
-        onStatus("PDF-паспорт завантажено.");
-      } catch (error) { onStatus(error.message || "Не вдалося сформувати PDF-паспорт.", true); }
+        onStatus(t("detail.passportPdfDownloaded"));
+      } catch (error) { onStatus(error.message || t("detail.passportPdfFailed"), true); }
     };
   } catch {
     state.textContent = "Не вдалося завантажити стан публікації.";
     return;
   }
   reissue.onclick = async () => {
-    if (!window.confirm("Перевипустити паспорт? Попередній код, посилання й QR перестануть працювати.")) return;
+    if (!window.confirm(t("detail.reissueConfirm"))) return;
     try {
-      onStatus("Перевипуск паспорта…");
+      onStatus(t("detail.reissuingPassport"));
       await reissueReportPassport(report.report_id, token);
       await renderPassportControls({ report, currentUser, token, onStatus });
-      onStatus("Створено новий код, посилання та QR-код.");
-    } catch (error) { onStatus(error.message || "Не вдалося перевипустити посилання.", true); }
+      onStatus(t("detail.passportReissued"));
+    } catch (error) { onStatus(error.message || t("detail.reissueFailed"), true); }
   };
   revoke.onclick = async () => {
-    if (!window.confirm("Відкликати публічний паспорт? Код, посилання й QR одразу перестануть працювати.")) return;
+    if (!window.confirm(t("detail.revokeConfirm"))) return;
     try {
-      onStatus("Відкликання публікації…");
+      onStatus(t("detail.revokingPassport"));
       await revokeReportPassport(report.report_id, token);
       await renderPassportControls({ report, currentUser, token, onStatus });
-      onStatus("Публікацію паспорта відкликано.");
-    } catch (error) { onStatus(error.message || "Не вдалося відкликати паспорт.", true); }
+      onStatus(t("detail.passportRevoked"));
+    } catch (error) { onStatus(error.message || t("detail.revokeFailed"), true); }
   };
 }
 
@@ -435,27 +435,27 @@ function renderTransitionControls(container, helpNode, report, currentUser, onTr
   const isAdmin = currentUser.role === "admin";
   const isOwner = currentUser.expert_id === report.expert_id;
   const options = [];
-  if (report.status === "draft" && (isOwner || isAdmin)) options.push(["review", "Передати на перевірку"]);
+  if (report.status === "draft" && (isOwner || isAdmin)) options.push(["review", t("detail.sendForReview")]);
   if (report.status === "review" && isAdmin) {
-    options.push(["draft", "Повернути в чернетку"], ["issued", "Видати звіт"], ["void", "Анулювати"]);
+    options.push(["draft", t("detail.returnToDraft")], ["issued", t("detail.issueReport")], ["void", t("detail.voidReport")]);
   }
-  if (report.status === "issued" && isAdmin) options.push(["void", "Анулювати"]);
+  if (report.status === "issued" && isAdmin) options.push(["void", t("detail.voidReport")]);
   for (const [targetStatus, label] of options) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = targetStatus === "issued" ? "btn btn-primary" : "btn btn-outline";
     button.textContent = label;
     button.disabled = targetStatus === "issued" && report.expert_proportions_grade === null;
-    if (button.disabled) button.title = "Для видачі потрібна експертна оцінка Proportions.";
+    if (button.disabled) button.title = t("detail.issueNeedsProportions");
     button.addEventListener("click", () => onTransition(targetStatus));
     container.append(button);
   }
   if (report.status === "review" && report.expert_proportions_grade === null) {
-    helpNode.textContent = "Для видачі поверніть звіт у чернетку та оберіть експертну оцінку Proportions.";
+    helpNode.textContent = t("detail.reviewNeedsProportions");
   } else {
     helpNode.textContent = report.status === "draft"
-      ? "Чернетку може редагувати її автор або admin."
-      : "Після передачі на перевірку поля звіту заблоковані; переходи контролює сервер.";
+      ? t("detail.draftEditHelp")
+      : t("detail.lockedAfterReview");
   }
 }
 

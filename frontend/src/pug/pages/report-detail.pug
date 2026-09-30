@@ -166,20 +166,20 @@ block content
                     ul#detail-media.report-detail__list
                         li(data-i18n="detail.loading") Loading…
                 section#detail-passport.report-detail__surface(hidden)
-                    h2 Публічний паспорт
-                    p#detail-passport-state.report-detail__help Доступний лише для виданого звіту.
+                    h2(data-i18n="detail.publicPassport") Public passport
+                    p#detail-passport-state.report-detail__help(data-i18n="detail.passportIssuedOnly") Available only for an issued report.
                     p#detail-passport-code.report-detail__passport-code(hidden)
-                        span Код паспорта
+                        span(data-i18n="detail.passportCode") Passport code
                         code
-                    a#detail-passport-link(href="#" target="_blank" rel="noopener noreferrer" hidden) Відкрити публічний паспорт
-                    img#detail-passport-qr.report-detail__qr(alt="QR-код публічного паспорта" hidden)
+                    a#detail-passport-link(href="#" target="_blank" rel="noopener noreferrer" hidden data-i18n="detail.openPublicPassport") Open public passport
+                    img#detail-passport-qr.report-detail__qr(alt="Public passport QR code" data-i18n-alt="detail.passportQrAlt" hidden)
                     .report-detail__transition-actions
-                        button#detail-passport-publish.btn.btn-primary(type="button" hidden) Опублікувати паспорт
-                        button#detail-passport-copy-link.btn.btn-outline(type="button" hidden) Скопіювати посилання
-                        button#detail-passport-copy-code.btn.btn-outline(type="button" hidden) Скопіювати код
-                        button#detail-passport-pdf.btn.btn-primary(type="button" hidden) Завантажити PDF
-                        button#detail-passport-reissue.btn.btn-outline(type="button" hidden) Перевипустити посилання
-                        button#detail-passport-revoke.btn.btn-outline(type="button" hidden) Відкликати публікацію
+                        button#detail-passport-publish.btn.btn-primary(type="button" hidden data-i18n="detail.publishPassport") Publish passport
+                        button#detail-passport-copy-link.btn.btn-outline(type="button" hidden data-i18n="detail.copyLink") Copy link
+                        button#detail-passport-copy-code.btn.btn-outline(type="button" hidden data-i18n="detail.copyCode") Copy code
+                        button#detail-passport-pdf.btn.btn-primary(type="button" hidden data-i18n="detail.downloadPdf") Download PDF
+                        button#detail-passport-reissue.btn.btn-outline(type="button" hidden data-i18n="detail.reissueLink") Reissue link
+                        button#detail-passport-revoke.btn.btn-outline(type="button" hidden data-i18n="detail.revokePublication") Revoke publication
                 section.report-detail__surface
                     h2(data-i18n="detail.history") Change history
                     ol#detail-events.report-detail__timeline
@@ -187,10 +187,10 @@ block content
         dialog#media-publication-dialog.account-dialog(aria-labelledby="media-publication-dialog-title")
             form#media-publication-form
                 .account-dialog__header
-                    h2#media-publication-dialog-title Підтвердити публікацію вкладення
-                    button#media-publication-dialog-close.account-dialog__close(type="button" aria-label="Закрити") ×
+                    h2#media-publication-dialog-title(data-i18n="detail.confirmAttachmentPublication") Confirm attachment publication
+                    button#media-publication-dialog-close.account-dialog__close(type="button" aria-label="Close" data-i18n-aria-label="wizard.close") ×
                 p#media-publication-description.account-help
                 p#media-publication-status.form-status(role="status" aria-live="polite" hidden)
                 .account-dialog__actions
-                    button#media-publication-cancel.btn.btn-outline(type="button") Скасувати
-                    button#media-publication-submit.btn.btn-primary(type="submit") Підтвердити
+                    button#media-publication-cancel.btn.btn-outline(type="button" data-i18n="wizard.cancel") Cancel
+                    button#media-publication-submit.btn.btn-primary(type="submit" data-i18n="detail.confirm") Confirm
