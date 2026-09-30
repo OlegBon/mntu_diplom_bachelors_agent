@@ -1,7 +1,7 @@
 import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getNarrativeQualityAnalytics, getOperationalProviderAnalytics, getOperationalQualityAnalytics } from "./api.js";
 import { logout } from "./auth.js";
 import { duration, element, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
-import { t } from "./i18n.js";
+import { formatDate, t } from "./i18n.js";
 
 function localizeAnalyticsShell(page) {
   const textKeys = [
@@ -23,6 +23,10 @@ function localizeAnalyticsShell(page) {
     ["#analytics-currency > h2", "analytics.currencyTitle"],
     ["#analytics-expert-dialog-title", "analytics.expertDialogTitle"],
     ["#analytics-provider-dialog-title", "analytics.providerDialogTitle"],
+    ["label[for=analytics-date-from]", "analytics.from"],
+    ["label[for=analytics-date-to]", "analytics.to"],
+    ["#analytics-period-form button[type=submit]", "analytics.applyPeriod"],
+    ["#analytics-period-reset", "analytics.allTime"],
   ];
   for (const [selector, key] of textKeys) {
     const element = page.querySelector(selector);
@@ -44,7 +48,7 @@ const decisionLabels = {
 
 function dateTime(value) {
   if (!value) return null;
-  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return formatDate(new Date(value), { dateStyle: "medium", timeStyle: "short" });
 }
 
 function openExpertDialog(dialog, dialogContent, row) {
@@ -206,8 +210,8 @@ function renderCurrencySources(container, snapshots, dialog, dialogContent) {
   const formatCurrencyDateTime = (value) => {
     const parsed = new Date(value);
     return {
-      date: new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(parsed),
-      time: new Intl.DateTimeFormat("uk-UA", { timeStyle: "short" }).format(parsed),
+      date: formatDate(parsed, { dateStyle: "medium" }),
+      time: formatDate(parsed, { timeStyle: "short" }),
     };
   };
   renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatCurrencyDateTime);
