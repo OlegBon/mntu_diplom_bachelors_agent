@@ -5,41 +5,41 @@ block content
     .dashboard-page(hidden data-protected-page="true" data-dashboard)
         .page-header
             div
-                h1.page-title Всі звіти
-                p.page-subtitle Управління сертифікатами та оцінками.
-            a#create-report-action.btn.btn-primary(href="/create-report.html") Новий звіт
+                h1.page-title(data-i18n="dashboard.title") All reports
+                p.page-subtitle(data-i18n="dashboard.subtitle") Manage certificates and assessments.
+            a#create-report-action.btn.btn-primary(href="/create-report.html" data-i18n="dashboard.newReport") New report
 
         .filters-container
             .filters-bar
                 .search-group
-                    label.sr-only(for="report-search") Пошук за номером звіту
-                    input#report-search(type="search" placeholder="Пошук за номером звіту" autocomplete="off")
-                button#toggle-filters.btn.btn-primary(type="button" aria-expanded="false" aria-controls="advanced-filters") Фільтри
+                    label.sr-only(for="report-search" data-i18n="dashboard.search") Search by report number
+                    input#report-search(type="search" data-i18n-placeholder="dashboard.search" placeholder="Search by report number" autocomplete="off")
+                button#toggle-filters.btn.btn-primary(type="button" aria-expanded="false" aria-controls="advanced-filters" data-i18n="dashboard.filters") Filters
                 .filter-control.filter-control--quick
-                    label.sr-only(for="quick-report-status") Статус звіту
+                    label.sr-only(for="quick-report-status" data-i18n="dashboard.reportStatus") Статус звіту
                     select#quick-report-status.form-select
-                        option(value="") Усі статуси звіту
-                        option(value="draft") Чернетка
-                        option(value="review") На перевірці
-                        option(value="issued") Видано
-                        option(value="void") Анульовано
+                        option(value="" data-i18n="dashboard.allReportStatuses") All report statuses
+                        option(value="draft" data-i18n="dashboard.statusDraft") Draft
+                        option(value="review" data-i18n="dashboard.statusReview") In review
+                        option(value="issued" data-i18n="dashboard.statusIssued") Issued
+                        option(value="void" data-i18n="dashboard.statusVoid") Voided
                 .filter-control.filter-control--quick
-                    label.sr-only(for="quick-market-status") Статус продажу
+                    label.sr-only(for="quick-market-status" data-i18n="dashboard.saleStatus") Sale status
                     select#quick-market-status.form-select
-                        option(value="") Усі статуси продажу
-                        option(value="false") Не продано
-                        option(value="true") Продано
+                        option(value="" data-i18n="dashboard.allSaleStatuses") All sale statuses
+                        option(value="false" data-i18n="dashboard.notSold") Not sold
+                        option(value="true" data-i18n="dashboard.sold") Sold
                 #expert-filter-wrap.filter-control.filter-control--quick(hidden)
-                    label.sr-only(for="expert-filter") Експерт
+                    label.sr-only(for="expert-filter" data-i18n="dashboard.expert") Expert
                     select#expert-filter.form-select
-                        option(value="") Усі експерти
+                        option(value="" data-i18n="dashboard.allExperts") All experts
 
             #advanced-filters.advanced-filters
                 form#dashboard-filters.filters-grid
                     .filter-item
-                        label(for="shape-filter") Форма (Shape)
+                        label(for="shape-filter" data-i18n="dashboard.shape") Shape
                         select#shape-filter.form-select(name="shape")
-                            option(value="") Будь-яка
+                            option(value="" data-i18n="dashboard.any") Any
                             option(value="Round") Round
                             option(value="Princess") Princess
                             option(value="Oval") Oval
@@ -51,67 +51,67 @@ block content
                             option(value="Marquise") Marquise
                             option(value="Asscher") Asscher
                     .filter-item
-                        label Вага (Carat)
+                        label(data-i18n="dashboard.carat") Carat
                         .range-inputs
-                            input#carat-min.form-control(type="number" name="carat_min" min="0" step="0.01" placeholder="Від")
-                            input#carat-max.form-control(type="number" name="carat_max" min="0" step="0.01" placeholder="До")
+                            input#carat-min.form-control(type="number" name="carat_min" min="0" step="0.01" placeholder="From" data-i18n-placeholder="dashboard.from")
+                            input#carat-max.form-control(type="number" name="carat_max" min="0" step="0.01" placeholder="To" data-i18n-placeholder="dashboard.to")
                     .filter-item
-                        label(for="color-filter") Колір (Color)
+                        label(for="color-filter" data-i18n="dashboard.color") Color
                         select#color-filter.form-select(name="color_grade")
-                            option(value="") Будь-який
+                            option(value="" data-i18n="dashboard.any") Any
                     .filter-item
-                        label(for="clarity-filter") Чистота (Clarity)
+                        label(for="clarity-filter" data-i18n="dashboard.clarity") Clarity
                         select#clarity-filter.form-select(name="clarity_grade")
-                            option(value="") Будь-яка
+                            option(value="" data-i18n="dashboard.any") Any
                     .filter-item
-                        label(for="cut-filter") Якість (Cut)
+                        label(for="cut-filter" data-i18n="dashboard.cut") Cut
                         select#cut-filter.form-select(name="cut_grade")
-                            option(value="") Будь-яка
+                            option(value="" data-i18n="dashboard.any") Any
                     .filter-item
-                        label Довідковий орієнтир (USD)
+                        label(data-i18n="dashboard.referenceUsd") Reference value (USD)
                         .range-inputs
-                            input#price-min.form-control(type="number" name="price_min" min="0" step="0.01" placeholder="Від")
-                            input#price-max.form-control(type="number" name="price_max" min="0" step="0.01" placeholder="До")
+                            input#price-min.form-control(type="number" name="price_min" min="0" step="0.01" placeholder="From" data-i18n-placeholder="dashboard.from")
+                            input#price-max.form-control(type="number" name="price_max" min="0" step="0.01" placeholder="To" data-i18n-placeholder="dashboard.to")
                     .filter-item.filter-item--date
-                        label(for="date-from") Дата створення: від
+                        label(for="date-from" data-i18n="dashboard.createdFrom") Created from
                         input#date-from.form-control(type="date" name="date_from")
                     .filter-item.filter-item--date
-                        label(for="date-to") Дата створення: до
+                        label(for="date-to" data-i18n="dashboard.createdTo") Created to
                         input#date-to.form-control(type="date" name="date_to")
                     +narrativeCompletenessFilter("report")
                     .filter-actions
-                        button.btn.btn-primary.btn-sm(type="submit") Застосувати
-                        button.btn.btn-outline.btn-sm(type="reset") Очистити
+                        button.btn.btn-primary.btn-sm(type="submit" data-i18n="dashboard.apply") Apply
+                        button.btn.btn-outline.btn-sm(type="reset" data-i18n="dashboard.clear") Clear
 
         #dashboard-status.dashboard-status(role="status" aria-live="polite")
-        p#dashboard-demo-note.dashboard-demo-note
-            | Довідкові орієнтири (USD) формуються для нових або змінених чернеток за налаштованим провайдером (поточне джерело — OpenFacet). Позначка SYS означає Системний довідковий орієнтир, ADM — орієнтир, застосовність якого підтвердив адміністратор; поруч завжди вказано джерело. Це не експертна, продажна чи транзакційна ціна; еквівалент у UAH додається лише за увімкненим курсом НБУ та фіксується під час створення.
+        p#dashboard-demo-note.dashboard-demo-note(data-i18n="dashboard.referenceNote")
+            | Reference values (USD) are generated for new or changed drafts by the configured provider (currently OpenFacet). SYS means a system reference value and ADM means an administrator-confirmed applicable reference; the source is always shown. This is not an expert, sale, or transaction price. A UAH equivalent is added only when the NBU exchange rate is enabled and is fixed at creation.
 
         .table-container(tabindex="0")
             table.data-table
                 thead
                     tr
                         th
-                            button.table-sort(type="button" data-sort-key="report_id" aria-label="Сортувати за ID звіту") ID звіту
+                            button.table-sort(type="button" data-sort-key="report_id" data-i18n="dashboard.reportId" data-i18n-aria-label="dashboard.sortReportId" aria-label="Sort by report ID") Report ID
                         th
-                            button.table-sort(type="button" data-sort-key="report_date" aria-label="Сортувати за датою") Дата
+                            button.table-sort(type="button" data-sort-key="report_date" data-i18n="dashboard.date" data-i18n-aria-label="dashboard.sortDate" aria-label="Sort by date") Date
                         th
-                            button.table-sort(type="button" data-sort-key="shape" aria-label="Сортувати за формою") Форма
+                            button.table-sort(type="button" data-sort-key="shape" data-i18n="dashboard.shape" data-i18n-aria-label="dashboard.sortShape" aria-label="Sort by shape") Shape
                         th
-                            button.table-sort(type="button" data-sort-key="carat" aria-label="Сортувати за вагою") Вага (ct)
+                            button.table-sort(type="button" data-sort-key="carat" data-i18n="dashboard.caratColumn" data-i18n-aria-label="dashboard.sortCarat" aria-label="Sort by carat") Carat (ct)
                         th
-                            button.table-sort(type="button" data-sort-key="color" aria-label="Сортувати за кольором") Колір
+                            button.table-sort(type="button" data-sort-key="color" data-i18n="dashboard.color" data-i18n-aria-label="dashboard.sortColor" aria-label="Sort by color") Color
                         th
-                            button.table-sort(type="button" data-sort-key="clarity" aria-label="Сортувати за чистотою") Чистота
+                            button.table-sort(type="button" data-sort-key="clarity" data-i18n-aria-label="dashboard.sortClarity" aria-label="Sort by clarity") Clarity
                         th
-                            button.table-sort(type="button" data-sort-key="cut" aria-label="Сортувати за Cut") Cut
+                            button.table-sort(type="button" data-sort-key="cut" data-i18n="dashboard.cut" data-i18n-aria-label="dashboard.sortCut" aria-label="Sort by cut") Cut
                         th
-                            button.table-sort(type="button" data-sort-key="price" aria-label="Сортувати за довідковим орієнтиром") Ціна (USD)
+                            button.table-sort(type="button" data-sort-key="price" data-i18n="dashboard.priceUsd" data-i18n-aria-label="dashboard.sortPrice" aria-label="Sort by reference value") Value (USD)
                         th
-                            button.table-sort(type="button" data-sort-key="report_status" aria-label="Сортувати за статусом звіту") Статус звіту
+                            button.table-sort(type="button" data-sort-key="report_status" data-i18n="dashboard.reportStatus" data-i18n-aria-label="dashboard.sortReportStatus" aria-label="Sort by report status") Report status
                         th
-                            button.table-sort(type="button" data-sort-key="market_status" aria-label="Сортувати за статусом продажу") Статус продажу
-                        th Дії
+                            button.table-sort(type="button" data-sort-key="market_status" data-i18n="dashboard.saleStatus" data-i18n-aria-label="dashboard.sortSaleStatus" aria-label="Sort by sale status") Sale status
+                        th(data-i18n="dashboard.actions") Actions
                 tbody
 
-        nav.pagination(aria-label="Пагінація звітів")
+        nav.pagination(aria-label="Report pagination" data-i18n-aria-label="dashboard.pagination")

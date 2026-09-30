@@ -72,7 +72,7 @@ test("built report wizard provides private media inputs and explicit fallbacks",
   assert.equal(document.querySelector("#plotting-preview")?.getAttribute("src"), "/img/plotting-placeholder.svg");
   assert.equal(document.querySelector("#stone-preview")?.getAttribute("src"), "/img/stone-placeholder.svg");
   assert.equal(document.querySelectorAll(".stepper-tabs [role=tab]").length, 3);
-  assert.equal(document.querySelector("#report-id-preview")?.value, "Завантаження…");
+  assert.equal(document.querySelector("#report-id-preview")?.value, "Loading…");
   assert.equal(document.querySelector("input[value='DR-2026-NEW']"), null);
   assert.equal(document.querySelector("[name=examination_date]")?.getAttribute("type"), "date");
   assert.equal(document.querySelector("[name=examination_date]")?.required, true);
@@ -85,21 +85,21 @@ test("built dashboard exposes real list controls without mock rows", async () =>
   const html = await readFile(dashboardPath, "utf8");
   const document = new JSDOM(html).window.document;
 
-  assert.equal(document.querySelector("#create-report-action")?.textContent.trim(), "Новий звіт");
-  assert.equal(document.querySelector(".page-subtitle")?.textContent.trim(), "Управління сертифікатами та оцінками.");
+  assert.equal(document.querySelector("#create-report-action")?.textContent.trim(), "New report");
+  assert.equal(document.querySelector(".page-subtitle")?.textContent.trim(), "Manage certificates and assessments.");
   assert.equal(document.querySelector("#dashboard-filters")?.tagName, "FORM");
   assert.equal(document.querySelector("#report-search")?.getAttribute("type"), "search");
   assert.equal(document.querySelector("#toggle-filters")?.getAttribute("aria-controls"), "advanced-filters");
   assert.equal(document.querySelectorAll("[name=empty_narrative]").length, 4);
   assert.equal(document.querySelectorAll("[name=narrative_presence]").length, 2);
-  assert.match(document.querySelector(".filter-item--narrative")?.textContent || "", /Текстові поля/);
-  assert.match(document.querySelector(".filter-item--narrative")?.textContent || "", /Подія зміни статусу без коментаря/);
+  assert.match(document.querySelector(".filter-item--narrative")?.textContent || "", /Text fields/);
+  assert.match(document.querySelector(".filter-item--narrative")?.textContent || "", /Status-change event without a comment/);
   assert.equal(document.querySelector("#quick-report-status")?.tagName, "SELECT");
   assert.equal(document.querySelector("#quick-market-status")?.tagName, "SELECT");
   assert.equal(document.querySelector("#expert-filter-wrap")?.hasAttribute("hidden"), true);
   assert.match(document.querySelector("#dashboard-demo-note")?.textContent || "", /OpenFacet/);
-  assert.match(document.querySelector("#dashboard-demo-note")?.textContent || "", /Системний довідковий орієнтир/);
-  assert.match(document.querySelector("#dashboard-demo-note")?.textContent || "", /НБУ/);
+  assert.match(document.querySelector("#dashboard-demo-note")?.textContent || "", /system reference value/);
+  assert.match(document.querySelector("#dashboard-demo-note")?.textContent || "", /NBU/);
   assert.equal(document.querySelector(".data-table tbody")?.children.length, 0);
   assert.equal(document.querySelector(".report-actions"), null);
   assert.equal(document.querySelectorAll(".table-sort").length, 10);

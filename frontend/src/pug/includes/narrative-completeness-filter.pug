@@ -1,31 +1,31 @@
 mixin narrativeCompletenessFilter(prefix, isDemo = false)
     fieldset.filter-item.filter-item--narrative
-        legend Текстові поля
+        legend(data-i18n="narrative.fields") Text fields
         .narrative-filter-layout
             .narrative-filter-options
                 label
                     input(type="checkbox" name="empty_narrative" value="identification_method")
-                    | Метод ідентифікації
+                    span(data-i18n="narrative.identificationMethod") Identification method
                 label
                     input(type="checkbox" name="empty_narrative" value="identification_conclusion")
-                    | Висновок щодо ідентифікації
+                    span(data-i18n="narrative.identificationConclusion") Identification conclusion
             .narrative-filter-options
                 label
                     input(type="checkbox" name="empty_narrative" value="expert_comment")
-                    | Коментар експерта
+                    span(data-i18n="narrative.expertComment") Expert comment
                 label
                     input(type="checkbox" name="empty_narrative" value="status_transition_reason" disabled=isDemo)
-                    | Подія зміни статусу без коментаря
+                    span(data-i18n="narrative.statusTransition") Status-change event without a comment
             .narrative-filter-help
-                span.narrative-presence__label Показувати:
-                .narrative-presence(role="radiogroup" aria-label="Показувати текстові поля")
+                span.narrative-presence__label(data-i18n="narrative.show") Show:
+                .narrative-presence(role="radiogroup" aria-label="Show text fields" data-i18n-aria-label="narrative.showFields")
                     label
                         input(type="radio" name="narrative_presence" value="empty" checked)
-                        | Порожні
+                        span(data-i18n="narrative.empty") Empty
                     label
                         input(type="radio" name="narrative_presence" value="filled")
-                        | Заповнені
+                        span(data-i18n="narrative.filled") Filled
         if isDemo
-            p.account-help.narrative-filter-note Synthetic lifecycle не має текстових коментарів; цю опцію не моделюємо.
+            p.account-help.narrative-filter-note(data-i18n="narrative.demoNote") Synthetic lifecycle has no text comments, so this option is not modeled.
         else
-            p.account-help.narrative-filter-note Подія зміни статусу перевіряється у вибраному зрізі дат.
+            p.account-help.narrative-filter-note(data-i18n="narrative.realNote") The status-change event is checked in the selected date range.
