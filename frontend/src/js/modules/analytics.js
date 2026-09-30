@@ -33,6 +33,7 @@ function localizeAnalyticsShell(page) {
     ["#analytics-admins > .account-help", "analytics.administratorsHelp"],
     ["#analytics-providers > .account-help", "analytics.providersHelp"],
     ["#analytics-currency > .account-help", "analytics.currencyHelp"],
+    ["#analytics-stones > .account-help", "analytics.stonesHelp"],
   ];
   for (const [selector, key] of textKeys) {
     const element = page.querySelector(selector);
