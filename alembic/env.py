@@ -28,7 +28,10 @@ def build_comparison_metadata() -> MetaData:
     metadata = MetaData()
 
     def referred_schema_fn(table, to_schema, constraint, referred_schema):
-        if referred_schema == LOCAL_DEFAULT_DATABASE:
+        # Only foreign keys within the default OLTP database become unqualified
+        # to match MariaDB reflection. Cross-database references must retain
+        # their schema, otherwise autogenerate reports a false FK replacement.
+        if table.schema == LOCAL_DEFAULT_DATABASE and referred_schema == LOCAL_DEFAULT_DATABASE:
             return BLANK_SCHEMA
         return referred_schema
 

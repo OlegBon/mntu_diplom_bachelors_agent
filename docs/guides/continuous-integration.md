@@ -60,6 +60,23 @@ Real E2E runner обирає `PYTHON_EXECUTABLE`, якщо змінну зада
 GitHub Linux runner використати `python`, а локальному Windows flow — існуючий
 `.venv\Scripts\python.exe` без зміни сценарію.
 
+## Налаштування repository Actions
+
+Для поточного workflow у **Settings → Actions → General** потрібні такі межі:
+
+- обрати **Allow OlegBon, and select non-OlegBon, actions and reusable workflows**;
+- увімкнути **Allow actions created by GitHub**: CI використовує тільки
+  `actions/checkout`, `actions/setup-python`, `actions/setup-node` і
+  `actions/upload-artifact`;
+- залишити увімкненим **Require actions to be pinned to a full-length commit
+  SHA**. Усі `uses:` у workflow вже зафіксовані повними SHA;
+- `Workflow permissions` лишаються **Read repository contents and packages**.
+
+Не додавайте official `actions/*` до поля allow-list вручну: це поле призначене
+для окремих pattern-ів, які GitHub розділяє комою, і зайвий custom список тут не
+потрібен. Після зміни policy створюйте новий **Run workflow** для `local-dev`,
+а не повторюйте run, що вже отримав startup failure.
+
 ## Після перших п'яти зелених runs
 
 Власник репозиторію має надіслати:
