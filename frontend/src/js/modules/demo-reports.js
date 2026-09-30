@@ -2,12 +2,43 @@ import { getDemoDataset, getDemoReports, getDemoNarrativeQualityAnalytics, getDe
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
 import { applyNarrativeCompleteness, narrativeCompletenessFromUrl, narrativePresenceFromUrl, readNarrativeCompleteness, readNarrativePresence } from "./narrative-completeness-filters.js";
+import { t } from "./i18n.js";
 
 const PREFERRED_DATASET_ID = "synthetic-demo-v4";
 const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
 const PAGE_SIZE = 25;
 const REPORT_STATUS_LABELS = { issued: "Видано", void: "Анульовано" };
 const SALE_STATUS_LABELS = { not_for_sale: "Не продається" };
+
+function localizeDemoShell(root) {
+  const textKeys = [
+    [".page-title", "demo.title"],
+    [".page-subtitle", "demo.subtitle"],
+    ["#demo-tab-reports", "demo.reports"],
+    ["#demo-tab-stones", "demo.stones"],
+    ["#demo-tab-experts", "demo.experts"],
+    ["#demo-tab-narratives", "demo.texts"],
+    ["#demo-tab-quality", "demo.quality"],
+    ["#demo-tab-administrators", "demo.administrators"],
+    ["#demo-tab-providers", "demo.providers"],
+    ["#demo-tab-currency", "demo.currencySources"],
+  ];
+  for (const [selector, key] of textKeys) {
+    const element = root.querySelector(selector);
+    if (element) element.textContent = t(key);
+  }
+  root.querySelector(".analytics-tabs")?.setAttribute("aria-label", t("demo.tabs"));
+
+  const notice = root.querySelector(".demo-scope__notice");
+  const marker = notice?.querySelector("strong");
+  if (!notice || !marker) return;
+  for (const node of [...notice.childNodes]) {
+    if (node !== marker) node.remove();
+  }
+  const copy = document.createElement("span");
+  copy.textContent = ` ${t("demo.syntheticNotice")}`;
+  notice.append(copy);
+}
 
 function createBadge(value, kind) {
   return createElement("span", `status-badge status-badge--${kind}`, value);
@@ -709,6 +740,8 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
 export async function initDemoReports() {
   const root = document.querySelector("[data-demo-reports]");
   if (!root || localStorage.getItem("role") !== "admin") return;
+  localizeDemoShell(root);
+  document.addEventListener("diamant:locale-change", () => localizeDemoShell(root));
   const token = localStorage.getItem("token");
   const tbody = root.querySelector("#demo-reports-body");
   const pagination = root.querySelector("#demo-pagination");
