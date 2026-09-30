@@ -4,6 +4,7 @@ const SUPPORTED_LOCALES = ["en", "uk"];
 
 const catalogs = {
   en: {
+    "demo.shape": "Shape", "demo.carat": "Carat", "demo.color": "Color", "demo.clarity": "Clarity", "demo.cut": "Cut", "demo.referenceUsd": "Reference value (USD)", "demo.createdFrom": "Created from", "demo.createdTo": "Created to",
     "demo.from": "From", "demo.to": "To", "demo.applyPeriod": "Apply period", "demo.allTime": "All time",
     "demo.allReportStatuses": "All report statuses", "demo.allSaleStatuses": "All sale statuses", "demo.allExperts": "All experts",
     "demo.searchReports": "Search by demo report number", "demo.filters": "Filters", "demo.apply": "Apply", "demo.clear": "Clear",
@@ -134,6 +135,7 @@ const catalogs = {
     "narrative.fields": "Text fields", "narrative.identificationMethod": "Identification method", "narrative.identificationConclusion": "Identification conclusion", "narrative.expertComment": "Expert comment", "narrative.statusTransition": "Status-change event without a comment", "narrative.show": "Show:", "narrative.showFields": "Show text fields", "narrative.empty": "Empty", "narrative.filled": "Filled", "narrative.demoNote": "Synthetic lifecycle has no text comments, so this option is not modeled.", "narrative.realNote": "The status-change event is checked in the selected date range.",
   },
   uk: {
+    "demo.shape": "Форма (Shape)", "demo.carat": "Вага (Carat)", "demo.color": "Колір (Color)", "demo.clarity": "Чистота (Clarity)", "demo.cut": "Якість (Cut)", "demo.referenceUsd": "Довідковий орієнтир (USD)", "demo.createdFrom": "Дата створення: від", "demo.createdTo": "Дата створення: до",
     "demo.from": "Від", "demo.to": "До", "demo.applyPeriod": "Застосувати період", "demo.allTime": "За весь час",
     "demo.allReportStatuses": "Усі статуси звіту", "demo.allSaleStatuses": "Усі статуси продажу", "demo.allExperts": "Усі експерти",
     "demo.searchReports": "Пошук за номером demo-звіту", "demo.filters": "Фільтри", "demo.apply": "Застосувати", "demo.clear": "Очистити",
