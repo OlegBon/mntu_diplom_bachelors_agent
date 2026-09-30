@@ -1,5 +1,5 @@
 doctype html
-html(lang="uk")
+html(lang="en")
     head
         meta(charset="UTF-8")
         meta(name="viewport" content="width=device-width, initial-scale=1.0")
@@ -13,31 +13,34 @@ html(lang="uk")
         header.main-header
             .container
                 .header-content
-                    a.logo(href="/" aria-label="Diamant ID — головна")
+                    a.logo(href="/" data-i18n-aria-label="brand.home" aria-label="Diamant ID home")
                         span.logo-mark(aria-hidden="true")
                             svg(viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true")
                                 path(d="M4 8.5 8.5 4h7L20 8.5 12 20 4 8.5Z")
                                 path(d="m4 8.5 8 11.5L20 8.5M8.5 4 12 8.5 15.5 4M4 8.5h16")
                         span.logo-text Diamant ID
 
-                    nav#main-nav.main-nav(aria-label="Основна навігація")
+                    nav#main-nav.main-nav(data-i18n-aria-label="navigation.primary" aria-label="Primary navigation")
                         ul#nav-list(hidden)
-                            li: a(href="/#public-passport") Перевірити паспорт
-                            li.mobile-login: a(href="/login.html") Увійти
+                            li: a(href="/#public-passport" data-i18n="navigation.verifyPassport") Verify passport
+                            li.mobile-login: a(href="/login.html" data-i18n="navigation.signIn") Sign in
 
                     .header-right
                         span#header-session-name.header-session-name(hidden)
+                        .locale-switcher(role="group" data-i18n-aria-label="locale.switcher" aria-label="Language")
+                            button.locale-switcher__button(type="button" data-locale-switch="en" data-i18n-aria-label="locale.en" aria-pressed="true" aria-label="English") EN
+                            button.locale-switcher__button(type="button" data-locale-switch="uk" data-i18n-aria-label="locale.uk" aria-pressed="false" aria-label="Ukrainian") УКР
                         .header-auth#auth-block(hidden)
-                            a.header-session-action.header-login(href="/login.html") Увійти
-                        button#burger-btn.burger-btn(type="button" aria-label="Відкрити меню" aria-expanded="false")
+                            a.header-session-action.header-login(href="/login.html" data-i18n="navigation.signIn") Sign in
+                        button#burger-btn.burger-btn(type="button" data-i18n-aria-label="menu.open" aria-label="Open menu" aria-expanded="false")
                             span
                             span
                             span
 
         section#session-retry-state.session-retry-state(hidden role="status" aria-live="polite")
             .container.session-retry-state__content
-                p#session-retry-message Сеанс збережено. API тимчасово недоступний.
-                button#session-retry-button.btn.btn-outline(type="button") Спробувати знову
+                p#session-retry-message(data-i18n="session.saved") Your session is preserved. The API is temporarily unavailable.
+                button#session-retry-button.btn.btn-outline(type="button" data-i18n="session.retry") Try again
 
         main.page-content
             .container
@@ -52,8 +55,8 @@ html(lang="uk")
                         | &nbsp;
                         a.footer-brand(href="/") Diamant ID
                     .footer-links
-                        a(href="/privacy.html") Політика конфіденційності
+                        a(href="/privacy.html" data-i18n="footer.privacy") Privacy policy
                         span.separator |
-                        a(href="/documentation.html") Документація
+                        a(href="/documentation.html" data-i18n="footer.documentation") Documentation
 
         script(type="module" src="js/main.js")

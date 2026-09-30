@@ -3,21 +3,21 @@ extends ../layout/main
 block content
     .login-container
         .login-card
-            h2 Вхід у систему
-            p.text-muted Будь ласка, авторизуйтесь
+            h2(data-i18n="login.title") Sign in
+            p.text-muted(data-i18n="login.subtitle") Please authenticate to continue
             
             // Форма
             form#login-form
                 .form-group
-                    label(for="username") Логін
+                    label(for="username" data-i18n="login.username") Username
                     input#username.form-control(type="text" name="username" required autocomplete="username" placeholder="admin")
                 
                 .form-group
-                    label(for="password") Пароль
+                    label(for="password" data-i18n="login.password") Password
                     input#password.form-control(type="password" name="password" required autocomplete="current-password" placeholder="******")
                 
                 // Місце для помилки
                 p#error-msg(style="color: red; display: none;")
                 
                 .form-actions
-                    button.btn.btn-primary(type="submit") Увійти
+                    button.btn.btn-primary(type="submit" data-i18n="login.submit") Sign in

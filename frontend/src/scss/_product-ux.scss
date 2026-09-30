@@ -108,6 +108,33 @@ body {
     gap: 0.5rem;
   }
 
+  .locale-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    border: 1px solid variables.$border-color;
+    border-radius: 0.5rem;
+    padding: 0.1875rem;
+  }
+
+  .locale-switcher__button {
+    min-height: 2rem;
+    border: 0;
+    border-radius: 0.3125rem;
+    padding: 0.25rem 0.5rem;
+    background: transparent;
+    color: variables.$secondary-color;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible { color: variables.$primary-color; }
+    &:focus-visible { outline: 3px solid variables.$focus-ring; outline-offset: 2px; }
+    &.is-active { background: variables.$primary-color; color: variables.$white; }
+  }
+
   .header-auth {
     position: relative;
 
