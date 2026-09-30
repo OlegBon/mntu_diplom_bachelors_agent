@@ -4,6 +4,7 @@ const SUPPORTED_LOCALES = ["en", "uk"];
 
 const catalogs = {
   en: {
+    "market.title": "Market data", "market.accessTerms": "Provider access and terms", "market.referencePolicy": "System reference policy", "market.automaticRefresh": "Automatic refresh", "market.providers": "Providers", "market.snapshotHistory": "Snapshot history", "market.operationLog": "Operation log", "market.attachReference": "Attach a reference to a report",
     "app.title": "Diamant ID",
     "brand.home": "Diamant ID home",
     "navigation.primary": "Primary navigation",
@@ -118,6 +119,7 @@ const catalogs = {
     "narrative.fields": "Text fields", "narrative.identificationMethod": "Identification method", "narrative.identificationConclusion": "Identification conclusion", "narrative.expertComment": "Expert comment", "narrative.statusTransition": "Status-change event without a comment", "narrative.show": "Show:", "narrative.showFields": "Show text fields", "narrative.empty": "Empty", "narrative.filled": "Filled", "narrative.demoNote": "Synthetic lifecycle has no text comments, so this option is not modeled.", "narrative.realNote": "The status-change event is checked in the selected date range.",
   },
   uk: {
+    "market.title": "Ринкові дані", "market.accessTerms": "Доступ і умови provider-ів", "market.referencePolicy": "Системний довідковий орієнтир", "market.automaticRefresh": "Автоматичне оновлення", "market.providers": "Провайдери", "market.snapshotHistory": "Історія знімків", "market.operationLog": "Журнал операцій", "market.attachReference": "Прикріпити орієнтир до звіту",
     "app.title": "Diamant ID",
     "brand.home": "Головна Diamant ID",
     "navigation.primary": "Основна навігація",
