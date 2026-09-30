@@ -64,6 +64,16 @@ function localizeDemoShell(root) {
     const select = root.querySelector(selector);
     if (select?.options[0]) select.options[0].textContent = t(key);
   });
+  const sortKeys = { report_id: "demo.reportId", report_date: "demo.date", shape: "demo.shape", carat: "demo.carat", color: "demo.color", clarity: "demo.clarity", cut: "demo.cut", price: "demo.priceUsd", report_status: "demo.reportStatus", market_status: "demo.saleStatus" };
+  root.querySelectorAll("[data-demo-sort-key]").forEach((button) => {
+    const key = sortKeys[button.dataset.demoSortKey];
+    if (!key) return;
+    const label = t(key);
+    button.textContent = label;
+    button.setAttribute("aria-label", t("demo.sortBy", { field: label }));
+  });
+  const actionsHeader = root.querySelector("#demo-reports-panel table thead th:last-child");
+  if (actionsHeader) actionsHeader.textContent = t("demo.actions");
   for (const closeButton of root.querySelectorAll(".account-dialog__close")) closeButton.setAttribute("aria-label", t("demo.close"));
 
   const notice = root.querySelector(".demo-scope__notice");
