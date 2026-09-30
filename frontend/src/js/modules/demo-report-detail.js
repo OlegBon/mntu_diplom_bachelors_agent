@@ -74,6 +74,18 @@ function reportStatusLabel(status) {
   return status;
 }
 
+function originLabel(value) {
+  return t({ natural: "demoDetail.originNatural", lab_grown: "demoDetail.originLabGrown", other: "demoDetail.originOther", unknown: "demoDetail.unknown" }[value] || "demoDetail.unknown");
+}
+
+function treatmentLabel(value) {
+  return t({ not_assessed: "demoDetail.notAssessed", none_detected: "demoDetail.noneDetected", disclosed: "demoDetail.disclosed", confirmed: "demoDetail.confirmed" }[value] || "demoDetail.unknown");
+}
+
+function identificationLabel(value) {
+  return t({ preliminary: "demoDetail.preliminary", confirmed: "demoDetail.confirmed", inconclusive: "demoDetail.inconclusive" }[value] || "demoDetail.unknown");
+}
+
 function localizeDemoDetailShell(root) {
   const textKeys = [
     ["#demo-report-subtitle", "demoDetail.subtitle"],
@@ -166,6 +178,9 @@ export async function initDemoReportDetail() {
       "demo-comment": report.expert_comment,
       "demo-cut": label("cut", report.system_cut_grade),
     };
+    values["demo-origin"] = originLabel(report.stone.origin);
+    values["demo-treatment"] = treatmentLabel(report.stone.treatment_status);
+    values["demo-identification-status"] = identificationLabel(report.stone.identification_status);
     for (const [id, value] of Object.entries(values)) document.getElementById(id).value = value ?? "—";
     renderDemoValuations(document.getElementById("demo-valuations"), report.market_references || []);
     document.getElementById("demo-preview-pdf").addEventListener("click", async () => {
