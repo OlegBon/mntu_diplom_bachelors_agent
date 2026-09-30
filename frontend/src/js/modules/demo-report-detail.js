@@ -116,6 +116,22 @@ function localizeDemoDetailShell(root) {
   ["demoDetail.reportState", "demoDetail.references", "demoDetail.attachments", "demoDetail.passport", "demoDetail.history"].forEach((key, index) => {
     if (sideHeadings[index]) sideHeadings[index].textContent = t(key);
   });
+  const mediaRows = root.querySelectorAll(".demo-media-list li");
+  if (mediaRows[0]) mediaRows[0].querySelector("span").textContent = t("demoDetail.photoAttachment");
+  if (mediaRows[1]) mediaRows[1].querySelector("span").textContent = t("demoDetail.plottingAttachment");
+  root.querySelectorAll(".demo-media-list button").forEach((button) => { button.textContent = t("demoDetail.removeFromPassport"); });
+  const sideSurfaces = root.querySelectorAll(".report-detail__side > .report-detail__surface");
+  const passportSurface = sideSurfaces[3];
+  if (!passportSurface) return;
+  passportSurface.querySelector(".report-detail__help").textContent = t("demoDetail.internalOnly");
+  passportSurface.querySelector(".demo-passport-placeholder__code strong").textContent = t("demoDetail.passportCode");
+  passportSurface.querySelector(".demo-passport-placeholder__code").lastChild.textContent = ` ${t("demoDetail.notCreated")}`;
+  passportSurface.querySelector(".demo-passport-placeholder__qr").setAttribute("aria-label", t("demoDetail.qrUnavailable"));
+  passportSurface.querySelector(".demo-passport-placeholder__qr small").textContent = t("demoDetail.unavailable");
+  const passportButtons = passportSurface.querySelectorAll("button");
+  ["demoDetail.publishPassport", "demoDetail.openPassport", "demoDetail.copyLink", "demoDetail.downloadPdf"].forEach((key, index) => {
+    if (passportButtons[index]) passportButtons[index].textContent = t(key);
+  });
 }
 
 export async function initDemoReportDetail() {
