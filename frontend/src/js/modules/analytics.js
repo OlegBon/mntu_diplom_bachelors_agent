@@ -153,6 +153,10 @@ function renderAdmins(container, snapshot) {
 }
 
 function providerFreshnessLabel(value) {
+  if (value === "fresh") return t("analytics.fresh");
+  if (value === "warning") return t("analytics.warning");
+  if (value === "stale") return t("analytics.stale");
+  if (value === "missing") return t("analytics.missingSnapshot");
   return { fresh: "Актуальний", warning: "Потребує уваги", stale: "Застарілий", missing: "Немає знімка" }[value] || value;
 }
 
@@ -197,13 +201,31 @@ function openProviderDialog(dialog, content, provider) {
   content.replaceChildren(fragment); dialog.showModal();
 }
 
-function renderProviders(container, providers, dialog, dialogContent) {
+function renderProvidersLegacy(container, providers, dialog, dialogContent) {
   renderTable(container, ["Провайдер", "Freshness", "Знімки", "Спроби", "Coverage чернеток"], providers.map((provider) => {
     const button = element("button", "analytics-expert-button", provider.display_name);
     button.type = "button"; button.addEventListener("click", () => openProviderDialog(dialog, dialogContent, provider));
     const coverage = provider.coverage;
     return [button, providerFreshnessLabel(provider.freshness_status), `${provider.snapshots_approved}/${provider.snapshots_total} затверджено`, `${provider.failed_operations} failed · ${provider.retry_operations} retry`, `${coverage.covered_draft_reports}/${coverage.candidate_draft_reports} покрито`];
   }), "Активних ринкових provider-ів поки немає.");
+}
+
+function renderProviders(container, providers, dialog, dialogContent) {
+  renderTable(container, [
+    t("analytics.provider"), t("analytics.freshness"), t("analytics.snapshots"), t("analytics.attempts"), t("analytics.draftCoverage"),
+  ], providers.map((provider) => {
+    const button = element("button", "analytics-expert-button", provider.display_name);
+    button.type = "button";
+    button.addEventListener("click", () => openProviderDialog(dialog, dialogContent, provider));
+    const coverage = provider.coverage;
+    return [
+      button,
+      providerFreshnessLabel(provider.freshness_status),
+      `${provider.snapshots_approved}/${provider.snapshots_total} ${t("analytics.approved")}`,
+      `${provider.failed_operations} ${t("analytics.failed")} · ${provider.retry_operations} ${t("analytics.retry")}`,
+      `${coverage.covered_draft_reports}/${coverage.candidate_draft_reports} ${t("analytics.covered")}`,
+    ];
+  }), t("analytics.noActiveProviders"));
 }
 
 function renderCurrencySources(container, snapshots, dialog, dialogContent) {
