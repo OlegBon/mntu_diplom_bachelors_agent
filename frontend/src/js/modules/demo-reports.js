@@ -22,12 +22,25 @@ function localizeDemoShell(root) {
     ["#demo-tab-administrators", "demo.administrators"],
     ["#demo-tab-providers", "demo.providers"],
     ["#demo-tab-currency", "demo.currencySources"],
+    [".demo-scope__showcase strong", "demo.previewTitle"],
+    [".demo-scope__showcase p", "demo.previewDescription"],
+    [".demo-scope__showcase a", "demo.openPreview"],
+    ["#demo-currency-panel h2", "demo.currencyTitle"],
+    ["#demo-experts-panel h2", "demo.workflowTitle"],
+    ["#demo-narratives-panel h2", "demo.narrativesTitle"],
+    ["#demo-quality-panel h2", "demo.qualityTitle"],
+    ["#demo-administrators-panel h2", "demo.administratorsTitle"],
+    ["#demo-providers-panel h2", "demo.providersTitle"],
+    ["#demo-stones-panel h2", "demo.somTitle"],
+    ["#demo-workflow-actor-dialog-title", "demo.workflowDialogTitle"],
+    ["#demo-provider-dialog-title", "demo.providerDialogTitle"],
   ];
   for (const [selector, key] of textKeys) {
     const element = root.querySelector(selector);
     if (element) element.textContent = t(key);
   }
   root.querySelector(".analytics-tabs")?.setAttribute("aria-label", t("demo.tabs"));
+  for (const closeButton of root.querySelectorAll(".account-dialog__close")) closeButton.setAttribute("aria-label", t("demo.close"));
 
   const notice = root.querySelector(".demo-scope__notice");
   const marker = notice?.querySelector("strong");
