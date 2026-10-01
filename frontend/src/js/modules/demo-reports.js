@@ -276,7 +276,7 @@ function openSyntheticActorDialog(dialog, content, actor) {
   const metrics = document.createElement("dl");
   metrics.className = "analytics-metrics";
   const rows = [
-    [t("analytics.accountState"), "Synthetic · non-account"],
+    [t("analytics.accountState"), t("demo.syntheticAccount")],
     [t("analytics.total"), actor.reports_touched],
     [t("analytics.drafts"), t("analytics.notModeled")],
     [t("analytics.underReview"), t("analytics.notModeled")],
@@ -295,10 +295,10 @@ function openSyntheticActorDialog(dialog, content, actor) {
   content.replaceChildren(
     createElement("h3", "analytics-dialog-name", actor.display_name),
     metrics,
-    createElement("p", "account-help", "Активний час — лише детермінований synthetic інтервал demo workflow, а не server-timed сесія чи вимір продуктивності людини."),
-    createElement("p", "account-help", "Час до першого збереження для demo-набору не моделюється. Actor є вигаданим, не має профілю та не представляє реальну людину."),
-    renderDemoIntervalList("Три найкоротші synthetic активні інтервали", actor.shortest_intervals, actor.dataset_id),
-    renderDemoIntervalList("Три найдовші synthetic активні інтервали", actor.longest_intervals, actor.dataset_id),
+    createElement("p", "account-help", t("demo.syntheticActiveTimeHelp")),
+    createElement("p", "account-help", t("demo.syntheticFirstSaveHelp")),
+    renderDemoIntervalList(t("demo.syntheticShortestIntervals"), actor.shortest_intervals, actor.dataset_id),
+    renderDemoIntervalList(t("demo.syntheticLongestIntervals"), actor.longest_intervals, actor.dataset_id),
   );
   dialog.showModal();
 }
@@ -307,7 +307,7 @@ function renderDemoIntervalList(title, items = [], datasetId) {
   const section = createElement("section", "analytics-review-list");
   section.append(createElement("h3", "", title));
   if (!items.length) {
-    section.append(createElement("p", "account-help", "Завершених synthetic інтервалів у цьому періоді немає."));
+    section.append(createElement("p", "account-help", t("demo.noSyntheticIntervals")));
     return section;
   }
   const list = document.createElement("ol");
@@ -334,7 +334,7 @@ function renderWorkflowRows(container, actors, dialog, dialogContent, datasetId)
     actorButton.type = "button";
     actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, { ...actor, dataset_id: datasetId }));
     return [actorButton, "Synthetic", String(actor.reports_touched), "—", "—", String(actor.issued_reports), String(actor.void_reports), formatDuration(actor.total_duration_seconds)];
-  }), "За обраний період synthetic-подій немає.");
+  }), t("demo.noSyntheticWorkflow"));
 }
 
 function renderSyntheticAdministrators(container, actors, datasetId) {
@@ -357,12 +357,12 @@ function renderSyntheticAdministrators(container, actors, datasetId) {
       metrics,
       renderDemoIntervalList(t("analytics.shortestReviews"), actor.shortest_intervals, datasetId),
       renderDemoIntervalList(t("analytics.longestReviews"), actor.longest_intervals, datasetId),
-      createElement("p", "account-help", "Synthetic administrator · non-account. Дані сформовано детермінованим demo workflow."),
+      createElement("p", "account-help", t("demo.syntheticAdministratorHelp")),
     );
     cards.append(card);
   }
   if (actors.length) fragment.append(cards);
-  else fragment.append(createElement("p", "account-help", "Synthetic адміністраторів для цього зрізу немає."));
+  else fragment.append(createElement("p", "account-help", t("demo.noSyntheticAdministrators")));
   container.replaceChildren(fragment);
 }
 
@@ -473,13 +473,13 @@ function renderSom(container, data, labelFor) {
   for (const cell of data.cells) {
     const button = createElement("button", `demo-som-cell demo-som-cell--${cell.segment_label.slice(-1).toLowerCase()}`, String(cell.report_count));
     button.type = "button";
-    button.title = `${cell.segment_label}: ${cell.report_count} synthetic звітів`;
-    button.setAttribute("aria-label", `${cell.segment_label}, клітинка ${cell.x + 1} × ${cell.y + 1}: ${cell.report_count} synthetic звітів. Показати деталі клітинки.`);
+    button.title = `${cell.segment_label}: ${t("demo.somReportCount", { count: cell.report_count })}`;
+    button.setAttribute("aria-label", t("demo.somCellAria", { segment: cell.segment_label, x: cell.x + 1, y: cell.y + 1, count: cell.report_count }));
     button.addEventListener("click", () => showSomCellDetails(mainCellDetails, [
-      `Клітинка ${cell.x + 1} × ${cell.y + 1} · ${cell.segment_label}.`,
-      `${cell.report_count} synthetic звітів.`,
-      cell.median_carat_weight === null || cell.median_carat_weight === undefined ? "Медіанна вага: —." : `Медіанна вага: ${cell.median_carat_weight} ct.`,
-      cell.median_reference_amount === null || cell.median_reference_amount === undefined ? "Медіанний synthetic орієнтир: —." : `Медіанний synthetic орієнтир: ${formatUsd(cell.median_reference_amount)}.`,
+      `${t("demo.somCellTitle", { x: cell.x + 1, y: cell.y + 1, segment: cell.segment_label })}.`,
+      `${t("demo.somReportCount", { count: cell.report_count })}.`,
+      cell.median_carat_weight === null || cell.median_carat_weight === undefined ? t("demo.somMedianWeightEmpty") : t("demo.somMedianWeight", { weight: cell.median_carat_weight }),
+      cell.median_reference_amount === null || cell.median_reference_amount === undefined ? t("demo.somMedianReferenceEmpty") : t("demo.somMedianReference", { amount: formatUsd(cell.median_reference_amount) }),
     ].join(" ")));
     if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
     grid.append(button);
@@ -494,13 +494,13 @@ function renderSom(container, data, labelFor) {
     item.append(createElement("strong", "", `${segment.label} · ${segment.report_count}`), createElement("span", "", `${segment.carat_min}–${segment.carat_max} ct · ${segment.dominant_shapes.join(" / ")}`));
     legend.append(item);
   }
-  left.append(createElement("h3", "", t("demo.somSegmentMap")), mainMapViewport, mainCellDetails, createElement("p", "demo-som-scroll-hint", t("demo.somScroll")), legend, createElement("p", "account-help", `Клітинка містить кількість ${t("demo.reports").toLowerCase()}. Кольори відповідають описовим профілям у легенді, не класам якості.`));
+  left.append(createElement("h3", "", t("demo.somSegmentMap")), mainMapViewport, mainCellDetails, createElement("p", "demo-som-scroll-hint", t("demo.somScroll")), legend, createElement("p", "account-help", t("demo.somMapHelp")));
   const right = createElement("aside", "demo-som-profile");
   right.append(createElement("h3", "", t("demo.somProfile")));
   if (selected) {
     const details = document.createElement("dl");
     details.className = "analytics-metrics";
-    [[t("demo.reportId"), selected.report_id], [t("demo.somCell"), `${selected.som_x + 1} × ${selected.som_y + 1}`], [t("demo.somInCell"), `${selected.cell_count}`], [t("demo.somNeighborhood"), `${selected.neighborhood_count}`], [t("demo.somColorClarity"), `${labelFor("color", selected.color_grade)} / ${labelFor("clarity", selected.clarity_grade)}`], ["Final Cut", labelFor("cut", selected.system_cut_grade)]].forEach(([label, value]) => details.append(createElement("dt", "", label), createElement("dd", "", value)));
+    [[t("demo.reportId"), selected.report_id], [t("demo.somCell"), `${selected.som_x + 1} × ${selected.som_y + 1}`], [t("demo.somInCell"), `${selected.cell_count}`], [t("demo.somNeighborhood"), `${selected.neighborhood_count}`], [t("demo.somColorClarity"), `${labelFor("color", selected.color_grade)} / ${labelFor("clarity", selected.clarity_grade)}`], [t("demo.somFinalCut"), labelFor("cut", selected.system_cut_grade)]].forEach(([label, value]) => details.append(createElement("dt", "", label), createElement("dd", "", value)));
     const formWeight = createElement("dd", "demo-som-value-stack");
     formWeight.append(createElement("strong", "", selected.shape), createElement("span", "", `${selected.carat_weight} ct`));
     details.append(createElement("dt", "", t("demo.somShapeWeight")), formWeight);
@@ -521,24 +521,24 @@ function renderSom(container, data, labelFor) {
       peers.append(document.createTextNode("."));
     } else peers.textContent = t("demo.somNoPeers");
     const benchmark = createElement("section", "demo-som-benchmark");
-    benchmark.append(createElement("h4", "", t("demo.somSegmentReference")), createElement("strong", "", `${formatUsd(selected.segment_reference_min)} – ${formatUsd(selected.segment_reference_max)}`), createElement("span", "", "Діапазон значень усієї описової зони SOM, а не лише трьох найближчих прикладів."));
+    benchmark.append(createElement("h4", "", t("demo.somSegmentReference")), createElement("strong", "", `${formatUsd(selected.segment_reference_min)} – ${formatUsd(selected.segment_reference_max)}`), createElement("span", "", t("demo.somSegmentRangeHelp")));
     right.append(details, position, peers, benchmark);
   }
-  right.append(createElement("p", "account-help", t("demo.somCoverage", { accepted: coverage.accepted_reports ?? 0, candidates: coverage.candidate_reports ?? 0, excluded: coverage.excluded_reports ?? 0 })), createElement("p", "account-help", coverage.policy_explanation || "Для виключених звітів policy scenario не залишає дозволеного synthetic орієнтиру."));
-  right.append(createElement("p", "account-help", "Synthetic орієнтир — лише демонстраційна величина сценарію, не прогнозована чи ринкова ціна."));
+  right.append(createElement("p", "account-help", t("demo.somCoverage", { accepted: coverage.accepted_reports ?? 0, candidates: coverage.candidate_reports ?? 0, excluded: coverage.excluded_reports ?? 0 })), createElement("p", "account-help", coverage.policy_explanation || t("demo.somPolicyExplanation")));
+  right.append(createElement("p", "account-help", t("demo.somReferenceNote")));
   const layout = createElement("div", "demo-som-layout");
   layout.append(left, right);
   const overview = data.map_overview || {};
   const overviewSection = createElement("section", "demo-som-overview");
-  overviewSection.append(createElement("h3", "", "Огляд карти"));
+  overviewSection.append(createElement("h3", "", t("demo.somMapOverview")));
   const overviewMetrics = createElement("dl", "demo-som-overview__metrics");
   const providerUsage = Object.entries(overview.provider_usage || {}).map(([provider, count]) => `${provider}: ${count}`).join(" · ") || "—";
   [
-    ["Охоплення", `${coverage.accepted_reports ?? 0} включено · ${coverage.excluded_reports ?? 0} виключено`],
-    ["Зайнято клітинок", `${overview.occupied_cells ?? 0} із ${data.grid_size ** 2}`],
-    ["Найщільніша клітинка", `${overview.densest_cell ?? "—"} · ${overview.densest_cell_report_count ?? 0} каменів`],
-    ["Найбільша зона", `${overview.largest_segment_label ?? "—"} · ${overview.largest_segment_report_count ?? 0} каменів`],
-    ["Дозволені орієнтири", providerUsage],
+    [t("demo.somCoverageOverview"), t("demo.somIncludedExcluded", { included: coverage.accepted_reports ?? 0, excluded: coverage.excluded_reports ?? 0 })],
+    [t("demo.somOccupiedCells"), t("demo.somOfCells", { occupied: overview.occupied_cells ?? 0, total: data.grid_size ** 2 })],
+    [t("demo.somDensestCell"), `${overview.densest_cell ?? "—"} · ${t("demo.somStones", { count: overview.densest_cell_report_count ?? 0 })}`],
+    [t("demo.somLargestSegment"), `${overview.largest_segment_label ?? "—"} · ${t("demo.somStones", { count: overview.largest_segment_report_count ?? 0 })}`],
+    [t("demo.somPermittedReferences"), providerUsage],
   ].forEach(([term, value]) => {
     const item = createElement("div", "demo-som-overview__item");
     item.append(createElement("dt", "", term), createElement("dd", "", value));
@@ -556,13 +556,13 @@ function renderSom(container, data, labelFor) {
     button.type = "button";
     button.title = value === null || value === undefined
       ? t("demo.somNoBenchmark")
-      : `${formatUsdPerCarat(value)} · ${cell.report_count} synthetic звітів`;
+      : `${formatUsdPerCarat(value)} · ${t("demo.somReportCount", { count: cell.report_count })}`;
     button.setAttribute("aria-label", button.title);
     button.addEventListener("click", () => {
       const bandLabel = (data.benchmark_bands || []).find((band) => band.key === cell.benchmark_band)?.label || t("demo.somBenchmarkUnavailable");
       showSomCellDetails(benchmarkCellDetails, value === null || value === undefined
         ? `${t("demo.somCell")} ${cell.x + 1} × ${cell.y + 1}. ${t("demo.somNoBenchmark")}`
-        : `Клітинка ${cell.x + 1} × ${cell.y + 1} · ${bandLabel}. Медіанний дозволений synthetic орієнтир: ${formatUsdPerCarat(value)}. ${cell.report_count} synthetic звітів.`);
+        : `${t("demo.somCellTitle", { x: cell.x + 1, y: cell.y + 1, segment: bandLabel })}. ${t("demo.somBenchmarkCell", { amount: formatUsdPerCarat(value), count: cell.report_count })}`);
     });
     if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
     benchmarkGrid.append(button);
@@ -574,8 +574,8 @@ function renderSom(container, data, labelFor) {
     const item = createElement("div", `demo-som-legend__item demo-som-benchmark-legend__item--${band.key}`);
     const lower = band.lower_bound_usd_per_carat === null || band.lower_bound_usd_per_carat === undefined ? null : formatUsdPerCarat(band.lower_bound_usd_per_carat);
     const upper = band.upper_bound_usd_per_carat === null || band.upper_bound_usd_per_carat === undefined ? null : formatUsdPerCarat(band.upper_bound_usd_per_carat);
-    const range = lower && upper ? `${lower} – ${upper}` : lower ? `від ${lower}` : `до ${upper}`;
-    item.append(createElement("strong", "", band.label), createElement("span", "", `${range} · ${band.cell_count} клітинок`));
+    const range = lower && upper ? `${lower} – ${upper}` : lower ? t("demo.somFrom", { value: lower }) : t("demo.somTo", { value: upper });
+    item.append(createElement("strong", "", band.label), createElement("span", "", `${range} · ${t("demo.somCells", { count: band.cell_count })}`));
     benchmarkLegend.append(item);
   }
   benchmarkMap.append(
@@ -584,7 +584,7 @@ function renderSom(container, data, labelFor) {
     benchmarkCellDetails,
     createElement("p", "demo-som-scroll-hint", t("demo.somScroll")),
     benchmarkLegend,
-    createElement("p", "account-help", "Та самі SOM-координати й marker. Значення в клітинці — медіанний дозволений synthetic USD/ct; це не прогноз, не market value і не інвестиційна категорія."),
+    createElement("p", "account-help", t("demo.somBenchmarkMapHelp")),
   );
   const benchmarkProfile = createElement("aside", "demo-som-profile");
   const selectedBenchmarkCell = selected
@@ -595,15 +595,15 @@ function renderSom(container, data, labelFor) {
     selectedBenchmark.append(
       createElement("h4", "", t("demo.somSelectedBenchmark")),
       createElement("strong", "", formatUsdPerCarat(selectedBenchmarkCell.median_reference_usd_per_carat)),
-      createElement("span", "", `Клітинка ${selected.som_x + 1} × ${selected.som_y + 1} · ${selectedBenchmarkCell.report_count} synthetic звітів.`),
+      createElement("span", "", t("demo.somSelectedBenchmarkDetail", { x: selected.som_x + 1, y: selected.som_y + 1, count: selectedBenchmarkCell.report_count })),
     );
     benchmarkProfile.append(selectedBenchmark);
   }
   benchmarkProfile.append(
     createElement("h3", "", t("demo.somHowToRead")),
-    createElement("p", "account-help", "Кожна клітинка показує медіанний дозволений synthetic USD/ct каменів у цій самій SOM-клітинці. Тому карта зберігає сусідство основної SOM, але підсвічує відносний рівень synthetic орієнтирів."),
-    createElement("p", "account-help", "Чотири кольори — квартилі медіан клітинок поточного immutable artifact. Вони не є класами якості, ринковими сегментами, predicted price чи investment category."),
-    createElement("p", "account-help", "Значення у клітинках скорочені до k для читабельності; повне USD/ct доступне у підказці та доступній назві клітинки. Marker відповідає вибраному звіту і збігається з marker основної карти."),
+    createElement("p", "account-help", t("demo.somReadOne")),
+    createElement("p", "account-help", t("demo.somReadTwo")),
+    createElement("p", "account-help", t("demo.somReadThree")),
   );
   const benchmarkLayout = createElement("div", "demo-som-layout demo-som-layout--benchmark");
   benchmarkLayout.append(benchmarkMap, benchmarkProfile);
