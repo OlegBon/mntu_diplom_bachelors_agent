@@ -494,24 +494,24 @@ function renderSom(container, data, labelFor) {
     item.append(createElement("strong", "", `${segment.label} · ${segment.report_count}`), createElement("span", "", `${segment.carat_min}–${segment.carat_max} ct · ${segment.dominant_shapes.join(" / ")}`));
     legend.append(item);
   }
-  left.append(createElement("h3", "", "Карта сегментів"), mainMapViewport, mainCellDetails, createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."), legend, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Кольори відповідають описовим профілям у легенді, не класам якості.`));
+  left.append(createElement("h3", "", t("demo.somSegmentMap")), mainMapViewport, mainCellDetails, createElement("p", "demo-som-scroll-hint", t("demo.somScroll")), legend, createElement("p", "account-help", `Клітинка містить кількість ${t("demo.reports").toLowerCase()}. Кольори відповідають описовим профілям у легенді, не класам якості.`));
   const right = createElement("aside", "demo-som-profile");
-  right.append(createElement("h3", "", "Профіль показового каменю"));
+  right.append(createElement("h3", "", t("demo.somProfile")));
   if (selected) {
     const details = document.createElement("dl");
     details.className = "analytics-metrics";
-    [["Звіт", selected.report_id], ["SOM-клітинка", `${selected.som_x + 1} × ${selected.som_y + 1}`], ["У клітинці", `${selected.cell_count} demo-звітів`], ["У сусідстві", `${selected.neighborhood_count} demo-звітів`], ["Колір / чистота", `${labelFor("color", selected.color_grade)} / ${labelFor("clarity", selected.clarity_grade)}`], ["Системний Final Cut", labelFor("cut", selected.system_cut_grade)]].forEach(([label, value]) => details.append(createElement("dt", "", label), createElement("dd", "", value)));
+    [[t("demo.reportId"), selected.report_id], [t("demo.somCell"), `${selected.som_x + 1} × ${selected.som_y + 1}`], [t("demo.somInCell"), `${selected.cell_count}`], [t("demo.somNeighborhood"), `${selected.neighborhood_count}`], [t("demo.somColorClarity"), `${labelFor("color", selected.color_grade)} / ${labelFor("clarity", selected.clarity_grade)}`], ["Final Cut", labelFor("cut", selected.system_cut_grade)]].forEach(([label, value]) => details.append(createElement("dt", "", label), createElement("dd", "", value)));
     const formWeight = createElement("dd", "demo-som-value-stack");
     formWeight.append(createElement("strong", "", selected.shape), createElement("span", "", `${selected.carat_weight} ct`));
-    details.append(createElement("dt", "", "Форма / вага"), formWeight);
+    details.append(createElement("dt", "", t("demo.somShapeWeight")), formWeight);
     const reference = createElement("dd", "demo-som-value-stack");
     reference.append(createElement("strong", "", formatUsd(selected.selected_reference_amount)), createElement("span", "", selected.selected_provider));
-    details.append(createElement("dt", "", "Synthetic орієнтир"), reference);
+    details.append(createElement("dt", "", t("demo.somReference")), reference);
     const position = createElement("section", "demo-som-position");
-    position.append(createElement("h4", "", "Позиція в сегменті"), createElement("strong", "", selected.segment_label), createElement("p", "account-help", selected.segment_description));
+    position.append(createElement("h4", "", t("demo.somPosition")), createElement("strong", "", selected.segment_label), createElement("p", "account-help", selected.segment_description));
     const peers = createElement("p", "account-help");
     if (selected.peer_report_ids.length) {
-      peers.append(document.createTextNode("Найближчі synthetic приклади: "));
+      peers.append(document.createTextNode(t("demo.somPeers")));
       selected.peer_report_ids.forEach((reportId, index) => {
         if (index) peers.append(document.createTextNode(", "));
         const link = createElement("a", "", reportId);
@@ -519,12 +519,12 @@ function renderSom(container, data, labelFor) {
         peers.append(link);
       });
       peers.append(document.createTextNode("."));
-    } else peers.textContent = "У клітинці поки немає інших synthetic прикладів.";
+    } else peers.textContent = t("demo.somNoPeers");
     const benchmark = createElement("section", "demo-som-benchmark");
-    benchmark.append(createElement("h4", "", "Демо-орієнтир сегмента"), createElement("strong", "", `${formatUsd(selected.segment_reference_min)} – ${formatUsd(selected.segment_reference_max)}`), createElement("span", "", "Діапазон значень усієї описової зони SOM, а не лише трьох найближчих прикладів."));
+    benchmark.append(createElement("h4", "", t("demo.somSegmentReference")), createElement("strong", "", `${formatUsd(selected.segment_reference_min)} – ${formatUsd(selected.segment_reference_max)}`), createElement("span", "", "Діапазон значень усієї описової зони SOM, а не лише трьох найближчих прикладів."));
     right.append(details, position, peers, benchmark);
   }
-  right.append(createElement("p", "account-help", `Охоплення: ${coverage.accepted_reports ?? 0} включено з ${coverage.candidate_reports ?? 0}; ${coverage.excluded_reports ?? 0} виключено через відсутність повного дозволеного synthetic вектора.`), createElement("p", "account-help", coverage.policy_explanation || "Для виключених звітів policy scenario не залишає дозволеного synthetic орієнтиру."));
+  right.append(createElement("p", "account-help", t("demo.somCoverage", { accepted: coverage.accepted_reports ?? 0, candidates: coverage.candidate_reports ?? 0, excluded: coverage.excluded_reports ?? 0 })), createElement("p", "account-help", coverage.policy_explanation || "Для виключених звітів policy scenario не залишає дозволеного synthetic орієнтиру."));
   right.append(createElement("p", "account-help", "Synthetic орієнтир — лише демонстраційна величина сценарію, не прогнозована чи ринкова ціна."));
   const layout = createElement("div", "demo-som-layout");
   layout.append(left, right);
