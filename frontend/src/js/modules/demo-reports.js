@@ -555,13 +555,13 @@ function renderSom(container, data, labelFor) {
     const button = createElement("button", `demo-som-cell demo-som-benchmark-cell demo-som-benchmark-cell--${band}`, value === null || value === undefined ? "—" : formatCompactUsdPerCarat(value));
     button.type = "button";
     button.title = value === null || value === undefined
-      ? "У цій SOM-клітинці немає synthetic benchmark"
+      ? t("demo.somNoBenchmark")
       : `${formatUsdPerCarat(value)} · ${cell.report_count} synthetic звітів`;
     button.setAttribute("aria-label", button.title);
     button.addEventListener("click", () => {
-      const bandLabel = (data.benchmark_bands || []).find((band) => band.key === cell.benchmark_band)?.label || "Synthetic benchmark недоступний";
+      const bandLabel = (data.benchmark_bands || []).find((band) => band.key === cell.benchmark_band)?.label || t("demo.somBenchmarkUnavailable");
       showSomCellDetails(benchmarkCellDetails, value === null || value === undefined
-        ? `Клітинка ${cell.x + 1} × ${cell.y + 1}. У ній немає synthetic benchmark.`
+        ? `${t("demo.somCell")} ${cell.x + 1} × ${cell.y + 1}. ${t("demo.somNoBenchmark")}`
         : `Клітинка ${cell.x + 1} × ${cell.y + 1} · ${bandLabel}. Медіанний дозволений synthetic орієнтир: ${formatUsdPerCarat(value)}. ${cell.report_count} synthetic звітів.`);
     });
     if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
@@ -579,10 +579,10 @@ function renderSom(container, data, labelFor) {
     benchmarkLegend.append(item);
   }
   benchmarkMap.append(
-    createElement("h3", "", "Карта synthetic benchmark сегментів · USD/ct"),
+    createElement("h3", "", t("demo.somBenchmarkMap")),
     benchmarkViewport,
     benchmarkCellDetails,
-    createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."),
+    createElement("p", "demo-som-scroll-hint", t("demo.somScroll")),
     benchmarkLegend,
     createElement("p", "account-help", "Та самі SOM-координати й marker. Значення в клітинці — медіанний дозволений synthetic USD/ct; це не прогноз, не market value і не інвестиційна категорія."),
   );
@@ -593,14 +593,14 @@ function renderSom(container, data, labelFor) {
   if (selectedBenchmarkCell?.median_reference_usd_per_carat !== null && selectedBenchmarkCell?.median_reference_usd_per_carat !== undefined) {
     const selectedBenchmark = createElement("section", "demo-som-benchmark demo-som-benchmark--summary");
     selectedBenchmark.append(
-      createElement("h4", "", "Медіанний дозволений synthetic орієнтир клітинки"),
+      createElement("h4", "", t("demo.somSelectedBenchmark")),
       createElement("strong", "", formatUsdPerCarat(selectedBenchmarkCell.median_reference_usd_per_carat)),
       createElement("span", "", `Клітинка ${selected.som_x + 1} × ${selected.som_y + 1} · ${selectedBenchmarkCell.report_count} synthetic звітів.`),
     );
     benchmarkProfile.append(selectedBenchmark);
   }
   benchmarkProfile.append(
-    createElement("h3", "", "Як читати benchmark-карту"),
+    createElement("h3", "", t("demo.somHowToRead")),
     createElement("p", "account-help", "Кожна клітинка показує медіанний дозволений synthetic USD/ct каменів у цій самій SOM-клітинці. Тому карта зберігає сусідство основної SOM, але підсвічує відносний рівень synthetic орієнтирів."),
     createElement("p", "account-help", "Чотири кольори — квартилі медіан клітинок поточного immutable artifact. Вони не є класами якості, ринковими сегментами, predicted price чи investment category."),
     createElement("p", "account-help", "Значення у клітинках скорочені до k для читабельності; повне USD/ct доступне у підказці та доступній назві клітинки. Marker відповідає вибраному звіту і збігається з marker основної карти."),
