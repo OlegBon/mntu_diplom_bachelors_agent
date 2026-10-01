@@ -374,32 +374,32 @@ function openDemoProviderDialog(dialog, content, provider, datasetId) {
   const metrics = document.createElement("dl");
   metrics.className = "analytics-metrics";
   [
-    ["Тип джерела", provider.source_class],
-    ["Походження даних", provider.provenance],
-    ["Статус договору й умов", provider.terms_status],
-    ["Покриття у зрізі", `${provider.covered_report_count} із ${provider.candidate_report_count} demo-звітів`],
-    ["Тип значень", "Synthetic demonstration reference"],
-    ["Кількість значень", provider.reference_count],
-    ["Період значень", `${provider.first_period} — ${provider.last_period}`],
-    ["Медіанний орієнтир", provider.median_amount === null ? "—" : formatUsd(provider.median_amount)],
-    ["Діапазон орієнтирів", provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`],
-    ["Знімок провайдера", "Не передбачено: значення детерміновано генерує локальний demo-набір."],
-    ["Останнє отримання", "Не застосовується: немає зовнішнього сервісу."],
+    [t("demo.sourceType"), provider.source_class],
+    [t("demo.dataOrigin"), provider.provenance],
+    [t("demo.termsStatus"), provider.terms_status],
+    [t("demo.coverage"), `${provider.covered_report_count} / ${provider.candidate_report_count}`],
+    [t("demo.valueType"), t("dashboard.referenceTypeDemo")],
+    [t("demo.valueCount"), provider.reference_count],
+    [t("demo.valuePeriod"), `${provider.first_period} — ${provider.last_period}`],
+    [t("demo.medianReference"), provider.median_amount === null ? "—" : formatUsd(provider.median_amount)],
+    [t("demo.referenceRange"), provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`],
+    [t("demo.providerSnapshot"), t("analytics.notModeled")],
+    [t("demo.lastRetrieved"), t("analytics.notApplicable")],
   ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
   const sample = provider.latest_report_id ? createElement("a", "id-link", provider.latest_report_id) : null;
   if (sample) sample.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(provider.latest_report_id)}`;
   const sampleSection = createElement("section", "analytics-review-list");
-  sampleSection.append(createElement("h3", "", "Останній synthetic приклад"), sample || createElement("p", "account-help", "У цьому зрізі немає прикладу."));
+  sampleSection.append(createElement("h3", "", t("demo.latestExample")), sample || createElement("p", "account-help", t("demo.noExample")));
   const scenario = createElement("section", "analytics-review-list");
   scenario.append(
-    createElement("h3", "", "Synthetic policy scenario"),
-    createElement("p", "account-help", "Режим: demo-only. Мережеві виклики вимкнені; договори, trial-призначення та журнал реальних provider-умов для цього fictional джерела не створюються."),
+    createElement("h3", "", t("demo.policyScenario")),
+    createElement("p", "account-help", t("demo.providerScenario")),
   );
   content.replaceChildren(
     createElement("h3", "analytics-dialog-name", provider.provider_name),
     metrics,
     createElement("p", "account-help", provider.usage_policy),
-    createElement("p", "account-help", "Ці умови описують лише demo-сценарій. Вони не є договором, ліцензією чи дозволом використовувати реальні provider data."),
+    createElement("p", "account-help", t("demo.providerTermsHelp")),
     scenario,
     sampleSection,
   );
@@ -419,9 +419,9 @@ function renderDemoProviderAnalytics(container, data, datasetId, dialog, dialogC
     link.title = "Відкрити read-only demo-звіт";
     return link;
   };
-  const overview = createElement("p", "account-help", `${data.candidate_report_count} demo-звітів у зрізі · ${data.reference_count} synthetic орієнтирів.`);
+  const overview = createElement("p", "account-help", t("demo.providerOverview", { reports: data.candidate_report_count, references: data.reference_count }));
   const tableHost = createElement("div", "demo-provider-analytics__table");
-  renderTable(tableHost, ["Провайдер", "Покриття", "Значень", "Період", "Медіана", "Діапазон", "Останній приклад"], data.providers.map((provider) => {
+  renderTable(tableHost, [t("analytics.provider"), t("demo.coverage"), t("demo.valueCount"), t("demo.valuePeriod"), t("demo.medianReference"), t("demo.referenceRange"), t("demo.latestExample")], data.providers.map((provider) => {
     const providerButton = createElement("button", "analytics-expert-button", provider.provider_name);
     providerButton.type = "button";
     providerButton.addEventListener("click", () => openDemoProviderDialog(dialog, dialogContent, {
@@ -438,8 +438,8 @@ function renderDemoProviderAnalytics(container, data, datasetId, dialog, dialogC
     provider.median_amount === null ? "—" : formatUsd(provider.median_amount),
     provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`,
     latestReportLink(provider.latest_report_id),
-  ]; }), "У вибраному зрізі немає synthetic provider values.");
-  const note = createElement("p", "account-help", "Суми — immutable synthetic reference values у USD для всього каменю. Вони не є ринковими даними, прогнозом, ціною продажу або рейтингом провайдера.");
+  ]; }), t("demo.providerEmpty"));
+  const note = createElement("p", "account-help", t("demo.providerNote"));
   container.replaceChildren(overview, tableHost, note);
 }
 
