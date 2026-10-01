@@ -345,18 +345,18 @@ function renderSyntheticAdministrators(container, actors, datasetId) {
     const heading = createElement("h3", "", actor.display_name);
     const metrics = createElement("dl", "analytics-metrics");
     [
-      ["Завершено перевірок", actor.completed_intervals],
-      ["Видано", actor.issued_reports],
-      ["Повернуто", actor.returned_to_draft],
-      ["Анульовано", actor.void_reports],
-      ["Середня тривалість", formatDuration(actor.avg_duration_seconds)],
-      ["Медіанна тривалість", formatDuration(actor.median_duration_seconds)],
+      [t("analytics.completedReviews"), actor.completed_intervals],
+      [t("analytics.issued"), actor.issued_reports],
+      [t("analytics.returned"), actor.returned_to_draft],
+      [t("analytics.void"), actor.void_reports],
+      [t("analytics.averageDuration"), formatDuration(actor.avg_duration_seconds)],
+      [t("analytics.medianDuration"), formatDuration(actor.median_duration_seconds)],
     ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
     card.append(
       heading,
       metrics,
-      renderDemoIntervalList("Найкоротші synthetic перевірки", actor.shortest_intervals, datasetId),
-      renderDemoIntervalList("Найдовші synthetic перевірки", actor.longest_intervals, datasetId),
+      renderDemoIntervalList(t("analytics.shortestReviews"), actor.shortest_intervals, datasetId),
+      renderDemoIntervalList(t("analytics.longestReviews"), actor.longest_intervals, datasetId),
       createElement("p", "account-help", "Synthetic administrator · non-account. Дані сформовано детермінованим demo workflow."),
     );
     cards.append(card);
