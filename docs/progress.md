@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-10-01 — home-auth-cta-flash
+
+- **Задача:** прибрати коротку появу CTA входу в hero на головній сторінці для вже автентифікованого користувача.
+- **Змінені файли:** `frontend/src/{pug/pages/index.pug,js/main.js,scss/_product-ux.scss}`, `docs/progress.md`.
+- **Рішення / Результат:** CTA має початковий presentation-only CSS стан очікування. Для гостя він синхронно знімається під час bootstrap; за наявної сесії CTA лишається невидимим до перевірки `/users/me`, тому не миготить. RBAC і auth contract не змінювалися.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 35 passed; targeted `npx playwright test -c playwright.config.mjs tests/e2e/i18n-shell.spec.mjs` — 1 passed; `git diff --check` — OK.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** тест не імітує затримку `/users/me`; запобігання flash забезпечене стартовим CSS-станом до виконання асинхронного bootstrap.
+
 ## 2026-10-01 — i18n-admin-demo-and-analytics
 
 - **Задача:** завершити 177 — повноцінні `en`/`uk` presentation locales для authenticated admin, synthetic Demo та Analytics surfaces.
