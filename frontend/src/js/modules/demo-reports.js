@@ -658,9 +658,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     activeTab = tab;
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
     controls.hidden = !["experts", "narratives", "quality", "administrators", "providers", "currency"].includes(tab);
-    periodHelpNode.textContent = tab === "currency"
-      ? "Зріз застосовується до офіційної дати курсу НБУ. Він не фільтрує demo-звіти, орієнтири чи SOM."
-      : "Дані за весь доступний період. У demo зрізі події та тривалості формуються детерміновано; вони не є active-time, review-cycle, SLA чи оцінкою реальних людей.";
+    periodHelpNode.textContent = t(tab === "currency" ? "demo.periodHelpCurrency" : "demo.periodHelpWorkflow");
     for (const button of tabButtons) {
       const active = button.dataset.demoTab === tab;
       button.classList.toggle("is-active", active);
@@ -670,7 +668,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const filtersForSlice = () => Object.fromEntries(new FormData(form).entries());
   const validateSlice = (filters) => {
     if (!filters.date_from || !filters.date_to || filters.date_from <= filters.date_to) return true;
-    const message = "Дата «Від» не може бути пізнішою за дату «До».";
+    const message = t("analytics.invalidPeriod");
     setStatus(expertStatus, message, "error");
     setStatus(administratorStatus, message, "error");
     setStatus(narrativeStatus, message, "error");
@@ -682,8 +680,8 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const loadWorkflow = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(expertStatus, "Завантаження synthetic workflow…");
-    setStatus(administratorStatus, "Завантаження synthetic workflow…");
+    setStatus(expertStatus, t("demo.loadingWorkflow"));
+    setStatus(administratorStatus, t("demo.loadingWorkflow"));
     try {
       const data = await getDemoWorkflowAnalytics(datasetId, token, filters);
       expertStatus.replaceChildren();
@@ -692,27 +690,27 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       renderWorkflowRows(expertResults, data.experts, dialog, dialogContent, data.dataset_id);
       renderSyntheticAdministrators(administratorResults, data.administrators, data.dataset_id);
     } catch {
-      setStatus(expertStatus, "Не вдалося завантажити synthetic workflow.", "error");
-      setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
+      setStatus(expertStatus, t("demo.workflowLoadFailed"), "error");
+      setStatus(administratorStatus, t("demo.workflowLoadFailed"), "error");
     }
   };
   const loadProviders = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(providerStatus, "Завантаження synthetic provider analytics…");
+    setStatus(providerStatus, t("demo.loadingProviders"));
     try {
       const data = await getDemoProviderAnalytics(datasetId, token, filters);
       providerStatus.replaceChildren();
       periodSummaryNode.textContent = periodSummary(filters);
       renderDemoProviderAnalytics(providerResults, data, data.dataset_id, providerDialog, providerDialogContent);
     } catch {
-      setStatus(providerStatus, "Не вдалося завантажити synthetic provider analytics.", "error");
+      setStatus(providerStatus, t("demo.providersLoadFailed"), "error");
     }
   };
   const loadNarratives = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(narrativeStatus, "Завантаження synthetic текстових метаданих…");
+    setStatus(narrativeStatus, t("demo.loadingNarratives"));
     try {
       const data = await getDemoNarrativeQualityAnalytics(datasetId, token, filters);
       narrativeStatus.replaceChildren();
@@ -722,37 +720,37 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
         formatDateTime,
       });
     } catch {
-      setStatus(narrativeStatus, "Не вдалося завантажити synthetic текстові метадані.", "error");
+      setStatus(narrativeStatus, t("demo.narrativesLoadFailed"), "error");
     }
   };
   const loadQuality = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(qualityStatus, "Завантаження synthetic операцій та повноти даних…");
+    setStatus(qualityStatus, t("demo.loadingQuality"));
     try {
       const data = await getDemoOperationalQualityAnalytics(datasetId, token, filters);
       qualityStatus.replaceChildren();
       periodSummaryNode.textContent = periodSummary(filters);
       renderOperationalQuality(qualityResults, data, { formatDateTime });
     } catch {
-      setStatus(qualityStatus, "Не вдалося завантажити synthetic операції та повноту даних.", "error");
+      setStatus(qualityStatus, t("demo.qualityLoadFailed"), "error");
     }
   };
   const loadCurrencySources = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(currencyStatus, "Завантаження офіційних FX-знімків НБУ…");
+    setStatus(currencyStatus, t("demo.loadingCurrency"));
     try {
       const snapshots = await getFxDataSnapshots(filters, token);
       currencyStatus.replaceChildren();
       periodSummaryNode.textContent = periodSummary(filters);
       renderCurrencySources(currencyResults, snapshots, providerDialog, providerDialogContent);
     } catch {
-      setStatus(currencyStatus, "Не вдалося завантажити FX-знімки НБУ.", "error");
+      setStatus(currencyStatus, t("demo.currencyLoadFailed"), "error");
     }
   };
   const loadSom = async (requestedId = new URLSearchParams(window.location.search).get("som_report") || "") => {
-    setStatus(somStatus, "Завантаження synthetic SOM…");
+    setStatus(somStatus, t("demo.loadingSom"));
     try {
       const selectedId = requestedId.trim().toUpperCase();
       const data = await getDemoSom(datasetId, token, selectedId);
@@ -760,7 +758,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       somStatus.replaceChildren();
       renderSom(somResults, data, labelFor);
     } catch {
-      setStatus(somStatus, "Для цього номера немає доступного synthetic SOM-профілю. Перевірте DEMO-ідентифікатор.", "error");
+      setStatus(somStatus, t("demo.somLoadFailed"), "error");
     }
   };
   for (const button of tabButtons) button.addEventListener("click", () => {
@@ -853,7 +851,7 @@ export async function initDemoReports() {
     populateGradeFilter(root.querySelector("#demo-cut-filter"), "cut", mappings);
     for (const control of [root.querySelector("#demo-color-filter"), root.querySelector("#demo-clarity-filter"), root.querySelector("#demo-cut-filter")]) control.value = state[control.name] || "";
   } catch {
-    setStatus(stateNode, "Demo-набір недоступний.", "error");
+    setStatus(stateNode, t("demo.datasetUnavailable"), "error");
     return;
   }
 
@@ -861,20 +859,20 @@ export async function initDemoReports() {
     state = { ...nextState, page: Math.max(Number(nextState.page) || 1, 1) };
     updateUrl(state);
     updateSortIndicators(root, state.sort);
-    setStatus(stateNode, "Завантаження demo-звітів…");
+    setStatus(stateNode, t("demo.loadingReports"));
     tbody.replaceChildren();
     pagination.replaceChildren();
     try {
       const result = await getDemoReports(datasetId, token, state.page, { ...state, page_size: PAGE_SIZE });
       if (!result.items.length) {
-        setStatus(stateNode, "Demo-звітів за поточними умовами не знайдено.");
+        setStatus(stateNode, t("demo.emptyReports"));
         return;
       }
       stateNode.replaceChildren();
       renderRows(tbody, result.items, labelFor, datasetId);
       renderPagination(pagination, result.page, result.total_pages, (page) => load({ ...state, page }));
     } catch {
-      setStatus(stateNode, "Не вдалося завантажити demo-звіти. Спробуйте пізніше.", "error");
+      setStatus(stateNode, t("demo.reportsLoadFailed"), "error");
     }
   };
 
