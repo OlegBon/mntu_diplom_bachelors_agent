@@ -276,7 +276,7 @@ function providerFreshnessLabel(value) {
   return { fresh: "Актуальний", warning: "Потребує уваги", stale: "Застарілий", missing: "Немає знімка" }[value] || value;
 }
 
-function openProviderDialog(dialog, content, provider) {
+function openProviderDialogLegacy(dialog, content, provider) {
   const coverage = provider.coverage;
   const fragment = document.createDocumentFragment();
   fragment.append(element("h3", "analytics-dialog-name", provider.display_name));
@@ -315,6 +315,53 @@ function openProviderDialog(dialog, content, provider) {
     fragment.append(links);
   }
   content.replaceChildren(fragment); dialog.showModal();
+}
+
+function providerAccessModeLabel(value) {
+  return {
+    disabled: t("analytics.disabled"),
+    restricted_trial: t("analytics.restrictedTrial"),
+    standard_internal: t("analytics.standardInternal"),
+  }[value] || t("analytics.notConfigured");
+}
+
+function openProviderDialog(dialog, content, provider) {
+  const coverage = provider.coverage;
+  const fragment = document.createDocumentFragment();
+  fragment.append(element("h3", "analytics-dialog-name", provider.display_name));
+  const metrics = element("dl", "analytics-metrics");
+  [
+    ["analytics.freshnessState", providerFreshnessLabel(provider.freshness_status)],
+    ["analytics.latestApprovedSnapshot", provider.latest_snapshot_id ? `#${provider.latest_snapshot_id}` : t("analytics.noValue")],
+    ["analytics.snapshotCount", provider.snapshots_total], ["analytics.candidates", provider.snapshots_candidate], ["analytics.approvedCount", provider.snapshots_approved], ["analytics.rejectedCount", provider.snapshots_rejected],
+    ["analytics.totalAttempts", provider.operations_total], ["analytics.scheduled", provider.scheduled_operations], ["analytics.manual", provider.manual_operations], ["analytics.retries", provider.retry_operations], ["analytics.failedAttempts", provider.failed_operations],
+    ["analytics.draftsInRange", coverage.candidate_draft_reports], ["analytics.coveredByReference", coverage.covered_draft_reports], ["analytics.excludedByOrigin", coverage.excluded_non_natural_reports], ["analytics.missingCharacteristics", coverage.missing_characteristics_reports], ["analytics.noCurrentSnapshot", coverage.snapshot_unavailable_reports], ["analytics.quoteNotCovered", coverage.quote_not_covered_reports],
+  ].forEach(([key, value]) => metrics.append(element("dt", "", t(key)), element("dd", "", String(value))));
+  fragment.append(metrics, element("p", "account-help", provider.scope_note));
+  const policy = element("section", "analytics-review-list");
+  policy.append(element("h3", "", t("analytics.providerAccess")));
+  const policyMetrics = element("dl", "analytics-metrics");
+  [
+    ["analytics.accessMode", providerAccessModeLabel(provider.access_mode)],
+    ["analytics.trialUntil", dateTime(provider.trial_expires_at) || t("analytics.notApplicable")],
+    ["analytics.dailyLimit", provider.daily_request_limit || t("analytics.notApplicable")],
+    ["analytics.assignedAdministrators", provider.assigned_admin_count],
+    ["analytics.lastPolicyChange", provider.last_policy_event_at ? `${dateTime(provider.last_policy_event_at)} · ${provider.last_policy_event_action}` : t("analytics.noPolicyEvents")],
+  ].forEach(([key, value]) => policyMetrics.append(element("dt", "", t(key)), element("dd", "", String(value))));
+  policy.append(policyMetrics, element("p", "account-help", t("analytics.policyReadOnlyHelp")));
+  fragment.append(policy);
+  if (coverage.covered_report_ids.length) {
+    const links = element("p", "account-help", t("analytics.coveredReports"));
+    coverage.covered_report_ids.forEach((reportId, index) => {
+      if (index) links.append(document.createTextNode(", "));
+      const link = element("a", "", reportId);
+      link.href = `/report-detail.html?id=${encodeURIComponent(reportId)}`;
+      links.append(link);
+    });
+    fragment.append(links);
+  }
+  content.replaceChildren(fragment);
+  dialog.showModal();
 }
 
 function renderProvidersLegacy(container, providers, dialog, dialogContent) {
