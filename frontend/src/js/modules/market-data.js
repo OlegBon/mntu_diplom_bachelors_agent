@@ -326,17 +326,17 @@ export async function initMarketData() {
       button.disabled = true;
       try {
         if (providerCode === "nbu") {
-          setStatus(status, "Отримання офіційного курсу НБУ…");
+          setStatus(status, t("market.fetchingNbu"));
           await refreshNbuRate(token);
-          setStatus(status, "Новий незмінний знімок офіційного курсу НБУ збережено.");
+          setStatus(status, t("market.nbuSaved"));
         } else {
-          setStatus(status, "Отримання даних OpenFacet…");
+          setStatus(status, t("market.fetchingOpenfacet"));
           await fetchMarketDataCandidate(providerCode, token);
-          setStatus(status, "Створено кандидат. Перевірте покриття та затвердьте його окремо.");
+          setStatus(status, t("market.candidateCreated"));
         }
         await refresh();
       }
-      catch (error) { setStatus(status, error.message || "Не вдалося отримати дані провайдера.", true); }
+      catch (error) { setStatus(status, error.message || t("market.fetchFailed"), true); }
       finally { button.disabled = false; }
     });
     renderSnapshots(snapshots, snapshotRows, openDecisionDialog);
@@ -344,25 +344,25 @@ export async function initMarketData() {
       if (validationError) { setStatus(status, validationError, true); return; }
       try {
         await updateMarketProviderSchedule(payload.provider_code, payload, token);
-        setStatus(status, "Графік оновлення збережено.");
+        setStatus(status, t("market.scheduleSaved"));
         await refresh();
-      } catch (error) { setStatus(status, error.message || "Не вдалося зберегти графік.", true); }
+      } catch (error) { setStatus(status, error.message || t("market.scheduleSaveFailed"), true); }
     });
     renderOperations(operations, operationRows);
     if (accessRows) {
       accessControls.hidden = false;
       renderProviderAccessPolicies(accessPolicies, accessRows, administrators, async (providerCode, payload) => {
-        try { await updateProviderAccessPolicy(providerCode, payload, token); setStatus(status, "Умови provider-а збережено."); await refresh(); }
-        catch (error) { setStatus(status, error.message || "Не вдалося зберегти умови provider-а.", true); }
+        try { await updateProviderAccessPolicy(providerCode, payload, token); setStatus(status, t("market.policySaved")); await refresh(); }
+        catch (error) { setStatus(status, error.message || t("market.policySaveFailed"), true); }
       }, async (providerCode, expertId, enabled) => {
-        try { await updateProviderAccessAssignment(providerCode, expertId, enabled, token); setStatus(status, "Призначення restricted trial оновлено."); await refresh(); }
-        catch (error) { setStatus(status, error.message || "Не вдалося змінити призначення.", true); throw error; }
+        try { await updateProviderAccessAssignment(providerCode, expertId, enabled, token); setStatus(status, t("market.assignmentUpdated")); await refresh(); }
+        catch (error) { setStatus(status, error.message || t("market.assignmentFailed"), true); throw error; }
       }, async (providerCode) => {
         try {
           const events = await getProviderAccessEvents(providerCode, token);
           const lines = events.map((item) => `${formatDate(item.created_at)} — ${item.action}${item.reason ? `: ${item.reason}` : ""}`);
-          setStatus(status, lines.length ? lines.join("\n") : "Для provider-а ще немає подій умов.");
-        } catch (error) { setStatus(status, error.message || "Не вдалося завантажити журнал умов.", true); }
+          setStatus(status, lines.length ? lines.join("\n") : t("market.noPolicyEvents"));
+        } catch (error) { setStatus(status, error.message || t("market.policyEventsFailed"), true); }
       });
     } else accessControls.hidden = true;
     updateApprovedSnapshotOptions(snapshotSelect, snapshotRows);
@@ -376,7 +376,7 @@ export async function initMarketData() {
     }
     await refresh();
   } catch (error) {
-    setStatus(status, error instanceof ApiRequestError && error.status === 401 ? "Потрібно увійти знову." : error.message, true);
+    setStatus(status, error instanceof ApiRequestError && error.status === 401 ? t("market.signInAgain") : error.message, true);
     return;
   }
   form.addEventListener("submit", async (event) => {
@@ -391,7 +391,7 @@ export async function initMarketData() {
         ? ` ≈ ${valuation.converted_currency_code} ${Number(valuation.converted_amount).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
         : "";
       setStatus(status, `Додано ринковий орієнтир: ${valuation.currency_code} ${Number(valuation.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.${converted}`);
-      setStatus(referenceStatus, "Ринковий орієнтир успішно прикріплено.");
+      setStatus(referenceStatus, t("market.referenceAttached"));
       form.reset(); updateApprovedSnapshotOptions(snapshotSelect, currentSnapshots);
     } catch (error) {
       const message = marketReferenceMessage(error);
@@ -405,7 +405,7 @@ export async function initMarketData() {
       .map((input) => input.value);
     const primaryProvider = policyForm.querySelector('input[name="market-policy-primary-provider"]:checked');
     if (primaryProvider && !enabledProviderCodes.includes(primaryProvider.value)) {
-      setStatus(status, "Основний провайдер має входити до увімкненого набору.", true);
+      setStatus(status, t("market.primaryMustBeEnabled"), true);
       return;
     }
     policySubmit.disabled = true;
@@ -416,10 +416,10 @@ export async function initMarketData() {
         use_fx_conversion: policyUseFx.checked,
         fx_provider_code: policyUseFx.checked ? "nbu" : null,
       }, token);
-      setStatus(status, "Налаштування системного довідкового орієнтиру збережено для майбутніх чернеток.");
+      setStatus(status, t("market.referencePolicySaved"));
       await refresh();
     } catch (error) {
-      setStatus(status, error.message || "Не вдалося зберегти налаштування.", true);
+      setStatus(status, error.message || t("market.referencePolicyFailed"), true);
     } finally {
       policySubmit.disabled = false;
     }
@@ -434,10 +434,10 @@ export async function initMarketData() {
     try {
       await decideMarketDataSnapshot(snapshotId, action, decisionReason.value.trim(), token);
       closeDecisionDialog();
-      setStatus(status, action === "approve" ? "Знімок затверджено." : "Знімок відхилено.");
+      setStatus(status, action === "approve" ? t("market.snapshotApprovedMessage") : t("market.snapshotRejectedMessage"));
       await refresh();
     } catch (error) {
-      setStatus(status, error.message || "Не вдалося зберегти рішення.", true);
+      setStatus(status, error.message || t("market.decisionSaveFailed"), true);
     } finally {
       decisionSubmit.disabled = false;
     }
