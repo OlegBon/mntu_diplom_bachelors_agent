@@ -443,6 +443,11 @@ export async function initAnalytics() {
   const loadAnalytics = async () => {
     const period = Object.fromEntries(new FormData(periodForm).entries());
     if (period.date_from && period.date_to && period.date_from > period.date_to) {
+      status.textContent = t("analytics.invalidPeriod");
+      status.hidden = false;
+      return;
+    }
+    if (period.date_from && period.date_to && period.date_from > period.date_to) {
       status.textContent = "Дата «Від» не може бути пізнішою за дату «До».";
       status.hidden = false;
       return;
@@ -462,15 +467,25 @@ export async function initAnalytics() {
           formatDateTime: dateTime,
         });
       } else narrativeResults.textContent = "Текстові метадані тимчасово недоступні.";
+      if (!narratives) narrativeResults.textContent = t("analytics.narrativesUnavailable");
       if (quality) renderOperationalQuality(qualityResults, quality, { formatDateTime: dateTime });
       else qualityResults.textContent = "Операційні метадані тимчасово недоступні.";
+      if (!quality) qualityResults.textContent = t("analytics.qualityUnavailable");
       renderAdmins(adminResults, admins);
       if (providers) renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
       else providerResults.textContent = "Метадані provider-ів тимчасово недоступні.";
+      if (!providers) providerResults.textContent = t("analytics.providersUnavailable");
       if (currency) renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);
       else currencyResults.textContent = "Метадані валютних джерел тимчасово недоступні.";
+      if (!currency) currencyResults.textContent = t("analytics.currencyUnavailable");
       periodSummaryNode.textContent = periodSummary(period);
     } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
+      status.textContent = error instanceof ApiRequestError && error.status === 403
+        ? t("analytics.adminOnly")
+        : t("analytics.loadFailed");
+      status.hidden = false;
+      return;
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
       status.textContent = error instanceof ApiRequestError && error.status === 403
         ? "Аналітика доступна лише адміністратору."
