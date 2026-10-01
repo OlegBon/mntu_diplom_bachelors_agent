@@ -442,5 +442,8 @@ export async function initMarketData() {
       decisionSubmit.disabled = false;
     }
   });
+  window.addEventListener("diamant:locale-change", () => {
+    if (!decisionDialog.open && !form.matches(":focus-within") && !policyForm.matches(":focus-within")) void refresh();
+  });
   registerVisibleDataRefresh(refresh, { canRefresh: () => !form.matches(":focus-within") });
 }
