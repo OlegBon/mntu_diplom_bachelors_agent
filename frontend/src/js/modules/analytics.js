@@ -44,6 +44,7 @@ function localizeAnalyticsShell(page) {
 }
 
 function fullName(row) {
+  return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || t("analytics.notSpecified");
   return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || "Не вказано";
 }
 

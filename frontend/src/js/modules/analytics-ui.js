@@ -12,6 +12,9 @@ export function duration(value) {
   const hours = Math.floor(value / 3600);
   const minutes = Math.floor((value % 3600) / 60);
   const seconds = value % 60;
+  if (hours) return t("analytics.durationHours", { hours, minutes });
+  if (minutes) return t("analytics.durationMinutes", { minutes, seconds });
+  return t("analytics.durationSeconds", { seconds });
   if (hours) return `${hours} год ${minutes} хв`;
   if (minutes) return `${minutes} хв ${seconds} с`;
   return `${seconds} с`;
