@@ -2,7 +2,7 @@ import { getDemoDataset, getDemoReports, getDemoNarrativeQualityAnalytics, getDe
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
 import { applyNarrativeCompleteness, narrativeCompletenessFromUrl, narrativePresenceFromUrl, readNarrativeCompleteness, readNarrativePresence } from "./narrative-completeness-filters.js";
-import { t } from "./i18n.js";
+import { formatCurrency, formatNumber, t } from "./i18n.js";
 
 const PREFERRED_DATASET_ID = "synthetic-demo-v4";
 const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
@@ -367,7 +367,7 @@ function renderSyntheticAdministrators(container, actors, datasetId) {
 }
 
 function formatUsd(value) {
-  return new Intl.NumberFormat("uk-UA", { style: "currency", currency: "USD" }).format(Number(value));
+  return formatCurrency(Number(value), "USD");
 }
 
 function openDemoProviderDialog(dialog, content, provider, datasetId) {
@@ -444,17 +444,13 @@ function renderDemoProviderAnalytics(container, data, datasetId, dialog, dialogC
 }
 
 function formatUsdPerCarat(value, compact = false) {
-  return `${new Intl.NumberFormat("uk-UA", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: compact ? 0 : 2,
-  }).format(Number(value))}/ct`;
+  return `${formatCurrency(Number(value), "USD", { maximumFractionDigits: compact ? 0 : 2 })}/ct`;
 }
 
 function formatCompactUsdPerCarat(value) {
   const amount = Number(value);
-  if (amount >= 1000) return `${(amount / 1000).toLocaleString("uk-UA", { maximumFractionDigits: 1 })}k`;
-  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 }).format(amount);
+  if (amount >= 1000) return `${formatNumber(amount / 1000, { maximumFractionDigits: 1 })}k`;
+  return formatNumber(amount, { maximumFractionDigits: 0 });
 }
 
 function createSomCellDetails() {
