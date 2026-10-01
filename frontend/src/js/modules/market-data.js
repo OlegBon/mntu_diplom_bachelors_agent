@@ -80,7 +80,7 @@ function renderPolicyMarketProviders(container, providers, enabledProviderCodes,
   container.replaceChildren();
   const marketProviders = providers.filter((provider) => provider.provider_type === "market_reference");
   if (!marketProviders.length) {
-    container.textContent = "Активних провайдерів ринкового орієнтиру немає.";
+    container.textContent = t("market.noActiveProviders");
     return;
   }
   for (const provider of marketProviders) {
@@ -104,7 +104,7 @@ function renderPolicyMarketProviders(container, providers, enabledProviderCodes,
     const text = document.createElement("span");
     text.textContent = `${provider.display_name} — ${provider.scope_note}`;
     const primaryText = document.createElement("span");
-    primaryText.textContent = " Основний для списку звітів";
+    primaryText.textContent = ` ${t("market.primaryForDashboard")}`;
     label.append(input, text, primary, primaryText);
     container.append(label);
   }
@@ -117,26 +117,26 @@ function renderProviderAccessPolicies(container, policies, administrators, onSav
     const providerNames = { nbu: "Національний банк України (НБУ)", openfacet: "OpenFacet" };
     const title = document.createElement("h3"); title.textContent = providerNames[policy.provider_code] || policy.provider_code;
     const modeGroup = document.createElement("div"); modeGroup.className = "form-group";
-    const modeLabel = document.createElement("label"); modeLabel.textContent = "Режим доступу";
+    const modeLabel = document.createElement("label"); modeLabel.textContent = t("market.accessMode");
     const mode = document.createElement("select"); mode.name = "access_mode"; mode.className = "form-control";
-    [["disabled", "Вимкнено"], ["restricted_trial", "Обмежений trial"], ["standard_internal", "Внутрішній стандартний"]].forEach(([value, text]) => {
+    [["disabled", t("market.disabled")], ["restricted_trial", t("market.restrictedTrial")], ["standard_internal", t("market.standardInternal")]].forEach(([value, text]) => {
       const option = document.createElement("option"); option.value = value; option.textContent = text; option.selected = value === policy.access_mode; mode.append(option);
     });
     modeLabel.append(mode); modeGroup.append(modeLabel);
     const limitGroup = document.createElement("div"); limitGroup.className = "form-group";
-    const limitLabel = document.createElement("label"); limitLabel.textContent = "Денний ліміт запитів";
+    const limitLabel = document.createElement("label"); limitLabel.textContent = t("market.dailyRequestLimit");
     const limit = document.createElement("input"); limit.type = "number"; limit.min = "1"; limit.name = "daily_request_limit"; limit.className = "form-control"; limit.value = policy.daily_request_limit || ""; limitLabel.append(limit); limitGroup.append(limitLabel);
     const expiryGroup = document.createElement("div"); expiryGroup.className = "form-group";
-    const expiryLabel = document.createElement("label"); expiryLabel.textContent = "Trial діє до (UTC)";
+    const expiryLabel = document.createElement("label"); expiryLabel.textContent = t("market.trialUntil");
     const expiry = document.createElement("input"); expiry.type = "datetime-local"; expiry.name = "trial_expires_at"; expiry.className = "form-control";
     expiry.value = policy.trial_expires_at ? new Date(policy.trial_expires_at).toISOString().slice(0, 16) : "";
     expiryLabel.append(expiry); expiryGroup.append(expiryLabel);
     const termsGroup = document.createElement("div"); termsGroup.className = "form-group";
-    const termsLabel = document.createElement("label"); termsLabel.textContent = "Посилання або коротка примітка до умов";
+    const termsLabel = document.createElement("label"); termsLabel.textContent = t("market.termsReference");
     const terms = document.createElement("input"); terms.type = "text"; terms.maxLength = 2000; terms.name = "terms_reference"; terms.className = "form-control"; terms.value = policy.terms_reference || ""; termsLabel.append(terms); termsGroup.append(termsLabel);
-    const note = document.createElement("p"); note.className = "account-help"; note.textContent = "Дозволено лише природні камені, внутрішнє використання; public display і ML у цьому релізі вимкнені.";
+    const note = document.createElement("p"); note.className = "account-help"; note.textContent = t("market.accessPolicyNote");
     const assignments = document.createElement("div"); assignments.className = "market-data-card__actions";
-    const assignmentTitle = document.createElement("p"); assignmentTitle.textContent = policy.access_mode === "restricted_trial" ? "Призначені адміністратори restricted trial:" : "Призначення доступні лише для restricted trial.";
+    const assignmentTitle = document.createElement("p"); assignmentTitle.textContent = policy.access_mode === "restricted_trial" ? t("market.assignedTrialAdministrators") : t("market.assignmentsTrialOnly");
     assignments.append(assignmentTitle);
     if (policy.access_mode === "restricted_trial") administrators.forEach((administrator) => {
       const label = document.createElement("label"); label.className = "market-data-confirmation";
@@ -145,8 +145,8 @@ function renderProviderAccessPolicies(container, policies, administrators, onSav
       label.append(input, document.createTextNode(`${administrator.last_name || ""} ${administrator.first_name || ""} (${administrator.username})`.trim())); assignments.append(label);
     });
     const actions = document.createElement("div"); actions.className = "form-actions";
-    const eventsButton = document.createElement("button"); eventsButton.type = "button"; eventsButton.className = "btn btn-outline"; eventsButton.textContent = "Показати журнал умов"; eventsButton.addEventListener("click", () => onEvents(policy.provider_code));
-    const button = document.createElement("button"); button.type = "submit"; button.className = "btn btn-primary"; button.textContent = "Зберегти умови";
+    const eventsButton = document.createElement("button"); eventsButton.type = "button"; eventsButton.className = "btn btn-outline"; eventsButton.textContent = t("market.showPolicyLog"); eventsButton.addEventListener("click", () => onEvents(policy.provider_code));
+    const button = document.createElement("button"); button.type = "submit"; button.className = "btn btn-primary"; button.textContent = t("market.saveTerms");
     actions.append(eventsButton, button);
     form.append(title, modeGroup, limitGroup, expiryGroup, termsGroup, note, assignments, actions);
     form.addEventListener("submit", async (event) => {
@@ -190,7 +190,7 @@ function formatScheduleTime(schedule) {
 function renderSchedules(container, schedules, providerNames, onSubmit) {
   container.replaceChildren();
   if (!schedules.length) {
-    container.textContent = "Графіки ще не створені. Застосуйте міграцію 0013_market_provider_operations.";
+    container.textContent = t("market.noSchedules");
     return;
   }
   for (const schedule of schedules) {
@@ -201,16 +201,16 @@ function renderSchedules(container, schedules, providerNames, onSubmit) {
     const freshness = document.createElement("p");
     freshness.textContent = `${t("market.dataState")}: ${FRESHNESS_LABELS[schedule.freshness_status] ? t(FRESHNESS_LABELS[schedule.freshness_status]) : schedule.freshness_status}${schedule.latest_retrieved_at ? ` · ${t("market.lastRetrieved")} ${formatDate(schedule.latest_retrieved_at)}` : ""}.`;
     const enabled = document.createElement("input"); enabled.type = "checkbox"; enabled.checked = schedule.enabled;
-    const enabledLabel = document.createElement("label"); enabledLabel.className = "market-data-confirmation"; enabledLabel.append(enabled, document.createTextNode("Увімкнути планове оновлення"));
+    const enabledLabel = document.createElement("label"); enabledLabel.className = "market-data-confirmation"; enabledLabel.append(enabled, document.createTextNode(t("market.enableScheduledRefresh")));
     const time = document.createElement("input"); time.type = "time"; time.className = "form-control"; time.value = formatScheduleTime(schedule);
     const warn = document.createElement("input"); warn.type = "number"; warn.className = "form-control"; warn.min = "1"; warn.max = "2160"; warn.value = schedule.warn_after_hours;
     const block = document.createElement("input"); block.type = "number"; block.className = "form-control"; block.min = "1"; block.max = "4320"; block.value = schedule.block_after_hours;
     const fields = document.createElement("div"); fields.className = "form-row";
-    for (const [labelText, input] of [["Час (Europe/Kyiv)", time], ["Попереджати через, год.", warn], ["Блокувати через, год.", block]]) {
+    for (const [labelText, input] of [[t("market.scheduleTime"), time], [t("market.warnAfterHours"), warn], [t("market.blockAfterHours"), block]]) {
       const group = document.createElement("div"); group.className = "form-group";
       const label = document.createElement("label"); label.textContent = labelText; label.append(input); group.append(label); fields.append(group);
     }
-    const submit = document.createElement("button"); submit.type = "submit"; submit.className = "btn btn-outline"; submit.textContent = "Зберегти графік";
+    const submit = document.createElement("button"); submit.type = "submit"; submit.className = "btn btn-outline"; submit.textContent = t("market.saveSchedule");
     form.append(title, freshness, enabledLabel, fields, submit);
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -220,7 +220,7 @@ function renderSchedules(container, schedules, providerNames, onSubmit) {
         scheduled_minute: minute, warn_after_hours: Number(warn.value), block_after_hours: Number(block.value),
       };
       if (!time.value || !Number.isInteger(hour) || !Number.isInteger(minute) || payload.block_after_hours < payload.warn_after_hours) {
-        onSubmit(null, "Перевірте час і пороги: блокування не може бути раніше попередження.");
+        onSubmit(null, t("market.invalidSchedule"));
         return;
       }
       submit.disabled = true;
