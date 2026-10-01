@@ -20,13 +20,14 @@ import {
   updateProviderAccessPolicy,
 } from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
+import { formatDate as formatLocalizedDate, t } from "./i18n.js";
 
-const STATUS_LABELS = { candidate: "Кандидат", approved: "Затверджено", rejected: "Відхилено" };
-const FRESHNESS_LABELS = { fresh: "Актуальні", warning: "Потребують оновлення", stale: "Застарілі", missing: "Знімків немає" };
-const OPERATION_STATUS_LABELS = { success: "Успішно", no_change: "Без змін", failed: "Помилка", skipped: "Пропущено" };
+const STATUS_LABELS = { candidate: "market.snapshotCandidate", approved: "market.snapshotApproved", rejected: "market.snapshotRejected" };
+const FRESHNESS_LABELS = { fresh: "market.fresh", warning: "market.warning", stale: "market.stale", missing: "market.missing" };
+const OPERATION_STATUS_LABELS = { success: "market.operationSuccess", no_change: "market.operationNoChange", failed: "market.operationFailed", skipped: "market.operationSkipped" };
 
 function formatDate(value) {
-  return value ? new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
+  return value ? formatLocalizedDate(new Date(value), { dateStyle: "medium", timeStyle: "short" }) : "—";
 }
 
 function setStatus(node, message, isError = false) {
@@ -54,7 +55,7 @@ function renderProviders(container, providers, fxSnapshots, onAction) {
     const title = document.createElement("h3"); title.textContent = provider.display_name;
     const note = document.createElement("p"); note.textContent = provider.scope_note;
     const links = document.createElement("p");
-    for (const [href, text] of [[provider.documentation_url, "Документація"], [provider.terms_url, "Умови використання"]]) {
+    for (const [href, text] of [[provider.documentation_url, t("market.documentation")], [provider.terms_url, t("market.terms")]]) {
       const link = document.createElement("a"); link.href = href; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = text;
       links.append(link, document.createTextNode(" · "));
     }
@@ -69,7 +70,7 @@ function renderProviders(container, providers, fxSnapshots, onAction) {
       card.append(rate);
     }
     const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-primary";
-    button.textContent = isNbu ? "Оновити зараз" : "Отримати кандидат";
+    button.textContent = t(isNbu ? "market.refreshNow" : "market.fetchCandidate");
     button.addEventListener("click", () => onAction(provider.provider_code, button));
     card.append(title, note, links, button); container.append(card);
   }
@@ -160,19 +161,19 @@ function renderProviderAccessPolicies(container, policies, administrators, onSav
 function renderSnapshots(container, snapshots, onDecision) {
   container.replaceChildren();
   if (!snapshots.length) {
-    const empty = document.createElement("p"); empty.className = "account-help"; empty.textContent = "Знімків ще немає."; container.append(empty); return;
+    const empty = document.createElement("p"); empty.className = "account-help"; empty.textContent = t("market.noSnapshots"); container.append(empty); return;
   }
   for (const snapshot of snapshots) {
     const card = document.createElement("article"); card.className = "market-data-card";
-    const title = document.createElement("h3"); title.textContent = `${snapshot.provider_code} · ${STATUS_LABELS[snapshot.status] || snapshot.status}`;
+    const title = document.createElement("h3"); title.textContent = `${snapshot.provider_code} · ${STATUS_LABELS[snapshot.status] ? t(STATUS_LABELS[snapshot.status]) : snapshot.status}`;
     const meta = document.createElement("p"); meta.textContent = `${snapshot.quote_count} котирувань · ${snapshot.currency_code} · ${snapshot.unit} · отримано ${formatDate(snapshot.retrieved_at)}`;
     const scope = document.createElement("p"); scope.textContent = snapshot.coverage_note;
-    const source = document.createElement("a"); source.href = snapshot.methodology_url; source.target = "_blank"; source.rel = "noopener noreferrer"; source.textContent = "Методологія джерела";
+    const source = document.createElement("a"); source.href = snapshot.methodology_url; source.target = "_blank"; source.rel = "noopener noreferrer"; source.textContent = t("market.sourceMethodology");
     card.append(title, meta, scope, source);
-    if (snapshot.decision_reason) { const decision = document.createElement("p"); decision.textContent = `Рішення: ${snapshot.decision_reason}`; card.append(decision); }
+    if (snapshot.decision_reason) { const decision = document.createElement("p"); decision.textContent = `${t("market.decision")}: ${snapshot.decision_reason}`; card.append(decision); }
     if (snapshot.status === "candidate") {
       const actions = document.createElement("div"); actions.className = "market-data-card__actions";
-      for (const [action, label, className] of [["approve", "Затвердити", "btn btn-primary"], ["reject", "Відхилити", "btn btn-outline"]]) {
+      for (const [action, label, className] of [["approve", t("market.approve"), "btn btn-primary"], ["reject", t("market.reject"), "btn btn-outline"]]) {
         const button = document.createElement("button"); button.type = "button"; button.className = className; button.textContent = label;
         button.addEventListener("click", () => onDecision(snapshot.snapshot_id, action)); actions.append(button);
       }
@@ -198,7 +199,7 @@ function renderSchedules(container, schedules, providerNames, onSubmit) {
     form.noValidate = true;
     const title = document.createElement("h3"); title.textContent = providerNames.get(schedule.provider_code) || schedule.provider_code;
     const freshness = document.createElement("p");
-    freshness.textContent = `Стан даних: ${FRESHNESS_LABELS[schedule.freshness_status] || schedule.freshness_status}${schedule.latest_retrieved_at ? ` · останнє отримання ${formatDate(schedule.latest_retrieved_at)}` : ""}.`;
+    freshness.textContent = `${t("market.dataState")}: ${FRESHNESS_LABELS[schedule.freshness_status] ? t(FRESHNESS_LABELS[schedule.freshness_status]) : schedule.freshness_status}${schedule.latest_retrieved_at ? ` · ${t("market.lastRetrieved")} ${formatDate(schedule.latest_retrieved_at)}` : ""}.`;
     const enabled = document.createElement("input"); enabled.type = "checkbox"; enabled.checked = schedule.enabled;
     const enabledLabel = document.createElement("label"); enabledLabel.className = "market-data-confirmation"; enabledLabel.append(enabled, document.createTextNode("Увімкнути планове оновлення"));
     const time = document.createElement("input"); time.type = "time"; time.className = "form-control"; time.value = formatScheduleTime(schedule);
@@ -232,15 +233,15 @@ function renderSchedules(container, schedules, providerNames, onSubmit) {
 function renderOperations(container, operations) {
   container.replaceChildren();
   if (!operations.length) {
-    container.textContent = "Операцій ще не було.";
+    container.textContent = t("market.noOperations");
     return;
   }
   for (const operation of operations) {
     const item = document.createElement("article"); item.className = "market-data-card";
     const title = document.createElement("h3");
-    title.textContent = `${operation.provider_code} · ${OPERATION_STATUS_LABELS[operation.status] || operation.status}`;
+    title.textContent = `${operation.provider_code} · ${OPERATION_STATUS_LABELS[operation.status] ? t(OPERATION_STATUS_LABELS[operation.status]) : operation.status}`;
     const details = document.createElement("p");
-    details.textContent = `${operation.trigger_type === "manual" ? "Вручну" : "За графіком"} · спроба ${operation.attempt_number} · ${formatDate(operation.completed_at)}.`;
+    details.textContent = `${operation.trigger_type === "manual" ? t("market.manual") : t("market.scheduled")} · ${t("market.attempt")} ${operation.attempt_number} · ${formatDate(operation.completed_at)}.`;
     item.append(title, details);
     if (operation.message) { const message = document.createElement("p"); message.textContent = operation.message; item.append(message); }
     container.append(item);
@@ -250,7 +251,7 @@ function renderOperations(container, operations) {
 function updateApprovedSnapshotOptions(select, snapshots) {
   const approved = snapshots.filter((snapshot) => snapshot.status === "approved");
   select.replaceChildren();
-  const placeholder = document.createElement("option"); placeholder.value = ""; placeholder.textContent = approved.length ? "Оберіть знімок" : "Немає затверджених знімків";
+  const placeholder = document.createElement("option"); placeholder.value = ""; placeholder.textContent = t(approved.length ? "market.selectSnapshot" : "market.noApprovedSnapshots");
   select.append(placeholder);
   for (const snapshot of approved) {
     const option = document.createElement("option"); option.value = snapshot.snapshot_id;
@@ -298,6 +299,10 @@ export async function initMarketData() {
     decisionReasonLabel.textContent = isApproval ? "Коментар до затвердження" : "Причина відхилення";
     decisionReason.placeholder = isApproval ? "Необов’язково" : "Необов’язково";
     decisionSubmit.textContent = isApproval ? "Затвердити знімок" : "Відхилити знімок";
+    decisionDescription.textContent = t(isApproval ? "market.decisionApproveDescription" : "market.decisionRejectDescription");
+    decisionReasonLabel.textContent = t(isApproval ? "market.approvalComment" : "market.rejectionReason");
+    decisionReason.placeholder = t("market.optional");
+    decisionSubmit.textContent = t(isApproval ? "market.approveSnapshot" : "market.rejectSnapshot");
     decisionDialog.showModal();
     decisionReason.focus();
   };

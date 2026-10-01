@@ -41,7 +41,6 @@
 | Пріоритет | Файл | Тема |
 | --- | --- | --- |
 | P1 | [175-i18n-core-and-shared-shell.md](./175-i18n-core-and-shared-shell.md) | English-first i18n core, shared shell, login and landing. |
-| P2 | [177-i18n-admin-demo-and-analytics.md](./177-i18n-admin-demo-and-analytics.md) | Admin, synthetic demo and analytics locales. |
 | P2 | [178-i18n-public-pdf-and-release-quality.md](./178-i18n-public-pdf-and-release-quality.md) | Public/PDF locales and final i18n quality gate. |
 | P2 | [151-analytics-data-contract-and-quality.md](./151-analytics-data-contract-and-quality.md) | Ліцензії, dataset, target, quality і reproducible splits. |
 | P2 | [152-verified-ml-experiment.md](./152-verified-ml-experiment.md) | Baseline, validation, artifact та model-result provenance. |

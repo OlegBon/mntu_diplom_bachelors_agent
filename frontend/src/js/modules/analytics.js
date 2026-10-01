@@ -1,9 +1,58 @@
 import { ApiRequestError, getAdminReviewStatistics, getExpertStatistics, getFxDataSnapshots, getNarrativeQualityAnalytics, getOperationalProviderAnalytics, getOperationalQualityAnalytics } from "./api.js";
 import { logout } from "./auth.js";
 import { duration, element, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
+import { formatDate, t } from "./i18n.js";
+
+function localizeAnalyticsShell(page) {
+  const textKeys = [
+    [".page-title", "analytics.title"],
+    [".page-subtitle", "analytics.subtitle"],
+    ["#analytics-tab-stones", "analytics.stones"],
+    ["#analytics-tab-experts", "analytics.experts"],
+    ["#analytics-tab-narratives", "analytics.texts"],
+    ["#analytics-tab-quality", "analytics.quality"],
+    ["#analytics-tab-admins", "analytics.administrators"],
+    ["#analytics-tab-providers", "analytics.providers"],
+    ["#analytics-tab-currency", "analytics.currencySources"],
+    ["#analytics-stones > h2", "analytics.stonesTitle"],
+    ["#analytics-experts > h2", "analytics.expertsTitle"],
+    ["#analytics-narratives > h2", "analytics.textsTitle"],
+    ["#analytics-quality > h2", "analytics.qualityTitle"],
+    ["#analytics-admins > h2", "analytics.administratorsTitle"],
+    ["#analytics-providers > h2", "analytics.providersTitle"],
+    ["#analytics-currency > h2", "analytics.currencyTitle"],
+    ["#analytics-expert-dialog-title", "analytics.expertDialogTitle"],
+    ["#analytics-provider-dialog-title", "analytics.providerDialogTitle"],
+    ["label[for=analytics-date-from]", "analytics.from"],
+    ["label[for=analytics-date-to]", "analytics.to"],
+    ["#analytics-period-form button[type=submit]", "analytics.applyPeriod"],
+    ["#analytics-period-reset", "analytics.allTime"],
+    ["#analytics-experts > .account-help", "analytics.expertsHelp"],
+    ["#analytics-narratives > .account-help", "analytics.textsHelp"],
+    ["#analytics-quality > .account-help", "analytics.qualityHelp"],
+    ["#analytics-admins > .account-help", "analytics.administratorsHelp"],
+    ["#analytics-providers > .account-help", "analytics.providersHelp"],
+    ["#analytics-currency > .account-help", "analytics.currencyHelp"],
+    ["#analytics-stones > .account-help", "analytics.stonesHelp"],
+  ];
+  for (const [selector, key] of textKeys) {
+    const element = page.querySelector(selector);
+    if (element) element.textContent = t(key);
+  }
+  page.querySelector(".analytics-tabs")?.setAttribute("aria-label", t("analytics.tabs"));
+  for (const closeButton of page.querySelectorAll(".account-dialog__close")) closeButton.setAttribute("aria-label", t("analytics.close"));
+}
 
 function fullName(row) {
+  return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || t("analytics.notSpecified");
   return [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") || "Не вказано";
+}
+
+function decisionLabel(value) {
+  if (value === "draft") return t("dashboard.statusDraft");
+  if (value === "issued") return t("dashboard.statusIssued");
+  if (value === "void") return t("dashboard.statusVoid");
+  return value;
 }
 
 const decisionLabels = {
@@ -14,10 +63,10 @@ const decisionLabels = {
 
 function dateTime(value) {
   if (!value) return null;
-  return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return formatDate(new Date(value), { dateStyle: "medium", timeStyle: "short" });
 }
 
-function openExpertDialog(dialog, dialogContent, row) {
+function openExpertDialogLegacy(dialog, dialogContent, row) {
   const fragment = document.createDocumentFragment();
   fragment.append(element("h3", "analytics-dialog-name", `${fullName(row)} (${row.expert_username})`));
   const metrics = element("dl", "analytics-metrics");
@@ -41,6 +90,48 @@ function openExpertDialog(dialog, dialogContent, row) {
   dialog.showModal();
 }
 
+function openExpertDialog(dialog, dialogContent, row) {
+  const fragment = document.createDocumentFragment();
+  fragment.append(element("h3", "analytics-dialog-name", `${fullName(row)} (${row.expert_username})`));
+  const metrics = element("dl", "analytics-metrics");
+  [
+    ["analytics.accountState", row.is_active ? t("analytics.active") : t("analytics.inactive")],
+    ["analytics.total", row.total_reports], ["analytics.drafts", row.draft_reports], ["analytics.underReview", row.review_reports], ["analytics.issued", row.issued_reports], ["analytics.void", row.void_reports],
+    ["analytics.completedSessions", row.completed_work_sessions], ["analytics.activeTime", duration(row.total_active_seconds)],
+    ["analytics.averageActiveSession", duration(row.avg_active_seconds)], ["analytics.medianActiveSession", duration(row.median_active_seconds)],
+    ["analytics.firstSaveMeasurements", row.completed_first_save_timings], ["analytics.timeToFirstSave", duration(row.total_time_to_first_save_seconds)],
+    ["analytics.averageTimeToFirstSave", duration(row.avg_time_to_first_save_seconds)], ["analytics.medianTimeToFirstSave", duration(row.median_time_to_first_save_seconds)],
+  ].forEach(([key, value]) => metrics.append(element("dt", "", t(key)), element("dd", "", String(value))));
+  fragment.append(
+    metrics,
+    element("p", "account-help", t("analytics.activeTimeHelp")),
+    element("p", "account-help", t("analytics.firstSaveHelp")),
+    renderLocalizedWorkSessionList("analytics.shortestActiveSessions", row.shortest_work_sessions),
+    renderLocalizedWorkSessionList("analytics.longestActiveSessions", row.longest_work_sessions),
+  );
+  dialogContent.replaceChildren(fragment);
+  dialog.showModal();
+}
+
+function renderLocalizedWorkSessionList(titleKey, items = []) {
+  const section = element("section", "analytics-review-list");
+  section.append(element("h3", "", t(titleKey)));
+  if (!items.length) {
+    section.append(element("p", "account-help", t("analytics.noActiveSessions")));
+    return section;
+  }
+  const list = document.createElement("ol");
+  items.forEach((item) => {
+    const row = document.createElement("li");
+    const reportLink = element("a", "", item.report_id);
+    reportLink.href = `/report-detail.html?id=${encodeURIComponent(item.report_id)}`;
+    row.append(reportLink, document.createTextNode(`: ${duration(item.duration_seconds)} · ${dateTime(item.finished_at)}`));
+    list.append(row);
+  });
+  section.append(list);
+  return section;
+}
+
 function renderWorkSessionList(title, items = []) {
   const section = element("section", "analytics-review-list");
   section.append(element("h3", "", title));
@@ -60,7 +151,7 @@ function renderWorkSessionList(title, items = []) {
   return section;
 }
 
-function renderExperts(container, rows, dialog, dialogContent) {
+function renderExpertsLegacy(container, rows, dialog, dialogContent) {
   renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано", "Активний час"], rows.map((row) => [
     (() => {
       const button = element("button", "analytics-expert-button", `${fullName(row)} (${row.expert_username})`);
@@ -71,6 +162,23 @@ function renderExperts(container, rows, dialog, dialogContent) {
     String(row.total_reports), String(row.draft_reports), String(row.review_reports),
     String(row.issued_reports), String(row.void_reports), duration(row.total_active_seconds),
   ]));
+}
+
+function renderExperts(container, rows, dialog, dialogContent) {
+  renderTable(container, [
+    t("analytics.expert"), t("analytics.state"), t("analytics.total"), t("analytics.drafts"),
+    t("analytics.underReview"), t("analytics.issued"), t("analytics.void"), t("analytics.activeTime"),
+  ], rows.map((row) => {
+    const button = element("button", "analytics-expert-button", `${fullName(row)} (${row.expert_username})`);
+    button.type = "button";
+    button.addEventListener("click", () => openExpertDialog(dialog, dialogContent, row));
+    return [
+      button,
+      row.is_active ? t("experts.active") : t("experts.inactive"),
+      String(row.total_reports), String(row.draft_reports), String(row.review_reports),
+      String(row.issued_reports), String(row.void_reports), duration(row.total_active_seconds),
+    ];
+  }));
 }
 
 function renderReviewList(title, items) {
@@ -92,7 +200,7 @@ function renderReviewList(title, items) {
   return section;
 }
 
-function renderAdmins(container, snapshot) {
+function renderAdminsLegacy(container, snapshot) {
   const fragment = document.createDocumentFragment();
   const queueText = snapshot.pending_review_count
     ? `Зараз на перевірці: ${snapshot.pending_review_count}.`
@@ -118,11 +226,58 @@ function renderAdmins(container, snapshot) {
   container.replaceChildren(fragment);
 }
 
+function renderLocalizedReviewList(titleKey, items) {
+  const section = element("section", "analytics-review-list");
+  section.append(element("h3", "", t(titleKey)));
+  if (!items.length) {
+    section.append(element("p", "account-help", t("analytics.noCompletedReviews")));
+    return section;
+  }
+  const list = document.createElement("ol");
+  for (const item of items) {
+    const row = document.createElement("li");
+    const reportLink = element("a", "", item.report_id);
+    reportLink.href = `/report-detail.html?id=${encodeURIComponent(item.report_id)}`;
+    row.append(reportLink, document.createTextNode(`: ${duration(item.duration_seconds)} · ${decisionLabel(item.decision)}`));
+    list.append(row);
+  }
+  section.append(list);
+  return section;
+}
+
+function renderAdmins(container, snapshot) {
+  const fragment = document.createDocumentFragment();
+  const queueText = snapshot.pending_review_count
+    ? t("analytics.pendingReview", { count: snapshot.pending_review_count })
+    : t("analytics.noPendingReview");
+  const oldest = dateTime(snapshot.oldest_review_started_at);
+  fragment.append(element("p", "analytics-queue", oldest ? `${queueText} ${t("analytics.oldestTransferred", { date: oldest })}` : queueText));
+  const cards = element("div", "analytics-admin-list");
+  for (const admin of snapshot.admins) {
+    const card = element("article", "analytics-admin-card");
+    card.append(element("h3", "", `${fullName(admin)} (${admin.admin_username})`));
+    const metrics = element("dl", "analytics-metrics");
+    [
+      ["analytics.completedReviews", admin.completed_reviews], ["analytics.issued", admin.issued_reports],
+      ["analytics.returned", admin.returned_to_draft], ["analytics.void", admin.voided_reports],
+      ["analytics.averageDuration", duration(admin.avg_review_duration_seconds)], ["analytics.medianDuration", duration(admin.median_review_duration_seconds)],
+    ].forEach(([key, value]) => metrics.append(element("dt", "", t(key)), element("dd", "", String(value))));
+    card.append(metrics, renderLocalizedReviewList("analytics.shortestReviews", admin.shortest_reviews), renderLocalizedReviewList("analytics.longestReviews", admin.longest_reviews));
+    cards.append(card);
+  }
+  fragment.append(snapshot.admins.length ? cards : element("p", "account-help", t("analytics.noAdministrators")));
+  container.replaceChildren(fragment);
+}
+
 function providerFreshnessLabel(value) {
+  if (value === "fresh") return t("analytics.fresh");
+  if (value === "warning") return t("analytics.warning");
+  if (value === "stale") return t("analytics.stale");
+  if (value === "missing") return t("analytics.missingSnapshot");
   return { fresh: "Актуальний", warning: "Потребує уваги", stale: "Застарілий", missing: "Немає знімка" }[value] || value;
 }
 
-function openProviderDialog(dialog, content, provider) {
+function openProviderDialogLegacy(dialog, content, provider) {
   const coverage = provider.coverage;
   const fragment = document.createDocumentFragment();
   fragment.append(element("h3", "analytics-dialog-name", provider.display_name));
@@ -163,7 +318,54 @@ function openProviderDialog(dialog, content, provider) {
   content.replaceChildren(fragment); dialog.showModal();
 }
 
-function renderProviders(container, providers, dialog, dialogContent) {
+function providerAccessModeLabel(value) {
+  return {
+    disabled: t("analytics.disabled"),
+    restricted_trial: t("analytics.restrictedTrial"),
+    standard_internal: t("analytics.standardInternal"),
+  }[value] || t("analytics.notConfigured");
+}
+
+function openProviderDialog(dialog, content, provider) {
+  const coverage = provider.coverage;
+  const fragment = document.createDocumentFragment();
+  fragment.append(element("h3", "analytics-dialog-name", provider.display_name));
+  const metrics = element("dl", "analytics-metrics");
+  [
+    ["analytics.freshnessState", providerFreshnessLabel(provider.freshness_status)],
+    ["analytics.latestApprovedSnapshot", provider.latest_snapshot_id ? `#${provider.latest_snapshot_id}` : t("analytics.noValue")],
+    ["analytics.snapshotCount", provider.snapshots_total], ["analytics.candidates", provider.snapshots_candidate], ["analytics.approvedCount", provider.snapshots_approved], ["analytics.rejectedCount", provider.snapshots_rejected],
+    ["analytics.totalAttempts", provider.operations_total], ["analytics.scheduled", provider.scheduled_operations], ["analytics.manual", provider.manual_operations], ["analytics.retries", provider.retry_operations], ["analytics.failedAttempts", provider.failed_operations],
+    ["analytics.draftsInRange", coverage.candidate_draft_reports], ["analytics.coveredByReference", coverage.covered_draft_reports], ["analytics.excludedByOrigin", coverage.excluded_non_natural_reports], ["analytics.missingCharacteristics", coverage.missing_characteristics_reports], ["analytics.noCurrentSnapshot", coverage.snapshot_unavailable_reports], ["analytics.quoteNotCovered", coverage.quote_not_covered_reports],
+  ].forEach(([key, value]) => metrics.append(element("dt", "", t(key)), element("dd", "", String(value))));
+  fragment.append(metrics, element("p", "account-help", provider.scope_note));
+  const policy = element("section", "analytics-review-list");
+  policy.append(element("h3", "", t("analytics.providerAccess")));
+  const policyMetrics = element("dl", "analytics-metrics");
+  [
+    ["analytics.accessMode", providerAccessModeLabel(provider.access_mode)],
+    ["analytics.trialUntil", dateTime(provider.trial_expires_at) || t("analytics.notApplicable")],
+    ["analytics.dailyLimit", provider.daily_request_limit || t("analytics.notApplicable")],
+    ["analytics.assignedAdministrators", provider.assigned_admin_count],
+    ["analytics.lastPolicyChange", provider.last_policy_event_at ? `${dateTime(provider.last_policy_event_at)} · ${provider.last_policy_event_action}` : t("analytics.noPolicyEvents")],
+  ].forEach(([key, value]) => policyMetrics.append(element("dt", "", t(key)), element("dd", "", String(value))));
+  policy.append(policyMetrics, element("p", "account-help", t("analytics.policyReadOnlyHelp")));
+  fragment.append(policy);
+  if (coverage.covered_report_ids.length) {
+    const links = element("p", "account-help", t("analytics.coveredReports"));
+    coverage.covered_report_ids.forEach((reportId, index) => {
+      if (index) links.append(document.createTextNode(", "));
+      const link = element("a", "", reportId);
+      link.href = `/report-detail.html?id=${encodeURIComponent(reportId)}`;
+      links.append(link);
+    });
+    fragment.append(links);
+  }
+  content.replaceChildren(fragment);
+  dialog.showModal();
+}
+
+function renderProvidersLegacy(container, providers, dialog, dialogContent) {
   renderTable(container, ["Провайдер", "Freshness", "Знімки", "Спроби", "Coverage чернеток"], providers.map((provider) => {
     const button = element("button", "analytics-expert-button", provider.display_name);
     button.type = "button"; button.addEventListener("click", () => openProviderDialog(dialog, dialogContent, provider));
@@ -172,12 +374,30 @@ function renderProviders(container, providers, dialog, dialogContent) {
   }), "Активних ринкових provider-ів поки немає.");
 }
 
+function renderProviders(container, providers, dialog, dialogContent) {
+  renderTable(container, [
+    t("analytics.provider"), t("analytics.freshness"), t("analytics.snapshots"), t("analytics.attempts"), t("analytics.draftCoverage"),
+  ], providers.map((provider) => {
+    const button = element("button", "analytics-expert-button", provider.display_name);
+    button.type = "button";
+    button.addEventListener("click", () => openProviderDialog(dialog, dialogContent, provider));
+    const coverage = provider.coverage;
+    return [
+      button,
+      providerFreshnessLabel(provider.freshness_status),
+      `${provider.snapshots_approved}/${provider.snapshots_total} ${t("analytics.approved")}`,
+      `${provider.failed_operations} ${t("analytics.failed")} · ${provider.retry_operations} ${t("analytics.retry")}`,
+      `${coverage.covered_draft_reports}/${coverage.candidate_draft_reports} ${t("analytics.covered")}`,
+    ];
+  }), t("analytics.noActiveProviders"));
+}
+
 function renderCurrencySources(container, snapshots, dialog, dialogContent) {
   const formatCurrencyDateTime = (value) => {
     const parsed = new Date(value);
     return {
-      date: new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(parsed),
-      time: new Intl.DateTimeFormat("uk-UA", { timeStyle: "short" }).format(parsed),
+      date: formatDate(parsed, { dateStyle: "medium" }),
+      time: formatDate(parsed, { timeStyle: "short" }),
     };
   };
   renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatCurrencyDateTime);
@@ -187,6 +407,8 @@ function renderCurrencySources(container, snapshots, dialog, dialogContent) {
 export async function initAnalytics() {
   const page = document.querySelector("[data-analytics-page]");
   if (!page) return;
+  localizeAnalyticsShell(page);
+  window.addEventListener("diamant:locale-change", () => localizeAnalyticsShell(page));
   const status = document.getElementById("analytics-status");
   const token = localStorage.getItem("token");
   const expertResults = document.getElementById("analytics-expert-results");
@@ -221,6 +443,11 @@ export async function initAnalytics() {
   const loadAnalytics = async () => {
     const period = Object.fromEntries(new FormData(periodForm).entries());
     if (period.date_from && period.date_to && period.date_from > period.date_to) {
+      status.textContent = t("analytics.invalidPeriod");
+      status.hidden = false;
+      return;
+    }
+    if (period.date_from && period.date_to && period.date_from > period.date_to) {
       status.textContent = "Дата «Від» не може бути пізнішою за дату «До».";
       status.hidden = false;
       return;
@@ -240,15 +467,25 @@ export async function initAnalytics() {
           formatDateTime: dateTime,
         });
       } else narrativeResults.textContent = "Текстові метадані тимчасово недоступні.";
+      if (!narratives) narrativeResults.textContent = t("analytics.narrativesUnavailable");
       if (quality) renderOperationalQuality(qualityResults, quality, { formatDateTime: dateTime });
       else qualityResults.textContent = "Операційні метадані тимчасово недоступні.";
+      if (!quality) qualityResults.textContent = t("analytics.qualityUnavailable");
       renderAdmins(adminResults, admins);
       if (providers) renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
       else providerResults.textContent = "Метадані provider-ів тимчасово недоступні.";
+      if (!providers) providerResults.textContent = t("analytics.providersUnavailable");
       if (currency) renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);
       else currencyResults.textContent = "Метадані валютних джерел тимчасово недоступні.";
+      if (!currency) currencyResults.textContent = t("analytics.currencyUnavailable");
       periodSummaryNode.textContent = periodSummary(period);
     } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
+      status.textContent = error instanceof ApiRequestError && error.status === 403
+        ? t("analytics.adminOnly")
+        : t("analytics.loadFailed");
+      status.hidden = false;
+      return;
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
       status.textContent = error instanceof ApiRequestError && error.status === 403
         ? "Аналітика доступна лише адміністратору."
@@ -256,6 +493,7 @@ export async function initAnalytics() {
       status.hidden = false;
     }
   };
+  window.addEventListener("diamant:locale-change", () => { void loadAnalytics(); });
   periodForm.addEventListener("submit", (event) => { event.preventDefault(); loadAnalytics(); });
   periodReset.addEventListener("click", () => { periodForm.reset(); loadAnalytics(); });
   await loadAnalytics();

@@ -1,3 +1,5 @@
+import { formatDate, formatNumber, t } from "./i18n.js";
+
 export function element(tagName, className, text) {
   const node = document.createElement(tagName);
   if (className) node.className = className;
@@ -10,16 +12,24 @@ export function duration(value) {
   const hours = Math.floor(value / 3600);
   const minutes = Math.floor((value % 3600) / 60);
   const seconds = value % 60;
+  if (hours) return t("analytics.durationHours", { hours, minutes });
+  if (minutes) return t("analytics.durationMinutes", { minutes, seconds });
+  return t("analytics.durationSeconds", { seconds });
   if (hours) return `${hours} год ${minutes} хв`;
   if (minutes) return `${minutes} хв ${seconds} с`;
   return `${seconds} с`;
 }
 
 export function formatPeriodDate(value) {
+  return formatDate(new Date(`${value}T00:00:00`), { dateStyle: "medium" });
   return new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${value}T00:00:00`));
 }
 
 export function periodSummary(period) {
+  if (period.date_from && period.date_to) return t("analytics.periodRange", { from: formatPeriodDate(period.date_from), to: formatPeriodDate(period.date_to) });
+  if (period.date_from) return t("analytics.periodFrom", { from: formatPeriodDate(period.date_from) });
+  if (period.date_to) return t("analytics.periodTo", { to: formatPeriodDate(period.date_to) });
+  return t("analytics.periodAll");
   if (period.date_from && period.date_to) return `Поточний зріз: з ${formatPeriodDate(period.date_from)} до ${formatPeriodDate(period.date_to)}`;
   if (period.date_from) return `Поточний зріз: від ${formatPeriodDate(period.date_from)}`;
   if (period.date_to) return `Поточний зріз: до ${formatPeriodDate(period.date_to)}`;
@@ -54,6 +64,7 @@ export function renderTable(container, headers, rows, emptyMessage = "Даних
 }
 
 function narrativeNumber(value) {
+  if (value !== null && value !== undefined) return formatNumber(value, { maximumFractionDigits: 2 });
   if (value === null || value === undefined) return "—";
   return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 2 }).format(value);
 }
@@ -80,7 +91,7 @@ function renderNarrativeSamples(title, samples, reportHref, formatDateTime) {
   return section;
 }
 
-export function renderNarrativeAnalytics(container, snapshot, { reportHref, formatDateTime }) {
+function renderNarrativeAnalyticsLegacy(container, snapshot, { reportHref, formatDateTime }) {
   const cards = element("div", "analytics-narrative-list");
   snapshot.fields.forEach((field) => {
     const card = element("article", "analytics-admin-card analytics-narrative-card");
@@ -103,6 +114,57 @@ export function renderNarrativeAnalytics(container, snapshot, { reportHref, form
   container.replaceChildren(cards);
 }
 
+function localizedSampleDate(value, formatDateTime) {
+  const formatted = formatDateTime(value);
+  return typeof formatted === "string" ? formatted : `${formatted.date} ${formatted.time}`;
+}
+
+function renderLocalizedNarrativeSamples(titleKey, samples, reportHref, formatDateTime) {
+  const section = element("section", "analytics-review-list");
+  section.append(element("h3", "", t(titleKey)));
+  if (!samples.length) {
+    section.append(element("p", "account-help", t("analytics.noValues")));
+    return section;
+  }
+  const list = document.createElement("ol");
+  for (const sample of samples) {
+    const row = document.createElement("li");
+    const link = element("a", "", sample.report_id);
+    link.href = reportHref(sample.report_id);
+    const date = localizedSampleDate(sample.occurred_at, formatDateTime);
+    const description = sample.word_count === 0 && sample.non_whitespace_char_count === 0
+      ? `: ${t("analytics.emptyValue")} · ${date}`
+      : `: ${t("analytics.sampleMetrics", { words: sample.word_count, characters: sample.non_whitespace_char_count, date })}`;
+    row.append(link, document.createTextNode(description));
+    list.append(row);
+  }
+  section.append(list);
+  return section;
+}
+
+export function renderNarrativeAnalytics(container, snapshot, { reportHref, formatDateTime }) {
+  const cards = element("div", "analytics-narrative-list");
+  for (const field of snapshot.fields) {
+    const card = element("article", "analytics-admin-card analytics-narrative-card");
+    card.append(element("h3", "", field.label));
+    const metrics = element("dl", "analytics-metrics");
+    [
+      ["analytics.totalInRange", field.candidate_count], ["analytics.nonEmptyValues", field.non_empty_count],
+      ["analytics.emptyValues", field.empty_count], ["analytics.medianWords", narrativeNumber(field.median_word_count)],
+      ["analytics.averageWords", narrativeNumber(field.average_word_count)], ["analytics.medianCharacters", narrativeNumber(field.median_non_whitespace_char_count)],
+      ["analytics.averageCharacters", narrativeNumber(field.average_non_whitespace_char_count)],
+    ].forEach(([labelKey, value]) => metrics.append(element("dt", "", t(labelKey)), element("dd", "", String(value))));
+    card.append(metrics, element("p", "account-help", field.source_semantics));
+    card.append(
+      renderLocalizedNarrativeSamples("analytics.shortest", field.shortest, reportHref, formatDateTime),
+      renderLocalizedNarrativeSamples("analytics.longest", field.longest, reportHref, formatDateTime),
+      renderLocalizedNarrativeSamples("analytics.emptySamples", field.empty_samples, reportHref, formatDateTime),
+    );
+    cards.append(card);
+  }
+  container.replaceChildren(cards);
+}
+
 function renderCoverageTable(title, rows) {
   const section = element("section", "analytics-quality-section");
   section.append(element("h3", "", title));
@@ -114,7 +176,7 @@ function renderCoverageTable(title, rows) {
   return section;
 }
 
-export function renderOperationalQuality(container, snapshot, { formatDateTime }) {
+function renderOperationalQualityLegacy(container, snapshot, { formatDateTime }) {
   const isDemo = snapshot.scope === "demo";
   const fragment = document.createDocumentFragment();
   const workflow = element("section", "analytics-quality-section");
@@ -160,7 +222,7 @@ export function renderOperationalQuality(container, snapshot, { formatDateTime }
   container.replaceChildren(fragment);
 }
 
-export function renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatDateTime, tableClass = "") {
+function renderNbuCurrencySourceLegacy(container, snapshots, dialog, dialogContent, formatDateTime, tableClass = "") {
   container.replaceChildren();
   if (!snapshots.length) {
     container.append(element("p", "account-help", "Знімків офіційного курсу НБУ за цим зрізом поки немає."));
@@ -193,5 +255,73 @@ export function renderNbuCurrencySource(container, snapshots, dialog, dialogCont
     `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`,
     String(snapshots.length),
   ]]);
+  container.append(tableHost);
+}
+
+function localizedCoverageTable(titleKey, rows) {
+  const section = element("section", "analytics-quality-section");
+  section.append(element("h3", "", t(titleKey)));
+  const tableHost = element("div", "analytics-quality-table");
+  renderTable(tableHost, [t("analytics.field"), t("analytics.filled"), t("analytics.missing")], rows.map((row) => [
+    row.label, `${row.filled_count} / ${row.applicable_count}`, String(row.missing_count),
+  ]));
+  section.append(tableHost);
+  return section;
+}
+
+export function renderOperationalQuality(container, snapshot, { formatDateTime }) {
+  const isDemo = snapshot.scope === "demo";
+  const buildSection = (titleKey, rows, helpKey) => {
+    const section = element("section", "analytics-quality-section");
+    const metrics = element("dl", "analytics-metrics");
+    rows.forEach(([labelKey, value]) => metrics.append(element("dt", "", t(labelKey)), element("dd", "", String(value))));
+    section.append(element("h3", "", t(titleKey)), metrics, element("p", "account-help", t(helpKey)));
+    return section;
+  };
+  const workflow = [
+    [isDemo ? "analytics.completedSyntheticDraft" : "analytics.created", snapshot.workflow_created_count],
+    [isDemo ? "analytics.sentToSyntheticReview" : "analytics.sentToReview", snapshot.workflow_sent_to_review_count],
+    ["analytics.returnedToDraft", snapshot.workflow_returned_to_draft_count], ["analytics.issued", snapshot.workflow_issued_count],
+    ["analytics.void", snapshot.workflow_voided_count], ["analytics.repeatReturns", snapshot.workflow_repeat_return_count],
+  ];
+  const cohort = [
+    [isDemo ? "analytics.demoReportsInRange" : "analytics.reportsCreatedInRange", snapshot.report_cohort_count],
+    ["analytics.drafts", snapshot.current_status_counts.draft], ["analytics.underReview", snapshot.current_status_counts.review],
+    ["analytics.issued", snapshot.current_status_counts.issued], ["analytics.void", snapshot.current_status_counts.void],
+    [isDemo ? "analytics.currentSyntheticQueue" : "analytics.currentQueue", snapshot.current_review_count],
+    ["analytics.oldestCurrentReview", formatDateTime(snapshot.oldest_current_review_started_at) || t("analytics.notModeled")],
+  ];
+  const delivery = snapshot.delivery_is_modeled
+    ? [["analytics.reportsWithPrivateMedia", snapshot.reports_with_media_count], ["analytics.activePublicPassports", snapshot.active_public_passport_count], ["analytics.issuedWithoutPassport", snapshot.issued_without_active_passport_count]]
+    : [["analytics.reportsWithPrivateMedia", t("analytics.notModeled")], ["analytics.activePublicPassports", t("analytics.notModeled")], ["analytics.deliveryReadiness", t("analytics.notModeled")]];
+  const fragment = document.createDocumentFragment();
+  fragment.append(
+    buildSection(isDemo ? "analytics.syntheticWorkflowTitle" : "analytics.workflowTitle", workflow, isDemo ? "analytics.syntheticWorkflowHelp" : "analytics.workflowHelp"),
+    buildSection("analytics.currentCohort", cohort, isDemo ? "analytics.syntheticCohortHelp" : "analytics.cohortHelp"),
+    localizedCoverageTable("analytics.requiredFields", snapshot.required_field_coverage),
+    localizedCoverageTable("analytics.optionalFields", snapshot.optional_field_coverage),
+    buildSection("analytics.deliveryReadiness", delivery, snapshot.delivery_is_modeled ? "analytics.deliveryHelp" : "analytics.syntheticDeliveryHelp"),
+  );
+  container.replaceChildren(fragment);
+}
+
+export function renderNbuCurrencySource(container, snapshots, dialog, dialogContent, formatDateTime, tableClass = "") {
+  container.replaceChildren();
+  if (!snapshots.length) {
+    container.append(element("p", "account-help", t("analytics.noCurrencySnapshots")));
+    return;
+  }
+  const latest = snapshots[0];
+  const rate = formatNumber(latest.rate, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const sourceButton = element("button", "analytics-expert-button", t("analytics.nbu"));
+  sourceButton.type = "button";
+  sourceButton.addEventListener("click", () => {
+    const metrics = element("dl", "analytics-metrics");
+    [["analytics.sourceType", t("analytics.officialCurrencyProvider")], ["analytics.dataOrigin", t("analytics.officialNbuService")], ["analytics.valueType", `${latest.base_currency_code}/${latest.quote_currency_code} ${t("analytics.officialFxRate")}`], ["analytics.snapshotCount", snapshots.length], ["analytics.latestRate", `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`], ["analytics.officialRateDate", formatDateTime(`${latest.rate_date}T00:00:00`).date], ["analytics.retrieved", `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`]].forEach(([label, value]) => metrics.append(element("dt", "", t(label)), element("dd", "", String(value))));
+    dialogContent.replaceChildren(element("h3", "analytics-dialog-name", t("analytics.nbu")), metrics, element("p", "account-help", t("analytics.fxHelp")));
+    dialog.showModal();
+  });
+  const tableHost = element("div", tableClass || "analytics-currency-sources");
+  renderTable(tableHost, [t("analytics.currencySource"), t("analytics.pair"), t("analytics.latestRate"), t("analytics.officialRateDate"), t("analytics.retrieved"), t("analytics.snapshotCount")], [[sourceButton, `${latest.base_currency_code}/${latest.quote_currency_code}`, `1 ${latest.base_currency_code} = ${rate} ${latest.quote_currency_code}`, formatDateTime(`${latest.rate_date}T00:00:00`).date, `${formatDateTime(latest.retrieved_at).date}, ${formatDateTime(latest.retrieved_at).time}`, String(snapshots.length)]]);
   container.append(tableHost);
 }

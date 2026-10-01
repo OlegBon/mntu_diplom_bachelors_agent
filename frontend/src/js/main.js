@@ -176,7 +176,10 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   if (!isAuthenticated) {
     if (protectedPage) protectedPage.hidden = false;
-    if (homeLoginCta) homeLoginCta.hidden = false;
+    if (homeLoginCta) {
+      homeLoginCta.hidden = false;
+      homeLoginCta.classList.remove("home-login-cta--pending");
+    }
     applyApprovedNavigation(false);
   }
 

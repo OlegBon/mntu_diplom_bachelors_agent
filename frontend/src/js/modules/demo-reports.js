@@ -2,6 +2,7 @@ import { getDemoDataset, getDemoReports, getDemoNarrativeQualityAnalytics, getDe
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
 import { applyNarrativeCompleteness, narrativeCompletenessFromUrl, narrativePresenceFromUrl, readNarrativeCompleteness, readNarrativePresence } from "./narrative-completeness-filters.js";
+import { t } from "./i18n.js";
 
 const PREFERRED_DATASET_ID = "synthetic-demo-v4";
 const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
@@ -9,8 +10,102 @@ const PAGE_SIZE = 25;
 const REPORT_STATUS_LABELS = { issued: "Видано", void: "Анульовано" };
 const SALE_STATUS_LABELS = { not_for_sale: "Не продається" };
 
+function localizeDemoShell(root) {
+  const textKeys = [
+    [".page-title", "demo.title"],
+    [".page-subtitle", "demo.subtitle"],
+    ["#demo-tab-reports", "demo.reports"],
+    ["#demo-tab-stones", "demo.stones"],
+    ["#demo-tab-experts", "demo.experts"],
+    ["#demo-tab-narratives", "demo.texts"],
+    ["#demo-tab-quality", "demo.quality"],
+    ["#demo-tab-administrators", "demo.administrators"],
+    ["#demo-tab-providers", "demo.providers"],
+    ["#demo-tab-currency", "demo.currencySources"],
+    ["#demo-toggle-filters", "demo.filters"],
+    ["#demo-dashboard-filters button[type=submit]", "demo.apply"],
+    ["#demo-dashboard-filters button[type=reset]", "demo.clear"],
+    ["label[for=demo-workflow-date-from]", "demo.from"],
+    ["label[for=demo-workflow-date-to]", "demo.to"],
+    ["#demo-workflow-slice button[type=submit]", "demo.applyPeriod"],
+    ["#demo-workflow-slice button[type=reset]", "demo.allTime"],
+    ["label[for=demo-shape-filter]", "demo.shape"],
+    ["label[for=demo-carat-min]", "demo.carat"],
+    ["label[for=demo-color-filter]", "demo.color"],
+    ["label[for=demo-clarity-filter]", "demo.clarity"],
+    ["label[for=demo-cut-filter]", "demo.cut"],
+    ["label[for=demo-price-min]", "demo.referenceUsd"],
+    ["label[for=demo-date-from]", "demo.createdFrom"],
+    ["label[for=demo-date-to]", "demo.createdTo"],
+    [".demo-scope__showcase strong", "demo.previewTitle"],
+    [".demo-scope__showcase p", "demo.previewDescription"],
+    [".demo-scope__showcase a", "demo.openPreview"],
+    ["#demo-currency-panel h2", "demo.currencyTitle"],
+    ["#demo-experts-panel h2", "demo.workflowTitle"],
+    ["#demo-narratives-panel h2", "demo.narrativesTitle"],
+    ["#demo-quality-panel h2", "demo.qualityTitle"],
+    ["#demo-administrators-panel h2", "demo.administratorsTitle"],
+    ["#demo-providers-panel h2", "demo.providersTitle"],
+    ["#demo-stones-panel h2", "demo.somTitle"],
+    ["#demo-workflow-actor-dialog-title", "demo.workflowDialogTitle"],
+    ["#demo-provider-dialog-title", "demo.providerDialogTitle"],
+    ["#demo-currency-panel > .account-help", "demo.currencyHelp"],
+    ["#demo-experts-panel > .account-help", "demo.expertsHelp"],
+    ["#demo-narratives-panel > .account-help", "demo.textsHelp"],
+    ["#demo-quality-panel > .account-help", "demo.qualityHelp"],
+    ["#demo-administrators-panel > .account-help", "demo.administratorsHelp"],
+    ["#demo-providers-panel > .account-help", "demo.providersHelp"],
+    ["#demo-stones-panel > .account-help", "demo.somHelp"],
+  ];
+  for (const [selector, key] of textKeys) {
+    const element = root.querySelector(selector);
+    if (element) element.textContent = t(key);
+  }
+  root.querySelector(".analytics-tabs")?.setAttribute("aria-label", t("demo.tabs"));
+  const search = root.querySelector("#demo-report-search");
+  if (search) {
+    search.placeholder = t("demo.searchReports");
+    search.setAttribute("aria-label", t("demo.searchReports"));
+  }
+  [["#demo-quick-report-status", "demo.allReportStatuses"], ["#demo-quick-market-status", "demo.allSaleStatuses"], ["#demo-expert-filter", "demo.allExperts"]].forEach(([selector, key]) => {
+    const select = root.querySelector(selector);
+    if (select?.options[0]) select.options[0].textContent = t(key);
+  });
+  const sortKeys = { report_id: "demo.reportId", report_date: "demo.date", shape: "demo.shape", carat: "demo.carat", color: "demo.color", clarity: "demo.clarity", cut: "demo.cut", price: "demo.priceUsd", report_status: "demo.reportStatus", market_status: "demo.saleStatus" };
+  root.querySelectorAll("[data-demo-sort-key]").forEach((button) => {
+    const key = sortKeys[button.dataset.demoSortKey];
+    if (!key) return;
+    const label = t(key);
+    button.textContent = label;
+    button.setAttribute("aria-label", t("demo.sortBy", { field: label }));
+  });
+  const actionsHeader = root.querySelector("#demo-reports-panel table thead th:last-child");
+  if (actionsHeader) actionsHeader.textContent = t("demo.actions");
+  for (const closeButton of root.querySelectorAll(".account-dialog__close")) closeButton.setAttribute("aria-label", t("demo.close"));
+
+  const notice = root.querySelector(".demo-scope__notice");
+  const marker = notice?.querySelector("strong");
+  if (!notice || !marker) return;
+  for (const node of [...notice.childNodes]) {
+    if (node !== marker) node.remove();
+  }
+  const copy = document.createElement("span");
+  copy.textContent = ` ${t("demo.syntheticNotice")}`;
+  notice.append(copy);
+}
+
 function createBadge(value, kind) {
   return createElement("span", `status-badge status-badge--${kind}`, value);
+}
+
+function reportStatusLabel(status) {
+  if (status === "issued") return t("dashboard.statusIssued");
+  if (status === "void") return t("dashboard.statusVoid");
+  return status;
+}
+
+function saleStatusLabel(status) {
+  return status === "not_for_sale" ? t("dashboard.notSold") : status;
 }
 
 function getUrlState() {
@@ -87,6 +182,12 @@ function renderActions(report, datasetId) {
   print.rel = "noopener noreferrer";
   const som = createElement("a", "report-actions__item", "Аналіз SOM");
   som.href = `/demo-reports.html?tab=stones&som_report=${encodeURIComponent(report.report_id)}`;
+  toggle.setAttribute("aria-label", t("demo.reportActions", { reportId: report.report_id }));
+  detail.textContent = t("demo.view");
+  edit.textContent = t("demo.edit");
+  edit.title = t("demo.readOnly");
+  print.textContent = t("demo.print");
+  som.textContent = t("demo.somAnalysis");
   menu.append(detail, som, edit, print);
   toggle.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -128,10 +229,10 @@ function renderRows(tbody, reports, labelFor, datasetId) {
     price.append(renderMarketReferencePrice(report));
     row.append(price);
     const reportStatus = document.createElement("td");
-    reportStatus.append(createBadge(REPORT_STATUS_LABELS[report.status] || report.status, report.status));
+    reportStatus.append(createBadge(reportStatusLabel(report.status), report.status));
     row.append(reportStatus);
     const saleStatus = document.createElement("td");
-    saleStatus.append(createBadge(SALE_STATUS_LABELS[report.stone.market_status] || report.stone.market_status, "sale-not-sold"));
+    saleStatus.append(createBadge(saleStatusLabel(report.stone.market_status), "sale-not-sold"));
     row.append(saleStatus);
     const actions = document.createElement("td");
     actions.append(renderActions(report, datasetId));
@@ -709,6 +810,8 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
 export async function initDemoReports() {
   const root = document.querySelector("[data-demo-reports]");
   if (!root || localStorage.getItem("role") !== "admin") return;
+  localizeDemoShell(root);
+  window.addEventListener("diamant:locale-change", () => localizeDemoShell(root));
   const token = localStorage.getItem("token");
   const tbody = root.querySelector("#demo-reports-body");
   const pagination = root.querySelector("#demo-pagination");
@@ -775,6 +878,7 @@ export async function initDemoReports() {
     }
   };
 
+  window.addEventListener("diamant:locale-change", () => { void load(state); });
   let searchTimer;
   search.addEventListener("input", () => {
     window.clearTimeout(searchTimer);

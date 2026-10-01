@@ -5,6 +5,24 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-10-01 — home-auth-cta-flash
+
+- **Задача:** прибрати коротку появу CTA входу в hero на головній сторінці для вже автентифікованого користувача.
+- **Змінені файли:** `frontend/src/{pug/pages/index.pug,js/main.js,scss/_product-ux.scss}`, `docs/progress.md`.
+- **Рішення / Результат:** CTA має початковий presentation-only CSS стан очікування. Для гостя він синхронно знімається під час bootstrap; за наявної сесії CTA лишається невидимим до перевірки `/users/me`, тому не миготить. RBAC і auth contract не змінювалися.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 35 passed; targeted `npx playwright test -c playwright.config.mjs tests/e2e/i18n-shell.spec.mjs` — 1 passed; `git diff --check` — OK.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** тест не імітує затримку `/users/me`; запобігання flash забезпечене стартовим CSS-станом до виконання асинхронного bootstrap.
+
+## 2026-10-01 — i18n-admin-demo-and-analytics
+
+- **Задача:** завершити 177 — повноцінні `en`/`uk` presentation locales для authenticated admin, synthetic Demo та Analytics surfaces.
+- **Змінені файли:** `frontend/src/js/modules/{i18n,profile,experts,references,market-data,demo-reports,demo-report-detail,analytics,analytics-ui}.js`, пов’язані Pug/SCSS та E2E fixtures; `docs/{progress,work_plan,backlog/README}.md`.
+- **Рішення / Результат:** статичні й runtime-підписи Demo/Analytics, filters, table actions, timeline, operations/quality, NBU, expert/provider dialogs та fallback-states беруться з complete catalog. `Intl` форматує числа, валюту, дати й тривалість поточною locale. Provider codes, dataset/report IDs, scope/provenance, ролі, status values, API payloads і synthetic isolation не перекладаються та не змінюються. Locale switch зберігає route/query/hash і не обходить RBAC або demo access.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 35 passed; `cmd /c "cd frontend && npm run test:e2e"` — 27 passed; `git diff --check` — OK.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** public passport/PDF renderer, API-localized data та TypeScript залишаються у 178; Sass/Browserslist warnings не пов’язані з i18n.
+
 ## 2026-09-30 — i18n-ci-e2e-fixture-alignment
 
 - **Задача:** синхронізувати E2E fixtures з English-first default після 175–176 та усунути CI failures перед злиттям.
