@@ -790,6 +790,14 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     else if (activeTab === "currency") void loadCurrencySources();
     else void loadWorkflow();
   }, 0));
+  window.addEventListener("diamant:locale-change", () => {
+    if (activeTab === "stones") void loadSom();
+    else if (activeTab === "narratives") void loadNarratives();
+    else if (activeTab === "quality") void loadQuality();
+    else if (activeTab === "providers") void loadProviders();
+    else if (activeTab === "currency") void loadCurrencySources();
+    else if (activeTab !== "reports") void loadWorkflow();
+  });
   dialog.addEventListener("close", () => dialogContent.replaceChildren());
   providerDialog.addEventListener("close", () => providerDialogContent.replaceChildren());
   void loadWorkflow();
