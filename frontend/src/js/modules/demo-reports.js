@@ -276,20 +276,20 @@ function openSyntheticActorDialog(dialog, content, actor) {
   const metrics = document.createElement("dl");
   metrics.className = "analytics-metrics";
   const rows = [
-    ["Стан actor", "Synthetic · non-account"],
-    ["Усього demo-звітів", actor.reports_touched],
-    ["Чернетки", "Не моделюються"],
-    ["На перевірці", "Не моделюються"],
-    ["Видано", actor.issued_reports],
-    ["Анульовано", actor.void_reports],
-    ["Завершені робочі сесії", actor.completed_intervals],
-    ["Активний час", formatDuration(actor.total_duration_seconds)],
-    ["Середня активна сесія", formatDuration(actor.avg_duration_seconds)],
-    ["Медіанна активна сесія", formatDuration(actor.median_duration_seconds)],
-    ["Збережень із виміром підготовки", "Не моделюються"],
-    ["Час до першого збереження", "Не моделюється"],
-    ["Середній час до першого збереження", "Не моделюється"],
-    ["Медіанний час до першого збереження", "Не моделюється"],
+    [t("analytics.accountState"), "Synthetic · non-account"],
+    [t("analytics.total"), actor.reports_touched],
+    [t("analytics.drafts"), t("analytics.notModeled")],
+    [t("analytics.underReview"), t("analytics.notModeled")],
+    [t("analytics.issued"), actor.issued_reports],
+    [t("analytics.void"), actor.void_reports],
+    [t("analytics.completedSessions"), actor.completed_intervals],
+    [t("analytics.activeTime"), formatDuration(actor.total_duration_seconds)],
+    [t("analytics.averageActiveSession"), formatDuration(actor.avg_duration_seconds)],
+    [t("analytics.medianActiveSession"), formatDuration(actor.median_duration_seconds)],
+    [t("analytics.firstSaveMeasurements"), t("analytics.notModeled")],
+    [t("analytics.timeToFirstSave"), t("analytics.notModeled")],
+    [t("analytics.averageTimeToFirstSave"), t("analytics.notModeled")],
+    [t("analytics.medianTimeToFirstSave"), t("analytics.notModeled")],
   ];
   for (const [label, value] of rows) metrics.append(createElement("dt", "", label), createElement("dd", "", String(value)));
   content.replaceChildren(
@@ -315,11 +315,11 @@ function renderDemoIntervalList(title, items = [], datasetId) {
     const row = document.createElement("li");
     const reportLink = createElement("a", "", item.report_id);
     reportLink.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(item.report_id)}`;
-    const occurredAt = new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.occurred_at));
+    const occurredAt = formatDateTime(item.occurred_at).date + ` ${formatDateTime(item.occurred_at).time}`;
     const decision = {
-      review_completed: "Видано",
-      review_returned: "Повернено у чернетку",
-      review_voided: "Анульовано",
+      review_completed: t("analytics.issued"),
+      review_returned: t("analytics.returned"),
+      review_voided: t("analytics.void"),
     }[item.action];
     row.append(reportLink, document.createTextNode(`: ${formatDuration(item.duration_seconds)} · ${decision ? `${decision} · ` : ""}${occurredAt}`));
     list.append(row);
@@ -329,7 +329,7 @@ function renderDemoIntervalList(title, items = [], datasetId) {
 }
 
 function renderWorkflowRows(container, actors, dialog, dialogContent, datasetId) {
-  renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано", "Активний час"], actors.map((actor) => {
+  renderTable(container, [t("analytics.expert"), t("analytics.state"), t("analytics.total"), t("analytics.drafts"), t("analytics.underReview"), t("analytics.issued"), t("analytics.void"), t("analytics.activeTime")], actors.map((actor) => {
     const actorButton = createElement("button", "analytics-expert-button", actor.display_name);
     actorButton.type = "button";
     actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, { ...actor, dataset_id: datasetId }));
