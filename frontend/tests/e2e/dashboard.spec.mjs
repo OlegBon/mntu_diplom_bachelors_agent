@@ -125,7 +125,7 @@ test("dashboard renders the private report page and its row action menu", async 
   const draftRow = page.locator("tr", { hasText: "DR-00042" });
   await draftRow.getByRole("button", { name: "Пояснення ринкового орієнтира звіту DR-00042" }).click();
   const pricePopover = draftRow.locator(".report-price__popover");
-  await expect(pricePopover.getByText("Провайдер: Demo Market A")).toBeVisible();
+  await expect(pricePopover.getByText("Постачальник: Demo Market A")).toBeVisible();
   await page.getByRole("heading", { name: "Всі звіти" }).click();
   await expect(pricePopover).toBeHidden();
   await page.getByRole("button", { name: "Відкрити дії для звіту DR-00042" }).click();

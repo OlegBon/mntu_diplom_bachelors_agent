@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-10-01 — i18n-copy-audit-and-expert-actions
+
+- **Задача:** усунути змішані англо-українські підписи після 177, вирівняти CI fixtures і забезпечити оновлення runtime кнопок дій на сторінці «Експерти» після перемикання мови.
+- **Змінені файли:** `frontend/src/js/modules/{admin-users,i18n}.js`, `frontend/tests/e2e/{analytics,dashboard,market-data,profile-admin}.spec.mjs`, `docs/progress.md`.
+- **Рішення / Результат:** таблиця облікових записів перерендерюється на `diamant:locale-change`; у відкритому діалозі одразу оновлюється dynamic кнопка активації. Українські тексти dashboard, Demo, Analytics, market data та private detail не змішують службові англійські слова з локалізованим текстом. `IDC`, `SOM`, `PDF`, `QR`, `USD`, `UAH`, URL та ідентифікатори навмисно лишилися технічними позначеннями. CI fixtures явно обирають українську locale у сценаріях, де перевіряється український copy.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 35 passed; `cmd /c "cd frontend && npm run test:e2e"` — 27 passed; `git diff --check` — OK.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** публічний passport/PDF renderer і release-wide i18n quality gate залишаються scope задачі 178. Sass/Browserslist та GitHub Node runtime warnings не є результатом цієї зміни.
+
 ## 2026-10-01 — home-auth-cta-flash
 
 - **Задача:** прибрати коротку появу CTA входу в hero на головній сторінці для вже автентифікованого користувача.

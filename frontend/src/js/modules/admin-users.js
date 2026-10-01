@@ -64,6 +64,13 @@ export async function initAdminUsers() {
   });
   searchInput.addEventListener("input", async () => { state = { page: 1, search: searchInput.value.trim() }; await load(); });
   registerVisibleDataRefresh(load, { canRefresh: () => !dialog.open });
+  window.addEventListener("diamant:locale-change", () => {
+    if (dialog.open && selectedUser) {
+      activationButton.textContent = t(selectedUser.is_active ? "experts.deactivate" : "experts.activate");
+      return;
+    }
+    void load();
+  });
   document.getElementById("admin-user-dialog-close").addEventListener("click", () => dialog.close());
   editForm.addEventListener("submit", async (event) => {
     event.preventDefault();
