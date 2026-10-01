@@ -85,7 +85,7 @@ test("administrator sees operational analytics without a fake stone chart", asyn
   await expect(page.getByText("Адміністраторка Друга")).toBeVisible();
   await expect(page.getByRole("link", { name: "DR-00011" })).toHaveAttribute("href", "/report-detail.html?id=DR-00011");
   await page.getByRole("tab", { name: "Камені" }).click();
-  await expect(page.getByText(/Real SOM і benchmark-карта ще не запускаються/)).toBeVisible();
+  await expect(page.getByText(/Реальна SOM і карта порівняння ще не запускаються/)).toBeVisible();
   await page.getByRole("tab", { name: "Експерти" }).click();
   await page.locator("#analytics-date-from").fill("2026-09-01");
   await page.locator("#analytics-date-to").fill("2026-09-30");
