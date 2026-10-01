@@ -20,7 +20,7 @@ import {
   updateProviderAccessPolicy,
 } from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
-import { formatDate as formatLocalizedDate, t } from "./i18n.js";
+import { formatCurrency, formatDate as formatLocalizedDate, formatNumber, t } from "./i18n.js";
 
 const STATUS_LABELS = { candidate: "market.snapshotCandidate", approved: "market.snapshotApproved", rejected: "market.snapshotRejected" };
 const FRESHNESS_LABELS = { fresh: "market.fresh", warning: "market.warning", stale: "market.stale", missing: "market.missing" };
@@ -44,7 +44,7 @@ function marketReferenceMessage(error) {
     "The approved snapshot does not cover this carat weight": "Обраний знімок OpenFacet не має покриття для цієї ваги в каратах.",
     "This approved snapshot is already attached to the report": "Цей затверджений знімок уже прикріплено до звіту.",
   };
-  return messages[error?.message] || error?.message || "Не вдалося прикріпити ринковий орієнтир.";
+  return messages[error?.message] || error?.message || t("market.attachFailed");
 }
 
 function renderProviders(container, providers, fxSnapshots, onAction) {
@@ -65,8 +65,8 @@ function renderProviders(container, providers, fxSnapshots, onAction) {
       const latest = fxSnapshots[0];
       const rate = document.createElement("p");
       rate.textContent = latest
-        ? `Останній знімок: 1 USD = ${Number(latest.rate).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} UAH · офіційна дата ${new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${latest.rate_date}T00:00:00`))}.`
-        : "Знімків курсу ще немає. Під час прикріплення орієнтира курс також отримується автоматично.";
+        ? t("market.nbuLatestRate", { rate: formatNumber(latest.rate, { minimumFractionDigits: 2, maximumFractionDigits: 4 }), date: formatLocalizedDate(new Date(`${latest.rate_date}T00:00:00`), { dateStyle: "medium" }) })
+        : t("market.nbuNoSnapshots");
       card.append(rate);
     }
     const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-primary";
@@ -166,7 +166,7 @@ function renderSnapshots(container, snapshots, onDecision) {
   for (const snapshot of snapshots) {
     const card = document.createElement("article"); card.className = "market-data-card";
     const title = document.createElement("h3"); title.textContent = `${snapshot.provider_code} · ${STATUS_LABELS[snapshot.status] ? t(STATUS_LABELS[snapshot.status]) : snapshot.status}`;
-    const meta = document.createElement("p"); meta.textContent = `${snapshot.quote_count} котирувань · ${snapshot.currency_code} · ${snapshot.unit} · отримано ${formatDate(snapshot.retrieved_at)}`;
+    const meta = document.createElement("p"); meta.textContent = t("market.snapshotMeta", { count: snapshot.quote_count, currency: snapshot.currency_code, unit: snapshot.unit, date: formatDate(snapshot.retrieved_at) });
     const scope = document.createElement("p"); scope.textContent = snapshot.coverage_note;
     const source = document.createElement("a"); source.href = snapshot.methodology_url; source.target = "_blank"; source.rel = "noopener noreferrer"; source.textContent = t("market.sourceMethodology");
     card.append(title, meta, scope, source);
@@ -293,12 +293,6 @@ export async function initMarketData() {
   const openDecisionDialog = (snapshotId, action) => {
     pendingDecision = { snapshotId, action };
     const isApproval = action === "approve";
-    decisionDescription.textContent = isApproval
-      ? "Після затвердження цей незмінний знімок можна буде явно прикріпити до сумісного звіту."
-      : "Відхилений знімок не можна використати для ринкового орієнтира; самі дані знімка лишаться в історії.";
-    decisionReasonLabel.textContent = isApproval ? "Коментар до затвердження" : "Причина відхилення";
-    decisionReason.placeholder = isApproval ? "Необов’язково" : "Необов’язково";
-    decisionSubmit.textContent = isApproval ? "Затвердити знімок" : "Відхилити знімок";
     decisionDescription.textContent = t(isApproval ? "market.decisionApproveDescription" : "market.decisionRejectDescription");
     decisionReasonLabel.textContent = t(isApproval ? "market.approvalComment" : "market.rejectionReason");
     decisionReason.placeholder = t("market.optional");
@@ -320,8 +314,8 @@ export async function initMarketData() {
     policyUseFx.checked = policy.use_fx_conversion;
     const fxProvider = providerRows.find((provider) => provider.provider_code === policy.fx_provider_code);
     policyFxNote.textContent = policy.use_fx_conversion
-      ? `Курс ${fxProvider?.display_name || "валютного провайдера"} фіксується лише разом із новим орієнтиром.`
-      : "Еквівалент у UAH для нових орієнтирів не створюватиметься.";
+      ? t("market.fxProviderFixed", { provider: fxProvider?.display_name || t("analytics.currencySource") })
+      : t("market.fxNotCreated");
     renderProviders(providers, providerRows, fxSnapshotRows, async (providerCode, button) => {
       button.disabled = true;
       try {
@@ -369,7 +363,7 @@ export async function initMarketData() {
   };
   try {
     const user = await getCurrentUser(token);
-    if (user.role !== "admin") throw new Error("Ця сторінка доступна лише адміністратору.");
+    if (user.role !== "admin") throw new Error(t("market.adminOnly"));
     if (user.partner_controls_enabled) {
       const users = await getUsers({ page: 1, page_size: 100 }, token);
       administrators = users.items.filter((item) => item.role === "admin" && item.is_active);
@@ -388,9 +382,9 @@ export async function initMarketData() {
         { snapshot_id: Number(snapshotSelect.value), applicability_confirmed: true, applicability_note: document.getElementById("market-reference-note").value.trim() }, token,
       );
       const converted = valuation.converted_amount
-        ? ` ≈ ${valuation.converted_currency_code} ${Number(valuation.converted_amount).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
+        ? t("market.convertedAmount", { amount: formatCurrency(valuation.converted_amount, valuation.converted_currency_code, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) })
         : "";
-      setStatus(status, `Додано ринковий орієнтир: ${valuation.currency_code} ${Number(valuation.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.${converted}`);
+      setStatus(status, t("market.referenceAdded", { amount: formatCurrency(valuation.amount, valuation.currency_code, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), converted }));
       setStatus(referenceStatus, t("market.referenceAttached"));
       form.reset(); updateApprovedSnapshotOptions(snapshotSelect, currentSnapshots);
     } catch (error) {
