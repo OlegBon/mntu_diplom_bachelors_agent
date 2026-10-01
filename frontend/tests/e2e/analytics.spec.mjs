@@ -65,6 +65,7 @@ test("administrator sees operational analytics without a fake stone chart", asyn
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("username", "admin");
     localStorage.setItem("role", "admin");
+    localStorage.setItem("diamant_locale", "uk");
   });
   await page.route("**/users/me", (route) => route.fulfill({ json: { expert_id: 1, username: "admin", role: "admin" } }));
   await page.route("**/statistics/expert-performance**", (route) => route.fulfill({ json: expertStats }));
