@@ -2,7 +2,7 @@ import { getDemoDataset, getDemoReports, getDemoNarrativeQualityAnalytics, getDe
 import { closeReportOverlays, formatDateTime, renderMarketReferencePrice } from "./dashboard.js";
 import { duration as formatDuration, element as createElement, periodSummary, renderNarrativeAnalytics, renderNbuCurrencySource, renderOperationalQuality, renderTable } from "./analytics-ui.js";
 import { applyNarrativeCompleteness, narrativeCompletenessFromUrl, narrativePresenceFromUrl, readNarrativeCompleteness, readNarrativePresence } from "./narrative-completeness-filters.js";
-import { t } from "./i18n.js";
+import { formatCurrency, formatNumber, t } from "./i18n.js";
 
 const PREFERRED_DATASET_ID = "synthetic-demo-v4";
 const FALLBACK_DATASET_IDS = ["synthetic-demo-v3", "synthetic-demo-v2", "synthetic-demo-v1"];
@@ -276,29 +276,29 @@ function openSyntheticActorDialog(dialog, content, actor) {
   const metrics = document.createElement("dl");
   metrics.className = "analytics-metrics";
   const rows = [
-    ["Стан actor", "Synthetic · non-account"],
-    ["Усього demo-звітів", actor.reports_touched],
-    ["Чернетки", "Не моделюються"],
-    ["На перевірці", "Не моделюються"],
-    ["Видано", actor.issued_reports],
-    ["Анульовано", actor.void_reports],
-    ["Завершені робочі сесії", actor.completed_intervals],
-    ["Активний час", formatDuration(actor.total_duration_seconds)],
-    ["Середня активна сесія", formatDuration(actor.avg_duration_seconds)],
-    ["Медіанна активна сесія", formatDuration(actor.median_duration_seconds)],
-    ["Збережень із виміром підготовки", "Не моделюються"],
-    ["Час до першого збереження", "Не моделюється"],
-    ["Середній час до першого збереження", "Не моделюється"],
-    ["Медіанний час до першого збереження", "Не моделюється"],
+    [t("analytics.accountState"), t("demo.syntheticAccount")],
+    [t("analytics.total"), actor.reports_touched],
+    [t("analytics.drafts"), t("analytics.notModeled")],
+    [t("analytics.underReview"), t("analytics.notModeled")],
+    [t("analytics.issued"), actor.issued_reports],
+    [t("analytics.void"), actor.void_reports],
+    [t("analytics.completedSessions"), actor.completed_intervals],
+    [t("analytics.activeTime"), formatDuration(actor.total_duration_seconds)],
+    [t("analytics.averageActiveSession"), formatDuration(actor.avg_duration_seconds)],
+    [t("analytics.medianActiveSession"), formatDuration(actor.median_duration_seconds)],
+    [t("analytics.firstSaveMeasurements"), t("analytics.notModeled")],
+    [t("analytics.timeToFirstSave"), t("analytics.notModeled")],
+    [t("analytics.averageTimeToFirstSave"), t("analytics.notModeled")],
+    [t("analytics.medianTimeToFirstSave"), t("analytics.notModeled")],
   ];
   for (const [label, value] of rows) metrics.append(createElement("dt", "", label), createElement("dd", "", String(value)));
   content.replaceChildren(
     createElement("h3", "analytics-dialog-name", actor.display_name),
     metrics,
-    createElement("p", "account-help", "Активний час — лише детермінований synthetic інтервал demo workflow, а не server-timed сесія чи вимір продуктивності людини."),
-    createElement("p", "account-help", "Час до першого збереження для demo-набору не моделюється. Actor є вигаданим, не має профілю та не представляє реальну людину."),
-    renderDemoIntervalList("Три найкоротші synthetic активні інтервали", actor.shortest_intervals, actor.dataset_id),
-    renderDemoIntervalList("Три найдовші synthetic активні інтервали", actor.longest_intervals, actor.dataset_id),
+    createElement("p", "account-help", t("demo.syntheticActiveTimeHelp")),
+    createElement("p", "account-help", t("demo.syntheticFirstSaveHelp")),
+    renderDemoIntervalList(t("demo.syntheticShortestIntervals"), actor.shortest_intervals, actor.dataset_id),
+    renderDemoIntervalList(t("demo.syntheticLongestIntervals"), actor.longest_intervals, actor.dataset_id),
   );
   dialog.showModal();
 }
@@ -307,7 +307,7 @@ function renderDemoIntervalList(title, items = [], datasetId) {
   const section = createElement("section", "analytics-review-list");
   section.append(createElement("h3", "", title));
   if (!items.length) {
-    section.append(createElement("p", "account-help", "Завершених synthetic інтервалів у цьому періоді немає."));
+    section.append(createElement("p", "account-help", t("demo.noSyntheticIntervals")));
     return section;
   }
   const list = document.createElement("ol");
@@ -315,11 +315,11 @@ function renderDemoIntervalList(title, items = [], datasetId) {
     const row = document.createElement("li");
     const reportLink = createElement("a", "", item.report_id);
     reportLink.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(item.report_id)}`;
-    const occurredAt = new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.occurred_at));
+    const occurredAt = formatDateTime(item.occurred_at).date + ` ${formatDateTime(item.occurred_at).time}`;
     const decision = {
-      review_completed: "Видано",
-      review_returned: "Повернено у чернетку",
-      review_voided: "Анульовано",
+      review_completed: t("analytics.issued"),
+      review_returned: t("analytics.returned"),
+      review_voided: t("analytics.void"),
     }[item.action];
     row.append(reportLink, document.createTextNode(`: ${formatDuration(item.duration_seconds)} · ${decision ? `${decision} · ` : ""}${occurredAt}`));
     list.append(row);
@@ -329,12 +329,12 @@ function renderDemoIntervalList(title, items = [], datasetId) {
 }
 
 function renderWorkflowRows(container, actors, dialog, dialogContent, datasetId) {
-  renderTable(container, ["Експерт", "Стан", "Усього", "Чернетки", "На перевірці", "Видано", "Анульовано", "Активний час"], actors.map((actor) => {
+  renderTable(container, [t("analytics.expert"), t("analytics.state"), t("analytics.total"), t("analytics.drafts"), t("analytics.underReview"), t("analytics.issued"), t("analytics.void"), t("analytics.activeTime")], actors.map((actor) => {
     const actorButton = createElement("button", "analytics-expert-button", actor.display_name);
     actorButton.type = "button";
     actorButton.addEventListener("click", () => openSyntheticActorDialog(dialog, dialogContent, { ...actor, dataset_id: datasetId }));
     return [actorButton, "Synthetic", String(actor.reports_touched), "—", "—", String(actor.issued_reports), String(actor.void_reports), formatDuration(actor.total_duration_seconds)];
-  }), "За обраний період synthetic-подій немає.");
+  }), t("demo.noSyntheticWorkflow"));
 }
 
 function renderSyntheticAdministrators(container, actors, datasetId) {
@@ -345,61 +345,61 @@ function renderSyntheticAdministrators(container, actors, datasetId) {
     const heading = createElement("h3", "", actor.display_name);
     const metrics = createElement("dl", "analytics-metrics");
     [
-      ["Завершено перевірок", actor.completed_intervals],
-      ["Видано", actor.issued_reports],
-      ["Повернуто", actor.returned_to_draft],
-      ["Анульовано", actor.void_reports],
-      ["Середня тривалість", formatDuration(actor.avg_duration_seconds)],
-      ["Медіанна тривалість", formatDuration(actor.median_duration_seconds)],
+      [t("analytics.completedReviews"), actor.completed_intervals],
+      [t("analytics.issued"), actor.issued_reports],
+      [t("analytics.returned"), actor.returned_to_draft],
+      [t("analytics.void"), actor.void_reports],
+      [t("analytics.averageDuration"), formatDuration(actor.avg_duration_seconds)],
+      [t("analytics.medianDuration"), formatDuration(actor.median_duration_seconds)],
     ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
     card.append(
       heading,
       metrics,
-      renderDemoIntervalList("Найкоротші synthetic перевірки", actor.shortest_intervals, datasetId),
-      renderDemoIntervalList("Найдовші synthetic перевірки", actor.longest_intervals, datasetId),
-      createElement("p", "account-help", "Synthetic administrator · non-account. Дані сформовано детермінованим demo workflow."),
+      renderDemoIntervalList(t("analytics.shortestReviews"), actor.shortest_intervals, datasetId),
+      renderDemoIntervalList(t("analytics.longestReviews"), actor.longest_intervals, datasetId),
+      createElement("p", "account-help", t("demo.syntheticAdministratorHelp")),
     );
     cards.append(card);
   }
   if (actors.length) fragment.append(cards);
-  else fragment.append(createElement("p", "account-help", "Synthetic адміністраторів для цього зрізу немає."));
+  else fragment.append(createElement("p", "account-help", t("demo.noSyntheticAdministrators")));
   container.replaceChildren(fragment);
 }
 
 function formatUsd(value) {
-  return new Intl.NumberFormat("uk-UA", { style: "currency", currency: "USD" }).format(Number(value));
+  return formatCurrency(Number(value), "USD");
 }
 
 function openDemoProviderDialog(dialog, content, provider, datasetId) {
   const metrics = document.createElement("dl");
   metrics.className = "analytics-metrics";
   [
-    ["Тип джерела", provider.source_class],
-    ["Походження даних", provider.provenance],
-    ["Статус договору й умов", provider.terms_status],
-    ["Покриття у зрізі", `${provider.covered_report_count} із ${provider.candidate_report_count} demo-звітів`],
-    ["Тип значень", "Synthetic demonstration reference"],
-    ["Кількість значень", provider.reference_count],
-    ["Період значень", `${provider.first_period} — ${provider.last_period}`],
-    ["Медіанний орієнтир", provider.median_amount === null ? "—" : formatUsd(provider.median_amount)],
-    ["Діапазон орієнтирів", provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`],
-    ["Знімок провайдера", "Не передбачено: значення детерміновано генерує локальний demo-набір."],
-    ["Останнє отримання", "Не застосовується: немає зовнішнього сервісу."],
+    [t("demo.sourceType"), provider.source_class],
+    [t("demo.dataOrigin"), provider.provenance],
+    [t("demo.termsStatus"), provider.terms_status],
+    [t("demo.coverage"), `${provider.covered_report_count} / ${provider.candidate_report_count}`],
+    [t("demo.valueType"), t("dashboard.referenceTypeDemo")],
+    [t("demo.valueCount"), provider.reference_count],
+    [t("demo.valuePeriod"), `${provider.first_period} — ${provider.last_period}`],
+    [t("demo.medianReference"), provider.median_amount === null ? "—" : formatUsd(provider.median_amount)],
+    [t("demo.referenceRange"), provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`],
+    [t("demo.providerSnapshot"), t("analytics.notModeled")],
+    [t("demo.lastRetrieved"), t("analytics.notApplicable")],
   ].forEach(([label, value]) => metrics.append(createElement("dt", "", label), createElement("dd", "", String(value))));
   const sample = provider.latest_report_id ? createElement("a", "id-link", provider.latest_report_id) : null;
   if (sample) sample.href = `/demo-report-detail.html?dataset=${encodeURIComponent(datasetId)}&id=${encodeURIComponent(provider.latest_report_id)}`;
   const sampleSection = createElement("section", "analytics-review-list");
-  sampleSection.append(createElement("h3", "", "Останній synthetic приклад"), sample || createElement("p", "account-help", "У цьому зрізі немає прикладу."));
+  sampleSection.append(createElement("h3", "", t("demo.latestExample")), sample || createElement("p", "account-help", t("demo.noExample")));
   const scenario = createElement("section", "analytics-review-list");
   scenario.append(
-    createElement("h3", "", "Synthetic policy scenario"),
-    createElement("p", "account-help", "Режим: demo-only. Мережеві виклики вимкнені; договори, trial-призначення та журнал реальних provider-умов для цього fictional джерела не створюються."),
+    createElement("h3", "", t("demo.policyScenario")),
+    createElement("p", "account-help", t("demo.providerScenario")),
   );
   content.replaceChildren(
     createElement("h3", "analytics-dialog-name", provider.provider_name),
     metrics,
     createElement("p", "account-help", provider.usage_policy),
-    createElement("p", "account-help", "Ці умови описують лише demo-сценарій. Вони не є договором, ліцензією чи дозволом використовувати реальні provider data."),
+    createElement("p", "account-help", t("demo.providerTermsHelp")),
     scenario,
     sampleSection,
   );
@@ -419,9 +419,9 @@ function renderDemoProviderAnalytics(container, data, datasetId, dialog, dialogC
     link.title = "Відкрити read-only demo-звіт";
     return link;
   };
-  const overview = createElement("p", "account-help", `${data.candidate_report_count} demo-звітів у зрізі · ${data.reference_count} synthetic орієнтирів.`);
+  const overview = createElement("p", "account-help", t("demo.providerOverview", { reports: data.candidate_report_count, references: data.reference_count }));
   const tableHost = createElement("div", "demo-provider-analytics__table");
-  renderTable(tableHost, ["Провайдер", "Покриття", "Значень", "Період", "Медіана", "Діапазон", "Останній приклад"], data.providers.map((provider) => {
+  renderTable(tableHost, [t("analytics.provider"), t("demo.coverage"), t("demo.valueCount"), t("demo.valuePeriod"), t("demo.medianReference"), t("demo.referenceRange"), t("demo.latestExample")], data.providers.map((provider) => {
     const providerButton = createElement("button", "analytics-expert-button", provider.provider_name);
     providerButton.type = "button";
     providerButton.addEventListener("click", () => openDemoProviderDialog(dialog, dialogContent, {
@@ -438,23 +438,19 @@ function renderDemoProviderAnalytics(container, data, datasetId, dialog, dialogC
     provider.median_amount === null ? "—" : formatUsd(provider.median_amount),
     provider.min_amount === null || provider.max_amount === null ? "—" : `${formatUsd(provider.min_amount)} — ${formatUsd(provider.max_amount)}`,
     latestReportLink(provider.latest_report_id),
-  ]; }), "У вибраному зрізі немає synthetic provider values.");
-  const note = createElement("p", "account-help", "Суми — immutable synthetic reference values у USD для всього каменю. Вони не є ринковими даними, прогнозом, ціною продажу або рейтингом провайдера.");
+  ]; }), t("demo.providerEmpty"));
+  const note = createElement("p", "account-help", t("demo.providerNote"));
   container.replaceChildren(overview, tableHost, note);
 }
 
 function formatUsdPerCarat(value, compact = false) {
-  return `${new Intl.NumberFormat("uk-UA", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: compact ? 0 : 2,
-  }).format(Number(value))}/ct`;
+  return `${formatCurrency(Number(value), "USD", { maximumFractionDigits: compact ? 0 : 2 })}/ct`;
 }
 
 function formatCompactUsdPerCarat(value) {
   const amount = Number(value);
-  if (amount >= 1000) return `${(amount / 1000).toLocaleString("uk-UA", { maximumFractionDigits: 1 })}k`;
-  return new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 }).format(amount);
+  if (amount >= 1000) return `${formatNumber(amount / 1000, { maximumFractionDigits: 1 })}k`;
+  return formatNumber(amount, { maximumFractionDigits: 0 });
 }
 
 function createSomCellDetails() {
@@ -477,13 +473,13 @@ function renderSom(container, data, labelFor) {
   for (const cell of data.cells) {
     const button = createElement("button", `demo-som-cell demo-som-cell--${cell.segment_label.slice(-1).toLowerCase()}`, String(cell.report_count));
     button.type = "button";
-    button.title = `${cell.segment_label}: ${cell.report_count} synthetic звітів`;
-    button.setAttribute("aria-label", `${cell.segment_label}, клітинка ${cell.x + 1} × ${cell.y + 1}: ${cell.report_count} synthetic звітів. Показати деталі клітинки.`);
+    button.title = `${cell.segment_label}: ${t("demo.somReportCount", { count: cell.report_count })}`;
+    button.setAttribute("aria-label", t("demo.somCellAria", { segment: cell.segment_label, x: cell.x + 1, y: cell.y + 1, count: cell.report_count }));
     button.addEventListener("click", () => showSomCellDetails(mainCellDetails, [
-      `Клітинка ${cell.x + 1} × ${cell.y + 1} · ${cell.segment_label}.`,
-      `${cell.report_count} synthetic звітів.`,
-      cell.median_carat_weight === null || cell.median_carat_weight === undefined ? "Медіанна вага: —." : `Медіанна вага: ${cell.median_carat_weight} ct.`,
-      cell.median_reference_amount === null || cell.median_reference_amount === undefined ? "Медіанний synthetic орієнтир: —." : `Медіанний synthetic орієнтир: ${formatUsd(cell.median_reference_amount)}.`,
+      `${t("demo.somCellTitle", { x: cell.x + 1, y: cell.y + 1, segment: cell.segment_label })}.`,
+      `${t("demo.somReportCount", { count: cell.report_count })}.`,
+      cell.median_carat_weight === null || cell.median_carat_weight === undefined ? t("demo.somMedianWeightEmpty") : t("demo.somMedianWeight", { weight: cell.median_carat_weight }),
+      cell.median_reference_amount === null || cell.median_reference_amount === undefined ? t("demo.somMedianReferenceEmpty") : t("demo.somMedianReference", { amount: formatUsd(cell.median_reference_amount) }),
     ].join(" ")));
     if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
     grid.append(button);
@@ -498,24 +494,24 @@ function renderSom(container, data, labelFor) {
     item.append(createElement("strong", "", `${segment.label} · ${segment.report_count}`), createElement("span", "", `${segment.carat_min}–${segment.carat_max} ct · ${segment.dominant_shapes.join(" / ")}`));
     legend.append(item);
   }
-  left.append(createElement("h3", "", "Карта сегментів"), mainMapViewport, mainCellDetails, createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."), legend, createElement("p", "account-help", `Клітинка містить кількість demo-звітів. Кольори відповідають описовим профілям у легенді, не класам якості.`));
+  left.append(createElement("h3", "", t("demo.somSegmentMap")), mainMapViewport, mainCellDetails, createElement("p", "demo-som-scroll-hint", t("demo.somScroll")), legend, createElement("p", "account-help", t("demo.somMapHelp")));
   const right = createElement("aside", "demo-som-profile");
-  right.append(createElement("h3", "", "Профіль показового каменю"));
+  right.append(createElement("h3", "", t("demo.somProfile")));
   if (selected) {
     const details = document.createElement("dl");
     details.className = "analytics-metrics";
-    [["Звіт", selected.report_id], ["SOM-клітинка", `${selected.som_x + 1} × ${selected.som_y + 1}`], ["У клітинці", `${selected.cell_count} demo-звітів`], ["У сусідстві", `${selected.neighborhood_count} demo-звітів`], ["Колір / чистота", `${labelFor("color", selected.color_grade)} / ${labelFor("clarity", selected.clarity_grade)}`], ["Системний Final Cut", labelFor("cut", selected.system_cut_grade)]].forEach(([label, value]) => details.append(createElement("dt", "", label), createElement("dd", "", value)));
+    [[t("demo.reportId"), selected.report_id], [t("demo.somCell"), `${selected.som_x + 1} × ${selected.som_y + 1}`], [t("demo.somInCell"), `${selected.cell_count}`], [t("demo.somNeighborhood"), `${selected.neighborhood_count}`], [t("demo.somColorClarity"), `${labelFor("color", selected.color_grade)} / ${labelFor("clarity", selected.clarity_grade)}`], [t("demo.somFinalCut"), labelFor("cut", selected.system_cut_grade)]].forEach(([label, value]) => details.append(createElement("dt", "", label), createElement("dd", "", value)));
     const formWeight = createElement("dd", "demo-som-value-stack");
     formWeight.append(createElement("strong", "", selected.shape), createElement("span", "", `${selected.carat_weight} ct`));
-    details.append(createElement("dt", "", "Форма / вага"), formWeight);
+    details.append(createElement("dt", "", t("demo.somShapeWeight")), formWeight);
     const reference = createElement("dd", "demo-som-value-stack");
     reference.append(createElement("strong", "", formatUsd(selected.selected_reference_amount)), createElement("span", "", selected.selected_provider));
-    details.append(createElement("dt", "", "Synthetic орієнтир"), reference);
+    details.append(createElement("dt", "", t("demo.somReference")), reference);
     const position = createElement("section", "demo-som-position");
-    position.append(createElement("h4", "", "Позиція в сегменті"), createElement("strong", "", selected.segment_label), createElement("p", "account-help", selected.segment_description));
+    position.append(createElement("h4", "", t("demo.somPosition")), createElement("strong", "", selected.segment_label), createElement("p", "account-help", selected.segment_description));
     const peers = createElement("p", "account-help");
     if (selected.peer_report_ids.length) {
-      peers.append(document.createTextNode("Найближчі synthetic приклади: "));
+      peers.append(document.createTextNode(t("demo.somPeers")));
       selected.peer_report_ids.forEach((reportId, index) => {
         if (index) peers.append(document.createTextNode(", "));
         const link = createElement("a", "", reportId);
@@ -523,26 +519,26 @@ function renderSom(container, data, labelFor) {
         peers.append(link);
       });
       peers.append(document.createTextNode("."));
-    } else peers.textContent = "У клітинці поки немає інших synthetic прикладів.";
+    } else peers.textContent = t("demo.somNoPeers");
     const benchmark = createElement("section", "demo-som-benchmark");
-    benchmark.append(createElement("h4", "", "Демо-орієнтир сегмента"), createElement("strong", "", `${formatUsd(selected.segment_reference_min)} – ${formatUsd(selected.segment_reference_max)}`), createElement("span", "", "Діапазон значень усієї описової зони SOM, а не лише трьох найближчих прикладів."));
+    benchmark.append(createElement("h4", "", t("demo.somSegmentReference")), createElement("strong", "", `${formatUsd(selected.segment_reference_min)} – ${formatUsd(selected.segment_reference_max)}`), createElement("span", "", t("demo.somSegmentRangeHelp")));
     right.append(details, position, peers, benchmark);
   }
-  right.append(createElement("p", "account-help", `Охоплення: ${coverage.accepted_reports ?? 0} включено з ${coverage.candidate_reports ?? 0}; ${coverage.excluded_reports ?? 0} виключено через відсутність повного дозволеного synthetic вектора.`), createElement("p", "account-help", coverage.policy_explanation || "Для виключених звітів policy scenario не залишає дозволеного synthetic орієнтиру."));
-  right.append(createElement("p", "account-help", "Synthetic орієнтир — лише демонстраційна величина сценарію, не прогнозована чи ринкова ціна."));
+  right.append(createElement("p", "account-help", t("demo.somCoverage", { accepted: coverage.accepted_reports ?? 0, candidates: coverage.candidate_reports ?? 0, excluded: coverage.excluded_reports ?? 0 })), createElement("p", "account-help", coverage.policy_explanation || t("demo.somPolicyExplanation")));
+  right.append(createElement("p", "account-help", t("demo.somReferenceNote")));
   const layout = createElement("div", "demo-som-layout");
   layout.append(left, right);
   const overview = data.map_overview || {};
   const overviewSection = createElement("section", "demo-som-overview");
-  overviewSection.append(createElement("h3", "", "Огляд карти"));
+  overviewSection.append(createElement("h3", "", t("demo.somMapOverview")));
   const overviewMetrics = createElement("dl", "demo-som-overview__metrics");
   const providerUsage = Object.entries(overview.provider_usage || {}).map(([provider, count]) => `${provider}: ${count}`).join(" · ") || "—";
   [
-    ["Охоплення", `${coverage.accepted_reports ?? 0} включено · ${coverage.excluded_reports ?? 0} виключено`],
-    ["Зайнято клітинок", `${overview.occupied_cells ?? 0} із ${data.grid_size ** 2}`],
-    ["Найщільніша клітинка", `${overview.densest_cell ?? "—"} · ${overview.densest_cell_report_count ?? 0} каменів`],
-    ["Найбільша зона", `${overview.largest_segment_label ?? "—"} · ${overview.largest_segment_report_count ?? 0} каменів`],
-    ["Дозволені орієнтири", providerUsage],
+    [t("demo.somCoverageOverview"), t("demo.somIncludedExcluded", { included: coverage.accepted_reports ?? 0, excluded: coverage.excluded_reports ?? 0 })],
+    [t("demo.somOccupiedCells"), t("demo.somOfCells", { occupied: overview.occupied_cells ?? 0, total: data.grid_size ** 2 })],
+    [t("demo.somDensestCell"), `${overview.densest_cell ?? "—"} · ${t("demo.somStones", { count: overview.densest_cell_report_count ?? 0 })}`],
+    [t("demo.somLargestSegment"), `${overview.largest_segment_label ?? "—"} · ${t("demo.somStones", { count: overview.largest_segment_report_count ?? 0 })}`],
+    [t("demo.somPermittedReferences"), providerUsage],
   ].forEach(([term, value]) => {
     const item = createElement("div", "demo-som-overview__item");
     item.append(createElement("dt", "", term), createElement("dd", "", value));
@@ -559,14 +555,14 @@ function renderSom(container, data, labelFor) {
     const button = createElement("button", `demo-som-cell demo-som-benchmark-cell demo-som-benchmark-cell--${band}`, value === null || value === undefined ? "—" : formatCompactUsdPerCarat(value));
     button.type = "button";
     button.title = value === null || value === undefined
-      ? "У цій SOM-клітинці немає synthetic benchmark"
-      : `${formatUsdPerCarat(value)} · ${cell.report_count} synthetic звітів`;
+      ? t("demo.somNoBenchmark")
+      : `${formatUsdPerCarat(value)} · ${t("demo.somReportCount", { count: cell.report_count })}`;
     button.setAttribute("aria-label", button.title);
     button.addEventListener("click", () => {
-      const bandLabel = (data.benchmark_bands || []).find((band) => band.key === cell.benchmark_band)?.label || "Synthetic benchmark недоступний";
+      const bandLabel = (data.benchmark_bands || []).find((band) => band.key === cell.benchmark_band)?.label || t("demo.somBenchmarkUnavailable");
       showSomCellDetails(benchmarkCellDetails, value === null || value === undefined
-        ? `Клітинка ${cell.x + 1} × ${cell.y + 1}. У ній немає synthetic benchmark.`
-        : `Клітинка ${cell.x + 1} × ${cell.y + 1} · ${bandLabel}. Медіанний дозволений synthetic орієнтир: ${formatUsdPerCarat(value)}. ${cell.report_count} synthetic звітів.`);
+        ? `${t("demo.somCell")} ${cell.x + 1} × ${cell.y + 1}. ${t("demo.somNoBenchmark")}`
+        : `${t("demo.somCellTitle", { x: cell.x + 1, y: cell.y + 1, segment: bandLabel })}. ${t("demo.somBenchmarkCell", { amount: formatUsdPerCarat(value), count: cell.report_count })}`);
     });
     if (selected && cell.x === selected.som_x && cell.y === selected.som_y) button.classList.add("is-selected");
     benchmarkGrid.append(button);
@@ -578,17 +574,17 @@ function renderSom(container, data, labelFor) {
     const item = createElement("div", `demo-som-legend__item demo-som-benchmark-legend__item--${band.key}`);
     const lower = band.lower_bound_usd_per_carat === null || band.lower_bound_usd_per_carat === undefined ? null : formatUsdPerCarat(band.lower_bound_usd_per_carat);
     const upper = band.upper_bound_usd_per_carat === null || band.upper_bound_usd_per_carat === undefined ? null : formatUsdPerCarat(band.upper_bound_usd_per_carat);
-    const range = lower && upper ? `${lower} – ${upper}` : lower ? `від ${lower}` : `до ${upper}`;
-    item.append(createElement("strong", "", band.label), createElement("span", "", `${range} · ${band.cell_count} клітинок`));
+    const range = lower && upper ? `${lower} – ${upper}` : lower ? t("demo.somFrom", { value: lower }) : t("demo.somTo", { value: upper });
+    item.append(createElement("strong", "", band.label), createElement("span", "", `${range} · ${t("demo.somCells", { count: band.cell_count })}`));
     benchmarkLegend.append(item);
   }
   benchmarkMap.append(
-    createElement("h3", "", "Карта synthetic benchmark сегментів · USD/ct"),
+    createElement("h3", "", t("demo.somBenchmarkMap")),
     benchmarkViewport,
     benchmarkCellDetails,
-    createElement("p", "demo-som-scroll-hint", "На вузькому екрані проведіть карту горизонтально."),
+    createElement("p", "demo-som-scroll-hint", t("demo.somScroll")),
     benchmarkLegend,
-    createElement("p", "account-help", "Та самі SOM-координати й marker. Значення в клітинці — медіанний дозволений synthetic USD/ct; це не прогноз, не market value і не інвестиційна категорія."),
+    createElement("p", "account-help", t("demo.somBenchmarkMapHelp")),
   );
   const benchmarkProfile = createElement("aside", "demo-som-profile");
   const selectedBenchmarkCell = selected
@@ -597,17 +593,17 @@ function renderSom(container, data, labelFor) {
   if (selectedBenchmarkCell?.median_reference_usd_per_carat !== null && selectedBenchmarkCell?.median_reference_usd_per_carat !== undefined) {
     const selectedBenchmark = createElement("section", "demo-som-benchmark demo-som-benchmark--summary");
     selectedBenchmark.append(
-      createElement("h4", "", "Медіанний дозволений synthetic орієнтир клітинки"),
+      createElement("h4", "", t("demo.somSelectedBenchmark")),
       createElement("strong", "", formatUsdPerCarat(selectedBenchmarkCell.median_reference_usd_per_carat)),
-      createElement("span", "", `Клітинка ${selected.som_x + 1} × ${selected.som_y + 1} · ${selectedBenchmarkCell.report_count} synthetic звітів.`),
+      createElement("span", "", t("demo.somSelectedBenchmarkDetail", { x: selected.som_x + 1, y: selected.som_y + 1, count: selectedBenchmarkCell.report_count })),
     );
     benchmarkProfile.append(selectedBenchmark);
   }
   benchmarkProfile.append(
-    createElement("h3", "", "Як читати benchmark-карту"),
-    createElement("p", "account-help", "Кожна клітинка показує медіанний дозволений synthetic USD/ct каменів у цій самій SOM-клітинці. Тому карта зберігає сусідство основної SOM, але підсвічує відносний рівень synthetic орієнтирів."),
-    createElement("p", "account-help", "Чотири кольори — квартилі медіан клітинок поточного immutable artifact. Вони не є класами якості, ринковими сегментами, predicted price чи investment category."),
-    createElement("p", "account-help", "Значення у клітинках скорочені до k для читабельності; повне USD/ct доступне у підказці та доступній назві клітинки. Marker відповідає вибраному звіту і збігається з marker основної карти."),
+    createElement("h3", "", t("demo.somHowToRead")),
+    createElement("p", "account-help", t("demo.somReadOne")),
+    createElement("p", "account-help", t("demo.somReadTwo")),
+    createElement("p", "account-help", t("demo.somReadThree")),
   );
   const benchmarkLayout = createElement("div", "demo-som-layout demo-som-layout--benchmark");
   benchmarkLayout.append(benchmarkMap, benchmarkProfile);
@@ -658,9 +654,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     activeTab = tab;
     for (const [name, panel] of Object.entries(panels)) panel.hidden = name !== tab;
     controls.hidden = !["experts", "narratives", "quality", "administrators", "providers", "currency"].includes(tab);
-    periodHelpNode.textContent = tab === "currency"
-      ? "Зріз застосовується до офіційної дати курсу НБУ. Він не фільтрує demo-звіти, орієнтири чи SOM."
-      : "Дані за весь доступний період. У demo зрізі події та тривалості формуються детерміновано; вони не є active-time, review-cycle, SLA чи оцінкою реальних людей.";
+    periodHelpNode.textContent = t(tab === "currency" ? "demo.periodHelpCurrency" : "demo.periodHelpWorkflow");
     for (const button of tabButtons) {
       const active = button.dataset.demoTab === tab;
       button.classList.toggle("is-active", active);
@@ -670,7 +664,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const filtersForSlice = () => Object.fromEntries(new FormData(form).entries());
   const validateSlice = (filters) => {
     if (!filters.date_from || !filters.date_to || filters.date_from <= filters.date_to) return true;
-    const message = "Дата «Від» не може бути пізнішою за дату «До».";
+    const message = t("analytics.invalidPeriod");
     setStatus(expertStatus, message, "error");
     setStatus(administratorStatus, message, "error");
     setStatus(narrativeStatus, message, "error");
@@ -682,8 +676,8 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
   const loadWorkflow = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(expertStatus, "Завантаження synthetic workflow…");
-    setStatus(administratorStatus, "Завантаження synthetic workflow…");
+    setStatus(expertStatus, t("demo.loadingWorkflow"));
+    setStatus(administratorStatus, t("demo.loadingWorkflow"));
     try {
       const data = await getDemoWorkflowAnalytics(datasetId, token, filters);
       expertStatus.replaceChildren();
@@ -692,27 +686,27 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       renderWorkflowRows(expertResults, data.experts, dialog, dialogContent, data.dataset_id);
       renderSyntheticAdministrators(administratorResults, data.administrators, data.dataset_id);
     } catch {
-      setStatus(expertStatus, "Не вдалося завантажити synthetic workflow.", "error");
-      setStatus(administratorStatus, "Не вдалося завантажити synthetic workflow.", "error");
+      setStatus(expertStatus, t("demo.workflowLoadFailed"), "error");
+      setStatus(administratorStatus, t("demo.workflowLoadFailed"), "error");
     }
   };
   const loadProviders = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(providerStatus, "Завантаження synthetic provider analytics…");
+    setStatus(providerStatus, t("demo.loadingProviders"));
     try {
       const data = await getDemoProviderAnalytics(datasetId, token, filters);
       providerStatus.replaceChildren();
       periodSummaryNode.textContent = periodSummary(filters);
       renderDemoProviderAnalytics(providerResults, data, data.dataset_id, providerDialog, providerDialogContent);
     } catch {
-      setStatus(providerStatus, "Не вдалося завантажити synthetic provider analytics.", "error");
+      setStatus(providerStatus, t("demo.providersLoadFailed"), "error");
     }
   };
   const loadNarratives = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(narrativeStatus, "Завантаження synthetic текстових метаданих…");
+    setStatus(narrativeStatus, t("demo.loadingNarratives"));
     try {
       const data = await getDemoNarrativeQualityAnalytics(datasetId, token, filters);
       narrativeStatus.replaceChildren();
@@ -722,37 +716,37 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
         formatDateTime,
       });
     } catch {
-      setStatus(narrativeStatus, "Не вдалося завантажити synthetic текстові метадані.", "error");
+      setStatus(narrativeStatus, t("demo.narrativesLoadFailed"), "error");
     }
   };
   const loadQuality = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(qualityStatus, "Завантаження synthetic операцій та повноти даних…");
+    setStatus(qualityStatus, t("demo.loadingQuality"));
     try {
       const data = await getDemoOperationalQualityAnalytics(datasetId, token, filters);
       qualityStatus.replaceChildren();
       periodSummaryNode.textContent = periodSummary(filters);
       renderOperationalQuality(qualityResults, data, { formatDateTime });
     } catch {
-      setStatus(qualityStatus, "Не вдалося завантажити synthetic операції та повноту даних.", "error");
+      setStatus(qualityStatus, t("demo.qualityLoadFailed"), "error");
     }
   };
   const loadCurrencySources = async () => {
     const filters = filtersForSlice();
     if (!validateSlice(filters)) return;
-    setStatus(currencyStatus, "Завантаження офіційних FX-знімків НБУ…");
+    setStatus(currencyStatus, t("demo.loadingCurrency"));
     try {
       const snapshots = await getFxDataSnapshots(filters, token);
       currencyStatus.replaceChildren();
       periodSummaryNode.textContent = periodSummary(filters);
       renderCurrencySources(currencyResults, snapshots, providerDialog, providerDialogContent);
     } catch {
-      setStatus(currencyStatus, "Не вдалося завантажити FX-знімки НБУ.", "error");
+      setStatus(currencyStatus, t("demo.currencyLoadFailed"), "error");
     }
   };
   const loadSom = async (requestedId = new URLSearchParams(window.location.search).get("som_report") || "") => {
-    setStatus(somStatus, "Завантаження synthetic SOM…");
+    setStatus(somStatus, t("demo.loadingSom"));
     try {
       const selectedId = requestedId.trim().toUpperCase();
       const data = await getDemoSom(datasetId, token, selectedId);
@@ -760,7 +754,7 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
       somStatus.replaceChildren();
       renderSom(somResults, data, labelFor);
     } catch {
-      setStatus(somStatus, "Для цього номера немає доступного synthetic SOM-профілю. Перевірте DEMO-ідентифікатор.", "error");
+      setStatus(somStatus, t("demo.somLoadFailed"), "error");
     }
   };
   for (const button of tabButtons) button.addEventListener("click", () => {
@@ -796,6 +790,14 @@ function initDemoWorkflowTabs(root, datasetId, token, labelFor) {
     else if (activeTab === "currency") void loadCurrencySources();
     else void loadWorkflow();
   }, 0));
+  window.addEventListener("diamant:locale-change", () => {
+    if (activeTab === "stones") void loadSom();
+    else if (activeTab === "narratives") void loadNarratives();
+    else if (activeTab === "quality") void loadQuality();
+    else if (activeTab === "providers") void loadProviders();
+    else if (activeTab === "currency") void loadCurrencySources();
+    else if (activeTab !== "reports") void loadWorkflow();
+  });
   dialog.addEventListener("close", () => dialogContent.replaceChildren());
   providerDialog.addEventListener("close", () => providerDialogContent.replaceChildren());
   void loadWorkflow();
@@ -853,7 +855,7 @@ export async function initDemoReports() {
     populateGradeFilter(root.querySelector("#demo-cut-filter"), "cut", mappings);
     for (const control of [root.querySelector("#demo-color-filter"), root.querySelector("#demo-clarity-filter"), root.querySelector("#demo-cut-filter")]) control.value = state[control.name] || "";
   } catch {
-    setStatus(stateNode, "Demo-набір недоступний.", "error");
+    setStatus(stateNode, t("demo.datasetUnavailable"), "error");
     return;
   }
 
@@ -861,20 +863,20 @@ export async function initDemoReports() {
     state = { ...nextState, page: Math.max(Number(nextState.page) || 1, 1) };
     updateUrl(state);
     updateSortIndicators(root, state.sort);
-    setStatus(stateNode, "Завантаження demo-звітів…");
+    setStatus(stateNode, t("demo.loadingReports"));
     tbody.replaceChildren();
     pagination.replaceChildren();
     try {
       const result = await getDemoReports(datasetId, token, state.page, { ...state, page_size: PAGE_SIZE });
       if (!result.items.length) {
-        setStatus(stateNode, "Demo-звітів за поточними умовами не знайдено.");
+        setStatus(stateNode, t("demo.emptyReports"));
         return;
       }
       stateNode.replaceChildren();
       renderRows(tbody, result.items, labelFor, datasetId);
       renderPagination(pagination, result.page, result.total_pages, (page) => load({ ...state, page }));
     } catch {
-      setStatus(stateNode, "Не вдалося завантажити demo-звіти. Спробуйте пізніше.", "error");
+      setStatus(stateNode, t("demo.reportsLoadFailed"), "error");
     }
   };
 

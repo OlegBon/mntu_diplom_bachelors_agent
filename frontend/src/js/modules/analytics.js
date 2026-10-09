@@ -447,11 +447,6 @@ export async function initAnalytics() {
       status.hidden = false;
       return;
     }
-    if (period.date_from && period.date_to && period.date_from > period.date_to) {
-      status.textContent = "Дата «Від» не може бути пізнішою за дату «До».";
-      status.hidden = false;
-      return;
-    }
     status.hidden = true;
     try {
       const [experts, narratives, quality, admins, providers, currency] = await Promise.all([
@@ -466,18 +461,14 @@ export async function initAnalytics() {
           reportHref: (reportId) => `/report-detail.html?id=${encodeURIComponent(reportId)}`,
           formatDateTime: dateTime,
         });
-      } else narrativeResults.textContent = "Текстові метадані тимчасово недоступні.";
-      if (!narratives) narrativeResults.textContent = t("analytics.narrativesUnavailable");
+      } else narrativeResults.textContent = t("analytics.narrativesUnavailable");
       if (quality) renderOperationalQuality(qualityResults, quality, { formatDateTime: dateTime });
-      else qualityResults.textContent = "Операційні метадані тимчасово недоступні.";
-      if (!quality) qualityResults.textContent = t("analytics.qualityUnavailable");
+      else qualityResults.textContent = t("analytics.qualityUnavailable");
       renderAdmins(adminResults, admins);
       if (providers) renderProviders(providerResults, providers.providers, providerDialog, providerDialogContent);
-      else providerResults.textContent = "Метадані provider-ів тимчасово недоступні.";
-      if (!providers) providerResults.textContent = t("analytics.providersUnavailable");
+      else providerResults.textContent = t("analytics.providersUnavailable");
       if (currency) renderCurrencySources(currencyResults, currency, providerDialog, providerDialogContent);
-      else currencyResults.textContent = "Метадані валютних джерел тимчасово недоступні.";
-      if (!currency) currencyResults.textContent = t("analytics.currencyUnavailable");
+      else currencyResults.textContent = t("analytics.currencyUnavailable");
       periodSummaryNode.textContent = periodSummary(period);
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
@@ -486,11 +477,6 @@ export async function initAnalytics() {
         : t("analytics.loadFailed");
       status.hidden = false;
       return;
-      if (error instanceof ApiRequestError && error.status === 401) { logout("/login.html"); return; }
-      status.textContent = error instanceof ApiRequestError && error.status === 403
-        ? "Аналітика доступна лише адміністратору."
-        : "Не вдалося завантажити аналітику. Спробуйте оновити сторінку пізніше.";
-      status.hidden = false;
     }
   };
   window.addEventListener("diamant:locale-change", () => { void loadAnalytics(); });

@@ -20,7 +20,7 @@ import {
   updateProviderAccessPolicy,
 } from "./api.js";
 import { registerVisibleDataRefresh } from "./page-refresh.js";
-import { formatDate as formatLocalizedDate, t } from "./i18n.js";
+import { formatCurrency, formatDate as formatLocalizedDate, formatNumber, t } from "./i18n.js";
 
 const STATUS_LABELS = { candidate: "market.snapshotCandidate", approved: "market.snapshotApproved", rejected: "market.snapshotRejected" };
 const FRESHNESS_LABELS = { fresh: "market.fresh", warning: "market.warning", stale: "market.stale", missing: "market.missing" };
@@ -44,7 +44,7 @@ function marketReferenceMessage(error) {
     "The approved snapshot does not cover this carat weight": "Обраний знімок OpenFacet не має покриття для цієї ваги в каратах.",
     "This approved snapshot is already attached to the report": "Цей затверджений знімок уже прикріплено до звіту.",
   };
-  return messages[error?.message] || error?.message || "Не вдалося прикріпити ринковий орієнтир.";
+  return messages[error?.message] || error?.message || t("market.attachFailed");
 }
 
 function renderProviders(container, providers, fxSnapshots, onAction) {
@@ -65,8 +65,8 @@ function renderProviders(container, providers, fxSnapshots, onAction) {
       const latest = fxSnapshots[0];
       const rate = document.createElement("p");
       rate.textContent = latest
-        ? `Останній знімок: 1 USD = ${Number(latest.rate).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} UAH · офіційна дата ${new Intl.DateTimeFormat("uk-UA", { dateStyle: "medium" }).format(new Date(`${latest.rate_date}T00:00:00`))}.`
-        : "Знімків курсу ще немає. Під час прикріплення орієнтира курс також отримується автоматично.";
+        ? t("market.nbuLatestRate", { rate: formatNumber(latest.rate, { minimumFractionDigits: 2, maximumFractionDigits: 4 }), date: formatLocalizedDate(new Date(`${latest.rate_date}T00:00:00`), { dateStyle: "medium" }) })
+        : t("market.nbuNoSnapshots");
       card.append(rate);
     }
     const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-primary";
@@ -80,7 +80,7 @@ function renderPolicyMarketProviders(container, providers, enabledProviderCodes,
   container.replaceChildren();
   const marketProviders = providers.filter((provider) => provider.provider_type === "market_reference");
   if (!marketProviders.length) {
-    container.textContent = "Активних провайдерів ринкового орієнтиру немає.";
+    container.textContent = t("market.noActiveProviders");
     return;
   }
   for (const provider of marketProviders) {
@@ -104,7 +104,7 @@ function renderPolicyMarketProviders(container, providers, enabledProviderCodes,
     const text = document.createElement("span");
     text.textContent = `${provider.display_name} — ${provider.scope_note}`;
     const primaryText = document.createElement("span");
-    primaryText.textContent = " Основний для списку звітів";
+    primaryText.textContent = ` ${t("market.primaryForDashboard")}`;
     label.append(input, text, primary, primaryText);
     container.append(label);
   }
@@ -117,26 +117,26 @@ function renderProviderAccessPolicies(container, policies, administrators, onSav
     const providerNames = { nbu: "Національний банк України (НБУ)", openfacet: "OpenFacet" };
     const title = document.createElement("h3"); title.textContent = providerNames[policy.provider_code] || policy.provider_code;
     const modeGroup = document.createElement("div"); modeGroup.className = "form-group";
-    const modeLabel = document.createElement("label"); modeLabel.textContent = "Режим доступу";
+    const modeLabel = document.createElement("label"); modeLabel.textContent = t("market.accessMode");
     const mode = document.createElement("select"); mode.name = "access_mode"; mode.className = "form-control";
-    [["disabled", "Вимкнено"], ["restricted_trial", "Обмежений trial"], ["standard_internal", "Внутрішній стандартний"]].forEach(([value, text]) => {
+    [["disabled", t("market.disabled")], ["restricted_trial", t("market.restrictedTrial")], ["standard_internal", t("market.standardInternal")]].forEach(([value, text]) => {
       const option = document.createElement("option"); option.value = value; option.textContent = text; option.selected = value === policy.access_mode; mode.append(option);
     });
     modeLabel.append(mode); modeGroup.append(modeLabel);
     const limitGroup = document.createElement("div"); limitGroup.className = "form-group";
-    const limitLabel = document.createElement("label"); limitLabel.textContent = "Денний ліміт запитів";
+    const limitLabel = document.createElement("label"); limitLabel.textContent = t("market.dailyRequestLimit");
     const limit = document.createElement("input"); limit.type = "number"; limit.min = "1"; limit.name = "daily_request_limit"; limit.className = "form-control"; limit.value = policy.daily_request_limit || ""; limitLabel.append(limit); limitGroup.append(limitLabel);
     const expiryGroup = document.createElement("div"); expiryGroup.className = "form-group";
-    const expiryLabel = document.createElement("label"); expiryLabel.textContent = "Trial діє до (UTC)";
+    const expiryLabel = document.createElement("label"); expiryLabel.textContent = t("market.trialUntil");
     const expiry = document.createElement("input"); expiry.type = "datetime-local"; expiry.name = "trial_expires_at"; expiry.className = "form-control";
     expiry.value = policy.trial_expires_at ? new Date(policy.trial_expires_at).toISOString().slice(0, 16) : "";
     expiryLabel.append(expiry); expiryGroup.append(expiryLabel);
     const termsGroup = document.createElement("div"); termsGroup.className = "form-group";
-    const termsLabel = document.createElement("label"); termsLabel.textContent = "Посилання або коротка примітка до умов";
+    const termsLabel = document.createElement("label"); termsLabel.textContent = t("market.termsReference");
     const terms = document.createElement("input"); terms.type = "text"; terms.maxLength = 2000; terms.name = "terms_reference"; terms.className = "form-control"; terms.value = policy.terms_reference || ""; termsLabel.append(terms); termsGroup.append(termsLabel);
-    const note = document.createElement("p"); note.className = "account-help"; note.textContent = "Дозволено лише природні камені, внутрішнє використання; public display і ML у цьому релізі вимкнені.";
+    const note = document.createElement("p"); note.className = "account-help"; note.textContent = t("market.accessPolicyNote");
     const assignments = document.createElement("div"); assignments.className = "market-data-card__actions";
-    const assignmentTitle = document.createElement("p"); assignmentTitle.textContent = policy.access_mode === "restricted_trial" ? "Призначені адміністратори restricted trial:" : "Призначення доступні лише для restricted trial.";
+    const assignmentTitle = document.createElement("p"); assignmentTitle.textContent = policy.access_mode === "restricted_trial" ? t("market.assignedTrialAdministrators") : t("market.assignmentsTrialOnly");
     assignments.append(assignmentTitle);
     if (policy.access_mode === "restricted_trial") administrators.forEach((administrator) => {
       const label = document.createElement("label"); label.className = "market-data-confirmation";
@@ -145,8 +145,8 @@ function renderProviderAccessPolicies(container, policies, administrators, onSav
       label.append(input, document.createTextNode(`${administrator.last_name || ""} ${administrator.first_name || ""} (${administrator.username})`.trim())); assignments.append(label);
     });
     const actions = document.createElement("div"); actions.className = "form-actions";
-    const eventsButton = document.createElement("button"); eventsButton.type = "button"; eventsButton.className = "btn btn-outline"; eventsButton.textContent = "Показати журнал умов"; eventsButton.addEventListener("click", () => onEvents(policy.provider_code));
-    const button = document.createElement("button"); button.type = "submit"; button.className = "btn btn-primary"; button.textContent = "Зберегти умови";
+    const eventsButton = document.createElement("button"); eventsButton.type = "button"; eventsButton.className = "btn btn-outline"; eventsButton.textContent = t("market.showPolicyLog"); eventsButton.addEventListener("click", () => onEvents(policy.provider_code));
+    const button = document.createElement("button"); button.type = "submit"; button.className = "btn btn-primary"; button.textContent = t("market.saveTerms");
     actions.append(eventsButton, button);
     form.append(title, modeGroup, limitGroup, expiryGroup, termsGroup, note, assignments, actions);
     form.addEventListener("submit", async (event) => {
@@ -166,7 +166,7 @@ function renderSnapshots(container, snapshots, onDecision) {
   for (const snapshot of snapshots) {
     const card = document.createElement("article"); card.className = "market-data-card";
     const title = document.createElement("h3"); title.textContent = `${snapshot.provider_code} · ${STATUS_LABELS[snapshot.status] ? t(STATUS_LABELS[snapshot.status]) : snapshot.status}`;
-    const meta = document.createElement("p"); meta.textContent = `${snapshot.quote_count} котирувань · ${snapshot.currency_code} · ${snapshot.unit} · отримано ${formatDate(snapshot.retrieved_at)}`;
+    const meta = document.createElement("p"); meta.textContent = t("market.snapshotMeta", { count: snapshot.quote_count, currency: snapshot.currency_code, unit: snapshot.unit, date: formatDate(snapshot.retrieved_at) });
     const scope = document.createElement("p"); scope.textContent = snapshot.coverage_note;
     const source = document.createElement("a"); source.href = snapshot.methodology_url; source.target = "_blank"; source.rel = "noopener noreferrer"; source.textContent = t("market.sourceMethodology");
     card.append(title, meta, scope, source);
@@ -190,7 +190,7 @@ function formatScheduleTime(schedule) {
 function renderSchedules(container, schedules, providerNames, onSubmit) {
   container.replaceChildren();
   if (!schedules.length) {
-    container.textContent = "Графіки ще не створені. Застосуйте міграцію 0013_market_provider_operations.";
+    container.textContent = t("market.noSchedules");
     return;
   }
   for (const schedule of schedules) {
@@ -201,16 +201,16 @@ function renderSchedules(container, schedules, providerNames, onSubmit) {
     const freshness = document.createElement("p");
     freshness.textContent = `${t("market.dataState")}: ${FRESHNESS_LABELS[schedule.freshness_status] ? t(FRESHNESS_LABELS[schedule.freshness_status]) : schedule.freshness_status}${schedule.latest_retrieved_at ? ` · ${t("market.lastRetrieved")} ${formatDate(schedule.latest_retrieved_at)}` : ""}.`;
     const enabled = document.createElement("input"); enabled.type = "checkbox"; enabled.checked = schedule.enabled;
-    const enabledLabel = document.createElement("label"); enabledLabel.className = "market-data-confirmation"; enabledLabel.append(enabled, document.createTextNode("Увімкнути планове оновлення"));
+    const enabledLabel = document.createElement("label"); enabledLabel.className = "market-data-confirmation"; enabledLabel.append(enabled, document.createTextNode(t("market.enableScheduledRefresh")));
     const time = document.createElement("input"); time.type = "time"; time.className = "form-control"; time.value = formatScheduleTime(schedule);
     const warn = document.createElement("input"); warn.type = "number"; warn.className = "form-control"; warn.min = "1"; warn.max = "2160"; warn.value = schedule.warn_after_hours;
     const block = document.createElement("input"); block.type = "number"; block.className = "form-control"; block.min = "1"; block.max = "4320"; block.value = schedule.block_after_hours;
     const fields = document.createElement("div"); fields.className = "form-row";
-    for (const [labelText, input] of [["Час (Europe/Kyiv)", time], ["Попереджати через, год.", warn], ["Блокувати через, год.", block]]) {
+    for (const [labelText, input] of [[t("market.scheduleTime"), time], [t("market.warnAfterHours"), warn], [t("market.blockAfterHours"), block]]) {
       const group = document.createElement("div"); group.className = "form-group";
       const label = document.createElement("label"); label.textContent = labelText; label.append(input); group.append(label); fields.append(group);
     }
-    const submit = document.createElement("button"); submit.type = "submit"; submit.className = "btn btn-outline"; submit.textContent = "Зберегти графік";
+    const submit = document.createElement("button"); submit.type = "submit"; submit.className = "btn btn-outline"; submit.textContent = t("market.saveSchedule");
     form.append(title, freshness, enabledLabel, fields, submit);
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -220,7 +220,7 @@ function renderSchedules(container, schedules, providerNames, onSubmit) {
         scheduled_minute: minute, warn_after_hours: Number(warn.value), block_after_hours: Number(block.value),
       };
       if (!time.value || !Number.isInteger(hour) || !Number.isInteger(minute) || payload.block_after_hours < payload.warn_after_hours) {
-        onSubmit(null, "Перевірте час і пороги: блокування не може бути раніше попередження.");
+        onSubmit(null, t("market.invalidSchedule"));
         return;
       }
       submit.disabled = true;
@@ -293,12 +293,6 @@ export async function initMarketData() {
   const openDecisionDialog = (snapshotId, action) => {
     pendingDecision = { snapshotId, action };
     const isApproval = action === "approve";
-    decisionDescription.textContent = isApproval
-      ? "Після затвердження цей незмінний знімок можна буде явно прикріпити до сумісного звіту."
-      : "Відхилений знімок не можна використати для ринкового орієнтира; самі дані знімка лишаться в історії.";
-    decisionReasonLabel.textContent = isApproval ? "Коментар до затвердження" : "Причина відхилення";
-    decisionReason.placeholder = isApproval ? "Необов’язково" : "Необов’язково";
-    decisionSubmit.textContent = isApproval ? "Затвердити знімок" : "Відхилити знімок";
     decisionDescription.textContent = t(isApproval ? "market.decisionApproveDescription" : "market.decisionRejectDescription");
     decisionReasonLabel.textContent = t(isApproval ? "market.approvalComment" : "market.rejectionReason");
     decisionReason.placeholder = t("market.optional");
@@ -320,23 +314,23 @@ export async function initMarketData() {
     policyUseFx.checked = policy.use_fx_conversion;
     const fxProvider = providerRows.find((provider) => provider.provider_code === policy.fx_provider_code);
     policyFxNote.textContent = policy.use_fx_conversion
-      ? `Курс ${fxProvider?.display_name || "валютного провайдера"} фіксується лише разом із новим орієнтиром.`
-      : "Еквівалент у UAH для нових орієнтирів не створюватиметься.";
+      ? t("market.fxProviderFixed", { provider: fxProvider?.display_name || t("analytics.currencySource") })
+      : t("market.fxNotCreated");
     renderProviders(providers, providerRows, fxSnapshotRows, async (providerCode, button) => {
       button.disabled = true;
       try {
         if (providerCode === "nbu") {
-          setStatus(status, "Отримання офіційного курсу НБУ…");
+          setStatus(status, t("market.fetchingNbu"));
           await refreshNbuRate(token);
-          setStatus(status, "Новий незмінний знімок офіційного курсу НБУ збережено.");
+          setStatus(status, t("market.nbuSaved"));
         } else {
-          setStatus(status, "Отримання даних OpenFacet…");
+          setStatus(status, t("market.fetchingOpenfacet"));
           await fetchMarketDataCandidate(providerCode, token);
-          setStatus(status, "Створено кандидат. Перевірте покриття та затвердьте його окремо.");
+          setStatus(status, t("market.candidateCreated"));
         }
         await refresh();
       }
-      catch (error) { setStatus(status, error.message || "Не вдалося отримати дані провайдера.", true); }
+      catch (error) { setStatus(status, error.message || t("market.fetchFailed"), true); }
       finally { button.disabled = false; }
     });
     renderSnapshots(snapshots, snapshotRows, openDecisionDialog);
@@ -344,39 +338,39 @@ export async function initMarketData() {
       if (validationError) { setStatus(status, validationError, true); return; }
       try {
         await updateMarketProviderSchedule(payload.provider_code, payload, token);
-        setStatus(status, "Графік оновлення збережено.");
+        setStatus(status, t("market.scheduleSaved"));
         await refresh();
-      } catch (error) { setStatus(status, error.message || "Не вдалося зберегти графік.", true); }
+      } catch (error) { setStatus(status, error.message || t("market.scheduleSaveFailed"), true); }
     });
     renderOperations(operations, operationRows);
     if (accessRows) {
       accessControls.hidden = false;
       renderProviderAccessPolicies(accessPolicies, accessRows, administrators, async (providerCode, payload) => {
-        try { await updateProviderAccessPolicy(providerCode, payload, token); setStatus(status, "Умови provider-а збережено."); await refresh(); }
-        catch (error) { setStatus(status, error.message || "Не вдалося зберегти умови provider-а.", true); }
+        try { await updateProviderAccessPolicy(providerCode, payload, token); setStatus(status, t("market.policySaved")); await refresh(); }
+        catch (error) { setStatus(status, error.message || t("market.policySaveFailed"), true); }
       }, async (providerCode, expertId, enabled) => {
-        try { await updateProviderAccessAssignment(providerCode, expertId, enabled, token); setStatus(status, "Призначення restricted trial оновлено."); await refresh(); }
-        catch (error) { setStatus(status, error.message || "Не вдалося змінити призначення.", true); throw error; }
+        try { await updateProviderAccessAssignment(providerCode, expertId, enabled, token); setStatus(status, t("market.assignmentUpdated")); await refresh(); }
+        catch (error) { setStatus(status, error.message || t("market.assignmentFailed"), true); throw error; }
       }, async (providerCode) => {
         try {
           const events = await getProviderAccessEvents(providerCode, token);
           const lines = events.map((item) => `${formatDate(item.created_at)} — ${item.action}${item.reason ? `: ${item.reason}` : ""}`);
-          setStatus(status, lines.length ? lines.join("\n") : "Для provider-а ще немає подій умов.");
-        } catch (error) { setStatus(status, error.message || "Не вдалося завантажити журнал умов.", true); }
+          setStatus(status, lines.length ? lines.join("\n") : t("market.noPolicyEvents"));
+        } catch (error) { setStatus(status, error.message || t("market.policyEventsFailed"), true); }
       });
     } else accessControls.hidden = true;
     updateApprovedSnapshotOptions(snapshotSelect, snapshotRows);
   };
   try {
     const user = await getCurrentUser(token);
-    if (user.role !== "admin") throw new Error("Ця сторінка доступна лише адміністратору.");
+    if (user.role !== "admin") throw new Error(t("market.adminOnly"));
     if (user.partner_controls_enabled) {
       const users = await getUsers({ page: 1, page_size: 100 }, token);
       administrators = users.items.filter((item) => item.role === "admin" && item.is_active);
     }
     await refresh();
   } catch (error) {
-    setStatus(status, error instanceof ApiRequestError && error.status === 401 ? "Потрібно увійти знову." : error.message, true);
+    setStatus(status, error instanceof ApiRequestError && error.status === 401 ? t("market.signInAgain") : error.message, true);
     return;
   }
   form.addEventListener("submit", async (event) => {
@@ -388,10 +382,10 @@ export async function initMarketData() {
         { snapshot_id: Number(snapshotSelect.value), applicability_confirmed: true, applicability_note: document.getElementById("market-reference-note").value.trim() }, token,
       );
       const converted = valuation.converted_amount
-        ? ` ≈ ${valuation.converted_currency_code} ${Number(valuation.converted_amount).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
+        ? t("market.convertedAmount", { amount: formatCurrency(valuation.converted_amount, valuation.converted_currency_code, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) })
         : "";
-      setStatus(status, `Додано ринковий орієнтир: ${valuation.currency_code} ${Number(valuation.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.${converted}`);
-      setStatus(referenceStatus, "Ринковий орієнтир успішно прикріплено.");
+      setStatus(status, t("market.referenceAdded", { amount: formatCurrency(valuation.amount, valuation.currency_code, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), converted }));
+      setStatus(referenceStatus, t("market.referenceAttached"));
       form.reset(); updateApprovedSnapshotOptions(snapshotSelect, currentSnapshots);
     } catch (error) {
       const message = marketReferenceMessage(error);
@@ -405,7 +399,7 @@ export async function initMarketData() {
       .map((input) => input.value);
     const primaryProvider = policyForm.querySelector('input[name="market-policy-primary-provider"]:checked');
     if (primaryProvider && !enabledProviderCodes.includes(primaryProvider.value)) {
-      setStatus(status, "Основний провайдер має входити до увімкненого набору.", true);
+      setStatus(status, t("market.primaryMustBeEnabled"), true);
       return;
     }
     policySubmit.disabled = true;
@@ -416,10 +410,10 @@ export async function initMarketData() {
         use_fx_conversion: policyUseFx.checked,
         fx_provider_code: policyUseFx.checked ? "nbu" : null,
       }, token);
-      setStatus(status, "Налаштування системного довідкового орієнтиру збережено для майбутніх чернеток.");
+      setStatus(status, t("market.referencePolicySaved"));
       await refresh();
     } catch (error) {
-      setStatus(status, error.message || "Не вдалося зберегти налаштування.", true);
+      setStatus(status, error.message || t("market.referencePolicyFailed"), true);
     } finally {
       policySubmit.disabled = false;
     }
@@ -434,13 +428,16 @@ export async function initMarketData() {
     try {
       await decideMarketDataSnapshot(snapshotId, action, decisionReason.value.trim(), token);
       closeDecisionDialog();
-      setStatus(status, action === "approve" ? "Знімок затверджено." : "Знімок відхилено.");
+      setStatus(status, action === "approve" ? t("market.snapshotApprovedMessage") : t("market.snapshotRejectedMessage"));
       await refresh();
     } catch (error) {
-      setStatus(status, error.message || "Не вдалося зберегти рішення.", true);
+      setStatus(status, error.message || t("market.decisionSaveFailed"), true);
     } finally {
       decisionSubmit.disabled = false;
     }
+  });
+  window.addEventListener("diamant:locale-change", () => {
+    if (!decisionDialog.open && !form.matches(":focus-within") && !policyForm.matches(":focus-within")) void refresh();
   });
   registerVisibleDataRefresh(refresh, { canRefresh: () => !form.matches(":focus-within") });
 }
