@@ -92,7 +92,7 @@
 - [x] 175 — i18n core і shared shell: canonical complete `en`/`uk` catalogs with parity test, no-reload History API locale state, shared shell, login і landing. Locale switch зберігає route/hash/інші query parameters та public lookup input; API/domain data не локалізуються.
 - [x] 176 — i18n private report workflow: dashboard, wizard і detail/edit локалізовані через complete `en`/`uk` catalogs; перемикач не скидає URL/filter state, active wizard step чи незбережені detail edits. Авторські тексти, lifecycle reasons, IDs і файли не перекладаються.
 - [x] 177 — i18n admin, demo та analytics: базові authenticated admin/synthetic surfaces локалізовані без зміни RBAC, provenance чи URL state; залишковий runtime copy audit винесено в 179.
-- [ ] [179 — i18n runtime completion audit](./backlog/179-i18n-runtime-completion-audit.md): Demo, Market, Analytics і private runtime text/state audit перед public/PDF етапом.
+- [x] 179 — i18n runtime completion audit: Demo workflow/SOM, Market data feedback і scoped private/Analytics runtime copy перевірені для complete `en`/`uk` catalogs; dynamic numbers, currencies й dates форматуються active locale. Public/PDF лишаються 178.
 - [ ] [178 — i18n public/PDF і release quality](./backlog/178-i18n-public-pdf-and-release-quality.md): public passport, PDF locale allow-list та загальний regression/accessibility gate.
 
 ### Пріоритет 4 — перевірений ML, PostgreSQL і тестовий домен
@@ -136,7 +136,7 @@
 ### Рекомендована черга активних задач
 
 1. `137` — найближчий незалежний технічний gate після рішення власника щодо GitHub Actions, бюджету minutes/storage і repository settings. Він не залежить від ML, але має бути green до `161`.
-2. `175 → 177` завершені: English-first core/shared shell, state-preserving private workflow та базові authenticated admin/Demo/Analytics locales. Далі `179` завершує runtime audit, потім `178` — public passport/PDF і release-wide i18n quality gate; TypeScript не є залежністю цього ланцюга.
+2. `175 → 177 → 179` завершені: English-first core/shared shell, state-preserving private workflow, authenticated admin/Demo/Analytics locales та runtime audit. Далі `178` — public passport/PDF і release-wide i18n quality gate; TypeScript не є залежністю цього ланцюга.
 3. `151 → 152 → 153` — незмінна черга real analytics: спершу ліцензований data contract і quality gate, потім відтворюваний verified experiment, і лише за його результатом private descriptive visualization.
 4. Deployment-залежність: лише після успішного `152` виконати `160`; за готового CI gate `137` переходити до `161 → 140`. Повний ланцюг: `151 → 152 → 160`, плюс `137` до `161`, потім `161 → 140`.
 

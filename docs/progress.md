@@ -5,6 +5,15 @@
 Нові записи завжди додаються одразу під цим абзацом — у зворотному хронологічному порядку.
 Кожен новий запис містить секції: **Задача**, **Змінені файли**, **Рішення / Результат**, **Перевірки**, **Нові змінні середовища**, **Обмеження**.
 
+## 2026-10-09 — i18n-runtime-completion-audit
+
+- **Задача:** завершити 179 — аудит і локалізацію залишкових runtime-підписів та presentation state на private, Demo, Market data і Analytics surfaces.
+- **Змінені файли:** `frontend/src/js/modules/{demo-reports,market-data,i18n}.js`, `docs/{progress,work_plan,backlog/README}.md`; active backlog `179-i18n-runtime-completion-audit.md` видалено.
+- **Рішення / Результат:** synthetic workflow dialogs, administrator cards, SOM-клітинки, легенди, ARIA-назви, benchmark-пояснення й empty states використовують complete `en`/`uk` catalog. Market data локалізує NBU snapshot, formatted date/number/currency values, status/fallback messages та provider policy feedback за активною locale. Private detail і активні Analytics renderers перевірено: вони вже використовують catalog і locale-aware formatters; знайдені українські тексти належать неактивним legacy helpers. API/domain data, provider codes, IDs, авторські тексти та native `input[type=date]` не перекладаються.
+- **Перевірки:** `cmd /c "cd frontend && npm test"` — 35 passed; `cmd /c "cd frontend && npm run test:e2e"` — 27 passed; `git diff --check` — OK.
+- **Нові змінні середовища:** немає.
+- **Обмеження:** public passport/PDF renderer, Privacy/Documentation pages і release-wide i18n quality gate лишаються scope задачі 178. Sass/Browserslist warnings не є результатом цієї зміни.
+
 ## 2026-10-01 — i18n-copy-audit-and-expert-actions
 
 - **Задача:** усунути змішані англо-українські підписи після 177, вирівняти CI fixtures і забезпечити оновлення runtime кнопок дій на сторінці «Експерти» після перемикання мови.
